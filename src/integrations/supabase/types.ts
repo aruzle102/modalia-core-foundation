@@ -1120,6 +1120,7 @@ export type Database = {
         Returns: boolean
       }
       is_super_admin: { Args: never; Returns: boolean }
+      media_seller_id: { Args: { object_name: string }; Returns: string }
     }
     Enums: {
       app_role: "customer" | "seller_owner" | "seller_staff" | "super_admin"

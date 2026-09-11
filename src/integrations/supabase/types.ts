@@ -312,6 +312,156 @@ export type Database = {
           },
         ]
       }
+      discovery_campaigns: {
+        Row: {
+          category_ids: Json
+          created_at: string
+          cta: Json
+          description: Json | null
+          ends_at: string | null
+          id: string
+          media: Json
+          name: Json
+          product_ids: Json
+          slug: string
+          starts_at: string | null
+          status: string
+          store_ids: Json
+          updated_at: string
+        }
+        Insert: {
+          category_ids?: Json
+          created_at?: string
+          cta?: Json
+          description?: Json | null
+          ends_at?: string | null
+          id?: string
+          media?: Json
+          name: Json
+          product_ids?: Json
+          slug: string
+          starts_at?: string | null
+          status?: string
+          store_ids?: Json
+          updated_at?: string
+        }
+        Update: {
+          category_ids?: Json
+          created_at?: string
+          cta?: Json
+          description?: Json | null
+          ends_at?: string | null
+          id?: string
+          media?: Json
+          name?: Json
+          product_ids?: Json
+          slug?: string
+          starts_at?: string | null
+          status?: string
+          store_ids?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      discovery_events: {
+        Row: {
+          category_id: string | null
+          event_kind: Database["public"]["Enums"]["discovery_event_kind"]
+          id: string
+          metadata: Json
+          occurred_at: string
+          product_id: string | null
+          profile_id: string | null
+          query: string | null
+          session_id: string | null
+        }
+        Insert: {
+          category_id?: string | null
+          event_kind: Database["public"]["Enums"]["discovery_event_kind"]
+          id?: string
+          metadata?: Json
+          occurred_at?: string
+          product_id?: string | null
+          profile_id?: string | null
+          query?: string | null
+          session_id?: string | null
+        }
+        Update: {
+          category_id?: string | null
+          event_kind?: Database["public"]["Enums"]["discovery_event_kind"]
+          id?: string
+          metadata?: Json
+          occurred_at?: string
+          product_id?: string | null
+          profile_id?: string | null
+          query?: string | null
+          session_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discovery_events_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "discovery_events_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      homepage_sections: {
+        Row: {
+          animation: Json
+          content: Json
+          created_at: string
+          enabled: boolean
+          ends_at: string | null
+          id: string
+          kind: Database["public"]["Enums"]["homepage_section_kind"]
+          section_key: string
+          sort_order: number
+          starts_at: string | null
+          subtitle: Json | null
+          title: Json | null
+          updated_at: string
+        }
+        Insert: {
+          animation?: Json
+          content?: Json
+          created_at?: string
+          enabled?: boolean
+          ends_at?: string | null
+          id?: string
+          kind: Database["public"]["Enums"]["homepage_section_kind"]
+          section_key: string
+          sort_order?: number
+          starts_at?: string | null
+          subtitle?: Json | null
+          title?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          animation?: Json
+          content?: Json
+          created_at?: string
+          enabled?: boolean
+          ends_at?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["homepage_section_kind"]
+          section_key?: string
+          sort_order?: number
+          starts_at?: string | null
+          subtitle?: Json | null
+          title?: Json | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       inventory: {
         Row: {
           id: string
@@ -514,6 +664,53 @@ export type Database = {
           key?: string
         }
         Relationships: []
+      }
+      product_discovery_overrides: {
+        Row: {
+          badge: string | null
+          created_at: string
+          enabled: boolean
+          ends_at: string | null
+          id: string
+          placement: string
+          priority: number
+          product_id: string
+          starts_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          badge?: string | null
+          created_at?: string
+          enabled?: boolean
+          ends_at?: string | null
+          id?: string
+          placement: string
+          priority?: number
+          product_id: string
+          starts_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          badge?: string | null
+          created_at?: string
+          enabled?: boolean
+          ends_at?: string | null
+          id?: string
+          placement?: string
+          priority?: number
+          product_id?: string
+          starts_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_discovery_overrides_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       product_images: {
         Row: {
@@ -1124,6 +1321,21 @@ export type Database = {
     }
     Enums: {
       app_role: "customer" | "seller_owner" | "seller_staff" | "super_admin"
+      discovery_event_kind:
+        | "product_view"
+        | "category_view"
+        | "search"
+        | "wishlist"
+        | "cart"
+      homepage_section_kind:
+        | "hero"
+        | "categories"
+        | "trending"
+        | "best_sellers"
+        | "new_arrivals"
+        | "flash_sale"
+        | "stores"
+        | "recommendations"
       order_status:
         | "pending"
         | "confirmed"
@@ -1269,6 +1481,23 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["customer", "seller_owner", "seller_staff", "super_admin"],
+      discovery_event_kind: [
+        "product_view",
+        "category_view",
+        "search",
+        "wishlist",
+        "cart",
+      ],
+      homepage_section_kind: [
+        "hero",
+        "categories",
+        "trending",
+        "best_sellers",
+        "new_arrivals",
+        "flash_sale",
+        "stores",
+        "recommendations",
+      ],
       order_status: [
         "pending",
         "confirmed",

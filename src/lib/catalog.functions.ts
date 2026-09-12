@@ -1,5 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
+import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import type { Database } from "@/integrations/supabase/types";
 
 type LocalizedText = Record<string, unknown> | null;
 
@@ -63,15 +65,25 @@ function publicUrl(path: string | null) {
   return null;
 }
 
+function createPublicClient() {
+  const url = process.env["SUPABASE_URL"];
+  const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
+  if (!url || !key) throw new Error("The marketplace catalogue is unavailable.");
+  return createClient<Database>(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: { fetch: (input, init) => { const headers = new Headers(init?.headers); if (key.startsWith("sb_") && headers.get("Authorization") === `Bearer ${key}`) headers.delete("Authorization"); headers.set("apikey", key); return fetch(input, { ...init, headers }); } },
+  });
+}
+
 export const getDiscoveryData = createServerFn({ method: "GET" })
   .inputValidator((data) => discoveryInput.parse(data))
   .handler(async ({ data }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const supabase = createPublicClient();
     const [sectionResult, categoryResult, productResult, storeResult] = await Promise.all([
-      supabaseAdmin.from("homepage_sections").select("section_key,kind,title,subtitle,content").eq("enabled", true).order("sort_order"),
-      supabaseAdmin.from("categories").select("id,slug,name").eq("status", "active").is("parent_id", null).order("sort_order"),
-      supabaseAdmin.from("products").select("id,slug,name,base_price,created_at,category:categories(slug),seller:sellers(stores(name)),images:product_images(storage_path,alt_text,sort_order)").eq("status", "active").order("created_at", { ascending: false }).limit(24),
-      supabaseAdmin.from("stores").select("id,slug,name,description,logo_path,banner_path,seller_id").eq("status", "active").order("created_at", { ascending: false }).limit(12),
+      supabase.from("homepage_sections").select("section_key,kind,title,subtitle,content").eq("enabled", true).order("sort_order"),
+      supabase.from("categories").select("id,slug,name").eq("status", "active").is("parent_id", null).order("sort_order"),
+      supabase.from("products").select("id,slug,name,base_price,created_at,category:categories(slug),seller:sellers(stores(name)),images:product_images(storage_path,alt_text,sort_order)").eq("status", "active").order("created_at", { ascending: false }).limit(24),
+      supabase.from("stores").select("id,slug,name,description,logo_path,banner_path,seller_id").eq("status", "active").order("created_at", { ascending: false }).limit(12),
     ]);
     if (sectionResult.error || categoryResult.error || productResult.error || storeResult.error) throw new Error("The marketplace catalogue could not be loaded.");
 

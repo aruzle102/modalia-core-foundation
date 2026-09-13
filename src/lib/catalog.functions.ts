@@ -1,9 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
-import type { Database } from "@/integrations/supabase/types";
+import type { Database, Json } from "@/integrations/supabase/types";
 
-type LocalizedText = Record<string, unknown> | null;
+type LocalizedText = Json | null;
 
 export type CatalogProduct = {
   id: string;
@@ -39,7 +39,7 @@ export type HomepageSection = {
   kind: string;
   title: string | null;
   subtitle: string | null;
-  content: Record<string, unknown>;
+  content: Json;
 };
 
 export type DiscoveryData = {
@@ -54,8 +54,8 @@ const browseInput = z.object({ q: z.string().optional(), category: z.string().op
 
 function localized(value: LocalizedText, locale: string, fallback: string) {
   if (!value || Array.isArray(value)) return fallback;
-  const record = value as Record<string, unknown>;
-  const text = record[locale] ?? record.fr ?? record.en ?? record.ar;
+  const record = value as Record<string, Json | undefined>;
+  const text = record[locale] ?? record["fr"] ?? record["en"] ?? record["ar"];
   return typeof text === "string" ? text : fallback;
 }
 
@@ -75,9 +75,7 @@ function createPublicClient() {
   });
 }
 
-export const getDiscoveryData = createServerFn({ method: "GET" })
-  .inputValidator((data) => discoveryInput.parse(data))
-  .handler(async ({ data }) => {
+async function fetchDiscoveryData(locale: string): Promise<DiscoveryData> {
     const supabase = createPublicClient();
     const [sectionResult, categoryResult, productResult, storeResult] = await Promise.all([
       supabase.from("homepage_sections").select("section_key,kind,title,subtitle,content").eq("enabled", true).order("sort_order"),
@@ -95,25 +93,29 @@ export const getDiscoveryData = createServerFn({ method: "GET" })
       const seller = Array.isArray(product.seller) ? product.seller[0] : product.seller;
       const sellerStores = seller && Array.isArray(seller.stores) ? seller.stores : [];
       const category = Array.isArray(product.category) ? product.category[0] : product.category;
-      return { id: product.id, slug: product.slug, name: localized(product.name, data.locale, product.slug), price: Number(product.base_price), storeName: sellerStores[0]?.name ?? "Modalia store", categorySlug: category?.slug ?? null, imagePath: publicUrl(firstImage?.storage_path ?? null), imageAlt: localized(firstImage?.alt_text ?? null, data.locale, ""), createdAt: product.created_at };
+      return { id: product.id, slug: product.slug, name: localized(product.name, locale, product.slug), price: Number(product.base_price), storeName: sellerStores[0]?.name ?? "Modalia store", categorySlug: category?.slug ?? null, imagePath: publicUrl(firstImage?.storage_path ?? null), imageAlt: localized(firstImage?.alt_text ?? null, locale, ""), createdAt: product.created_at };
     });
     const categoryCounts = new Map<string, number>();
     products.forEach((product) => { if (product.categorySlug) categoryCounts.set(product.categorySlug, (categoryCounts.get(product.categorySlug) ?? 0) + 1); });
     const storeCounts = new Map<string, number>();
     products.forEach((product) => storeCounts.set(product.storeName, (storeCounts.get(product.storeName) ?? 0) + 1));
     return {
-      sections: (sectionResult.data ?? []).map((section) => ({ sectionKey: section.section_key, kind: section.kind, title: localized(section.title, data.locale, ""), subtitle: localized(section.subtitle, data.locale, ""), content: section.content as Record<string, unknown> })),
-      categories: (categoryResult.data ?? []).map((category) => ({ id: category.id, slug: category.slug, name: localized(category.name, data.locale, category.slug), productCount: categoryCounts.get(category.slug) ?? 0 })),
+      sections: (sectionResult.data ?? []).map((section) => ({ sectionKey: section.section_key, kind: section.kind, title: localized(section.title, locale, ""), subtitle: localized(section.subtitle, locale, ""), content: section.content })),
+      categories: (categoryResult.data ?? []).map((category) => ({ id: category.id, slug: category.slug, name: localized(category.name, locale, category.slug), productCount: categoryCounts.get(category.slug) ?? 0 })),
       products,
       stores: (storeResult.data ?? []).map((store) => ({ id: store.id, slug: store.slug, name: store.name, description: store.description, logoPath: publicUrl(store.logo_path), bannerPath: publicUrl(store.banner_path), productCount: storeCounts.get(store.name) ?? 0 })),
-    } satisfies DiscoveryData;
-  });
+    };
+}
+
+export const getDiscoveryData = createServerFn({ method: "GET" })
+  .validator((data) => discoveryInput.parse(data))
+  .handler(async ({ data }) => fetchDiscoveryData(data.locale));
 
 export const browseCatalog = createServerFn({ method: "GET" })
-  .inputValidator((data) => browseInput.parse(data))
+  .validator((data) => browseInput.parse(data))
   .handler(async ({ data }) => {
     const locale = "fr";
-    const discovery = await getDiscoveryData({ data: { locale } });
+    const discovery = await fetchDiscoveryData(locale);
     const query = data.q?.trim().toLocaleLowerCase() ?? "";
     let products = discovery.products.filter((product) => (!data.category || product.categorySlug === data.category) && (!query || [product.name, product.storeName, product.categorySlug ?? ""].some((value) => value.toLocaleLowerCase().includes(query))));
     if (data.sort === "price_asc") products = [...products].sort((a, b) => a.price - b.price);

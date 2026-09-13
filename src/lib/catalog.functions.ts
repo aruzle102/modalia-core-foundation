@@ -85,7 +85,9 @@ export const getDiscoveryData = createServerFn({ method: "GET" })
       supabase.from("products").select("id,slug,name,base_price,created_at,category:categories(slug),seller:sellers(stores(name)),images:product_images(storage_path,alt_text,sort_order)").eq("status", "active").order("created_at", { ascending: false }).limit(24),
       supabase.from("stores").select("id,slug,name,description,logo_path,banner_path,seller_id").eq("status", "active").order("created_at", { ascending: false }).limit(12),
     ]);
-    if (sectionResult.error || categoryResult.error || productResult.error || storeResult.error) throw new Error("The marketplace catalogue could not be loaded.");
+    if (sectionResult.error || categoryResult.error || productResult.error || storeResult.error) {
+      console.error("Catalog query failed", { sections: sectionResult.error?.message, categories: categoryResult.error?.message, products: productResult.error?.message, stores: storeResult.error?.message });
+    }
 
     const products = (productResult.data ?? []).map((product) => {
       const images = Array.isArray(product.images) ? [...product.images].sort((a, b) => a.sort_order - b.sort_order) : [];

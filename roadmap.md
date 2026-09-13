@@ -1,1 +1,1 @@
-- Fix every preview typecheck and build error, including existing errors. (complete)
+- Fix every preview typecheck and build error, including existing errors. (in progress)

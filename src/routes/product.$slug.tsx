@@ -9,8 +9,8 @@ import { getLocale, getTranslations, localeDirections } from "@/lib/i18n";
 const productQuery = (slug: string, locale: string) => queryOptions({ queryKey: ["product", slug, locale], queryFn: () => getProductDetail({ data: { slug, locale } }) });
 export const Route = createFileRoute("/product/$slug")({
   validateSearch: (search: Record<string, unknown>) => ({ locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined) }),
-  loaderDeps: ({ params, search }) => ({ slug: params.slug, locale: search.locale }),
-  loader: ({ context, deps }) => context.queryClient.ensureQueryData(productQuery(deps.slug, deps.locale)),
+  loaderDeps: ({ search }) => ({ locale: search.locale }),
+  loader: ({ context, deps, params }) => context.queryClient.ensureQueryData(productQuery(params.slug, deps.locale)),
   pendingComponent: () => <div className="px-6 py-24 text-center text-muted-foreground">Loading product…</div>,
   errorComponent: () => <div role="alert" className="px-6 py-24 text-center text-muted-foreground">This product could not be loaded. Please try again.</div>,
   notFoundComponent: () => <div className="px-6 py-24 text-center text-muted-foreground">This product is not available.</div>,

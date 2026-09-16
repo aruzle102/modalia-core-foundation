@@ -32,7 +32,7 @@ export const getProductDetail = createServerFn({ method: "GET" })
   .validator((data) => z.object({ slug: z.string(), locale: z.string() }).parse(data))
   .handler(async ({ data }) => {
     const supabase = createPublicClient();
-    const productResult = await supabase.from("products").select("id,slug,name,description,short_description,base_price,compare_at_price,currency,featured,weight_grams,category:categories(name,slug),brand:brands(name,slug),store:stores(name,slug,logo_path)").eq("slug", data.slug).maybeSingle();
+    const productResult = await supabase.from("products").select("id,slug,name,description,short_description,base_price,compare_at_price,currency,featured,weight_grams,category_id,category:categories(name,slug),brand:brands(name,slug),store:stores(name,slug,logo_path)").eq("slug", data.slug).maybeSingle();
     if (productResult.error) throw new Error("The product could not be loaded.");
     if (!productResult.data) return null;
     const product = productResult.data;

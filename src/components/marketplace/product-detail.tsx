@@ -24,7 +24,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
   const stock = matchingVariant?.stock ?? product.variants.find((variant) => variant.available)?.stock ?? 0;
   const maxQuantity = Math.max(1, Math.min(stock, matchingVariant?.maxPurchaseQuantity ?? stock));
   const sale = discount(price, compareAtPrice);
-  const media = product.media.filter((item) => !selectedValues.length || !item.colorId || selectedValues.includes(item.colorId));
+  const media = product.media.filter((item) => !selectedValues.length || !item.colorId || product.options.some((option) => option.values.some((value) => value.id === selected[option.id] && value.colorId === item.colorId)));
   const currentMedia = media[activeMedia] ?? media[0];
   const updateOption = (optionId: string, valueId: string) => { setSelected((current) => ({ ...current, [optionId]: valueId })); setQuantity(1); setActiveMedia(0); };
   const actionLabel = product.options.length && !complete ? "Select options" : "Add to cart";
@@ -34,7 +34,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
     <div className="mt-6 grid gap-10 lg:grid-cols-[minmax(0,1.45fr)_minmax(20rem,0.8fr)] lg:items-start">
       <section aria-label="Product media" className="min-w-0">
         <div className="aspect-[4/5] overflow-hidden bg-muted">{currentMedia?.url ? <img src={currentMedia.url} alt={currentMedia.alt || product.name} className="size-full object-cover" sizes="(min-width: 1024px) 55vw, 100vw" /> : <div className="flex size-full items-end p-7 text-body text-muted-foreground">Modalia<br />{product.name}</div>}</div>
-        {media.length > 1 ? <div className="mt-3 flex gap-2 overflow-x-auto pb-1">{media.map((item, index) => <button key={item.id} type="button" aria-label={`View image ${index + 1}`} aria-pressed={index === activeMedia} onClick={() => setActiveMedia(index)} className="size-16 shrink-0 overflow-hidden border border-border data-[active=true]:border-foreground"><span data-active={index === activeMedia}>{item.url ? <img src={item.url} alt="" loading="lazy" className="size-full object-cover" /> : <span className="block size-full bg-muted" />}</span></button>)}</div> : null}
+        {media.length > 1 ? <div className="mt-3 flex gap-2 overflow-x-auto pb-1">{media.map((item, index) => <Button key={item.id} type="button" variant="outline" size="icon" aria-label={`View image ${index + 1}`} aria-pressed={index === activeMedia} onClick={() => setActiveMedia(index)} className="size-16 shrink-0 overflow-hidden p-0 aria-pressed:border-foreground"><span className="block size-full">{item.url ? <img src={item.url} alt="" loading="lazy" className="size-full object-cover" /> : <span className="block size-full bg-muted" />}</span></Button>)}</div> : null}
       </section>
       <section className="lg:sticky lg:top-24">
         <div className="flex items-start justify-between gap-5"><div>{product.brand ? <p className="text-eyebrow text-muted-foreground">{product.brand.name}</p> : null}<h1 className="mt-2 text-display text-foreground">{product.name}</h1></div><Button type="button" variant="outline" size="icon" aria-label={saved ? "Remove from wishlist" : "Save to wishlist"} onClick={() => setSaved((value) => !value)}><Heart className={saved ? "fill-current" : ""} /></Button></div>

@@ -73,6 +73,48 @@ export type Database = {
         }
         Relationships: []
       }
+      back_in_stock_subscriptions: {
+        Row: {
+          created_at: string
+          customer_id: string | null
+          email: string | null
+          id: string
+          notified_at: string | null
+          variant_id: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id?: string | null
+          email?: string | null
+          id?: string
+          notified_at?: string | null
+          variant_id: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string | null
+          email?: string | null
+          id?: string
+          notified_at?: string | null
+          variant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "back_in_stock_subscriptions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "back_in_stock_subscriptions_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       brands: {
         Row: {
           created_at: string
@@ -1141,6 +1183,9 @@ export type Database = {
           featured: boolean
           id: string
           metadata: Json
+          moderated_at: string | null
+          moderated_by: string | null
+          moderation_reason: string | null
           moderation_status: string
           name: Json
           publication_status: string
@@ -1168,6 +1213,9 @@ export type Database = {
           featured?: boolean
           id?: string
           metadata?: Json
+          moderated_at?: string | null
+          moderated_by?: string | null
+          moderation_reason?: string | null
           moderation_status?: string
           name: Json
           publication_status?: string
@@ -1195,6 +1243,9 @@ export type Database = {
           featured?: boolean
           id?: string
           metadata?: Json
+          moderated_at?: string | null
+          moderated_by?: string | null
+          moderation_reason?: string | null
           moderation_status?: string
           name?: Json
           publication_status?: string
@@ -1278,6 +1329,9 @@ export type Database = {
           id: string
           image_path: string | null
           last_name: string | null
+          moderated_at: string | null
+          moderated_by: string | null
+          moderation_reason: string | null
           moderation_status: string
           order_item_id: string | null
           product_id: string
@@ -1296,6 +1350,9 @@ export type Database = {
           id?: string
           image_path?: string | null
           last_name?: string | null
+          moderated_at?: string | null
+          moderated_by?: string | null
+          moderation_reason?: string | null
           moderation_status?: string
           order_item_id?: string | null
           product_id: string
@@ -1314,6 +1371,9 @@ export type Database = {
           id?: string
           image_path?: string | null
           last_name?: string | null
+          moderated_at?: string | null
+          moderated_by?: string | null
+          moderation_reason?: string | null
           moderation_status?: string
           order_item_id?: string | null
           product_id?: string

@@ -1,2 +1,3 @@
 - Fix every preview typecheck and build error, including existing errors. (complete)
 - Complete product system: structured catalogue data, product detail, options, media, inventory, wishlist and review foundations. (complete)
+- Complete product-system safeguards, moderation, availability requests, reusable product form, and customer catalogue integration. (complete)

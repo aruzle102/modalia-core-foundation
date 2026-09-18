@@ -80,7 +80,7 @@ async function fetchDiscoveryData(locale: string): Promise<DiscoveryData> {
     const [sectionResult, categoryResult, productResult, storeResult] = await Promise.all([
       supabase.from("homepage_sections").select("section_key,kind,title,subtitle,content").eq("enabled", true).order("sort_order"),
       supabase.from("categories").select("id,slug,name").eq("status", "active").is("parent_id", null).order("sort_order"),
-      supabase.from("products").select("id,slug,name,base_price,created_at,category:categories(slug),seller:sellers(stores(name)),images:product_images(storage_path,alt_text,sort_order)").eq("status", "active").order("created_at", { ascending: false }).limit(24),
+      supabase.from("products").select("id,slug,name,base_price,created_at,category:categories(slug),seller:sellers(stores(name)),images:product_images(storage_path,alt_text,sort_order)").eq("status", "active").eq("publication_status", "published").eq("moderation_status", "approved").eq("visibility", "public").order("created_at", { ascending: false }).limit(24),
       supabase.from("stores").select("id,slug,name,description,logo_path,banner_path,seller_id").eq("status", "active").order("created_at", { ascending: false }).limit(12),
     ]);
     if (sectionResult.error || categoryResult.error || productResult.error || storeResult.error) {

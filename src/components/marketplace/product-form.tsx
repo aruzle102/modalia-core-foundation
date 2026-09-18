@@ -20,4 +20,4 @@ export function ProductForm({ initialValues, onSubmit, submitting = false }: Pro
   </form>;
 }
 
-function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) { return <div className="space-y-2"><Label>{label}</Label>{children}{error ? <p role="alert" className="text-caption text-destructive">{error}</p> : null}</div>; }
+function Field({ label, error, children }: { label: string; error: string | undefined; children: React.ReactNode }) { return <div className="space-y-2"><Label>{label}</Label>{children}{error ? <p role="alert" className="text-caption text-destructive">{error}</p> : null}</div>; }

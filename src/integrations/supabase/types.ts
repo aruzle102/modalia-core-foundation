@@ -144,26 +144,38 @@ export type Database = {
       }
       cart_items: {
         Row: {
+          availability_checked_at: string | null
           cart_id: string
+          compare_at_price_snapshot: number | null
           created_at: string
           id: string
+          product_snapshot: Json
           quantity: number
+          unit_price_snapshot: number | null
           updated_at: string
           variant_id: string
         }
         Insert: {
+          availability_checked_at?: string | null
           cart_id: string
+          compare_at_price_snapshot?: number | null
           created_at?: string
           id?: string
+          product_snapshot?: Json
           quantity: number
+          unit_price_snapshot?: number | null
           updated_at?: string
           variant_id: string
         }
         Update: {
+          availability_checked_at?: string | null
           cart_id?: string
+          compare_at_price_snapshot?: number | null
           created_at?: string
           id?: string
+          product_snapshot?: Json
           quantity?: number
+          unit_price_snapshot?: number | null
           updated_at?: string
           variant_id?: string
         }
@@ -636,9 +648,14 @@ export type Database = {
       }
       order_items: {
         Row: {
+          compare_at_price: number | null
           created_at: string
+          discount_total: number
           id: string
+          image_path: string | null
+          option_snapshot: Json
           product_id: string | null
+          product_snapshot: Json
           quantity: number
           seller_order_id: string
           sku: string | null
@@ -646,11 +663,17 @@ export type Database = {
           total: number
           unit_price: number
           variant_id: string | null
+          weight_grams: number | null
         }
         Insert: {
+          compare_at_price?: number | null
           created_at?: string
+          discount_total?: number
           id?: string
+          image_path?: string | null
+          option_snapshot?: Json
           product_id?: string | null
+          product_snapshot?: Json
           quantity: number
           seller_order_id: string
           sku?: string | null
@@ -658,11 +681,17 @@ export type Database = {
           total: number
           unit_price: number
           variant_id?: string | null
+          weight_grams?: number | null
         }
         Update: {
+          compare_at_price?: number | null
           created_at?: string
+          discount_total?: number
           id?: string
+          image_path?: string | null
+          option_snapshot?: Json
           product_id?: string | null
+          product_snapshot?: Json
           quantity?: number
           seller_order_id?: string
           sku?: string | null
@@ -670,6 +699,7 @@ export type Database = {
           total?: number
           unit_price?: number
           variant_id?: string | null
+          weight_grams?: number | null
         }
         Relationships: [
           {
@@ -697,14 +727,19 @@ export type Database = {
       }
       orders: {
         Row: {
+          address_snapshot: Json
           created_at: string
           currency: string
           customer_id: string | null
+          customer_note: string | null
+          delivery_method: string | null
           discount_total: number
+          first_name: string | null
           grand_total: number
           guest_email: string | null
           guest_phone: string | null
           id: string
+          last_name: string | null
           order_number: string
           shipping_address: Json | null
           shipping_total: number
@@ -713,14 +748,19 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          address_snapshot?: Json
           created_at?: string
           currency?: string
           customer_id?: string | null
+          customer_note?: string | null
+          delivery_method?: string | null
           discount_total?: number
+          first_name?: string | null
           grand_total?: number
           guest_email?: string | null
           guest_phone?: string | null
           id?: string
+          last_name?: string | null
           order_number: string
           shipping_address?: Json | null
           shipping_total?: number
@@ -729,14 +769,19 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          address_snapshot?: Json
           created_at?: string
           currency?: string
           customer_id?: string | null
+          customer_note?: string | null
+          delivery_method?: string | null
           discount_total?: number
+          first_name?: string | null
           grand_total?: number
           guest_email?: string | null
           guest_phone?: string | null
           id?: string
+          last_name?: string | null
           order_number?: string
           shipping_address?: Json | null
           shipping_total?: number
@@ -1461,33 +1506,45 @@ export type Database = {
         Row: {
           commission_total: number
           created_at: string
+          delivery_method: string | null
           id: string
           order_id: string
           seller_id: string
+          shipping_snapshot: Json
           shipping_total: number
+          shipping_weight_grams: number
           status: Database["public"]["Enums"]["seller_order_status"]
+          store_id: string | null
           subtotal: number
           updated_at: string
         }
         Insert: {
           commission_total?: number
           created_at?: string
+          delivery_method?: string | null
           id?: string
           order_id: string
           seller_id: string
+          shipping_snapshot?: Json
           shipping_total?: number
+          shipping_weight_grams?: number
           status?: Database["public"]["Enums"]["seller_order_status"]
+          store_id?: string | null
           subtotal?: number
           updated_at?: string
         }
         Update: {
           commission_total?: number
           created_at?: string
+          delivery_method?: string | null
           id?: string
           order_id?: string
           seller_id?: string
+          shipping_snapshot?: Json
           shipping_total?: number
+          shipping_weight_grams?: number
           status?: Database["public"]["Enums"]["seller_order_status"]
+          store_id?: string | null
           subtotal?: number
           updated_at?: string
         }
@@ -1504,6 +1561,13 @@ export type Database = {
             columns: ["seller_id"]
             isOneToOne: false
             referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seller_orders_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
             referencedColumns: ["id"]
           },
         ]
@@ -1575,7 +1639,10 @@ export type Database = {
           commune_id: string | null
           created_at: string
           delivery_method: string
+          enabled: boolean
           id: string
+          max_weight_grams: number | null
+          min_weight_grams: number
           price: number
           seller_id: string | null
           status: string
@@ -1586,7 +1653,10 @@ export type Database = {
           commune_id?: string | null
           created_at?: string
           delivery_method: string
+          enabled?: boolean
           id?: string
+          max_weight_grams?: number | null
+          min_weight_grams?: number
           price: number
           seller_id?: string | null
           status?: string
@@ -1597,7 +1667,10 @@ export type Database = {
           commune_id?: string | null
           created_at?: string
           delivery_method?: string
+          enabled?: boolean
           id?: string
+          max_weight_grams?: number | null
+          min_weight_grams?: number
           price?: number
           seller_id?: string | null
           status?: string
@@ -1892,6 +1965,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      checkout_cart: {
+        Args: {
+          p_address_line: string
+          p_cart_id: string
+          p_commune_id: string
+          p_customer_note?: string
+          p_delivery_method: string
+          p_first_name: string
+          p_last_name: string
+          p_phone: string
+          p_session_token: string
+          p_wilaya_id: string
+        }
+        Returns: Json
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

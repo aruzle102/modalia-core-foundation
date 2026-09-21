@@ -725,15 +725,160 @@ export type Database = {
           },
         ]
       }
+      order_notes: {
+        Row: {
+          author_id: string | null
+          body: string
+          created_at: string
+          id: string
+          seller_order_id: string
+          visibility: string
+        }
+        Insert: {
+          author_id?: string | null
+          body: string
+          created_at?: string
+          id?: string
+          seller_order_id: string
+          visibility?: string
+        }
+        Update: {
+          author_id?: string | null
+          body?: string
+          created_at?: string
+          id?: string
+          seller_order_id?: string
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_notes_seller_order_id_fkey"
+            columns: ["seller_order_id"]
+            isOneToOne: false
+            referencedRelation: "seller_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_returns: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          processed_at: string | null
+          processed_by: string | null
+          reason: string
+          requested_at: string
+          requested_by: string | null
+          seller_order_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          processed_at?: string | null
+          processed_by?: string | null
+          reason: string
+          requested_at?: string
+          requested_by?: string | null
+          seller_order_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          processed_at?: string | null
+          processed_by?: string | null
+          reason?: string
+          requested_at?: string
+          requested_by?: string | null
+          seller_order_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_returns_seller_order_id_fkey"
+            columns: ["seller_order_id"]
+            isOneToOne: false
+            referencedRelation: "seller_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_status_history: {
+        Row: {
+          actor_id: string | null
+          actor_type: string
+          created_at: string
+          id: string
+          new_status: string
+          note: string | null
+          order_id: string | null
+          previous_status: string | null
+          seller_order_id: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          actor_type: string
+          created_at?: string
+          id?: string
+          new_status: string
+          note?: string | null
+          order_id?: string | null
+          previous_status?: string | null
+          seller_order_id?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          actor_type?: string
+          created_at?: string
+          id?: string
+          new_status?: string
+          note?: string | null
+          order_id?: string | null
+          previous_status?: string | null
+          seller_order_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_status_history_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_status_history_seller_order_id_fkey"
+            columns: ["seller_order_id"]
+            isOneToOne: false
+            referencedRelation: "seller_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orders: {
         Row: {
           address_snapshot: Json
+          cancellation_note: string | null
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          checkout_idempotency_key: string | null
           created_at: string
           currency: string
           customer_id: string | null
           customer_note: string | null
           delivery_method: string | null
           discount_total: number
+          failed_delivery_at: string | null
+          failed_delivery_by: string | null
+          failed_delivery_note: string | null
+          failed_delivery_reason: string | null
           first_name: string | null
           grand_total: number
           guest_email: string | null
@@ -741,6 +886,10 @@ export type Database = {
           id: string
           last_name: string | null
           order_number: string
+          payment_amount_due: number
+          payment_method: string
+          payment_paid_at: string | null
+          payment_status: string
           shipping_address: Json | null
           shipping_total: number
           status: Database["public"]["Enums"]["order_status"]
@@ -749,12 +898,21 @@ export type Database = {
         }
         Insert: {
           address_snapshot?: Json
+          cancellation_note?: string | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          checkout_idempotency_key?: string | null
           created_at?: string
           currency?: string
           customer_id?: string | null
           customer_note?: string | null
           delivery_method?: string | null
           discount_total?: number
+          failed_delivery_at?: string | null
+          failed_delivery_by?: string | null
+          failed_delivery_note?: string | null
+          failed_delivery_reason?: string | null
           first_name?: string | null
           grand_total?: number
           guest_email?: string | null
@@ -762,6 +920,10 @@ export type Database = {
           id?: string
           last_name?: string | null
           order_number: string
+          payment_amount_due?: number
+          payment_method?: string
+          payment_paid_at?: string | null
+          payment_status?: string
           shipping_address?: Json | null
           shipping_total?: number
           status?: Database["public"]["Enums"]["order_status"]
@@ -770,12 +932,21 @@ export type Database = {
         }
         Update: {
           address_snapshot?: Json
+          cancellation_note?: string | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          checkout_idempotency_key?: string | null
           created_at?: string
           currency?: string
           customer_id?: string | null
           customer_note?: string | null
           delivery_method?: string | null
           discount_total?: number
+          failed_delivery_at?: string | null
+          failed_delivery_by?: string | null
+          failed_delivery_note?: string | null
+          failed_delivery_reason?: string | null
           first_name?: string | null
           grand_total?: number
           guest_email?: string | null
@@ -783,6 +954,10 @@ export type Database = {
           id?: string
           last_name?: string | null
           order_number?: string
+          payment_amount_due?: number
+          payment_method?: string
+          payment_paid_at?: string | null
+          payment_status?: string
           shipping_address?: Json | null
           shipping_total?: number
           status?: Database["public"]["Enums"]["order_status"]
@@ -795,6 +970,56 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          id: string
+          metadata: Json
+          order_id: string
+          paid_at: string | null
+          payment_method: string
+          provider_reference: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          id?: string
+          metadata?: Json
+          order_id: string
+          paid_at?: string | null
+          payment_method: string
+          provider_reference?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          metadata?: Json
+          order_id?: string
+          paid_at?: string | null
+          payment_method?: string
+          provider_reference?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
             referencedColumns: ["id"]
           },
         ]
@@ -1965,21 +2190,39 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      checkout_cart: {
-        Args: {
-          p_address_line: string
-          p_cart_id: string
-          p_commune_id: string
-          p_customer_note?: string
-          p_delivery_method: string
-          p_first_name: string
-          p_last_name: string
-          p_phone: string
-          p_session_token: string
-          p_wilaya_id: string
-        }
-        Returns: Json
-      }
+      checkout_cart:
+        | {
+            Args: {
+              p_address_line: string
+              p_cart_id: string
+              p_commune_id: string
+              p_customer_note?: string
+              p_delivery_method: string
+              p_first_name: string
+              p_last_name: string
+              p_phone: string
+              p_session_token: string
+              p_wilaya_id: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_address_line: string
+              p_cart_id: string
+              p_commune_id: string
+              p_customer_id?: string
+              p_customer_note?: string
+              p_delivery_method: string
+              p_first_name: string
+              p_idempotency_key?: string
+              p_last_name: string
+              p_phone: string
+              p_session_token: string
+              p_wilaya_id: string
+            }
+            Returns: Json
+          }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1989,6 +2232,14 @@ export type Database = {
       }
       is_super_admin: { Args: never; Returns: boolean }
       media_seller_id: { Args: { object_name: string }; Returns: string }
+      transition_seller_order_status: {
+        Args: {
+          p_new_status: string
+          p_note?: string
+          p_seller_order_id: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "customer" | "seller_owner" | "seller_staff" | "super_admin"
@@ -2015,6 +2266,13 @@ export type Database = {
         | "delivered"
         | "cancelled"
         | "refunded"
+        | "received"
+        | "preparing"
+        | "ready_for_shipping"
+        | "handed_to_courier"
+        | "in_transit"
+        | "returned"
+        | "failed_delivery"
       product_status: "draft" | "active" | "archived"
       seller_order_status:
         | "pending"
@@ -2023,6 +2281,13 @@ export type Database = {
         | "fulfilled"
         | "cancelled"
         | "refunded"
+        | "confirmed"
+        | "ready_for_shipping"
+        | "handed_to_courier"
+        | "in_transit"
+        | "delivered"
+        | "returned"
+        | "failed_delivery"
       store_status: "draft" | "active" | "suspended" | "closed"
     }
     CompositeTypes: {
@@ -2177,6 +2442,13 @@ export const Constants = {
         "delivered",
         "cancelled",
         "refunded",
+        "received",
+        "preparing",
+        "ready_for_shipping",
+        "handed_to_courier",
+        "in_transit",
+        "returned",
+        "failed_delivery",
       ],
       product_status: ["draft", "active", "archived"],
       seller_order_status: [
@@ -2186,6 +2458,13 @@ export const Constants = {
         "fulfilled",
         "cancelled",
         "refunded",
+        "confirmed",
+        "ready_for_shipping",
+        "handed_to_courier",
+        "in_transit",
+        "delivered",
+        "returned",
+        "failed_delivery",
       ],
       store_status: ["draft", "active", "suspended", "closed"],
     },

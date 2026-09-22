@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.transition_seller_order_status(uuid, text, text) FROM authenticated;

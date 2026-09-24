@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import type { Database, Json } from "@/integrations/supabase/types";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -9,13 +8,6 @@ type LocalizedText = Json;
 export type CustomerOrderCard = { id: string; orderNumber: string; createdAt: string; itemCount: number; total: number; currency: string; status: string };
 export type CustomerOrderDetail = CustomerOrderCard & { subtotal: number; shippingTotal: number; deliveryMethod: string | null; paymentMethod: string; paymentStatus: string; firstName: string | null; lastName: string | null; phone: string | null; address: Json; items: { id: string; title: string; sku: string | null; quantity: number; unitPrice: number; total: number; imagePath: string | null; options: Json }[] };
 export type SellerOrderCard = { id: string; orderNumber: string; createdAt: string; customerName: string; itemCount: number; total: number; shippingTotal: number; status: string; deliveryMethod: string | null };
-
-function publicClient() {
-  const url = process.env["SUPABASE_URL"];
-  const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
-  if (!url || !key) throw new Error("Orders are temporarily unavailable.");
-  return createClient<Database>(url, key, { auth: { persistSession: false, autoRefreshToken: false }, global: { fetch: (input, init) => { const headers = new Headers(init?.headers); if (key.startsWith("sb_") && headers.get("Authorization") === `Bearer ${key}`) headers.delete("Authorization"); headers.set("apikey", key); return fetch(input, { ...init, headers }); } } });
-}
 
 function localized(value: LocalizedText, fallback: string) {
   if (!value || Array.isArray(value)) return fallback;
@@ -36,8 +28,9 @@ export const getMyOrders = createServerFn({ method: "GET" })
     if (!customerResult.data) return { orders: [] as CustomerOrderCard[], page: data.page, hasMore: false };
     const ordersResult = await context.supabase.from("orders").select("id,order_number,created_at,grand_total,currency,status,seller_orders(order_items(id))").eq("customer_id", customerResult.data.id).order("created_at", { ascending: false }).range(from, from + data.pageSize);
     if (ordersResult.error) throw new Error("Your orders could not be loaded.");
-    const orders = (ordersResult.data ?? []).map((order) => ({ id: order.id, orderNumber: order.order_number, createdAt: order.created_at, itemCount: (order.seller_orders ?? []).reduce((sum, sellerOrder) => sum + (sellerOrder.order_items?.length ?? 0), 0), total: Number(order.grand_total), currency: order.currency, status: order.status }));
-    return { orders, page: data.page, hasMore: orders.length > data.pageSize };
+    const records = ordersResult.data ?? [];
+    const orders = records.slice(0, data.pageSize).map((order) => ({ id: order.id, orderNumber: order.order_number, createdAt: order.created_at, itemCount: (order.seller_orders ?? []).reduce((sum, sellerOrder) => sum + (sellerOrder.order_items?.length ?? 0), 0), total: Number(order.grand_total), currency: order.currency, status: order.status }));
+    return { orders, page: data.page, hasMore: records.length > data.pageSize };
   });
 
 export const getMyOrder = createServerFn({ method: "GET" })
@@ -58,15 +51,16 @@ export const getMySellerOrders = createServerFn({ method: "GET" })
     const from = (data.page - 1) * data.pageSize;
     const result = await context.supabase.from("seller_orders").select("id,created_at,status,subtotal,shipping_total,delivery_method,orders(order_number,first_name,last_name),order_items(id)").order("created_at", { ascending: false }).range(from, from + data.pageSize);
     if (result.error) throw new Error("Seller orders could not be loaded.");
-    const orders = (result.data ?? []).map((sellerOrder) => { const order = Array.isArray(sellerOrder.orders) ? sellerOrder.orders[0] : sellerOrder.orders; return { id: sellerOrder.id, orderNumber: order?.order_number ?? "Order", createdAt: sellerOrder.created_at, customerName: [order?.first_name, order?.last_name].filter(Boolean).join(" ") || "Customer", itemCount: sellerOrder.order_items?.length ?? 0, total: Number(sellerOrder.subtotal) + Number(sellerOrder.shipping_total), shippingTotal: Number(sellerOrder.shipping_total), status: sellerOrder.status, deliveryMethod: sellerOrder.delivery_method } satisfies SellerOrderCard; });
-    return { orders, page: data.page, hasMore: orders.length > data.pageSize };
+    const records = result.data ?? [];
+    const orders = records.slice(0, data.pageSize).map((sellerOrder) => { const order = Array.isArray(sellerOrder.orders) ? sellerOrder.orders[0] : sellerOrder.orders; return { id: sellerOrder.id, orderNumber: order?.order_number ?? "Order", createdAt: sellerOrder.created_at, customerName: [order?.first_name, order?.last_name].filter(Boolean).join(" ") || "Customer", itemCount: sellerOrder.order_items?.length ?? 0, total: Number(sellerOrder.subtotal) + Number(sellerOrder.shipping_total), shippingTotal: Number(sellerOrder.shipping_total), status: sellerOrder.status, deliveryMethod: sellerOrder.delivery_method } satisfies SellerOrderCard; });
+    return { orders, page: data.page, hasMore: records.length > data.pageSize };
   });
 
 export const getOrderConfirmation = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
   .validator((data) => z.object({ orderNumber: z.string().regex(/^ORD-[A-Z0-9]{6}$/) }).parse(data))
-  .handler(async ({ data }) => {
-    const client = publicClient();
-    const result = await client.from("orders").select("order_number,grand_total,currency,delivery_method,address_snapshot").eq("order_number", data.orderNumber).maybeSingle();
+  .handler(async ({ data, context }) => {
+    const result = await context.supabase.from("orders").select("order_number,grand_total,currency,delivery_method,address_snapshot").eq("order_number", data.orderNumber).maybeSingle();
     if (result.error || !result.data) return null;
     return { orderNumber: result.data.order_number, total: Number(result.data.grand_total), currency: result.data.currency, deliveryMethod: result.data.delivery_method, address: result.data.address_snapshot };
   });

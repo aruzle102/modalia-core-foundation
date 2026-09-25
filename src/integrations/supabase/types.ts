@@ -1727,6 +1727,74 @@ export type Database = {
         }
         Relationships: []
       }
+      seller_applications: {
+        Row: {
+          admin_notes: string | null
+          applicant_id: string
+          business_description: string
+          created_at: string
+          email: string
+          first_name: string
+          id: string
+          last_name: string
+          phone: string
+          product_categories: Json
+          proposed_store_name: string
+          rejection_reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          seller_id: string | null
+          status: Database["public"]["Enums"]["seller_application_status"]
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          applicant_id: string
+          business_description: string
+          created_at?: string
+          email: string
+          first_name: string
+          id?: string
+          last_name: string
+          phone: string
+          product_categories?: Json
+          proposed_store_name: string
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          seller_id?: string | null
+          status?: Database["public"]["Enums"]["seller_application_status"]
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          applicant_id?: string
+          business_description?: string
+          created_at?: string
+          email?: string
+          first_name?: string
+          id?: string
+          last_name?: string
+          phone?: string
+          product_categories?: Json
+          proposed_store_name?: string
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          seller_id?: string | null
+          status?: Database["public"]["Enums"]["seller_application_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seller_applications_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       seller_orders: {
         Row: {
           commission_total: number
@@ -1797,6 +1865,71 @@ export type Database = {
           },
         ]
       }
+      seller_settlements: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          id: string
+          notes: string | null
+          payment_method: string | null
+          payment_proof_path: string | null
+          payment_reference: string | null
+          period_end: string | null
+          period_start: string | null
+          seller_id: string
+          settled_at: string | null
+          status: Database["public"]["Enums"]["seller_settlement_status"]
+          updated_at: string
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          payment_proof_path?: string | null
+          payment_reference?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          seller_id: string
+          settled_at?: string | null
+          status?: Database["public"]["Enums"]["seller_settlement_status"]
+          updated_at?: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          payment_proof_path?: string | null
+          payment_reference?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          seller_id?: string
+          settled_at?: string | null
+          status?: Database["public"]["Enums"]["seller_settlement_status"]
+          updated_at?: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seller_settlements_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       seller_staff: {
         Row: {
           created_at: string
@@ -1832,28 +1965,96 @@ export type Database = {
           },
         ]
       }
-      sellers: {
+      seller_support_requests: {
         Row: {
+          admin_response: string | null
           created_at: string
           id: string
+          message: string
+          responded_at: string | null
+          responded_by: string | null
+          seller_id: string
+          status: Database["public"]["Enums"]["seller_support_status"]
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          admin_response?: string | null
+          created_at?: string
+          id?: string
+          message: string
+          responded_at?: string | null
+          responded_by?: string | null
+          seller_id: string
+          status?: Database["public"]["Enums"]["seller_support_status"]
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          admin_response?: string | null
+          created_at?: string
+          id?: string
+          message?: string
+          responded_at?: string | null
+          responded_by?: string | null
+          seller_id?: string
+          status?: Database["public"]["Enums"]["seller_support_status"]
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seller_support_requests_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sellers: {
+        Row: {
+          account_status: Database["public"]["Enums"]["seller_account_status"]
+          approved_at: string | null
+          commission_rate: number
+          created_at: string
+          email: string | null
+          first_name: string | null
+          id: string
+          last_name: string | null
           legal_name: string
           owner_id: string
+          phone: string | null
           status: Database["public"]["Enums"]["store_status"]
           updated_at: string
         }
         Insert: {
+          account_status?: Database["public"]["Enums"]["seller_account_status"]
+          approved_at?: string | null
+          commission_rate?: number
           created_at?: string
+          email?: string | null
+          first_name?: string | null
           id?: string
+          last_name?: string | null
           legal_name: string
           owner_id: string
+          phone?: string | null
           status?: Database["public"]["Enums"]["store_status"]
           updated_at?: string
         }
         Update: {
+          account_status?: Database["public"]["Enums"]["seller_account_status"]
+          approved_at?: string | null
+          commission_rate?: number
           created_at?: string
+          email?: string | null
+          first_name?: string | null
           id?: string
+          last_name?: string | null
           legal_name?: string
           owner_id?: string
+          phone?: string | null
           status?: Database["public"]["Enums"]["store_status"]
           updated_at?: string
         }
@@ -2024,39 +2225,51 @@ export type Database = {
       stores: {
         Row: {
           banner_path: string | null
+          contact_email: string | null
+          contact_phone: string | null
           created_at: string
           description: string | null
           id: string
           logo_path: string | null
           name: string
           seller_id: string
+          settings: Json
           slug: string
           status: Database["public"]["Enums"]["store_status"]
           updated_at: string
+          verification_status: Database["public"]["Enums"]["store_verification_status"]
         }
         Insert: {
           banner_path?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
           created_at?: string
           description?: string | null
           id?: string
           logo_path?: string | null
           name: string
           seller_id: string
+          settings?: Json
           slug: string
           status?: Database["public"]["Enums"]["store_status"]
           updated_at?: string
+          verification_status?: Database["public"]["Enums"]["store_verification_status"]
         }
         Update: {
           banner_path?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
           created_at?: string
           description?: string | null
           id?: string
           logo_path?: string | null
           name?: string
           seller_id?: string
+          settings?: Json
           slug?: string
           status?: Database["public"]["Enums"]["store_status"]
           updated_at?: string
+          verification_status?: Database["public"]["Enums"]["store_verification_status"]
         }
         Relationships: [
           {
@@ -2232,6 +2445,10 @@ export type Database = {
       }
       is_super_admin: { Args: never; Returns: boolean }
       media_seller_id: { Args: { object_name: string }; Returns: string }
+      seller_can: {
+        Args: { _permission: string; _seller_id: string }
+        Returns: boolean
+      }
       transition_seller_order_status: {
         Args: {
           p_new_status: string
@@ -2274,6 +2491,12 @@ export type Database = {
         | "returned"
         | "failed_delivery"
       product_status: "draft" | "active" | "archived"
+      seller_account_status: "pending" | "active" | "suspended" | "disabled"
+      seller_application_status:
+        | "pending"
+        | "approved"
+        | "rejected"
+        | "suspended"
       seller_order_status:
         | "pending"
         | "accepted"
@@ -2288,7 +2511,15 @@ export type Database = {
         | "delivered"
         | "returned"
         | "failed_delivery"
+      seller_settlement_status:
+        | "pending"
+        | "approved"
+        | "paid"
+        | "rejected"
+        | "cancelled"
+      seller_support_status: "open" | "in_progress" | "resolved" | "closed"
       store_status: "draft" | "active" | "suspended" | "closed"
+      store_verification_status: "unverified" | "verified"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2451,6 +2682,13 @@ export const Constants = {
         "failed_delivery",
       ],
       product_status: ["draft", "active", "archived"],
+      seller_account_status: ["pending", "active", "suspended", "disabled"],
+      seller_application_status: [
+        "pending",
+        "approved",
+        "rejected",
+        "suspended",
+      ],
       seller_order_status: [
         "pending",
         "accepted",
@@ -2466,7 +2704,16 @@ export const Constants = {
         "returned",
         "failed_delivery",
       ],
+      seller_settlement_status: [
+        "pending",
+        "approved",
+        "paid",
+        "rejected",
+        "cancelled",
+      ],
+      seller_support_status: ["open", "in_progress", "resolved", "closed"],
       store_status: ["draft", "active", "suspended", "closed"],
+      store_verification_status: ["unverified", "verified"],
     },
   },
 } as const

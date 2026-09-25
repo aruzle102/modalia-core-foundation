@@ -177,3 +177,29 @@
 @utility text-price { font-size: 1rem; line-height: 1.25; font-weight: 600; font-variant-numeric: tabular-nums; }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: 0.01ms !important; } }
+
+/* Modalia premium motion / depth layer */
+html { scroll-behavior: smooth; }
+.hero-scene { position: relative; isolation: isolate; box-shadow: 0 30px 100px rgba(0,0,0,.12); }
+.hero-grid { position:absolute; inset:0; opacity:.24; background-image: linear-gradient(rgba(255,255,255,.06) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.06) 1px, transparent 1px); background-size: 56px 56px; mask-image: linear-gradient(to bottom, black, transparent 85%); animation: grid-drift 18s linear infinite; }
+.hero-orb { position:absolute; border-radius:999px; filter: blur(1px); transform-style: preserve-3d; }
+.hero-orb-a { width: 34rem; height:34rem; right:-8rem; top:-10rem; background: radial-gradient(circle at 35% 35%, rgba(255,255,255,.3), rgba(255,255,255,.02) 48%, transparent 70%); animation: float-a 10s ease-in-out infinite; }
+.hero-orb-b { width: 24rem; height:24rem; left:42%; bottom:-12rem; background: radial-gradient(circle, rgba(255,255,255,.13), transparent 68%); animation: float-b 12s ease-in-out infinite; }
+.hero-ring { position:absolute; border:1px solid rgba(255,255,255,.14); border-radius:50%; transform: rotateX(62deg) rotateZ(12deg); }
+.hero-ring-a { width: 420px; height:420px; right:7%; top:15%; animation: ring-spin 24s linear infinite; }
+.hero-ring-b { width: 250px; height:250px; right:17%; top:28%; animation: ring-spin 17s linear reverse infinite; }
+.hero-product { position:absolute; display:grid; place-items:center; border:1px solid rgba(255,255,255,.14); background:linear-gradient(145deg, rgba(255,255,255,.12), rgba(255,255,255,.025)); box-shadow: 0 40px 100px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.15); backdrop-filter: blur(18px); transform-style:preserve-3d; }
+.hero-product-a { width:180px; height:230px; right:17%; top:24%; border-radius:28px; transform: perspective(900px) rotateY(-22deg) rotateX(8deg) rotateZ(7deg); animation: card-float 8s ease-in-out infinite; }
+.hero-product-b { width:115px; height:150px; right:31%; top:46%; border-radius:22px; transform: perspective(900px) rotateY(25deg) rotateX(-8deg) rotateZ(-12deg); animation: card-float 9s 1s ease-in-out infinite reverse; }
+.hero-product-inner { font-size: 4rem; font-weight:700; letter-spacing:-.08em; color:rgba(255,255,255,.85); }
+@keyframes grid-drift { from { transform:translate3d(0,0,0) } to { transform:translate3d(56px,56px,0) } }
+@keyframes float-a { 0%,100%{transform:translate3d(0,0,0) scale(1)} 50%{transform:translate3d(-25px,25px,0) scale(1.04)} }
+@keyframes float-b { 0%,100%{transform:translate3d(0,0,0)} 50%{transform:translate3d(30px,-20px,0)} }
+@keyframes ring-spin { from{transform:rotateX(62deg) rotateZ(0deg)} to{transform:rotateX(62deg) rotateZ(360deg)} }
+@keyframes card-float { 0%,100%{translate:0 0} 50%{translate:0 -16px} }
+@media (max-width: 900px) { .hero-product-a { right:4%; top:14%; width:120px; height:155px; } .hero-product-b { right:20%; top:35%; width:82px; height:108px; } .hero-ring-a { right:-20%; top:20%; } }
+@media (max-width: 640px) { .hero-scene { border-radius:26px; } .hero-product-a,.hero-product-b,.hero-ring-a,.hero-ring-b { opacity:.5; } .hero-grid { background-size:36px 36px; } }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior:auto; } .hero-grid,.hero-orb,.hero-ring,.hero-product { animation:none !important; } }
+.success-orbit { box-shadow: 0 0 0 12px rgba(0,0,0,.04), 0 20px 70px rgba(0,0,0,.14); animation: success-pop .8s cubic-bezier(.2,.8,.2,1); }
+@keyframes success-pop { 0% { transform:scale(.65) rotate(-10deg); opacity:0 } 70% { transform:scale(1.06) rotate(2deg) } 100% { transform:scale(1) rotate(0); opacity:1 } }
+@keyframes modalia-reveal { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }

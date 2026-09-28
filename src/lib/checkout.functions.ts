@@ -36,7 +36,7 @@ export const getCheckoutMeta = createServerFn({ method: "GET" }).handler(async (
 });
 
 export const createGuestOrder = createServerFn({ method: "POST" })
-  .validator((data) => checkoutSchema.parse(data))
+  .inputValidator((data) => checkoutSchema.parse(data))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const sessionToken = crypto.randomUUID() + crypto.randomUUID();

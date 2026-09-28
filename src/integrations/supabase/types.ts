@@ -1795,6 +1795,41 @@ export type Database = {
           },
         ]
       }
+      seller_commission_history: {
+        Row: {
+          changed_by: string | null
+          created_at: string
+          effective_from: string
+          id: string
+          rate: number
+          seller_id: string
+        }
+        Insert: {
+          changed_by?: string | null
+          created_at?: string
+          effective_from?: string
+          id?: string
+          rate: number
+          seller_id: string
+        }
+        Update: {
+          changed_by?: string | null
+          created_at?: string
+          effective_from?: string
+          id?: string
+          rate?: number
+          seller_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seller_commission_history_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       seller_orders: {
         Row: {
           commission_total: number

@@ -1,0 +1,2 @@
+REVOKE EXECUTE ON FUNCTION public.record_seller_commission_change() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.apply_seller_commission_to_order() FROM PUBLIC, anon, authenticated;

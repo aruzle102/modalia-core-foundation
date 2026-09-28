@@ -1,5 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { createClient } from "@supabase/supabase-js";
+import type { Database } from "@/integrations/supabase/types";
 
 const checkoutSchema = z.object({
   items: z.array(z.object({ variantId: z.string().uuid(), quantity: z.number().int().min(1).max(99) })).min(1).max(100),
@@ -15,17 +17,26 @@ const checkoutSchema = z.object({
 });
 
 export const getCheckoutMeta = createServerFn({ method: "GET" }).handler(async () => {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const key = process.env["SUPABASE_PUBLISHABLE_KEY"]!;
+  const supabasePublic = createClient<Database>(process.env["SUPABASE_URL"]!, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: { fetch: (input, init) => {
+      const headers = new Headers(init?.headers);
+      if (key.startsWith("sb_") && headers.get("Authorization") === `Bearer ${key}`) headers.delete("Authorization");
+      headers.set("apikey", key);
+      return fetch(input, { ...init, headers });
+    } },
+  });
   const [wilayas, communes] = await Promise.all([
-    supabaseAdmin.from("wilayas").select("id,code,name,active").eq("active", true).order("code"),
-    supabaseAdmin.from("communes").select("id,wilaya_id,code,name,active").eq("active", true).order("code"),
+    supabasePublic.from("wilayas").select("id,code,name,active").eq("active", true).order("code"),
+    supabasePublic.from("communes").select("id,wilaya_id,code,name,active").eq("active", true).order("code"),
   ]);
   if (wilayas.error || communes.error) throw new Error("Delivery locations are unavailable.");
   return { wilayas: wilayas.data ?? [], communes: communes.data ?? [] };
 });
 
 export const createGuestOrder = createServerFn({ method: "POST" })
-  .validator((data) => checkoutSchema.parse(data))
+  .inputValidator((data) => checkoutSchema.parse(data))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const sessionToken = crypto.randomUUID() + crypto.randomUUID();

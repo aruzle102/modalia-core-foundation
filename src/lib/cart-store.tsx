@@ -13,7 +13,7 @@ export type CartLine = {
   storeName?: string | null;
   sellerId?: string | null;
   options?: Record<string, string>;
-  weightGrams?: number;
+  weightGrams?: number | undefined;
 };
 
 type CartContextValue = {

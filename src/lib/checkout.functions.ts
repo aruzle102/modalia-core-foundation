@@ -54,8 +54,7 @@ export const createGuestOrder = createServerFn({ method: "POST" })
       p_commune_id: data.communeId,
       p_address_line: data.address,
       p_delivery_method: data.deliveryMethod,
-      p_customer_note: data.note || undefined,
-      p_customer_id: undefined,
+      ...(data.note ? { p_customer_note: data.note } : {}),
       p_idempotency_key: data.idempotencyKey,
     });
     if (error) throw new Error(error.message.replace(/^.*?\n/, ""));

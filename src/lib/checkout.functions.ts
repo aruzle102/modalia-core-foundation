@@ -54,10 +54,18 @@ export const createGuestOrder = createServerFn({ method: "POST" })
       p_commune_id: data.communeId,
       p_address_line: data.address,
       p_delivery_method: data.deliveryMethod,
-      p_customer_note: data.note || null,
-      p_customer_id: null,
+      ...(data.note ? { p_customer_note: data.note } : {}),
       p_idempotency_key: data.idempotencyKey,
     });
     if (error) throw new Error(error.message.replace(/^.*?\n/, ""));
-    return result as { order_id: string; order_number: string; subtotal: number; shipping_total: number; grand_total: number; delivery_method: string; address: unknown };
+    const order = result as { order_id?: string; order_number?: string; subtotal?: number; shipping_total?: number; grand_total?: number; delivery_method?: string } | null;
+    if (!order?.order_id || !order.order_number) throw new Error("Order confirmation was unavailable.");
+    return {
+      orderId: order.order_id,
+      orderNumber: order.order_number,
+      subtotal: Number(order.subtotal ?? 0),
+      shippingTotal: Number(order.shipping_total ?? 0),
+      grandTotal: Number(order.grand_total ?? 0),
+      deliveryMethod: order.delivery_method ?? data.deliveryMethod,
+    };
   });

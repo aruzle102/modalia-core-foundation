@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 const q = queryOptions({ queryKey: ["seller-dashboard"], queryFn: () => getSellerDashboard() });
 
 export const Route = createFileRoute("/_authenticated/seller/staff")({
-  validateSearch: (search: Record<string, unknown>) => ({ locale: getLocale(typeof search.locale === "string" ? search.locale : undefined) }),
+  validateSearch: (search: Record<string, unknown>) => ({ locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined) }),
   loader: ({ context }) => context.queryClient.ensureQueryData(q),
   component: StaffPage,
 });

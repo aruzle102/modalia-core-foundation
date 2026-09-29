@@ -8,7 +8,7 @@ import { getLocale, getTranslations, localeDirections } from "@/lib/i18n";
 
 export const Route = createFileRoute("/cart")({
   head: () => ({ meta: [{ title: "Cart — Modalia" }, { name: "description", content: "Review items from multiple Modalia stores before checkout." }, { property: "og:title", content: "Cart — Modalia" }, { property: "og:description", content: "Review items from multiple Modalia stores before checkout." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
-  validateSearch: (search: Record<string, unknown>) => ({ locale: getLocale(typeof search.locale === "string" ? search.locale : undefined) }),
+  validateSearch: (search: Record<string, unknown>) => ({ locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined) }),
   component: CartPage,
 });
 

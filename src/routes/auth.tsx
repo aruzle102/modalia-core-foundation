@@ -6,7 +6,7 @@ import { SiteFooter, SiteHeader } from "@/components/layout/site-shell";
 import { supabase } from "@/integrations/supabase/client";
 import { getLocale, getTranslations, localeDirections } from "@/lib/i18n";
 
-export const Route = createFileRoute("/auth")({ validateSearch:(search:Record<string,unknown>)=>({locale:getLocale(typeof search.locale === "string" ? search.locale : undefined)}), component: AuthPage });
+export const Route = createFileRoute("/auth")({ validateSearch:(search:Record<string,unknown>)=>({locale:getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined)}), component: AuthPage });
 function AuthPage(){
  const {locale}=Route.useSearch(); const t=getTranslations(locale); const nav=useNavigate(); const [mode,setMode]=useState<"signin"|"signup">("signin"); const [email,setEmail]=useState(""); const [password,setPassword]=useState(""); const [name,setName]=useState(""); const [message,setMessage]=useState(""); const [loading,setLoading]=useState(false);
  async function submit(e:React.FormEvent){e.preventDefault();setLoading(true);setMessage("");try{if(mode==="signin"){const {error}=await supabase.auth.signInWithPassword({email,password});if(error)throw error;await nav({to:"/",search:{locale}});}else{const {data,error}=await supabase.auth.signUp({email,password,options:{data:{display_name:name}}});if(error)throw error;if(data.user){await supabase.from("profiles").upsert({id:data.user.id,display_name:name,preferred_locale:locale});}setMessage("Account created. If email confirmation is enabled, check your inbox before signing in.");}}catch(err){setMessage(err instanceof Error?err.message:"Authentication failed.");}finally{setLoading(false)}}

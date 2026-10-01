@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import type { Json } from "@/integrations/supabase/types";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -17,6 +18,13 @@ function localized(value: LocalizedText, fallback: string) {
 }
 
 const pageInput = z.object({ page: z.number().int().positive().default(1), pageSize: z.number().int().min(1).max(20).default(10) });
+
+function publicClient() {
+  const url = process.env["SUPABASE_URL"];
+  const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
+  if (!url || !key) throw new Error("Order tracking is temporarily unavailable.");
+  return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false }, global: { fetch: (input, init) => { const headers = new Headers(init?.headers); if (key.startsWith("sb_") && headers.get("Authorization") === `Bearer ${key}`) headers.delete("Authorization"); headers.set("apikey", key); return fetch(input, { ...init, headers }); } } });
+}
 
 export const getMyOrders = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -63,4 +71,14 @@ export const getOrderConfirmation = createServerFn({ method: "GET" })
     const result = await context.supabase.from("orders").select("order_number,grand_total,currency,delivery_method,address_snapshot").eq("order_number", data.orderNumber).maybeSingle();
     if (result.error || !result.data) return null;
     return { orderNumber: result.data.order_number, total: Number(result.data.grand_total), currency: result.data.currency, deliveryMethod: result.data.delivery_method, address: result.data.address_snapshot };
+  });
+
+export const trackGuestOrder = createServerFn({ method: "POST" })
+  .inputValidator((data) => z.object({ orderNumber: z.string().trim().toUpperCase().regex(/^ORD-[A-Z0-9]{6}$/), phone: z.string().trim().regex(/^\+213[5-7][0-9]{8}$/) }).parse(data))
+  .handler(async ({ data }) => {
+    const supabase = publicClient();
+    const result = await supabase.from("orders").select("order_number,created_at,status,grand_total,currency,delivery_method,seller_orders(status,stores(name))").eq("order_number", data.orderNumber).eq("guest_phone", data.phone).maybeSingle();
+    if (result.error || !result.data) return null;
+    const sellerOrders = (result.data.seller_orders ?? []).map((sellerOrder: any) => ({ status: sellerOrder.status, storeName: Array.isArray(sellerOrder.stores) ? sellerOrder.stores[0]?.name ?? "Store" : sellerOrder.stores?.name ?? "Store" }));
+    return { orderNumber: result.data.order_number, createdAt: result.data.created_at, status: result.data.status, total: Number(result.data.grand_total), currency: result.data.currency, deliveryMethod: result.data.delivery_method, sellerOrders };
   });

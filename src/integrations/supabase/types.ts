@@ -1729,8 +1729,9 @@ export type Database = {
       }
       seller_applications: {
         Row: {
+          additional_information: string | null
           admin_notes: string | null
-          applicant_id: string
+          applicant_id: string | null
           business_description: string
           created_at: string
           email: string
@@ -1748,8 +1749,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          additional_information?: string | null
           admin_notes?: string | null
-          applicant_id: string
+          applicant_id?: string | null
           business_description: string
           created_at?: string
           email: string
@@ -1767,8 +1769,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          additional_information?: string | null
           admin_notes?: string | null
-          applicant_id?: string
+          applicant_id?: string | null
           business_description?: string
           created_at?: string
           email?: string

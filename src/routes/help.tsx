@@ -1,0 +1,7 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Button } from "@/components/ui/button";
+import { SiteFooter, SiteHeader } from "@/components/layout/site-shell";
+import { getLocale, getTranslations, localeDirections } from "@/lib/i18n";
+
+export const Route=createFileRoute("/help")({validateSearch:(search:Record<string,unknown>)=>({locale:getLocale(typeof search.locale==="string"?search.locale:undefined)}),head:()=>({meta:[{title:"Help — Modalia"},{name:"description",content:"Get help with an order, delivery, and using Modalia."},{property:"og:title",content:"Help — Modalia"},{property:"og:description",content:"Get help with an order, delivery, and using Modalia."},{property:"og:type",content:"website"},{name:"twitter:card",content:"summary_large_image"}]}),component:HelpPage});
+function HelpPage(){const {locale}=Route.useSearch();const t=getTranslations(locale);return <div dir={localeDirections[locale]} lang={locale} className="min-h-screen bg-background"><SiteHeader locale={locale} t={t}/><main className="mx-auto max-w-3xl px-4 py-16 sm:px-6"><p className="text-eyebrow text-muted-foreground">Help</p><h1 className="mt-2 text-display">Order help, made simple.</h1><p className="mt-6 text-body text-muted-foreground">Use your order code and checkout mobile number to view the current fulfillment status.</p><Button asChild className="mt-7"><Link to="/track-order" search={{locale}}>Track an order</Link></Button></main><SiteFooter t={t}/></div>}

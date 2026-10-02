@@ -3,3 +3,4 @@
 - Complete product-system safeguards, moderation, availability requests, reusable product form, and customer catalogue integration. (complete)
 - Complete Phase 4A cart, multi-seller checkout, COD, and Algeria shipping foundation. (complete)
 - Complete Phase 4B order management: snapshots, payments, histories, customer orders, seller isolation, returns and cancellation foundations. (in progress)
+- Complete public seller application, storefront, tracking, navigation, and visual discovery paths. (in progress)

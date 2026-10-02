@@ -180,7 +180,7 @@
 
 /* Modalia premium motion / depth layer */
 html { scroll-behavior: smooth; }
-.hero-scene { position: relative; isolation: isolate; box-shadow: 0 30px 100px rgba(0,0,0,.12); }
+.hero-scene { position: relative; isolation: isolate; }
 .hero-grid { position:absolute; inset:0; opacity:.24; background-image: linear-gradient(rgba(255,255,255,.06) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.06) 1px, transparent 1px); background-size: 56px 56px; mask-image: linear-gradient(to bottom, black, transparent 85%); animation: grid-drift 18s linear infinite; }
 .hero-orb { position:absolute; border-radius:999px; filter: blur(1px); transform-style: preserve-3d; }
 .hero-orb-a { width: 34rem; height:34rem; right:-8rem; top:-10rem; background: radial-gradient(circle at 35% 35%, rgba(255,255,255,.3), rgba(255,255,255,.02) 48%, transparent 70%); animation: float-a 10s ease-in-out infinite; }
@@ -203,3 +203,4 @@ html { scroll-behavior: smooth; }
 .success-orbit { box-shadow: 0 0 0 12px rgba(0,0,0,.04), 0 20px 70px rgba(0,0,0,.14); animation: success-pop .8s cubic-bezier(.2,.8,.2,1); }
 @keyframes success-pop { 0% { transform:scale(.65) rotate(-10deg); opacity:0 } 70% { transform:scale(1.06) rotate(2deg) } 100% { transform:scale(1) rotate(0); opacity:1 } }
 @keyframes modalia-reveal { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+.store-sheen { background: linear-gradient(125deg, color-mix(in oklch, var(--ink) 95%, transparent), color-mix(in oklch, var(--muted) 45%, transparent)); }

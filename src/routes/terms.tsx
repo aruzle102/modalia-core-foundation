@@ -1,0 +1,6 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { SiteFooter, SiteHeader } from "@/components/layout/site-shell";
+import { getLocale, getTranslations, localeDirections } from "@/lib/i18n";
+
+export const Route=createFileRoute("/terms")({validateSearch:(search:Record<string,unknown>)=>({locale:getLocale(typeof search.locale==="string"?search.locale:undefined)}),head:()=>({meta:[{title:"Terms — Modalia"},{name:"description",content:"Terms for using the Modalia marketplace."},{property:"og:title",content:"Terms — Modalia"},{property:"og:description",content:"Terms for using the Modalia marketplace."},{property:"og:type",content:"website"},{name:"twitter:card",content:"summary_large_image"}]}),component:TermsPage});
+function TermsPage(){const {locale}=Route.useSearch();const t=getTranslations(locale);return <div dir={localeDirections[locale]} lang={locale} className="min-h-screen bg-background"><SiteHeader locale={locale} t={t}/><main className="mx-auto max-w-3xl px-4 py-16 sm:px-6"><p className="text-eyebrow text-muted-foreground">Terms</p><h1 className="mt-2 text-display">Marketplace terms</h1><p className="mt-7 text-body text-muted-foreground">Products are offered by independent sellers. Availability, pricing, delivery, and fulfillment are confirmed during checkout and recorded with your order.</p></main><SiteFooter t={t}/></div>}

@@ -8,7 +8,7 @@ import { getLocale, getTranslations, localeDirections } from "@/lib/i18n";
 import { trackGuestOrder } from "@/lib/orders.functions";
 
 export const Route = createFileRoute("/track-order")({
-  validateSearch:(search:Record<string,unknown>)=>({locale:getLocale(typeof search.locale==="string"?search.locale:undefined)}),
+  validateSearch:(search:Record<string,unknown>)=>({locale:getLocale(typeof search["locale"]==="string"?search["locale"]:undefined)}),
   head: () => ({ meta: [{ title: "Track order — Modalia" }, { name: "description", content: "Check the latest status of your Modalia order." }, { property: "og:title", content: "Track order — Modalia" }, { property: "og:description", content: "Check the latest status of your Modalia order." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }], links: [{ rel: "canonical", href: "/track-order" }] }),
   component: TrackOrderPage,
 });

@@ -9,7 +9,7 @@ type LocalizedText = Json | null;
 function text(value: LocalizedText, locale: string, fallback: string) {
   if (!value || Array.isArray(value)) return fallback;
   const record = value as Record<string, Json | undefined>;
-  const localized = record[locale] ?? record.fr ?? record.en ?? record.ar;
+  const localized = record[locale] ?? record["fr"] ?? record["en"] ?? record["ar"];
   return typeof localized === "string" ? localized : fallback;
 }
 

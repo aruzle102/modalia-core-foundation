@@ -12,3 +12,4 @@
 ## Project architecture
 
 - Public seller applications submit through a public server function with strict validation; approvals remain admin-only so visitor contact details are never exposed. 
+- Protected server functions are invoked only after browser session hydration from public routes; server-side middleware remains the authority for admin and seller authorization.

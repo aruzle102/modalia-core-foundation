@@ -4,3 +4,4 @@
 - Complete Phase 4A cart, multi-seller checkout, COD, and Algeria shipping foundation. (complete)
 - Complete Phase 4B order management: snapshots, payments, histories, customer orders, seller isolation, returns and cancellation foundations. (in progress)
 - Complete public seller application, storefront, tracking, navigation, and visual discovery paths. (in progress)
+- Strict completion phase 1: fix secure admin loading, then complete the admin control center before seller and visual phases. (in progress)

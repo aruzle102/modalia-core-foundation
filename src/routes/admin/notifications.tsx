@@ -5,7 +5,7 @@ import { NotificationList } from "@/components/notifications/notification-center
 import { getTranslations } from "@/lib/i18n";
 
 export const Route = createFileRoute("/admin/notifications")({
-  head: () => ({ meta: [{ title: "Notifications — Admin — Modalia" }, { name: "description", content: "Operational notifications for administrators." }] }),
+  head: () => ({ meta: [{ name: "robots", content: "noindex,nofollow" }, { title: "Notifications — Admin — Modalia" }, { name: "description", content: "Operational notifications for administrators." }] }),
   component: AdminNotificationsPage,
 });
 

@@ -1,20 +1,14 @@
 import { createServerFn } from "@tanstack/react-start";
-import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { rateLimitEndpoint } from "@/lib/rate-limit";
 import { emitAdminNotification } from "@/lib/notifications.functions";
+import {
+  createSellerApplicationSchema,
+  EN_SELLER_APPLICATION_MESSAGES,
+} from "@/lib/seller-application.schema";
 
-const applicationInput = z.object({
-  firstName: z.string().trim().min(2).max(100),
-  lastName: z.string().trim().min(2).max(100),
-  phone: z.string().trim().regex(/^\+213[5-7][0-9]{8}$/, "Use an Algerian mobile number, for example +213551234567."),
-  email: z.string().trim().email().max(255),
-  storeName: z.string().trim().min(2).max(160),
-  categories: z.array(z.string().trim().min(1).max(80)).min(1).max(12),
-  description: z.string().trim().min(20).max(4000),
-  additionalInformation: z.string().trim().max(2000).optional(),
-});
+const applicationInput = createSellerApplicationSchema(EN_SELLER_APPLICATION_MESSAGES);
 
 function publicClient() {
   const url = process.env["SUPABASE_URL"];

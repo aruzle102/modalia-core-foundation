@@ -5,7 +5,7 @@ import { getLocale, getTranslations, localeDirections } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/notifications/preferences")({
   validateSearch: (search: Record<string, unknown>) => ({ locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined) }),
-  head: () => ({ meta: [{ title: "Notification preferences — Modalia" }, { name: "description", content: "Choose which Modalia notifications you receive." }] }),
+  head: () => ({ meta: [{ name: "robots", content: "noindex,nofollow" }, { title: "Notification preferences — Modalia" }, { name: "description", content: "Choose which Modalia notifications you receive." }] }),
   component: NotificationPreferencesPage,
 });
 

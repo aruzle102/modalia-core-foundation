@@ -1,12 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertAdmin } from "@/lib/admin-auth";
 
 const adminOnly = [requireSupabaseAuth] as const;
-
-async function assertAdmin(context: any) {
-  const { data, error } = await context.supabase.rpc("is_super_admin");
-  if (error || data !== true) throw new Error("Forbidden: super_admin role required");
-}
 
 /**
  * Lightweight session probe used by AdminGate. Verifies the caller is an

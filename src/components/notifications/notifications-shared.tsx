@@ -6,7 +6,6 @@ import {
   EyeOff,
   Megaphone,
   PackageCheck,
-  PackageX,
   Settings2,
   ShieldCheck,
   ShoppingBag,
@@ -18,7 +17,7 @@ import {
 } from "lucide-react";
 import type { SupportedLocale } from "@/config/platform";
 import type { Translation } from "@/lib/i18n";
-import type { Localized, NotificationItem, NotificationScope } from "@/lib/notifications.functions";
+import type { Localized } from "@/lib/notifications.functions";
 
 export type NotificationsText = Translation["notifications"];
 
@@ -73,5 +72,3 @@ export function localizedLink(link: string | null, locale: SupportedLocale): str
   if (!link) return null;
   return link.includes("?") ? `${link}&locale=${locale}` : `${link}?locale=${locale}`;
 }
-
-export type { NotificationItem, NotificationScope };

@@ -16,7 +16,7 @@ export const Route = createFileRoute("/_authenticated/account/orders")({
   pendingComponent: OrdersLoading,
   errorComponent: OrdersError,
   notFoundComponent: OrdersNotFound,
-  head: () => ({ meta: [{ title: "My orders — Modalia" }, { name: "description", content: "Review your Modalia orders." }, { property: "og:title", content: "My orders — Modalia" }, { property: "og:description", content: "Review your Modalia orders." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }], links: [{ rel: "canonical", href: "/account/orders" }] }),
+  head: () => ({ meta: [{ name: "robots", content: "noindex,nofollow" }, { title: "My orders — Modalia" }, { name: "description", content: "Review your Modalia orders." }, { property: "og:title", content: "My orders — Modalia" }, { property: "og:description", content: "Review your Modalia orders." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }], links: [{ rel: "canonical", href: "/account/orders" }] }),
   component: OrdersPage,
 });
 

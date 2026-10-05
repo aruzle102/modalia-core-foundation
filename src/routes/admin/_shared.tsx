@@ -1,13 +1,9 @@
 import { Button } from "@/components/ui/button";
+import { pickLocalizedName } from "@/lib/names";
 
 /** Pick the display name from a {fr,en,ar} jsonb object. */
 export function pickName(name: unknown): string {
-  if (!name || typeof name !== "object") return "";
-  const n = name as Record<string, unknown>;
-  for (const key of ["en", "fr", "ar"]) {
-    if (typeof n[key] === "string" && (n[key] as string).trim()) return (n[key] as string).trim();
-  }
-  return "";
+  return pickLocalizedName(name);
 }
 
 /** Small prev/next pager used across admin tables. */

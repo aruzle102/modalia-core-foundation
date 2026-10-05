@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SiteFooter, SiteHeader } from "@/components/layout/site-shell";
 import { getLocale, getTranslations, localeDirections } from "@/lib/i18n";
+import { canonicalUrl } from "@/lib/seo";
 import { submitContactMessage } from "@/lib/engagement.functions";
 import type { SupportedLocale } from "@/config/platform";
 
@@ -172,6 +173,7 @@ export const Route = createFileRoute("/contact")({
         { property: "og:type", content: "website" },
         { name: "twitter:card", content: "summary_large_image" },
       ],
+      links: [{ rel: "canonical", href: canonicalUrl("/contact") }],
     };
   },
   component: ContactPage,
@@ -203,7 +205,7 @@ function ContactPage() {
   return (
     <div dir={localeDirections[locale]} lang={locale} className="min-h-screen bg-background">
       <SiteHeader locale={locale} t={t} />
-      <main className="mx-auto max-w-4xl px-4 py-16 sm:px-6">
+      <main id="main-content" tabIndex={-1} className="mx-auto max-w-4xl px-4 py-16 sm:px-6">
         <p className="text-eyebrow text-muted-foreground">{c.eyebrow}</p>
         <h1 className="mt-2 text-display">{c.title}</h1>
         <p className="mt-6 max-w-2xl text-body text-muted-foreground">{c.lead}</p>

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { AdminGate } from "@/components/admin/AdminGate";
@@ -38,9 +38,14 @@ import {
   type CategoryNode,
   type CategoryRow,
 } from "@/lib/admin-catalog.functions";
+import { strParam, useUrlState } from "@/hooks/use-url-state";
 import { errMsg, pickName } from "./_shared";
 
 export const Route = createFileRoute("/admin/categories")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    create: strParam(search["create"]),
+  }),
+  head: () => ({ meta: [{ name: "robots", content: "noindex,nofollow" }] }),
   component: AdminCategoriesPage,
 });
 
@@ -58,10 +63,16 @@ function AdminCategoriesPage() {
 
 function CategoriesManager() {
   const queryClient = useQueryClient();
+  const url = useUrlState();
   const [editing, setEditing] = useState<FlatCategory | null | "new">(null);
   const [deleting, setDeleting] = useState<FlatCategory | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [orders, setOrders] = useState<Record<string, number>>({});
+
+  // Deep link: /admin/categories?create=category opens the new-category dialog.
+  useEffect(() => {
+    if (strParam(url.search["create"]) === "category") setEditing("new");
+  }, [url.search["create"]]);
 
   const categoriesQuery = useQuery({
     queryKey: ["admin-categories"],
@@ -197,7 +208,10 @@ function CategoriesManager() {
           key={editing === "new" ? "new" : (editing as FlatCategory).id}
           category={editing === "new" ? null : (editing as FlatCategory)}
           flat={flat}
-          onClose={() => setEditing(null)}
+          onClose={() => {
+            setEditing(null);
+            url.set({ create: undefined });
+          }}
           onSaved={invalidate}
         />
       ) : null}

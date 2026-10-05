@@ -12,6 +12,7 @@ import { z } from "zod";
 import type { Database, Json } from "@/integrations/supabase/types";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireSeller, type SellerContext, type SellerPermission } from "@/lib/seller-auth";
+import { assertAdmin } from "@/lib/admin-auth";
 import { rateLimitEndpoint } from "@/lib/rate-limit";
 import { getAiMode, resolveProvider, buildCatalogSystemPrompt, type AiProvider } from "./ai/provider";
 import {
@@ -35,12 +36,6 @@ const adminOnly = [requireSupabaseAuth] as const;
 
 async function sellerCtx(context: any, ...permissions: SellerPermission[]): Promise<SellerContext> {
   return requireSeller(context, ...permissions);
-}
-
-async function assertAdmin(context: any) {
-  if (!context) throw new Error("Unauthorized");
-  const { data, error } = await context.supabase.rpc("is_super_admin");
-  if (error || data !== true) throw new Error("Forbidden");
 }
 
 const localeSchema = z.enum(["ar", "fr", "en"]);
@@ -167,9 +162,9 @@ function scoreItem(item: AiCatalogItem, intent: ParsedIntent): number {
   for (const kw of intent.keywords) {
     const k = kw.toLowerCase();
     if ([...nameTokens].some((t) => t === k || t.startsWith(k) || k.startsWith(t))) score += 4;
-    else if ([...catTokens].some((t) => t === k || t.startsWith(k))) score += 3;
-    else if ([...descTokens].some((t) => t === k || t.startsWith(k))) score += 1;
-    else if ([...storeTokens].some((t) => t === k || t.startsWith(k))) score += 1;
+    else if ([...catTokens].some((t) => t === k || t.startsWith(k) || k.startsWith(t))) score += 3;
+    else if ([...descTokens].some((t) => t === k || t.startsWith(k) || k.startsWith(t))) score += 1;
+    else if ([...storeTokens].some((t) => t === k || t.startsWith(k) || k.startsWith(t))) score += 1;
   }
   return score;
 }
@@ -298,6 +293,7 @@ export const aiSearchCatalog = createServerFn({ method: "GET" })
     return {
       intent: {
         keywords: intent.keywords,
+        colors: intent.colors,
         categorySlug: intent.categorySlug,
         categoryName: intent.categoryName,
         minPrice: intent.minPrice,
@@ -618,7 +614,7 @@ export const aiSellerDraft = createServerFn({ method: "POST" })
       const nameTokens = facts.name.toLowerCase().split(/[^a-z0-9\u0600-\u06ff]+/i).filter((t) => t.length >= 3);
       const ranked = likes
         .map((like) => ({ like, match: matchCategory(nameTokens, [like]) }))
-        .filter((r) => r.match)
+        .filter((r) => r.match !== null)
         .slice(0, 3);
       const suggestions = ranked.map((r) => {
         const raw = categories.find((c) => c.slug === r.like.slug);

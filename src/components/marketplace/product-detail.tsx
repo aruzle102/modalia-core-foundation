@@ -1,17 +1,22 @@
-import { lazy, Suspense, useEffect, useMemo, useState, type MouseEvent } from "react";
-import { Link } from "@tanstack/react-router";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, Box, Heart, Minus, Plus, ShieldCheck, ShoppingBag, Star, Store, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ProductGrid } from "@/components/marketplace/discovery";
+import { VerifiedBadge } from "@/components/marketplace/VerifiedBadge";
+import { ReviewForm } from "@/components/marketplace/review-form";
+import { BackInStockNotify } from "@/components/marketplace/back-in-stock-notify";
 import { formatNumber, formatPrice } from "@/lib/i18n/format";
 import { getTranslations } from "@/lib/i18n";
 import { useCart } from "@/lib/cart-store";
+import { useDeviceTier } from "@/hooks/use-device-tier";
+import { microAnimationClass, replayAnimation } from "@/lib/motion";
 import { isWishlisted, toggleWishlist } from "@/lib/wishlist-store";
 import { toast } from "sonner";
 import { getRelatedProducts } from "@/lib/analytics.functions";
-import { getRecentlyViewed, recordRecentlyViewed, track } from "@/lib/analytics";
+import { recordRecentlyViewed, track } from "@/lib/analytics";
 import type { SupportedLocale } from "@/config/platform";
 import type { ProductDetail } from "@/lib/product.functions";
 
@@ -34,6 +39,7 @@ function canMagnify(): boolean {
 
 export function ProductDetailView({ product, locale }: { product: ProductDetail; locale: SupportedLocale }) {
   const t = getTranslations(locale).product;
+  const verifiedLabel = getTranslations(locale).store.verifiedStore;
   const [selected, setSelected] = useState<Record<string, string>>({});
   const [quantity, setQuantity] = useState(1);
   const [activeMedia, setActiveMedia] = useState(0);
@@ -41,7 +47,24 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
   const [zoomed, setZoomed] = useState(false);
   const [zoomOrigin, setZoomOrigin] = useState("50% 50%");
   const [saved, setSaved] = useState(false);
+  const { tier } = useDeviceTier();
+  const parallaxEnabled =
+    typeof window !== "undefined" &&
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(pointer: fine)").matches &&
+    !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const cart = useCart();
+  const navigate = useNavigate();
+  const ctaRef = useRef<HTMLDivElement>(null);
+  const [ctaVisible, setCtaVisible] = useState(true);
+
+  useEffect(() => {
+    const el = ctaRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(([entry]) => setCtaVisible(entry?.isIntersecting ?? true));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     setSaved(isWishlisted(product.id));
@@ -95,6 +118,9 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
         )),
   );
   const model3d = product.media.find((item) => item.mediaType === "model_3d");
+  // Only offer 3D when a real model exists — never a fake 3D button — and
+  // never push a multi-MB GLB download on users who asked to save data.
+  const canShow3d = Boolean(model3d?.url) && tier !== "data-saver";
   const currentImage = images[Math.min(activeMedia, Math.max(images.length - 1, 0))] ?? null;
 
   const updateOption = (optionId: string, valueId: string) => {
@@ -109,9 +135,23 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
     const x = ((event.clientX - rect.left) / rect.width) * 100;
     const y = ((event.clientY - rect.top) / rect.height) * 100;
     setZoomOrigin(`${x.toFixed(1)}% ${y.toFixed(1)}%`);
+    // 2.5D pointer parallax for the fallback gallery (fine pointers only,
+    // never with reduced motion): gives depth without WebGL.
+    if (parallaxEnabled) {
+      const px = (((event.clientX - rect.left) / rect.width) - 0.5) * -12;
+      const py = (((event.clientY - rect.top) / rect.height) - 0.5) * -12;
+      event.currentTarget.style.setProperty("--par-x", `${px.toFixed(1)}px`);
+      event.currentTarget.style.setProperty("--par-y", `${py.toFixed(1)}px`);
+    }
   };
 
-  const toggleSaved = () => {
+  const handleMediaLeave = (event: MouseEvent<HTMLDivElement>) => {
+    setZoomed(false);
+    event.currentTarget.style.removeProperty("--par-x");
+    event.currentTarget.style.removeProperty("--par-y");
+  };
+
+  const toggleSaved = (event: MouseEvent<HTMLButtonElement>) => {
     const next = toggleWishlist({
       productId: product.id,
       slug: product.slug,
@@ -121,7 +161,11 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
       storeName: product.store?.name ?? null,
     });
     setSaved(next);
-    if (next) track("wishlist_add", { entityType: "product", entityId: product.id });
+    if (next) {
+      track("wishlist_add", { entityType: "product", entityId: product.id });
+      // Commerce micro-feedback: pop the heart when the item is saved.
+      replayAnimation(event.currentTarget, microAnimationClass.wishlistPop);
+    }
     toast.success(next ? t.saved : t.removed);
   };
 
@@ -166,15 +210,22 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
         buy_now: true,
       },
     });
-    window.location.assign(`/checkout?locale=${locale}`);
+    // SPA navigation keeps the local cart state intact and scrolls to top;
+    // the item is already in the cart store (persisted to localStorage).
+    navigate({ to: "/checkout", search: { locale } });
   };
 
   const actionLabel = product.options.length && !complete ? t.selectOptions : t.addToBag;
   const canPurchase = complete && available;
+  // The variant to watch for a back-in-stock alert: the selected one when
+  // options are complete, otherwise the first variant of a simple product.
+  const alertVariant =
+    effectiveVariant ?? (product.options.length === 0 && product.variants.length > 0 ? product.variants[0] : null);
+  const showBackInStock = Boolean(alertVariant) && (product.options.length === 0 || complete) && !available;
   const descriptionParagraphs = (product.description ?? "").split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
 
   return (
-    <main id="main-content" tabIndex={-1} className="mx-auto max-w-7xl px-4 py-7 sm:px-6 lg:px-8">
+    <main id="main-content" tabIndex={-1} className="mx-auto max-w-7xl px-4 pb-28 pt-7 sm:px-6 lg:px-8 lg:pb-7">
       <nav aria-label={t.breadcrumb} className="flex flex-wrap items-center gap-2 text-caption text-muted-foreground">
         <Link to="/" search={{ locale }} className="transition-colors hover:text-foreground">
           {t.home}
@@ -200,12 +251,12 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
         {/* ——— Gallery with hover magnifier ——— */}
         <section aria-label={t.productMedia} className="min-w-0">
           <div
-            className="relative aspect-[4/5] cursor-zoom-in overflow-hidden rounded-xl bg-muted"
+            className="relative aspect-[4/5] cursor-zoom-in overflow-hidden rounded-2xl bg-muted ring-1 ring-border/60"
             onMouseMove={handleZoomMove}
             onMouseEnter={() => {
               if (canMagnify()) setZoomed(true);
             }}
-            onMouseLeave={() => setZoomed(false)}
+            onMouseLeave={handleMediaLeave}
             onClick={() => {
               if (typeof window !== "undefined" && !window.matchMedia("(pointer: fine)").matches) {
                 setZoomed((value) => !value);
@@ -228,7 +279,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
                 alt={currentImage.alt || product.name}
                 sizes="(min-width: 1024px) 55vw, 100vw"
                 style={{ transformOrigin: zoomOrigin }}
-                className={`size-full object-cover transition-transform duration-300 ease-out motion-reduce:transition-none ${
+                className={`gallery-parallax size-full object-cover transition-transform duration-300 ease-out motion-reduce:transition-none ${
                   zoomed ? "scale-[1.9]" : "scale-100"
                 }`}
               />
@@ -270,7 +321,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
                   </span>
                 </Button>
               ))}
-              {model3d?.url ? (
+              {canShow3d ? (
                 <Button
                   key="model-3d"
                   type="button"
@@ -326,7 +377,11 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
               {product.store.logoUrl ? (
                 <img src={product.store.logoUrl} alt="" loading="lazy" className="size-5 rounded-full object-cover" />
               ) : null}
-              {t.soldBy} <span className="font-medium text-foreground">{product.store.name}</span>
+              {t.soldBy}{" "}
+              <span className="inline-flex items-center gap-1 font-medium text-foreground">
+                {product.store.name}
+                <VerifiedBadge verified={product.store.verified} label={verifiedLabel} />
+              </span>
             </Link>
           ) : null}
 
@@ -439,6 +494,10 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
             )}
           </div>
 
+          {showBackInStock && alertVariant ? (
+            <BackInStockNotify variantId={alertVariant.id} locale={locale} />
+          ) : null}
+
           <div className="mt-6 flex items-center gap-3">
             <div className="flex h-11 items-center rounded-lg border border-border">
               <Button
@@ -470,12 +529,12 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
             </span>
           </div>
 
-          <div className="mt-5 grid grid-cols-2 gap-3">
-            <Button type="button" disabled={!canPurchase} onClick={() => addToCart()} className="h-12">
+          <div ref={ctaRef} className="mt-5 grid grid-cols-2 gap-3">
+            <Button type="button" variant="outline" disabled={!canPurchase} onClick={() => addToCart()} className="h-12">
               <ShoppingBag className="size-4" />
               {actionLabel}
             </Button>
-            <Button type="button" variant="outline" disabled={!canPurchase} onClick={handleBuyNow} className="h-12">
+            <Button type="button" disabled={!canPurchase} onClick={handleBuyNow} className="h-12 font-semibold">
               {t.buyNow}
             </Button>
           </div>
@@ -518,9 +577,14 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="shipping">
-              <AccordionTrigger>{t.shipping}</AccordionTrigger>
+              <AccordionTrigger>{t.shippingTitle}</AccordionTrigger>
               <AccordionContent className="space-y-2 text-small text-muted-foreground">
                 <p>{t.shippingBody}</p>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="returns">
+              <AccordionTrigger>{t.returns}</AccordionTrigger>
+              <AccordionContent className="space-y-2 text-small text-muted-foreground">
                 <p>{t.returnsBody}</p>
               </AccordionContent>
             </AccordionItem>
@@ -552,7 +616,10 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
                     </span>
                   )}
                   <span>
-                    <span className="block text-small font-medium text-foreground">{product.store.name}</span>
+                    <span className="flex items-center gap-1.5 text-small font-medium text-foreground">
+                      {product.store.name}
+                      <VerifiedBadge verified={product.store.verified} label={verifiedLabel} />
+                    </span>
                     <span className="mt-0.5 inline-flex items-center gap-1 text-caption text-muted-foreground">
                       {t.visitStore}
                       <ArrowRight className="size-3 rtl:rotate-180" aria-hidden />
@@ -641,6 +708,14 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
                   {review.body ? (
                     <p className="mt-3 text-small leading-relaxed text-muted-foreground">{review.body}</p>
                   ) : null}
+                  {review.imageUrl ? (
+                    <img
+                      src={review.imageUrl}
+                      alt=""
+                      loading="lazy"
+                      className="mt-3 size-20 rounded-xl border border-border object-cover"
+                    />
+                  ) : null}
                 </article>
               ))}
             </div>
@@ -648,6 +723,8 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
         ) : (
           <p className="mt-6 text-body text-muted-foreground">{t.noPublishedReviews}</p>
         )}
+
+        <ReviewForm productId={product.id} locale={locale} />
       </section>
 
       {/* ——— Related ——— */}
@@ -663,8 +740,47 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
         </section>
       ) : null}
 
+      {/* ——— Similar (same category, closest price — no store priority) ——— */}
+      {product.similar.length ? (
+        <section className="mt-20 border-t border-border pt-12 lg:mt-24">
+          <p className="text-eyebrow text-muted-foreground">{t.similarEyebrow}</p>
+          <h2 className="mt-2 font-display text-3xl font-semibold tracking-tight text-foreground">
+            {t.similarTitle}
+          </h2>
+          <div className="mt-8">
+            <ProductGrid products={product.similar} locale={locale} />
+          </div>
+        </section>
+      ) : null}
+
       {/* ——— Viewed together (real co-view events; hidden until data exists) ——— */}
       <ViewedTogether productId={product.id} locale={locale} copy={t} />
+
+      {/* ——— Sticky mobile purchase bar: appears once the main CTAs scroll out of view ——— */}
+      {canPurchase ? (
+        <div
+          aria-hidden={ctaVisible}
+          className={`fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 backdrop-blur transition-transform duration-200 motion-reduce:transition-none md:hidden ${
+            ctaVisible ? "translate-y-full" : "translate-y-0"
+          }`}
+        >
+          <div
+            className="flex items-center gap-3 px-4 pt-3"
+            style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
+          >
+            {currentImage?.url ? (
+              <img src={currentImage.url} alt="" loading="lazy" className="size-11 shrink-0 rounded-lg object-cover" />
+            ) : null}
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-small font-medium text-foreground">{product.name}</p>
+              <p className="text-small font-semibold text-foreground">{formatPrice(price, locale)}</p>
+            </div>
+            <Button type="button" onClick={handleBuyNow} className="h-11 shrink-0 font-semibold">
+              {t.buyNow}
+            </Button>
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }

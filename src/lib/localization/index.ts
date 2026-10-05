@@ -1,3 +1,10 @@
 import { platformConfig, type SupportedLocale } from "@/config/platform";
-export function formatPrice(amount: number, locale: SupportedLocale = platformConfig.market.defaultLanguage) { return new Intl.NumberFormat(locale === "ar" ? "ar-DZ" : `${locale}-DZ`, { style: "currency", currency: platformConfig.market.currency, maximumFractionDigits: 2 }).format(amount); }
+import { formatPrice as formatPriceI18n } from "@/lib/i18n/format";
+
+/** Backwards-compatible wrapper: customer UI should import from "@/lib/i18n/format" instead. */
+export function formatPrice(amount: number, locale: SupportedLocale = platformConfig.market.defaultLanguage) {
+  return formatPriceI18n(amount, locale);
+}
+export { formatDate, formatNumber, localeTag } from "@/lib/i18n/format";
+
 export function phonePattern(countryCode = platformConfig.market.countryCode) { return countryCode === "DZ" ? /^(\+213|0)[5-7][0-9]{8}$/ : /^\+?[1-9]\d{6,14}$/; }

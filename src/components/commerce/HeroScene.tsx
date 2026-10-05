@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { RotateCcw } from "lucide-react";
+import { getTranslations } from "@/lib/i18n";
+import type { SupportedLocale } from "@/config/platform";
 
 /**
  * HeroScene — a real WebGL (raw three.js, no react-three-fiber) hero scene.
@@ -65,7 +67,8 @@ const CARD_COLORS = [0x1b1510, 0xd9c193, 0xf1e9da, 0x8a6f45, 0x2c241b] as const;
 const GOLD_ACCENT = 0xc9a961;
 const PARTICLE_COUNT = 200;
 
-export function HeroScene({ className }: { className?: string }) {
+export function HeroScene({ className, locale }: { className?: string; locale: SupportedLocale }) {
+  const t = getTranslations(locale).viewer3d;
   const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const resetRef = useRef<() => void>(() => undefined);
@@ -403,9 +406,9 @@ export function HeroScene({ className }: { className?: string }) {
         <button
           type="button"
           onClick={() => resetRef.current()}
-          aria-label="إعادة ضبط المشهد"
-          title="إعادة ضبط المشهد"
-          className="absolute bottom-3 right-3 z-10 flex size-8 items-center justify-center rounded-full border border-white/20 bg-black/30 text-white/80 backdrop-blur-sm transition-colors hover:bg-black/50 hover:text-white"
+          aria-label={t.resetScene}
+          title={t.resetScene}
+          className="absolute bottom-3 end-3 z-10 flex size-8 items-center justify-center rounded-full border border-white/20 bg-black/30 text-white/80 backdrop-blur-sm transition-colors hover:bg-black/50 hover:text-white"
         >
           <RotateCcw className="size-4" aria-hidden />
         </button>

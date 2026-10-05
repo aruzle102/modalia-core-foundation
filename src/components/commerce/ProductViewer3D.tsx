@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { RotateCcw } from "lucide-react";
+import { getTranslations } from "@/lib/i18n";
+import type { SupportedLocale } from "@/config/platform";
 
 /**
  * ProductViewer3D — a real WebGL (raw three.js, no react-three-fiber) GLB model
@@ -50,11 +52,14 @@ function disposeModel(root: import("three").Object3D, THREE: typeof import("thre
 
 export function ProductViewer3D({
   modelUrl,
+  locale,
   className,
 }: {
   modelUrl: string;
+  locale: SupportedLocale;
   className?: string;
 }) {
+  const t = getTranslations(locale).viewer3d;
   const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const resetRef = useRef<() => void>(() => undefined);
@@ -386,38 +391,38 @@ export function ProductViewer3D({
           <div
             className="size-8 animate-spin rounded-full border-2 border-muted-foreground/30 border-t-foreground"
             role="status"
-            aria-label="جارٍ تحميل الموديل"
+            aria-label={t.loadingModel}
           />
-          <p className="text-sm text-muted-foreground">جارٍ تحميل الموديل…</p>
+          <p className="text-sm text-muted-foreground">{t.loadingModel}</p>
         </div>
       )}
 
       {status === "error" && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background/60 p-6 text-center">
           <p className="max-w-xs text-sm text-muted-foreground">
-            تعذّر تحميل الموديل ثلاثي الأبعاد. تحقق من الاتصال أو من رابط الملف.
+            {t.modelError}
           </p>
           <button
             type="button"
             onClick={() => setAttempt((n) => n + 1)}
             className="rounded-full border border-border px-4 py-1.5 text-sm text-foreground transition-colors hover:bg-muted"
           >
-            إعادة المحاولة
+            {t.retry}
           </button>
         </div>
       )}
 
       {status === "ready" && (
         <>
-          <p className="pointer-events-none absolute bottom-3 left-3 text-xs text-muted-foreground/80">
-            اسحب للتدوير · عجلة الفأرة للتقريب
+          <p className="pointer-events-none absolute bottom-3 start-3 text-xs text-muted-foreground/80">
+            {t.dragHint}
           </p>
           <button
             type="button"
             onClick={() => resetRef.current()}
-            aria-label="إعادة ضبط العرض"
-            title="إعادة ضبط العرض"
-            className="absolute bottom-3 right-3 z-10 flex size-8 items-center justify-center rounded-full border border-white/20 bg-black/30 text-white/80 backdrop-blur-sm transition-colors hover:bg-black/50 hover:text-white"
+            aria-label={t.resetView}
+            title={t.resetView}
+            className="absolute bottom-3 end-3 z-10 flex size-8 items-center justify-center rounded-full border border-white/20 bg-black/30 text-white/80 backdrop-blur-sm transition-colors hover:bg-black/50 hover:text-white"
           >
             <RotateCcw className="size-4" aria-hidden />
           </button>

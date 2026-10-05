@@ -1,14 +1,17 @@
 import { lazy, Suspense, useEffect, useMemo, useState, type MouseEvent } from "react";
 import { Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, Box, Heart, Minus, Plus, ShieldCheck, ShoppingBag, Star, Store, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ProductGrid } from "@/components/marketplace/discovery";
-import { formatPrice } from "@/lib/localization";
+import { formatNumber, formatPrice } from "@/lib/i18n/format";
+import { getTranslations } from "@/lib/i18n";
 import { useCart } from "@/lib/cart-store";
 import { isWishlisted, toggleWishlist } from "@/lib/wishlist-store";
 import { toast } from "sonner";
-import { trackDiscovery } from "@/lib/analytics";
+import { getRelatedProducts } from "@/lib/analytics.functions";
+import { getRecentlyViewed, recordRecentlyViewed, track } from "@/lib/analytics";
 import type { SupportedLocale } from "@/config/platform";
 import type { ProductDetail } from "@/lib/product.functions";
 
@@ -21,141 +24,6 @@ function discountPercent(price: number, compareAtPrice: number | null): number |
   return Math.round(((compareAtPrice - price) / compareAtPrice) * 100);
 }
 
-const copy = {
-  ar: {
-    home: "الرئيسية",
-    required: "مطلوب",
-    selectOptions: "اختر الخيارات",
-    addToBag: "أضف إلى السلة",
-    buyNow: "اشترِ الآن",
-    addedToBag: "أُضيف إلى السلة",
-    saved: "حُفظ في المفضلة",
-    removed: "أُزيل من المفضلة",
-    saveWishlist: "احفظ في المفضلة",
-    removeWishlist: "أزل من المفضلة",
-    soldBy: "يُباع من",
-    visitStore: "زيارة المتجر",
-    noReviews: "لا توجد تقييمات بعد",
-    reviews: (count: number) => `${count} ${count === 1 ? "تقييم" : "تقييمات"}`,
-    chooseOptions: "اختر الخيارات المطلوبة لعرض التوفر",
-    inStock: "متوفر",
-    outOfStock: "نفد المخزون",
-    onlyLeft: (count: number) => `بقي ${count} فقط`,
-    available: (count: number) => `${count} متوفر`,
-    decrease: "إنقاص الكمية",
-    increase: "زيادة الكمية",
-    quantity: "الكمية",
-    viewImage: (index: number) => `عرض الصورة ${index}`,
-    view3d: "عرض ثلاثي الأبعاد",
-    zoomHint: "مرّر فوق الصورة للتكبير",
-    storyEyebrow: "التفاصيل",
-    storyTitle: "عن هذه القطعة",
-    details: "المواصفات",
-    shipping: "الشحن والإرجاع",
-    shippingBody: "تُؤكَّد خيارات التوصيل وآجالها أثناء إتمام الطلب.",
-    returnsBody: "يمكن إرجاع المنتجات غير المستخدمة وفق سياسة المتجر.",
-    weight: "الوزن",
-    brand: "العلامة",
-    category: "الفئة",
-    customerReviews: "آراء العملاء",
-    reviewsTitle: "التقييمات",
-    verified: "عملية شراء موثّقة",
-    noPublishedReviews: "لم تُنشر بعد تقييمات معتمدة لهذا المنتج.",
-    relatedEyebrow: "اكتشف المزيد",
-    relatedTitle: "منتجات ذات صلة",
-    secure: "دفع آمن",
-    shippedBy: "شحن من الجزائر",
-  },
-  fr: {
-    home: "Accueil",
-    required: "Requis",
-    selectOptions: "Choisir les options",
-    addToBag: "Ajouter au panier",
-    buyNow: "Acheter",
-    addedToBag: "Ajouté au panier",
-    saved: "Ajouté aux favoris",
-    removed: "Retiré des favoris",
-    saveWishlist: "Ajouter aux favoris",
-    removeWishlist: "Retirer des favoris",
-    soldBy: "Vendu par",
-    visitStore: "Voir la boutique",
-    noReviews: "Aucun avis pour le moment",
-    reviews: (count: number) => `${count} avis`,
-    chooseOptions: "Choisissez les options requises pour voir la disponibilité",
-    inStock: "En stock",
-    outOfStock: "Rupture de stock",
-    onlyLeft: (count: number) => `Plus que ${count}`,
-    available: (count: number) => `${count} disponibles`,
-    decrease: "Diminuer la quantité",
-    increase: "Augmenter la quantité",
-    quantity: "Quantité",
-    viewImage: (index: number) => `Voir l'image ${index}`,
-    view3d: "Vue 3D",
-    zoomHint: "Survolez l'image pour zoomer",
-    storyEyebrow: "Détails",
-    storyTitle: "À propos de cette pièce",
-    details: "Caractéristiques",
-    shipping: "Livraison et retours",
-    shippingBody: "Les options de livraison sont confirmées lors du paiement.",
-    returnsBody: "Les produits non utilisés peuvent être retournés selon la politique de la boutique.",
-    weight: "Poids",
-    brand: "Marque",
-    category: "Catégorie",
-    customerReviews: "Avis clients",
-    reviewsTitle: "Avis",
-    verified: "Achat vérifié",
-    noPublishedReviews: "Aucun avis approuvé n'a encore été publié pour ce produit.",
-    relatedEyebrow: "À découvrir",
-    relatedTitle: "Produits similaires",
-    secure: "Paiement sécurisé",
-    shippedBy: "Expédié depuis l'Algérie",
-  },
-  en: {
-    home: "Home",
-    required: "Required",
-    selectOptions: "Select options",
-    addToBag: "Add to bag",
-    buyNow: "Buy now",
-    addedToBag: "Added to bag",
-    saved: "Saved to wishlist",
-    removed: "Removed from wishlist",
-    saveWishlist: "Save to wishlist",
-    removeWishlist: "Remove from wishlist",
-    soldBy: "Sold by",
-    visitStore: "Visit store",
-    noReviews: "No reviews yet",
-    reviews: (count: number) => `${count} ${count === 1 ? "review" : "reviews"}`,
-    chooseOptions: "Choose the required options to see availability",
-    inStock: "In stock",
-    outOfStock: "Out of stock",
-    onlyLeft: (count: number) => `Only ${count} left`,
-    available: (count: number) => `${count} available`,
-    decrease: "Decrease quantity",
-    increase: "Increase quantity",
-    quantity: "Quantity",
-    viewImage: (index: number) => `View image ${index}`,
-    view3d: "3D view",
-    zoomHint: "Hover the image to zoom",
-    storyEyebrow: "Details",
-    storyTitle: "About this piece",
-    details: "Specifications",
-    shipping: "Shipping & returns",
-    shippingBody: "Delivery options are confirmed during checkout.",
-    returnsBody: "Unused products may be returned under the store's policy.",
-    weight: "Weight",
-    brand: "Brand",
-    category: "Category",
-    customerReviews: "Customer reviews",
-    reviewsTitle: "Reviews",
-    verified: "Verified purchase",
-    noPublishedReviews: "No approved reviews have been published for this product yet.",
-    relatedEyebrow: "More to discover",
-    relatedTitle: "Related products",
-    secure: "Secure payment",
-    shippedBy: "Ships from Algeria",
-  },
-} as const;
-
 function canMagnify(): boolean {
   if (typeof window === "undefined") return false;
   return (
@@ -165,7 +33,7 @@ function canMagnify(): boolean {
 }
 
 export function ProductDetailView({ product, locale }: { product: ProductDetail; locale: SupportedLocale }) {
-  const t = copy[locale];
+  const t = getTranslations(locale).product;
   const [selected, setSelected] = useState<Record<string, string>>({});
   const [quantity, setQuantity] = useState(1);
   const [activeMedia, setActiveMedia] = useState(0);
@@ -177,7 +45,14 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
 
   useEffect(() => {
     setSaved(isWishlisted(product.id));
-    void trackDiscovery("product_view", { productId: product.id });
+    track("product_view", { entityType: "product", entityId: product.id });
+    recordRecentlyViewed({
+      id: product.id,
+      slug: product.slug,
+      name: product.name,
+      image: product.media.find((m) => m.isPrimary)?.url ?? product.media[0]?.url ?? null,
+      price: product.price,
+    });
   }, [product.id]);
 
   const selectedValues = Object.values(selected);
@@ -246,6 +121,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
       storeName: product.store?.name ?? null,
     });
     setSaved(next);
+    if (next) track("wishlist_add", { entityType: "product", entityId: product.id });
     toast.success(next ? t.saved : t.removed);
   };
 
@@ -270,14 +146,26 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
       weightGrams: product.weightGrams ?? undefined,
     });
     if (!silent) {
-      void trackDiscovery("cart", { productId: product.id });
+      track("add_to_cart", {
+        entityType: "product",
+        entityId: product.id,
+        metadata: { quantity, variant_id: effectiveVariant.id },
+      });
       toast.success(t.addedToBag);
     }
   };
 
   const handleBuyNow = () => {
     addToCart(true);
-    void trackDiscovery("cart", { productId: product.id });
+    track("add_to_cart", {
+      entityType: "product",
+      entityId: product.id,
+      metadata: {
+        quantity,
+        ...(effectiveVariant ? { variant_id: effectiveVariant.id } : {}),
+        buy_now: true,
+      },
+    });
     window.location.assign(`/checkout?locale=${locale}`);
   };
 
@@ -286,8 +174,8 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
   const descriptionParagraphs = (product.description ?? "").split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-7 sm:px-6 lg:px-8">
-      <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-2 text-caption text-muted-foreground">
+    <main id="main-content" tabIndex={-1} className="mx-auto max-w-7xl px-4 py-7 sm:px-6 lg:px-8">
+      <nav aria-label={t.breadcrumb} className="flex flex-wrap items-center gap-2 text-caption text-muted-foreground">
         <Link to="/" search={{ locale }} className="transition-colors hover:text-foreground">
           {t.home}
         </Link>
@@ -310,7 +198,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
 
       <div className="mt-6 grid gap-10 lg:grid-cols-[minmax(0,1.45fr)_minmax(20rem,0.8fr)] lg:items-start">
         {/* ——— Gallery with hover magnifier ——— */}
-        <section aria-label="Product media" className="min-w-0">
+        <section aria-label={t.productMedia} className="min-w-0">
           <div
             className="relative aspect-[4/5] cursor-zoom-in overflow-hidden rounded-xl bg-muted"
             onMouseMove={handleZoomMove}
@@ -332,7 +220,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
                   </div>
                 }
               >
-                <ProductViewer3D modelUrl={model3d.url} className="size-full" />
+                <ProductViewer3D modelUrl={model3d.url} locale={locale} className="size-full" />
               </Suspense>
             ) : currentImage?.url ? (
               <img
@@ -436,7 +324,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
               className="mt-3 inline-flex items-center gap-2 text-small text-muted-foreground transition-colors hover:text-foreground"
             >
               {product.store.logoUrl ? (
-                <img src={product.store.logoUrl} alt="" className="size-5 rounded-full object-cover" />
+                <img src={product.store.logoUrl} alt="" loading="lazy" className="size-5 rounded-full object-cover" />
               ) : null}
               {t.soldBy} <span className="font-medium text-foreground">{product.store.name}</span>
             </Link>
@@ -623,7 +511,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
                   {product.weightGrams ? (
                     <div className="flex justify-between gap-4">
                       <dt>{t.weight}</dt>
-                      <dd className="text-foreground">{product.weightGrams} g</dd>
+                      <dd className="text-foreground">{formatNumber(product.weightGrams, locale)} {t.weightUnit}</dd>
                     </div>
                   ) : null}
                 </dl>
@@ -657,7 +545,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
                   className="mt-6 inline-flex items-center gap-3 rounded-xl border border-border p-4 transition-colors hover:border-foreground/25"
                 >
                   {product.store.logoUrl ? (
-                    <img src={product.store.logoUrl} alt="" className="size-10 rounded-full object-cover" />
+                    <img src={product.store.logoUrl} alt="" loading="lazy" className="size-10 rounded-full object-cover" />
                   ) : (
                     <span className="grid size-10 place-items-center rounded-full bg-secondary text-small font-semibold">
                       <Store className="size-4" aria-hidden />
@@ -774,6 +662,42 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
           </div>
         </section>
       ) : null}
+
+      {/* ——— Viewed together (real co-view events; hidden until data exists) ——— */}
+      <ViewedTogether productId={product.id} locale={locale} copy={t} />
     </main>
+  );
+}
+
+/**
+ * "Frequently viewed together" from genuine co-view events. Renders nothing
+ * until real data exists -- never a fabricated recommendation.
+ */
+function ViewedTogether({
+  productId,
+  locale,
+  copy,
+}: {
+  productId: string;
+  locale: SupportedLocale;
+  copy: { viewedTogetherEyebrow: string; viewedTogetherTitle: string };
+}) {
+  const { data } = useQuery({
+    queryKey: ["related-products", productId, locale],
+    queryFn: () => getRelatedProducts({ data: { productId, limit: 8, locale } }),
+    staleTime: 5 * 60_000,
+    retry: false,
+  });
+  if (!data?.hasData || data.products.length === 0) return null;
+  return (
+    <section className="mt-20 border-t border-border pt-12 lg:mt-24">
+      <p className="text-eyebrow text-muted-foreground">{copy.viewedTogetherEyebrow}</p>
+      <h2 className="mt-2 font-display text-3xl font-semibold tracking-tight text-foreground">
+        {copy.viewedTogetherTitle}
+      </h2>
+      <div className="mt-8">
+        <ProductGrid products={data.products} locale={locale} />
+      </div>
+    </section>
   );
 }

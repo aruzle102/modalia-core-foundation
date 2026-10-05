@@ -573,3 +573,43 @@ html {
     color-mix(in oklch, var(--muted) 45%, transparent)
   );
 }
+
+/* ---------------- Arabic typography ----------------
+   Arabic script must never be letterspaced: letter-spacing breaks
+   cursive letter connections. Headings get a roomier line-height to
+   accommodate tall glyphs and diacritics; body text gets the same
+   treatment. The Latin brand entrance keeps its tracking. */
+:root:lang(ar), [lang="ar"] {
+  --leading-heading: 1.45;
+  --leading-body: 1.8;
+}
+
+html[lang="ar"] body {
+  letter-spacing: 0;
+  line-height: 1.8;
+  font-feature-settings: "liga" 1, "calt" 1;
+}
+
+html[lang="ar"] h1,
+html[lang="ar"] h2,
+html[lang="ar"] h3,
+html[lang="ar"] h4,
+html[lang="ar"] .text-display,
+html[lang="ar"] .text-h3,
+html[lang="ar"] .text-eyebrow {
+  letter-spacing: 0;
+  line-height: 1.45;
+}
+
+html[lang="ar"] p,
+html[lang="ar"] .text-body,
+html[lang="ar"] .text-small,
+html[lang="ar"] .text-caption {
+  letter-spacing: 0;
+  line-height: 1.8;
+}
+
+/* Brand wordmark entrance stays Latin-styled even on Arabic pages */
+html[lang="ar"] .brand-entrance-word {
+  letter-spacing: inherit;
+}

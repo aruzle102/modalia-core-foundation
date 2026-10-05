@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select";
 import { AdminGate } from "@/components/admin/AdminGate";
 import { AdminShell } from "@/components/admin/AdminShell";
-import { Pager } from "./_shared";
+import { Pager, errMsg } from "./_shared";
 import {
   AdminCard,
   StatusPill,
@@ -42,6 +42,7 @@ import {
   createSellerAccount,
   type CreateSellerAccountResult,
 } from "@/lib/admin-sellers.functions";
+import { aiAdminModerationBrief } from "@/lib/ai.functions";
 
 export const Route = createFileRoute("/admin/applications")({
   head: () => ({
@@ -104,6 +105,7 @@ function ApplicationsPage() {
         title="Seller Applications"
         subtitle="Review applications, approve sellers, and provision seller accounts."
       >
+        <ModerationBriefCard />
         <AdminCard
           title="Applications"
           subtitle={`${total} total`}
@@ -582,5 +584,105 @@ function ApplicationDrawer({
         onConfirm={() => createMutation.mutate()}
       />
     </div>
+  );
+}
+
+/**
+ * Rule-based moderation brief: a factual summary of what needs human
+ * review (pending applications, pending products, open tickets).
+ * Counts and one-line facts only — no invented judgments.
+ */
+function ModerationBriefCard() {
+  const briefQuery = useQuery({
+    queryKey: ["admin-moderation-brief"],
+    queryFn: () => aiAdminModerationBrief({ data: { locale: "en" } }),
+    retry: false,
+    staleTime: 60_000,
+  });
+  const brief = briefQuery.data ?? null;
+
+  return (
+    <AdminCard
+      title="Moderation brief"
+      subtitle="Rule-based summary from live data — every decision still needs a human."
+      actions={
+        <Button variant="outline" size="sm" onClick={() => briefQuery.refetch()} disabled={briefQuery.isFetching}>
+          Refresh
+        </Button>
+      }
+    >
+      {briefQuery.isLoading ? (
+        <TableSkeleton rows={3} />
+      ) : briefQuery.isError || !brief ? (
+        <EmptyState title="Brief unavailable" text={briefQuery.isError ? errMsg(briefQuery.error) : "No data."} />
+      ) : (
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {[
+              { label: "Pending applications", value: brief.counts.pendingApplications },
+              { label: "Products awaiting moderation", value: brief.counts.pendingProducts },
+              { label: "Open support tickets", value: brief.counts.openTickets },
+              { label: "Oldest application waiting (days)", value: brief.counts.oldestApplicationWaitingDays },
+            ].map((stat) => (
+              <div key={stat.label} className="rounded-xl border border-border p-3">
+                <p className="text-2xl font-bold">{stat.value}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{stat.label}</p>
+              </div>
+            ))}
+          </div>
+
+          {brief.applications.length ? (
+            <div>
+              <p className="text-sm font-medium">Oldest pending applications</p>
+              <ul className="mt-2 space-y-2 text-sm">
+                {brief.applications.slice(0, 5).map((a) => (
+                  <li key={a.id} className="rounded-xl bg-muted/50 p-3">
+                    <p className="font-medium">
+                      {a.applicant} — proposed store “{a.proposedStore}”
+                      <span className="ms-2 text-xs font-normal text-muted-foreground">
+                        waiting {a.waitingDays} day{a.waitingDays === 1 ? "" : "s"}
+                      </span>
+                    </p>
+                    <p className="mt-1 text-muted-foreground">{a.business}</p>
+                    {a.categories.length ? (
+                      <p className="mt-1 text-xs text-muted-foreground">Categories: {a.categories.join(", ")}</p>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
+          {brief.pendingProducts.length ? (
+            <div>
+              <p className="text-sm font-medium">Products awaiting moderation</p>
+              <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
+                {brief.pendingProducts.slice(0, 5).map((p) => (
+                  <li key={p.id}>
+                    {p.name}
+                    {p.store ? ` — ${p.store}` : ""} · waiting {p.waitingDays} day{p.waitingDays === 1 ? "" : "s"}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
+          {brief.openTickets.length ? (
+            <div>
+              <p className="text-sm font-medium">Open support requests</p>
+              <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
+                {brief.openTickets.slice(0, 5).map((t) => (
+                  <li key={t.id}>
+                    {t.subject || "No subject"} · waiting {t.waitingDays} day{t.waitingDays === 1 ? "" : "s"}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
+          <p className="text-xs italic text-muted-foreground">{brief.disclaimer}</p>
+        </div>
+      )}
+    </AdminCard>
   );
 }

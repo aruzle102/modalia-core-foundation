@@ -2,6 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
+import { rateLimitEndpoint } from "@/lib/rate-limit";
+import { emitCustomerNotification, emitSellerNotification } from "@/lib/notifications.functions";
 
 const checkoutSchema = z.object({
   items: z.array(z.object({ variantId: z.string().uuid(), quantity: z.number().int().min(1).max(99) })).min(1).max(100),
@@ -38,6 +40,8 @@ export const getCheckoutMeta = createServerFn({ method: "GET" }).handler(async (
 export const createGuestOrder = createServerFn({ method: "POST" })
   .inputValidator((data) => checkoutSchema.parse(data))
   .handler(async ({ data }) => {
+    // Public checkout: cap order creation per IP (order spam / inventory griefing).
+    rateLimitEndpoint("createGuestOrder", 20);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const sessionToken = crypto.randomUUID() + crypto.randomUUID();
     const { data: cart, error: cartError } = await supabaseAdmin.from("carts").insert({ session_token: sessionToken, currency: "DZD" }).select("id").single();
@@ -60,6 +64,56 @@ export const createGuestOrder = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message.replace(/^.*?\n/, ""));
     const order = result as { order_id?: string; order_number?: string; subtotal?: number; shipping_total?: number; grand_total?: number; delivery_method?: string } | null;
     if (!order?.order_id || !order.order_number) throw new Error("Order confirmation was unavailable.");
+
+    // Notifications (DB-first): order received for the customer, new order for
+    // each seller. Best-effort — a notification failure never breaks checkout.
+    try {
+      const orderRow = await supabaseAdmin
+        .from("orders")
+        .select("id,order_number,grand_total,currency,customer_id")
+        .eq("id", order.order_id)
+        .maybeSingle();
+      if (orderRow.data) {
+        const sellerOrders = await supabaseAdmin
+          .from("seller_orders")
+          .select("id,seller_id,subtotal")
+          .eq("order_id", order.order_id);
+        const pending: Promise<boolean>[] = [];
+        for (const sellerOrder of sellerOrders.data ?? []) {
+          if (!sellerOrder.seller_id) continue;
+          pending.push(
+            emitSellerNotification(sellerOrder.seller_id, {
+              type: "new_order",
+              params: { orderNumber: orderRow.data.order_number, total: Number(sellerOrder.subtotal ?? 0), currency: orderRow.data.currency ?? "DZD" },
+              link: `/seller/orders/${sellerOrder.id}`,
+              payload: { order_id: order.order_id, seller_order_id: sellerOrder.id, order_number: orderRow.data.order_number },
+            }),
+          );
+        }
+        if (orderRow.data.customer_id) {
+          const customerRow = await supabaseAdmin
+            .from("customers")
+            .select("profile_id")
+            .eq("id", orderRow.data.customer_id)
+            .maybeSingle();
+          const profileId = customerRow.data?.profile_id;
+          if (profileId) {
+            pending.push(
+              emitCustomerNotification(profileId, {
+                type: "order_received",
+                params: { orderNumber: orderRow.data.order_number, total: Number(orderRow.data.grand_total ?? 0), currency: orderRow.data.currency ?? "DZD" },
+                link: `/account/orders/${order.order_id}`,
+                payload: { order_id: order.order_id, order_number: orderRow.data.order_number },
+              }),
+            );
+          }
+        }
+        await Promise.allSettled(pending);
+      }
+    } catch {
+      /* notifications are best-effort */
+    }
+
     return {
       orderId: order.order_id,
       orderNumber: order.order_number,

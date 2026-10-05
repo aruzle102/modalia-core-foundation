@@ -2,6 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
+import { rateLimitEndpoint } from "@/lib/rate-limit";
+import { emitAdminNotification } from "@/lib/notifications.functions";
 
 const applicationInput = z.object({
   firstName: z.string().trim().min(2).max(100),
@@ -34,6 +36,8 @@ function publicClient() {
 export const submitSellerApplication = createServerFn({ method: "POST" })
   .inputValidator((data) => applicationInput.parse(data))
   .handler(async ({ data }) => {
+    // Public, anonymous entry point — cap applications per IP to blunt spam.
+    rateLimitEndpoint("submitSellerApplication", 5);
     const supabase = publicClient();
     const { error } = await supabase.from("seller_applications").insert({
       first_name: data.firstName,
@@ -47,5 +51,18 @@ export const submitSellerApplication = createServerFn({ method: "POST" })
       status: "pending",
     });
     if (error) throw new Error("Your application could not be submitted. Please try again.");
+
+    // Alert admins about the new application (best-effort).
+    try {
+      await emitAdminNotification({
+        type: "seller_application",
+        params: { applicantName: `${data.firstName} ${data.lastName}`, storeName: data.storeName },
+        link: "/admin/applications",
+        payload: { store_name: data.storeName, email: data.email },
+      });
+    } catch {
+      /* notifications are best-effort */
+    }
+
     return { ok: true };
   });

@@ -23,6 +23,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireSeller } from "@/lib/seller-auth";
 import type { Database, Json } from "@/integrations/supabase/types";
+import { emitCustomerNotification, emitSellerNotification } from "@/lib/notifications.functions";
 
 type Sb = SupabaseClient<Database>;
 
@@ -323,6 +324,18 @@ export const saveProduct = createServerFn({ method: "POST" })
       data.variants.map((v) => v.sku.trim()),
       data.id,
     );
+
+    // Media uploaded through storage lives under `<sellerId>/…` (see the
+    // product-media bucket policies). Reject paths outside the caller's own
+    // prefix so one seller cannot attach another seller's objects to their
+    // products.
+    const mediaPrefix = `${seller.sellerId}/`;
+    for (const img of data.images) {
+      const path = img.storagePath.trim();
+      if (path.includes("..") || !path.startsWith(mediaPrefix)) {
+        throw new Error("One or more image paths are not valid for this seller.");
+      }
+    }
 
     let productId: string;
     let isNew: boolean;
@@ -958,7 +971,7 @@ export const adjustInventory = createServerFn({ method: "POST" })
     // Ownership: variant → product → seller in one checked pass.
     const { data: variant, error: varErr } = await sb
       .from("product_variants")
-      .select("id, products!inner(id, seller_id)")
+      .select("id, label, sku, products!inner(id, seller_id, name, slug)")
       .eq("id", data.variantId)
       .maybeSingle();
     if (varErr) throw new Error("Variant lookup failed.");
@@ -992,6 +1005,67 @@ export const adjustInventory = createServerFn({ method: "POST" })
       before: { quantity: before.quantity, low_stock_threshold: before.low_stock_threshold },
       after,
     });
+
+    // Inventory event notifications (best-effort).
+    try {
+      const rawProduct = product as { name?: unknown; slug?: string | null } | null;
+      const rawName = rawProduct?.name;
+      const productName =
+        typeof rawName === "string"
+          ? rawName
+          : rawName && typeof rawName === "object" && !Array.isArray(rawName)
+            ? ((rawName as Record<string, unknown>)["fr"] as string) ||
+              ((rawName as Record<string, unknown>)["en"] as string) ||
+              "Product"
+            : "Product";
+      const variantLabel =
+        ((variant as { label?: string | null; sku?: string | null } | null)?.label ??
+          (variant as { label?: string | null; sku?: string | null } | null)?.sku ??
+          "").trim();
+      const threshold = after.low_stock_threshold ?? 0;
+
+      // Low stock: notify once when the available quantity crosses the threshold downward.
+      if (threshold > 0 && after.quantity <= threshold && before.quantity > threshold) {
+        await emitSellerNotification(seller.sellerId, {
+          type: "low_stock",
+          params: { productName, variantLabel: variantLabel || undefined, quantity: after.quantity, threshold },
+          link: "/seller/inventory",
+          payload: { variant_id: data.variantId, quantity: after.quantity, threshold },
+        });
+      }
+
+      // Back in stock: notify subscribers who asked to be alerted.
+      if (before.quantity === 0 && after.quantity > 0) {
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const subs = await supabaseAdmin
+          .from("back_in_stock_subscriptions")
+          .select("id,customer_id,customers(profile_id)")
+          .eq("variant_id", data.variantId)
+          .is("notified_at", null)
+          .not("customer_id", "is", null);
+        const notifiedIds: string[] = [];
+        for (const sub of subs.data ?? []) {
+          const customers = (sub as { customers?: { profile_id?: string | null } | { profile_id?: string | null }[] | null }).customers;
+          const profileId = Array.isArray(customers) ? customers[0]?.profile_id : customers?.profile_id;
+          if (!profileId) continue;
+          const sent = await emitCustomerNotification(profileId, {
+            type: "back_in_stock",
+            params: { productName, variantLabel: variantLabel || undefined },
+            link: rawProduct?.slug ? `/product/${rawProduct.slug}` : "/shop",
+            payload: { variant_id: data.variantId, product_name: productName },
+          });
+          if (sent) notifiedIds.push(sub.id);
+        }
+        if (notifiedIds.length > 0) {
+          await supabaseAdmin
+            .from("back_in_stock_subscriptions")
+            .update({ notified_at: new Date().toISOString() })
+            .in("id", notifiedIds);
+        }
+      }
+    } catch {
+      /* notifications are best-effort */
+    }
 
     return { ok: true, before: before.quantity, after: after.quantity };
   });

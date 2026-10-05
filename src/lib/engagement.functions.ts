@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
 import { platformConfig } from "@/config/platform";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { rateLimitEndpoint } from "@/lib/rate-limit";
 
 /**
  * Public engagement entry points (newsletter + contact form).
@@ -37,6 +38,7 @@ const newsletterInput = z.object({
 export const subscribeNewsletter = createServerFn({ method: "POST" })
   .inputValidator((data) => newsletterInput.parse(data))
   .handler(async ({ data }) => {
+    rateLimitEndpoint("subscribeNewsletter", 10);
     const supabase = publicClient();
     const { error } = await supabase.from("newsletter_subscribers").upsert(
       {
@@ -62,6 +64,7 @@ const contactInput = z.object({
 export const submitContactMessage = createServerFn({ method: "POST" })
   .inputValidator((data) => contactInput.parse(data))
   .handler(async ({ data }) => {
+    rateLimitEndpoint("submitContactMessage", 10);
     const supabase = publicClient();
     const { error } = await supabase.from("contact_messages").insert({
       name: data.name,

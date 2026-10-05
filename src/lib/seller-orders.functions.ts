@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { Database, Json } from "@/integrations/supabase/types";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireSeller, type SellerContext, type SellerPermission } from "@/lib/seller-auth";
+import { emitCustomerNotification } from "@/lib/notifications.functions";
 
 /**
  * Seller Order Operations Center — server functions (Phase 2/4, Worker 7/7).
@@ -430,6 +431,33 @@ export const updateSellerOrderStatus = createServerFn({ method: "POST" })
       resource_id: data.sellerOrderId,
       metadata: { seller_id: seller.sellerId, previous_status: current, new_status: next, note },
     });
+
+    // Notify the customer about the status change (best-effort; guests have no profile).
+    try {
+      const orderRow = await supabaseAdmin
+        .from("orders")
+        .select("id,order_number,customer_id")
+        .eq("id", currentResult.data.order_id)
+        .maybeSingle();
+      if (orderRow.data?.customer_id) {
+        const customerRow = await supabaseAdmin
+          .from("customers")
+          .select("profile_id")
+          .eq("id", orderRow.data.customer_id)
+          .maybeSingle();
+        const profileId = customerRow.data?.profile_id;
+        if (profileId) {
+          await emitCustomerNotification(profileId, {
+            type: "order_status",
+            params: { orderNumber: orderRow.data.order_number, status: next },
+            link: `/account/orders/${orderRow.data.id}`,
+            payload: { order_id: orderRow.data.id, seller_order_id: data.sellerOrderId, order_number: orderRow.data.order_number, status: next },
+          });
+        }
+      }
+    } catch {
+      /* notifications are best-effort */
+    }
 
     return { id: data.sellerOrderId, status: next, allowedTransitions: SELLER_TRANSITIONS[next] ?? [] };
   });

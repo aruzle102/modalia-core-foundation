@@ -3,12 +3,10 @@ import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
-  AlertTriangle,
   Check,
-  Copy,
   Eye,
-  KeyRound,
   Search,
+  UserPlus,
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -23,7 +21,8 @@ import {
 } from "@/components/ui/select";
 import { AdminGate } from "@/components/admin/AdminGate";
 import { AdminShell } from "@/components/admin/AdminShell";
-import { Pager } from "./_shared";
+import { Pager, errMsg } from "./_shared";
+import { numParam, strParam, useDebouncedUrlParam, useUrlState } from "@/hooks/use-url-state";
 import {
   AdminCard,
   StatusPill,
@@ -39,13 +38,21 @@ import {
   getApplication,
   reviewApplication,
   updateApplicationNotes,
-  createSellerAccount,
-  type CreateSellerAccountResult,
 } from "@/lib/admin-sellers.functions";
+import { SellerOnboardingWizard } from "@/components/admin/SellerOnboardingWizard";
+import { aiAdminModerationBrief } from "@/lib/ai.functions";
 
 export const Route = createFileRoute("/admin/applications")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    q: strParam(search["q"]),
+    status: strParam(search["status"], "all"),
+    page: numParam(search["page"], 1),
+    // Open application detail drawer. Kept in the URL so the browser Back
+    // button closes the drawer and the inspected application is shareable.
+    application: strParam(search["application"]),
+  }),
   head: () => ({
-    meta: [{ title: "Seller Applications — Modalia Admin" }],
+    meta: [{ name: "robots", content: "noindex,nofollow" }, { title: "Seller Applications — Modalia Admin" }],
   }),
   component: ApplicationsPage,
 });
@@ -53,8 +60,10 @@ export const Route = createFileRoute("/admin/applications")({
 const STATUS_OPTIONS = [
   { value: "all", label: "All statuses" },
   { value: "pending", label: "Pending" },
+  { value: "under_review", label: "Under review" },
   { value: "approved", label: "Approved" },
   { value: "rejected", label: "Rejected" },
+  { value: "converted", label: "Converted" },
   { value: "suspended", label: "Suspended" },
 ] as const;
 
@@ -74,21 +83,32 @@ function formatCategories(value: unknown): string[] {
 
 function ApplicationsPage() {
   const queryClient = useQueryClient();
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [searchInput, setSearchInput] = useState("");
-  const [q, setQ] = useState("");
-  const [page, setPage] = useState(1);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const url = useUrlState({ status: "all", page: 1 });
+  const page = numParam(url.search["page"], 1);
+  const q = strParam(url.search["q"]);
+  const statusFilter = strParam(url.search["status"], "all");
+  const [searchInput, setSearchInput] = useDebouncedUrlParam("q", "", {
+    onCommit: () => url.set({ page: 1 }),
+  });
+  // Detail drawer state lives in the URL: Back closes the drawer and the
+  // inspected application is a shareable link. `push: true` so each opened
+  // application is its own history entry.
+  const selectedId = strParam(url.search["application"]) || null;
+  const openApplication = (id: string) => url.set({ application: id }, { push: true });
+  const closeApplication = () => url.set({ application: undefined });
 
-  useEffect(() => {
-    const t = setTimeout(() => {
-      setQ(searchInput.trim());
-      setPage(1);
-    }, 400);
-    return () => clearTimeout(t);
-  }, [searchInput]);
+  const setPage = (next: number) => url.set({ page: next }, { push: true });
 
-  const status = statusFilter === "all" ? undefined : (statusFilter as "pending" | "approved" | "rejected" | "suspended");
+  const status =
+    statusFilter === "all"
+      ? undefined
+      : (statusFilter as
+          | "pending"
+          | "under_review"
+          | "approved"
+          | "rejected"
+          | "converted"
+          | "suspended");
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["admin-applications", status ?? "all", q, page],
@@ -104,6 +124,7 @@ function ApplicationsPage() {
         title="Seller Applications"
         subtitle="Review applications, approve sellers, and provision seller accounts."
       >
+        <ModerationBriefCard />
         <AdminCard
           title="Applications"
           subtitle={`${total} total`}
@@ -121,8 +142,7 @@ function ApplicationsPage() {
               <Select
                 value={statusFilter}
                 onValueChange={(v) => {
-                  setStatusFilter(v);
-                  setPage(1);
+                  url.set({ status: v, page: 1 });
                 }}
               >
                 <SelectTrigger className="w-44">
@@ -174,7 +194,7 @@ function ApplicationsPage() {
                   {items.map((app) => (
                     <tr
                       key={app.id}
-                      onClick={() => setSelectedId(app.id)}
+                      onClick={() => openApplication(app.id)}
                       className="cursor-pointer border-b last:border-0 transition-colors hover:bg-muted/50"
                     >
                       <td className="py-3 pe-4 font-medium">
@@ -204,7 +224,7 @@ function ApplicationsPage() {
           )}
           {total > 0 && (
             <div className="mt-4">
-              <Pager page={page} total={total} pageSize={data?.pageSize ?? 25} onPage={setPage} />
+              <Pager page={page} total={total} pageSize={data?.pageSize ?? 25} onPage={(p) => setPage(p)} />
             </div>
           )}
         </AdminCard>
@@ -212,7 +232,7 @@ function ApplicationsPage() {
         {selectedId && (
           <ApplicationDrawer
             applicationId={selectedId}
-            onClose={() => setSelectedId(null)}
+            onClose={closeApplication}
             onChanged={() => {
               queryClient.invalidateQueries({ queryKey: ["admin-applications"] });
             }}
@@ -235,11 +255,9 @@ function ApplicationDrawer({
   const queryClient = useQueryClient();
   const [confirmApprove, setConfirmApprove] = useState(false);
   const [confirmReject, setConfirmReject] = useState(false);
-  const [confirmCreate, setConfirmCreate] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
   const [notes, setNotes] = useState<string | null>(null);
-  const [provision, setProvision] = useState<CreateSellerAccountResult | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [wizardOpen, setWizardOpen] = useState(false);
 
   const detailQuery = useQuery({
     queryKey: ["admin-application", applicationId],
@@ -260,12 +278,21 @@ function ApplicationDrawer({
   };
 
   const reviewMutation = useMutation({
-    mutationFn: (input: { decision: "approve" | "reject"; rejectionReason?: string }) =>
+    mutationFn: (input: {
+      decision: "approve" | "reject" | "start_review";
+      rejectionReason?: string;
+    }) =>
       reviewApplication({
         data: { id: applicationId, decision: input.decision, rejectionReason: input.rejectionReason },
       }),
     onSuccess: (res) => {
-      toast.success(res.status === "approved" ? "Application approved." : "Application rejected.");
+      toast.success(
+        res.status === "approved"
+          ? "Application approved."
+          : res.status === "rejected"
+            ? "Application rejected."
+            : "Application moved to under review.",
+      );
       setConfirmApprove(false);
       setConfirmReject(false);
       setRejectionReason("");
@@ -282,36 +309,6 @@ function ApplicationDrawer({
     },
     onError: (err: Error) => toast.error(err.message),
   });
-
-  const createMutation = useMutation({
-    mutationFn: () => createSellerAccount({ data: { applicationId } }),
-    onSuccess: (res) => {
-      setConfirmCreate(false);
-      setProvision(res);
-      setCopied(false);
-      refresh();
-    },
-    onError: (err: Error) => {
-      setConfirmCreate(false);
-      toast.error(err.message);
-    },
-  });
-
-  const copyPassword = async () => {
-    if (!provision) return;
-    try {
-      await navigator.clipboard.writeText(provision.tempPassword);
-    } catch {
-      const ta = document.createElement("textarea");
-      ta.value = provision.tempPassword;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand("copy");
-      document.body.removeChild(ta);
-    }
-    setCopied(true);
-    toast.success("Temporary password copied.");
-  };
 
   return (
     <div className="fixed inset-0 z-50">
@@ -334,41 +331,6 @@ function ApplicationDrawer({
             <EmptyState title="Could not load application" text="Please try again." />
           ) : (
             <div className="space-y-6">
-              {/* One-time credential display */}
-              {provision && (
-                <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/40">
-                  <div className="flex items-start gap-3">
-                    <AlertTriangle className="mt-0.5 size-5 shrink-0 text-amber-600" />
-                    <div className="min-w-0 flex-1">
-                      <p className="font-semibold text-amber-900 dark:text-amber-100">
-                        Seller account created — share this password securely
-                      </p>
-                      <p className="mt-1 text-sm text-amber-800 dark:text-amber-200">
-                        This temporary password will not be shown again. Send it to the seller through
-                        a secure channel and ask them to change it on first sign-in.
-                      </p>
-                      <div className="mt-3 flex items-center gap-2">
-                        <code className="flex-1 truncate rounded bg-background px-3 py-2 font-mono text-sm" dir="ltr">
-                          {provision.tempPassword}
-                        </code>
-                        <Button size="sm" onClick={copyPassword}>
-                          {copied ? <Check className="size-4 me-1" /> : <Copy className="size-4 me-1" />}
-                          {copied ? "Copied" : "Copy"}
-                        </Button>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="mt-3"
-                        onClick={() => setProvision(null)}
-                      >
-                        I have shared it securely — dismiss
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
               {/* Applicant */}
               <section>
                 <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
@@ -480,11 +442,16 @@ function ApplicationDrawer({
               </section>
 
               {/* Actions */}
-              {app.status === "pending" && (
+              {(app.status === "pending" || app.status === "under_review") && (
                 <section className="rounded-lg border p-4">
                   <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
                     Decision
                   </h3>
+                  {app.status === "under_review" && (
+                    <p className="mb-3 text-sm text-muted-foreground">
+                      This application is under review — record a final decision below.
+                    </p>
+                  )}
                   <Field label="Rejection reason" hint="Required if you reject this application.">
                     <Textarea
                       value={rejectionReason}
@@ -502,6 +469,15 @@ function ApplicationDrawer({
                       <X className="size-4 me-1.5" />
                       Reject
                     </Button>
+                    {app.status === "pending" && (
+                      <Button
+                        variant="outline"
+                        onClick={() => reviewMutation.mutate({ decision: "start_review" })}
+                        disabled={reviewMutation.isPending}
+                      >
+                        Mark under review
+                      </Button>
+                    )}
                   </div>
                 </section>
               )}
@@ -509,19 +485,18 @@ function ApplicationDrawer({
               {app.status === "approved" && !app.seller_id && (
                 <section className="rounded-lg border border-primary/40 bg-primary/5 p-4">
                   <div className="flex items-start gap-3">
-                    <KeyRound className="mt-0.5 size-5 shrink-0 text-primary" />
+                    <UserPlus className="mt-0.5 size-5 shrink-0 text-primary" />
                     <div>
                       <p className="font-semibold">Provision the seller account</p>
                       <p className="mt-1 text-sm text-muted-foreground">
-                        Creates the login, seller record, store, and role. The temporary password is
-                        displayed once — share it with the seller through a secure channel.
+                        Launch the onboarding wizard to configure the seller, login, store,
+                        commission and permissions, then create everything in one step. The
+                        temporary password is displayed once — share it with the seller through a
+                        secure channel.
                       </p>
-                      <Button
-                        className="mt-3"
-                        onClick={() => setConfirmCreate(true)}
-                        disabled={createMutation.isPending}
-                      >
-                        {createMutation.isPending ? "Creating account…" : "Create seller account"}
+                      <Button className="mt-3" onClick={() => setWizardOpen(true)}>
+                        <UserPlus className="size-4 me-1.5" />
+                        Create seller &amp; store
                       </Button>
                     </div>
                   </div>
@@ -533,6 +508,7 @@ function ApplicationDrawer({
                   <Link
                     to="/admin/sellers/$sellerId"
                     params={{ sellerId: app.seller_id }}
+                    search={{ back: "", q: "", status: "all", page: 1, create: "" }}
                     className="inline-flex"
                   >
                     <Button variant="outline">
@@ -573,14 +549,123 @@ function ApplicationDrawer({
           reviewMutation.mutate({ decision: "reject", rejectionReason: rejectionReason.trim() });
         }}
       />
-      <ConfirmDialog
-        open={confirmCreate}
-        onOpenChange={setConfirmCreate}
-        title="Create seller account?"
-        description="This provisions the seller login and store now. The temporary password is shown once and must be shared securely."
-        confirmLabel="Create account"
-        onConfirm={() => createMutation.mutate()}
-      />
+
+      {app && (
+        <SellerOnboardingWizard
+          open={wizardOpen}
+          onOpenChange={setWizardOpen}
+          application={{
+            id: app.id,
+            first_name: app.first_name,
+            last_name: app.last_name,
+            phone: app.phone,
+            email: app.email,
+            proposed_store_name: app.proposed_store_name,
+            business_description: app.business_description,
+          }}
+          onCreated={refresh}
+        />
+      )}
     </div>
+  );
+}
+
+/**
+ * Rule-based moderation brief: a factual summary of what needs human
+ * review (pending applications, pending products, open tickets).
+ * Counts and one-line facts only — no invented judgments.
+ */
+function ModerationBriefCard() {
+  const briefQuery = useQuery({
+    queryKey: ["admin-moderation-brief"],
+    queryFn: () => aiAdminModerationBrief({ data: { locale: "en" } }),
+    retry: false,
+    staleTime: 60_000,
+  });
+  const brief = briefQuery.data ?? null;
+
+  return (
+    <AdminCard
+      title="Moderation brief"
+      subtitle="Rule-based summary from live data — every decision still needs a human."
+      actions={
+        <Button variant="outline" size="sm" onClick={() => briefQuery.refetch()} disabled={briefQuery.isFetching}>
+          Refresh
+        </Button>
+      }
+    >
+      {briefQuery.isLoading ? (
+        <TableSkeleton rows={3} />
+      ) : briefQuery.isError || !brief ? (
+        <EmptyState title="Brief unavailable" text={briefQuery.isError ? errMsg(briefQuery.error) : "No data."} />
+      ) : (
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {[
+              { label: "Pending applications", value: brief.counts.pendingApplications },
+              { label: "Products awaiting moderation", value: brief.counts.pendingProducts },
+              { label: "Open support tickets", value: brief.counts.openTickets },
+              { label: "Oldest application waiting (days)", value: brief.counts.oldestApplicationWaitingDays },
+            ].map((stat) => (
+              <div key={stat.label} className="rounded-xl border border-border p-3">
+                <p className="text-2xl font-bold">{stat.value}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{stat.label}</p>
+              </div>
+            ))}
+          </div>
+
+          {brief.applications.length ? (
+            <div>
+              <p className="text-sm font-medium">Oldest pending applications</p>
+              <ul className="mt-2 space-y-2 text-sm">
+                {brief.applications.slice(0, 5).map((a) => (
+                  <li key={a.id} className="rounded-xl bg-muted/50 p-3">
+                    <p className="font-medium">
+                      {a.applicant} — proposed store “{a.proposedStore}”
+                      <span className="ms-2 text-xs font-normal text-muted-foreground">
+                        waiting {a.waitingDays} day{a.waitingDays === 1 ? "" : "s"}
+                      </span>
+                    </p>
+                    <p className="mt-1 text-muted-foreground">{a.business}</p>
+                    {a.categories.length ? (
+                      <p className="mt-1 text-xs text-muted-foreground">Categories: {a.categories.join(", ")}</p>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
+          {brief.pendingProducts.length ? (
+            <div>
+              <p className="text-sm font-medium">Products awaiting moderation</p>
+              <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
+                {brief.pendingProducts.slice(0, 5).map((p) => (
+                  <li key={p.id}>
+                    {p.name}
+                    {p.store ? ` — ${p.store}` : ""} · waiting {p.waitingDays} day{p.waitingDays === 1 ? "" : "s"}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
+          {brief.openTickets.length ? (
+            <div>
+              <p className="text-sm font-medium">Open support requests</p>
+              <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
+                {brief.openTickets.slice(0, 5).map((t) => (
+                  <li key={t.id}>
+                    {t.subject || "No subject"} · waiting {t.waitingDays} day{t.waitingDays === 1 ? "" : "s"}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
+          <p className="text-xs italic text-muted-foreground">{brief.disclaimer}</p>
+        </div>
+      )}
+    </AdminCard>
   );
 }

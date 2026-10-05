@@ -44,6 +44,7 @@ export const Route = createFileRoute("/_authenticated/seller")({
   ),
   head: () => ({
     meta: [
+      { name: "robots", content: "noindex,nofollow" },
       { title: "Seller overview — Modalia" },
       { name: "description", content: "Your store's sales, orders, stock and earnings at a glance." },
       { property: "og:title", content: "Seller overview — Modalia" },
@@ -74,13 +75,13 @@ function SellerOverviewPage() {
       actions={
         <>
           <Button asChild variant="outline">
-            <Link to="/seller/orders" search={{ locale }}>Orders</Link>
+            <Link to="/seller/orders" search={{ locale, q: "", status: "", page: 1 }}>Orders</Link>
           </Button>
           <Button asChild variant="outline">
-            <Link to="/seller/analytics" search={{ locale }}>Analytics</Link>
+            <Link to="/seller/analytics" search={{ locale, days: 30 }}>Analytics</Link>
           </Button>
           <Button asChild>
-            <Link to="/seller/products" search={{ locale }}>Manage products</Link>
+            <Link to="/seller/products" search={{ locale, q: "", status: "", moderation: "", page: 1 }}>Manage products</Link>
           </Button>
         </>
       }
@@ -126,7 +127,7 @@ function SellerOverviewPage() {
             </p>
           </div>
           <Button asChild variant="secondary" size="sm">
-            <Link to="/seller/analytics" search={{ locale }}>
+            <Link to="/seller/analytics" search={{ locale, days: 30 }}>
               View analytics <ArrowRight className="ms-1 h-4 w-4" aria-hidden="true" />
             </Link>
           </Button>
@@ -150,7 +151,7 @@ function SellerOverviewPage() {
           subtitle="By revenue across non-cancelled orders"
           actions={
             <Button asChild variant="ghost" size="sm">
-              <Link to="/seller/analytics" search={{ locale }}>
+              <Link to="/seller/analytics" search={{ locale, days: 30 }}>
                 Details <ArrowRight className="ms-1 h-4 w-4" aria-hidden="true" />
               </Link>
             </Button>
@@ -169,7 +170,7 @@ function SellerOverviewPage() {
           subtitle={stockIssues > 0 ? `${stockIssues} variants need attention` : "All variants above their low-stock threshold"}
           actions={
             <Button asChild variant="ghost" size="sm">
-              <Link to="/seller/products" search={{ locale }}>
+              <Link to="/seller/products" search={{ locale, q: "", status: "", moderation: "", page: 1 }}>
                 Manage inventory <ArrowRight className="ms-1 h-4 w-4" aria-hidden="true" />
               </Link>
             </Button>
@@ -203,7 +204,7 @@ function SellerOverviewPage() {
         className="mt-6"
         actions={
           <Button asChild variant="ghost" size="sm">
-            <Link to="/seller/orders" search={{ locale }}>
+            <Link to="/seller/orders" search={{ locale, q: "", status: "", page: 1 }}>
               All orders <ArrowRight className="ms-1 h-4 w-4" aria-hidden="true" />
             </Link>
           </Button>
@@ -242,7 +243,7 @@ function SellerOverviewPage() {
             text="Orders for your products will appear here as soon as customers check out."
             action={
               <Button asChild variant="outline" size="sm">
-                <Link to="/seller/products" search={{ locale }}>Add products</Link>
+                <Link to="/seller/products" search={{ locale, q: "", status: "", moderation: "", page: 1 }}>Add products</Link>
               </Button>
             }
           />

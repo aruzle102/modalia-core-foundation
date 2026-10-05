@@ -1,8 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
-import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import type { Json } from "@/integrations/supabase/types";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { rateLimitEndpoint } from "@/lib/rate-limit";
 
 type LocalizedText = Json;
 
@@ -18,13 +18,6 @@ function localized(value: LocalizedText, fallback: string) {
 }
 
 const pageInput = z.object({ page: z.number().int().positive().default(1), pageSize: z.number().int().min(1).max(20).default(10) });
-
-function publicClient() {
-  const url = process.env["SUPABASE_URL"];
-  const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
-  if (!url || !key) throw new Error("Order tracking is temporarily unavailable.");
-  return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false }, global: { fetch: (input, init) => { const headers = new Headers(init?.headers); if (key.startsWith("sb_") && headers.get("Authorization") === `Bearer ${key}`) headers.delete("Authorization"); headers.set("apikey", key); return fetch(input, { ...init, headers }); } } });
-}
 
 export const getMyOrders = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -52,18 +45,6 @@ export const getMyOrder = createServerFn({ method: "GET" })
     return { id: result.data.id, orderNumber: result.data.order_number, createdAt: result.data.created_at, itemCount: items.length, total: Number(result.data.grand_total), currency: result.data.currency, status: result.data.status, subtotal: Number(result.data.subtotal), shippingTotal: Number(result.data.shipping_total), deliveryMethod: result.data.delivery_method, paymentMethod: result.data.payment_method, paymentStatus: result.data.payment_status, firstName: result.data.first_name, lastName: result.data.last_name, phone: result.data.guest_phone, address: result.data.address_snapshot, items } satisfies CustomerOrderDetail;
   });
 
-export const getMySellerOrders = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .validator((data) => pageInput.parse(data))
-  .handler(async ({ data, context }) => {
-    const from = (data.page - 1) * data.pageSize;
-    const result = await context.supabase.from("seller_orders").select("id,created_at,status,subtotal,shipping_total,delivery_method,orders(order_number,first_name,last_name),order_items(id)").order("created_at", { ascending: false }).range(from, from + data.pageSize);
-    if (result.error) throw new Error("Seller orders could not be loaded.");
-    const records = result.data ?? [];
-    const orders = records.slice(0, data.pageSize).map((sellerOrder) => { const order = Array.isArray(sellerOrder.orders) ? sellerOrder.orders[0] : sellerOrder.orders; return { id: sellerOrder.id, orderNumber: order?.order_number ?? "Order", createdAt: sellerOrder.created_at, customerName: [order?.first_name, order?.last_name].filter(Boolean).join(" ") || "Customer", itemCount: sellerOrder.order_items?.length ?? 0, total: Number(sellerOrder.subtotal) + Number(sellerOrder.shipping_total), shippingTotal: Number(sellerOrder.shipping_total), status: sellerOrder.status, deliveryMethod: sellerOrder.delivery_method } satisfies SellerOrderCard; });
-    return { orders, page: data.page, hasMore: records.length > data.pageSize };
-  });
-
 export const getOrderConfirmation = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((data) => z.object({ orderNumber: z.string().regex(/^ORD-[A-Z0-9]{6}$/) }).parse(data))
@@ -76,8 +57,13 @@ export const getOrderConfirmation = createServerFn({ method: "GET" })
 export const trackGuestOrder = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({ orderNumber: z.string().trim().toUpperCase().regex(/^ORD-[A-Z0-9]{6}$/), phone: z.string().trim().regex(/^\+213[5-7][0-9]{8}$/) }).parse(data))
   .handler(async ({ data }) => {
-    const supabase = publicClient();
-    const result = await supabase.from("orders").select("order_number,created_at,status,grand_total,currency,delivery_method,seller_orders(status,stores(name))").eq("order_number", data.orderNumber).eq("guest_phone", data.phone).maybeSingle();
+    rateLimitEndpoint("trackGuestOrder", 30);
+    // NOTE: the anonymous key has no SELECT policy on `orders`, so an anon
+    // client can never read rows. Use the service-role client server-side and
+    // re-scope with the caller-supplied order number + checkout phone (both
+    // validated above) — the same pattern guest checkout uses.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const result = await supabaseAdmin.from("orders").select("order_number,created_at,status,grand_total,currency,delivery_method,seller_orders(status,stores(name))").eq("order_number", data.orderNumber).eq("guest_phone", data.phone).maybeSingle();
     if (result.error || !result.data) return null;
     const sellerOrders = (result.data.seller_orders ?? []).map((sellerOrder: any) => ({ status: sellerOrder.status, storeName: Array.isArray(sellerOrder.stores) ? sellerOrder.stores[0]?.name ?? "Store" : sellerOrder.stores?.name ?? "Store" }));
     return { orderNumber: result.data.order_number, createdAt: result.data.created_at, status: result.data.status, total: Number(result.data.grand_total), currency: result.data.currency, deliveryMethod: result.data.delivery_method, sellerOrders };

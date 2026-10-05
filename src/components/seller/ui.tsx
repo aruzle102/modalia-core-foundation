@@ -4,16 +4,24 @@ import { useQuery } from "@tanstack/react-query";
 import type { Session } from "@supabase/supabase-js";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { getSellerContext } from "@/lib/seller-auth";
-import type { SellerContext } from "@/lib/seller-auth";
+import { getSellerContext, getSellerAccessStatus } from "@/lib/seller-auth";
+import type { SellerContext, SellerAccessState } from "@/lib/seller-auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-export type SellerSessionStatus = "checking" | "signed-out" | "not-seller" | "error" | "ready";
+export type SellerSessionStatus = "checking" | "signed-out" | "not-seller" | "suspended" | "error" | "ready";
+
+/** Why a signed-in user is blocked from the seller area (server-side check). */
+export type SellerSuspendedReason = Extract<
+  SellerAccessState,
+  "pending" | "suspended" | "disabled" | "staff-deactivated"
+>;
 
 export interface SellerSession {
   status: SellerSessionStatus;
   error: string | null;
   seller: SellerContext | null;
+  /** Set when status === "suspended": the server-side reason for the block. */
+  suspendedReason: SellerSuspendedReason | null;
   userEmail: string | null;
   retry: () => void;
 }
@@ -52,10 +60,22 @@ export function useSellerSession(): SellerSession {
     staleTime: 5 * 60 * 1000,
   });
 
+  // When the seller context is empty for a signed-in user, ask the server WHY
+  // (suspended / disabled / pending account, deactivated staff) so the UI can
+  // show a clear message instead of a confusing "not a seller" state.
+  const access = useQuery({
+    queryKey: ["seller-access"],
+    queryFn: () => getSellerAccessStatus(),
+    enabled: signedIn && ctx.isSuccess && !ctx.data.seller,
+    retry: false,
+    staleTime: 5 * 60 * 1000,
+  });
+
   const queryErrorMessage =
     ctx.error instanceof Error ? ctx.error.message : ctx.error ? String(ctx.error) : null;
 
   let status: SellerSessionStatus = "checking";
+  let suspendedReason: SellerSuspendedReason | null = null;
   if (!sessionReady) {
     status = "checking";
   } else if (!session) {
@@ -64,17 +84,34 @@ export function useSellerSession(): SellerSession {
     status = "checking";
   } else if (ctx.isError) {
     status = "error";
-  } else if (ctx.isSuccess) {
-    status = ctx.data.seller ? "ready" : "not-seller";
+  } else if (ctx.isSuccess && ctx.data.seller) {
+    status = "ready";
+  } else if (access.isPending || access.isFetching) {
+    status = "checking";
+  } else if (access.isError) {
+    status = "error";
+  } else if (access.isSuccess) {
+    const a = access.data.access;
+    if (a === "suspended" || a === "disabled" || a === "pending" || a === "staff-deactivated") {
+      status = "suspended";
+      suspendedReason = a;
+    } else {
+      status = "not-seller";
+    }
   }
 
   return {
     status,
-    error: status === "error" ? (queryErrorMessage ?? "Seller access check failed.") : null,
+    error:
+      status === "error"
+        ? (queryErrorMessage ?? (access.error instanceof Error ? access.error.message : "Seller access check failed."))
+        : null,
     seller: ctx.data?.seller ?? null,
+    suspendedReason,
     userEmail: session?.user?.email ?? null,
     retry: () => {
       void ctx.refetch();
+      void access.refetch();
     },
   };
 }

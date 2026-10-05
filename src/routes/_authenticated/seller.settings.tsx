@@ -7,6 +7,7 @@ import { AdminCard, Field, Stat, TableSkeleton } from "@/components/admin/ui";
 import { SellerShell } from "@/components/seller/SellerShell";
 import { getSellerProfile, updateSellerProfile } from "@/lib/seller-support.functions";
 import { getLocale, getTranslations } from "@/lib/i18n";
+import { RouteError } from "@/components/routing/route-states";
 
 const q = queryOptions({ queryKey: ["seller-profile"], queryFn: () => getSellerProfile() });
 
@@ -14,6 +15,12 @@ export const Route = createFileRoute("/_authenticated/seller/settings")({
   validateSearch: (search: Record<string, unknown>) => ({ locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined) }),
   loader: ({ context }) => context.queryClient.ensureQueryData(q),
   pendingComponent: TableSkeleton,
+  errorComponent: ({ reset }) => (
+    <SellerShell eyebrow="Seller workspace" title="Settings">
+      <RouteError message="Settings could not be loaded. Check your connection and try again." reset={reset} />
+    </SellerShell>
+  ),
+  head: () => ({ meta: [{ name: "robots", content: "noindex,nofollow" }] }),
   component: SettingsPage,
 });
 

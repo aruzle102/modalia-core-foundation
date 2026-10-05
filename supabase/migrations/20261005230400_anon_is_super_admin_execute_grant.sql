@@ -1,0 +1,20 @@
+-- Fix critical anon catalog outage (found 2026-10-05 during Phase 8/8 finalization).
+--
+-- Many public catalog RLS policies (FOR SELECT TO anon, authenticated) call
+-- public.is_super_admin() — e.g. categories_public_read, products_public_or_owner,
+-- stores_public_active, variants/images/options/tag policies, wilayas/communes,
+-- colors/sizes/brands, homepage_sections, discovery campaigns.
+--
+-- Migration 20260913000540 revoked EXECUTE ON FUNCTION public.is_super_admin()
+-- FROM anon. In Postgres, when RLS policy evaluation invokes a function the
+-- current role may not execute, the whole query fails with 42501
+-- (permission denied for function is_super_admin) — verified live via REST.
+-- Result: the ENTIRE anonymous storefront catalog (shop, product pages,
+-- homepage, AI assistant catalog fetch) returned errors/empty for visitors.
+--
+-- This grant is safe: is_super_admin() is SECURITY DEFINER, STABLE, and simply
+-- returns public.has_role(auth.uid(), 'super_admin'). For anon, auth.uid() IS
+-- NULL, so it always returns FALSE — it reveals nothing and grants nothing.
+-- The internal has_role() call runs with the definer's rights, so the earlier
+-- has_role revoke does not affect it.
+GRANT EXECUTE ON FUNCTION public.is_super_admin() TO anon;

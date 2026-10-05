@@ -1,4 +1,6 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
+import { strParam } from "@/hooks/use-url-state";
+import { BackLink } from "@/components/routing/back-link";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -41,8 +43,12 @@ import {
 } from "@/lib/admin-orders.functions";
 
 export const Route = createFileRoute("/admin/orders/$orderId")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    back: strParam(search["back"]),
+  }),
   head: () => ({
     meta: [
+      { name: "robots", content: "noindex,nofollow" },
       { title: "Order details — Admin — Modalia" },
       { name: "description", content: "Inspect and operate on a customer order." },
     ],
@@ -72,6 +78,7 @@ type TransitionRequest = { scope: "parent" | "seller"; id: string; newStatus: st
 
 function OrderDetailPage() {
   const { orderId } = Route.useParams();
+  const { back } = Route.useSearch();
   const queryClient = useQueryClient();
   const orderQuery = useQuery({
     queryKey: ["admin-order", orderId],
@@ -137,14 +144,22 @@ function OrderDetailPage() {
 
   return (
     <AdminGate>
-      <AdminShell title="Order details" subtitle="Inspect, advance and audit every part of an order.">
-        <Link
-          to="/admin/orders"
+      <AdminShell
+        title="Order details"
+        subtitle="Inspect, advance and audit every part of an order."
+        breadcrumbs={[
+          { label: "Orders", to: "/admin/orders" },
+          { label: order?.orderNumber ? `#${order.orderNumber}` : "Order details" },
+        ]}
+      >
+        <BackLink
+          back={back}
+          fallbackTo="/admin/orders"
           className="inline-flex w-fit items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="size-4" />
           Back to orders
-        </Link>
+        </BackLink>
 
         {orderQuery.isLoading ? (
           <OrderDetailSkeleton />
@@ -162,7 +177,7 @@ function OrderDetailPage() {
             title="Order not found"
             action={
               <Button type="button" variant="outline" size="sm" asChild>
-                <Link to="/admin/orders">Back to orders</Link>
+                <BackLink back={back} fallbackTo="/admin/orders">Back to orders</BackLink>
               </Button>
             }
           />

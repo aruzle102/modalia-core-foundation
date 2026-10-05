@@ -43,7 +43,13 @@ import {
 } from "@/lib/admin-catalog.functions";
 import { errMsg, pickName } from "./_shared";
 
+import { strParam, useUrlState } from "@/hooks/use-url-state";
+
 export const Route = createFileRoute("/admin/shipping")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    wilaya: strParam(search["wilaya"]),
+  }),
+  head: () => ({ meta: [{ name: "robots", content: "noindex,nofollow" }] }),
   component: AdminShippingPage,
 });
 
@@ -61,7 +67,10 @@ function AdminShippingPage() {
 
 function ShippingManager() {
   const queryClient = useQueryClient();
-  const [wilayaId, setWilayaId] = useState<string | null>(null);
+  const url = useUrlState({ wilaya: "" });
+  const wilayaParam = strParam(url.search["wilaya"]);
+  const wilayaId = wilayaParam || null;
+  const setWilayaId = (next: string) => url.set({ wilaya: next }, { push: true });
   const [editingRule, setEditingRule] = useState<RuleRow | null | "new">(null);
 
   const wilayasQuery = useQuery({

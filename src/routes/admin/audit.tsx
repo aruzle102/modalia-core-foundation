@@ -14,8 +14,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { listAuditLogs } from "@/lib/admin-catalog.functions";
 import { errMsg, Pager } from "./_shared";
+import { numParam, strParam, useUrlState } from "@/hooks/use-url-state";
 
 export const Route = createFileRoute("/admin/audit")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    action: strParam(search["action"]),
+    resource: strParam(search["resource"]),
+    page: numParam(search["page"], 1),
+  }),
+  head: () => ({ meta: [{ name: "robots", content: "noindex,nofollow" }] }),
   component: AdminAuditPage,
 });
 
@@ -30,12 +37,17 @@ function AdminAuditPage() {
 }
 
 function AuditLogViewer() {
-  const [action, setAction] = useState("");
-  const [resource, setResource] = useState("");
-  const [page, setPage] = useState(1);
-  const [applied, setApplied] = useState({ action: "", resource: "" });
+  // Filters are draft inputs; Apply commits them to the URL (shareable, Back-friendly).
+  const url = useUrlState({ page: 1 });
+  const appliedAction = strParam(url.search["action"]);
+  const appliedResource = strParam(url.search["resource"]);
+  const page = numParam(url.search["page"], 1);
+  const [action, setAction] = useState(appliedAction);
+  const [resource, setResource] = useState(appliedResource);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const setPage = (next: number) => url.set({ page: next }, { push: true });
 
+  const applied = { action: appliedAction, resource: appliedResource };
   const logsQuery = useQuery({
     queryKey: ["admin-audit-logs", applied, page],
     queryFn: () =>
@@ -50,14 +62,12 @@ function AuditLogViewer() {
   });
 
   const apply = () => {
-    setApplied({ action, resource });
-    setPage(1);
+    url.set({ action: action.trim() || undefined, resource: resource.trim() || undefined, page: 1 });
   };
   const reset = () => {
     setAction("");
     setResource("");
-    setApplied({ action: "", resource: "" });
-    setPage(1);
+    url.set({ action: undefined, resource: undefined, page: 1 });
   };
 
   const logs = logsQuery.data?.logs ?? [];

@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { FileText } from "lucide-react";
 import { SiteFooter, SiteHeader } from "@/components/layout/site-shell";
 import { getLocale, getTranslations, localeDirections } from "@/lib/i18n";
+import { canonicalUrl } from "@/lib/seo";
 import type { SupportedLocale } from "@/config/platform";
 
 type TermsSection = { title: string; paragraphs: string[] };
@@ -253,6 +254,7 @@ export const Route = createFileRoute("/terms")({
         { property: "og:type", content: "website" },
         { name: "twitter:card", content: "summary_large_image" },
       ],
+      links: [{ rel: "canonical", href: canonicalUrl("/terms") }],
     };
   },
   component: TermsPage,
@@ -265,7 +267,7 @@ function TermsPage() {
   return (
     <div dir={localeDirections[locale]} lang={locale} className="min-h-screen bg-background">
       <SiteHeader locale={locale} t={t} />
-      <main className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
+      <main id="main-content" tabIndex={-1} className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
         <p className="text-eyebrow text-muted-foreground">{c.eyebrow}</p>
         <h1 className="mt-2 text-display">{c.title}</h1>
         <p className="mt-6 text-body text-muted-foreground">{c.lead}</p>

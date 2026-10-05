@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -13,8 +14,9 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
 import { CartProvider } from "@/lib/cart-store";
+import { PageFade } from "@/lib/motion";
 
-import { getLocale, getTranslations, localeDirections, resolveLocale } from "../lib/i18n";
+import { getTranslations, resolveLocale } from "../lib/i18n";
 
 function NotFoundComponent() {
   const locale = resolveLocale();
@@ -44,7 +46,6 @@ function NotFoundComponent() {
 }
 
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
-  console.error(error);
   const router = useRouter();
   useEffect(() => {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
@@ -113,12 +114,20 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 });
 
 function RootShell({ children }: { children: ReactNode }) {
+  const locale = resolveLocale();
+  const t = getTranslations(locale);
   return (
     <html lang="en">
       <head>
         <HeadContent />
       </head>
       <body className="bg-background font-sans text-foreground antialiased">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:start-4 focus:top-4 focus:z-[100] focus:rounded-full focus:bg-foreground focus:px-4 focus:py-2 focus:text-small focus:text-background"
+        >
+          {t.common.skipToContent}
+        </a>
         {children}
         <Toaster />
         <Scripts />
@@ -129,12 +138,17 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  // Route transition (250ms fade-and-rise); keyed by pathname only so
+  // search-param-only navigations (filters, pagination) don't remount.
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   return (
     <QueryClientProvider client={queryClient}>
       <CartProvider>
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-        <Outlet />
+        <PageFade routeKey={pathname}>
+          <Outlet />
+        </PageFade>
       </CartProvider>
     </QueryClientProvider>
   );

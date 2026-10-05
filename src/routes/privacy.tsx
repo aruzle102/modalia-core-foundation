@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Cookie, Eye, Lock, Share2, UserCheck } from "lucide-react";
 import { SiteFooter, SiteHeader } from "@/components/layout/site-shell";
 import { getLocale, getTranslations, localeDirections } from "@/lib/i18n";
+import { canonicalUrl } from "@/lib/seo";
 import type { SupportedLocale } from "@/config/platform";
 
 type PrivacySection = { title: string; paragraphs: string[]; bullets?: string[] };
@@ -62,7 +63,8 @@ const content: Record<SupportedLocale, PrivacyContent> = {
       {
         title: "ملفات تعريف الارتباط (الكوكيز)",
         paragraphs: [
-          "نستخدم ملفات تعريف ارتباط أساسية لعمل الموقع (تسجيل الدخول، السلة، لغة العرض)، وملفات تحليلية مجهولة لفهم استخدام الموقع وتحسينه. يمكنك تعطيل الكوكيز من إعدادات متصفحك، لكن بعض وظائف الموقع قد تتأثر.",
+          "نستخدم ملفات تعريف ارتباط أساسية لعمل الموقع (تسجيل الدخول، السلة، لغة العرض). ولفهم كيفية استخدام السوق، نسجّل أحداث تصفّح مجهولة — مشاهدات الصفحات والمنتجات، عمليات البحث، السلال، بدء إتمام الشراء والمشتريات. ترتبط هذه الأحداث بمعرّف عشوائي محفوظ على جهازك فقط؛ لا توجد كوكيز تتبّع من طرف ثالث ولا ملفات إعلانية.",
+          "نحترم إشارة «عدم التتبع» (Do-Not-Track) في متصفحك: عند تفعيلها لا يُسجَّل أي شيء. يرى البائعون فقط أحداثاً مجمّعة لمتجرهم، ويرى المسؤولون إحصائيات مجمّعة للمنصة. كل رقم معروض يُحسب من أحداث حقيقية مسجّلة — لا تقديرات ولا بيانات خارجية.",
         ],
       },
       {
@@ -122,7 +124,8 @@ const content: Record<SupportedLocale, PrivacyContent> = {
       {
         title: "Cookies",
         paragraphs: [
-          "Nous utilisons des cookies essentiels au fonctionnement du site (connexion, panier, langue d'affichage) et des cookies analytiques anonymisés pour comprendre l'usage du site et l'améliorer. Vous pouvez désactiver les cookies dans les paramètres de votre navigateur, mais certaines fonctions du site pourraient en être affectées.",
+          "Nous utilisons des cookies essentiels au fonctionnement du site (connexion, panier, langue d'affichage). Pour comprendre l'usage de la marketplace, nous enregistrons des événements de navigation anonymes — pages vues, produits vus, recherches, paniers, démarrages de commande et achats. Ces événements sont liés à un identifiant aléatoire stocké sur votre seul appareil ; aucun cookie de suivi tiers ni profil publicitaire.",
+          "Le signal Do-Not-Track de votre navigateur est respecté : lorsqu'il est activé, rien n'est enregistré. Les vendeurs ne voient que les événements agrégés de leur propre boutique, et les administrateurs des agrégats à l'échelle de la plateforme. Chaque chiffre publié est calculé à partir d'événements réellement enregistrés — jamais estimé ni enrichi de données externes.",
         ],
       },
       {
@@ -180,9 +183,10 @@ const content: Record<SupportedLocale, PrivacyContent> = {
         ],
       },
       {
-        title: "Cookies",
+        title: "Cookies & analytics",
         paragraphs: [
-          "We use essential cookies for the site to work (login, cart, display language) and anonymized analytics cookies to understand site usage and improve it. You can disable cookies in your browser settings, but some site features may be affected.",
+          "We use essential cookies for the site to work (login, cart, display language). To understand how the marketplace is used, we record anonymous storefront events — page views, product views, searches, bags, checkouts and purchases. These events are linked to a random identifier stored on your own device only; there are no third-party tracking cookies and no advertising profiles.",
+          "Your browser's Do-Not-Track signal is honored: when it is on, nothing is recorded. Sellers see only aggregated events for their own store, and administrators see platform-wide aggregates. Every published metric is computed from real recorded events — never estimated or enriched with outside data.",
         ],
       },
       {
@@ -218,6 +222,7 @@ export const Route = createFileRoute("/privacy")({
         { property: "og:type", content: "website" },
         { name: "twitter:card", content: "summary_large_image" },
       ],
+      links: [{ rel: "canonical", href: canonicalUrl("/privacy") }],
     };
   },
   component: PrivacyPage,
@@ -230,7 +235,7 @@ function PrivacyPage() {
   return (
     <div dir={localeDirections[locale]} lang={locale} className="min-h-screen bg-background">
       <SiteHeader locale={locale} t={t} />
-      <main className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
+      <main id="main-content" tabIndex={-1} className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
         <p className="text-eyebrow text-muted-foreground">{c.eyebrow}</p>
         <h1 className="mt-2 text-display">{c.title}</h1>
         <p className="mt-6 text-body text-muted-foreground">{c.lead}</p>

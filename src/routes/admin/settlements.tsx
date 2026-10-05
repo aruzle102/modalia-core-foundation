@@ -38,12 +38,22 @@ import {
   settlementReference,
   createSettlement,
   updateSettlementStatus,
+  getSettlementProofUrl,
   listAdminSellersLite,
   type AdminSettlementListItem,
 } from "@/lib/admin-catalog.functions";
+import { supabase } from "@/integrations/supabase/client";
+import { useAdminT } from "@/components/admin/use-admin-t";
 import { errMsg, Pager } from "./_shared";
+import { numParam, strParam, useUrlState } from "@/hooks/use-url-state";
 
 export const Route = createFileRoute("/admin/settlements")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    status: strParam(search["status"], "all"),
+    sellerId: strParam(search["sellerId"], "all"),
+    page: numParam(search["page"], 1),
+  }),
+  head: () => ({ meta: [{ name: "robots", content: "noindex,nofollow" }] }),
   component: AdminSettlementsPage,
 });
 
@@ -63,9 +73,13 @@ function AdminSettlementsPage() {
 
 function SettlementsManager() {
   const queryClient = useQueryClient();
-  const [status, setStatus] = useState<string>("all");
-  const [sellerId, setSellerId] = useState<string>("all");
-  const [page, setPage] = useState(1);
+  const t = useAdminT().settlements;
+  const url = useUrlState({ status: "all", sellerId: "all", page: 1 });
+  const status = strParam(url.search["status"], "all");
+  const sellerId = strParam(url.search["sellerId"], "all");
+  const page = numParam(url.search["page"], 1);
+  const setPage = (next: number) => url.set({ page: next }, { push: true });
+  const setFilter = (patch: Record<string, string | undefined>) => url.set({ ...patch, page: 1 });
   const [creating, setCreating] = useState(false);
   const [acting, setActing] = useState<SettlementRow | null>(null);
 
@@ -103,10 +117,7 @@ function SettlementsManager() {
             <Label>Status</Label>
             <Select
               value={status}
-              onValueChange={(v) => {
-                setStatus(v);
-                setPage(1);
-              }}
+              onValueChange={(v) => setFilter({ status: v })}
             >
               <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -122,8 +133,7 @@ function SettlementsManager() {
             <Select
               value={sellerId}
               onValueChange={(v) => {
-                setSellerId(v);
-                setPage(1);
+                setFilter({ sellerId: v });
               }}
             >
               <SelectTrigger className="w-52"><SelectValue /></SelectTrigger>
@@ -158,6 +168,7 @@ function SettlementsManager() {
                   <th className="px-3 py-2 font-medium">Period</th>
                   <th className="px-3 py-2 font-medium">Status</th>
                   <th className="px-3 py-2 font-medium">Reference</th>
+                  <th className="px-3 py-2 font-medium">{t.proof}</th>
                   <th className="px-3 py-2 font-medium">Created</th>
                   <th className="px-3 py-2 font-medium text-end">Actions</th>
                 </tr>
@@ -172,6 +183,13 @@ function SettlementsManager() {
                     </td>
                     <td className="px-3 py-3"><StatusPill status={s.status} /></td>
                     <td className="px-3 py-3 font-mono text-xs">{s.payment_reference ?? "—"}</td>
+                    <td className="px-3 py-3 text-caption">
+                      {s.payment_proof_path ? (
+                        <span className="font-medium text-emerald-600 dark:text-emerald-400">{t.proofAttached}</span>
+                      ) : (
+                        <span className="text-muted-foreground">{t.noProof}</span>
+                      )}
+                    </td>
                     <td className="px-3 py-3 text-caption">{fmtDateTime(s.created_at)}</td>
                     <td className="px-3 py-3">
                       <div className="flex flex-wrap justify-end gap-1.5">
@@ -353,10 +371,14 @@ function ManageSettlementDialog({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const t = useAdminT().settlements;
   const nextOptions =
     settlement.status === "pending" ? (["approved", "rejected", "cancelled"] as const) : (["paid", "cancelled"] as const);
   const [nextStatus, setNextStatus] = useState<string>(nextOptions[0]);
   const [paymentReference, setPaymentReference] = useState(settlement.payment_reference ?? "");
+  const [proofPath, setProofPath] = useState<string | null>(settlement.payment_proof_path ?? null);
+  const [uploading, setUploading] = useState(false);
+  const [openingProof, setOpeningProof] = useState(false);
   const [notes, setNotes] = useState(settlement.notes ?? "");
   const [serverError, setServerError] = useState<string | null>(null);
 
@@ -367,6 +389,7 @@ function ManageSettlementDialog({
           id: settlement.id,
           status: nextStatus as "approved" | "paid" | "rejected" | "cancelled",
           payment_reference: paymentReference || undefined,
+          payment_proof_path: proofPath,
           notes: notes || undefined,
         },
       }),
@@ -377,6 +400,46 @@ function ManageSettlementDialog({
     },
     onError: (e) => setServerError(errMsg(e)),
   });
+
+  const uploadProof = async (file: File) => {
+    const okType = file.type.startsWith("image/") || file.type === "application/pdf";
+    if (!okType) {
+      toast.error("Only images or PDF files are accepted.");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("File must be 10 MB or smaller.");
+      return;
+    }
+    setUploading(true);
+    try {
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 80) || "proof";
+      const path = `${settlement.id}/${Date.now()}-${safeName}`;
+      const { error } = await supabase.storage.from("settlement-proofs").upload(path, file, {
+        contentType: file.type,
+        upsert: false,
+      });
+      if (error) throw new Error(error.message);
+      setProofPath(path);
+      toast.success(t.proofAttached);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Upload failed.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const viewProof = async () => {
+    setOpeningProof(true);
+    try {
+      const { url } = await getSettlementProofUrl({ data: { settlementId: settlement.id } });
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not open the proof.");
+    } finally {
+      setOpeningProof(false);
+    }
+  };
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
@@ -409,6 +472,39 @@ function ManageSettlementDialog({
               placeholder="e.g. TRF-2026-0102"
             />
           </Field>
+          <Field label={t.proof} hint={t.proofHint}>
+            <div className="flex flex-wrap items-center gap-2">
+              {proofPath ? (
+                <>
+                  <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                    {t.proofAttached}
+                  </span>
+                  <Button type="button" size="sm" variant="outline" onClick={viewProof} disabled={openingProof}>
+                    {openingProof ? "…" : t.viewProof}
+                  </Button>
+                  <Button type="button" size="sm" variant="ghost" onClick={() => setProofPath(null)}>
+                    {t.removeProof}
+                  </Button>
+                </>
+              ) : (
+                <span className="text-sm text-muted-foreground">{t.noProof}</span>
+              )}
+              <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-input bg-background px-3 py-1.5 text-sm hover:bg-muted">
+                <Input
+                  type="file"
+                  accept="image/*,application/pdf"
+                  className="hidden"
+                  disabled={uploading}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    e.target.value = "";
+                    if (file) void uploadProof(file);
+                  }}
+                />
+                {uploading ? t.uploading : proofPath ? t.replaceProof : t.uploadProof}
+              </label>
+            </div>
+          </Field>
           <Field label="Notes (optional)">
             <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} />
           </Field>
@@ -418,7 +514,7 @@ function ManageSettlementDialog({
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={() => { setServerError(null); save.mutate(); }} disabled={save.isPending}>
+          <Button onClick={() => { setServerError(null); save.mutate(); }} disabled={save.isPending || uploading}>
             {save.isPending ? "Saving…" : "Apply"}
           </Button>
         </DialogFooter>

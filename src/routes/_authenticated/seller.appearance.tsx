@@ -4,6 +4,7 @@ import { SellerShell } from "@/components/seller/SellerShell";
 import { StoreStudio } from "@/components/seller/StoreStudio";
 import { getStoreStudio } from "@/lib/seller-store.functions";
 import { getLocale } from "@/lib/i18n";
+import { RouteError } from "@/components/routing/route-states";
 
 const studioQuery = queryOptions({ queryKey: ["seller-store-studio"], queryFn: () => getStoreStudio() });
 
@@ -12,6 +13,12 @@ export const Route = createFileRoute("/_authenticated/seller/appearance")({
     locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined),
   }),
   loader: ({ context }) => context.queryClient.ensureQueryData(studioQuery),
+  errorComponent: ({ reset }) => (
+    <SellerShell eyebrow="Seller OS" title="Store appearance">
+      <RouteError message="Store appearance could not be loaded. Check your connection and try again." reset={reset} />
+    </SellerShell>
+  ),
+  head: () => ({ meta: [{ name: "robots", content: "noindex,nofollow" }] }),
   component: AppearancePage,
 });
 

@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { keepPreviousData, queryOptions, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { ArrowLeft, Info } from "lucide-react";
@@ -6,7 +5,9 @@ import { Button } from "@/components/ui/button";
 import { SellerShell } from "@/components/seller/SellerShell";
 import { AdminCard, EmptyState, Stat, fmtMoney } from "@/components/admin/ui";
 import { Donut, OrdersBars, SalesLine, TopList } from "@/components/seller/SellerCharts";
+import { FunnelChart } from "@/components/analytics/FunnelChart";
 import { getLocale } from "@/lib/i18n";
+import { numParam, useUrlState } from "@/hooks/use-url-state";
 import {
   getSellerOrderStatusBreakdown,
   getSellerOverview,
@@ -14,6 +15,7 @@ import {
   getSellerTopProducts,
   getSellerSalesSeries,
 } from "@/lib/seller-dashboard.functions";
+import { getSellerAnalytics } from "@/lib/analytics.functions";
 
 const RANGES = [7, 30, 90] as const;
 
@@ -29,17 +31,29 @@ const topCategoriesQuery = queryOptions({
   queryFn: () => getSellerTopCategories({ data: { limit: 10 } }),
 });
 const breakdownQuery = queryOptions({ queryKey: ["seller-status-breakdown"], queryFn: () => getSellerOrderStatusBreakdown() });
+const engagementQuery = (days: number) =>
+  queryOptions({
+    queryKey: ["seller-engagement", days],
+    queryFn: () => getSellerAnalytics({ data: { days } }),
+    retry: false,
+  });
 
 export const Route = createFileRoute("/_authenticated/seller/analytics")({
-  validateSearch: (search: Record<string, unknown>) => ({ locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined) }),
-  loader: ({ context }) =>
-    Promise.all([
+  validateSearch: (search: Record<string, unknown>) => ({
+    locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined),
+    days: numParam(search["days"], 30),
+  }),
+  loaderDeps: ({ search }) => ({ days: search.days }),
+  loader: ({ context, deps }) => {
+    const days = numParam(deps.days, 30);
+    return Promise.all([
       context.queryClient.ensureQueryData(overviewQuery),
-      context.queryClient.ensureQueryData(seriesQuery(30)),
+      context.queryClient.ensureQueryData(seriesQuery(days)),
       context.queryClient.ensureQueryData(topProductsQuery),
       context.queryClient.ensureQueryData(topCategoriesQuery),
       context.queryClient.ensureQueryData(breakdownQuery),
-    ]),
+    ]);
+  },
   pendingComponent: () => <div className="px-6 py-24 text-center text-muted-foreground">Loading analytics…</div>,
   errorComponent: () => (
     <div role="alert" className="px-6 py-24 text-center text-muted-foreground">
@@ -48,6 +62,7 @@ export const Route = createFileRoute("/_authenticated/seller/analytics")({
   ),
   head: () => ({
     meta: [
+      { name: "robots", content: "noindex,nofollow" },
       { title: "Sales analytics — Modalia" },
       { name: "description", content: "Deeper sales, product and settlement analytics for your store." },
       { property: "og:title", content: "Sales analytics — Modalia" },
@@ -61,7 +76,9 @@ export const Route = createFileRoute("/_authenticated/seller/analytics")({
 });
 
 function SellerAnalyticsPage() {
-  const [days, setDays] = useState<number>(30);
+  const url = useUrlState({ days: 30 });
+  const days = numParam(url.search["days"], 30);
+  const setDays = (next: number) => url.set({ days: next }, { push: true });
   const { locale } = Route.useSearch();
   const { data: overview } = useSuspenseQuery(overviewQuery);
   const { data: topProducts } = useSuspenseQuery(topProductsQuery);
@@ -69,6 +86,7 @@ function SellerAnalyticsPage() {
   const { data: breakdown } = useSuspenseQuery(breakdownQuery);
   // Range toggle refetches without suspending the page; the previous range stays visible meanwhile.
   const { data: series } = useQuery({ ...seriesQuery(days), placeholderData: keepPreviousData });
+  const { data: engagement } = useQuery({ ...engagementQuery(days), placeholderData: keepPreviousData });
 
   const { kpis, currency } = overview;
 
@@ -84,6 +102,47 @@ function SellerAnalyticsPage() {
         </Button>
       }
     >
+      {/* Storefront engagement — real events, this store only */}
+      {engagement ? (
+        engagement.hasData ? (
+          <>
+            <AdminCard title="Storefront engagement" subtitle={`Real visitor events for your store — last ${days} days`}>
+              <div className="grid gap-4 sm:grid-cols-3">
+                <Stat label="Store views" value={engagement.totals.storeViews.toLocaleString()} hint="Visits to your store page" />
+                <Stat label="Product views" value={engagement.totals.productViews.toLocaleString()} hint="Views of your listings" />
+                <Stat label="Unique visitors" value={engagement.totals.uniqueVisitors.toLocaleString()} hint="Anonymous visitor ids" />
+              </div>
+            </AdminCard>
+
+            <div className="mt-6 grid gap-6 lg:grid-cols-2">
+              <AdminCard title="Conversion funnel" subtitle="Unique visitors reaching each stage, ending in confirmed orders">
+                <FunnelChart stages={engagement.funnel} />
+              </AdminCard>
+              <AdminCard title="Most-viewed listings" subtitle="Your products ranked by real views">
+                {engagement.topProducts.length > 0 ? (
+                  <TopList
+                    rows={engagement.topProducts.slice(0, 5).map((p) => ({
+                      label: p.name,
+                      value: `${p.views.toLocaleString()} views`,
+                      hint: `${p.carts.toLocaleString()} added to bag`,
+                    }))}
+                  />
+                ) : (
+                  <EmptyState title="No product views yet" text="Listings appear here once visitors view them." />
+                )}
+              </AdminCard>
+            </div>
+          </>
+        ) : (
+          <AdminCard title="Storefront engagement" subtitle="Real visitor events for your store">
+            <EmptyState
+              title="No engagement data yet"
+              text="Store views, product views and your conversion funnel appear here once visitors browse your store. Nothing is estimated — figures show up when real events are recorded."
+            />
+          </AdminCard>
+        )
+      ) : null}
+
       {/* Range toggle + sales chart */}
       <AdminCard
         title="Sales performance"
@@ -164,15 +223,15 @@ function SellerAnalyticsPage() {
         </AdminCard>
       </div>
 
-      {/* Honest data note — conversion cannot be computed from order rows alone */}
+      {/* Honest data note — everything here is computed from real records */}
       <div className="mt-6 flex gap-3 rounded-2xl border border-border bg-card p-5">
         <Info className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
         <div>
           <p className="text-small font-semibold">About these figures</p>
           <p className="mt-1 text-small leading-6 text-muted-foreground">
-            Every figure on this page is computed from your real order, product and settlement records. Conversion rate is not
-            shown: it would require storefront analytics events (product views, add-to-cart actions), which are not collected
-            yet. Nothing here is estimated or sampled.
+            Every figure on this page is computed from your real order, product and settlement records, plus genuine
+            storefront events (product views, bags, checkouts) recorded for your store only. Visitors are anonymous —
+            no personal data is collected. Nothing here is estimated or sampled.
           </p>
         </div>
       </div>

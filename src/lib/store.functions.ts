@@ -35,6 +35,13 @@ export interface StoreSectionView {
   title: string;
 }
 
+export interface StoreCollectionView {
+  id: string;
+  title: string;
+  subtitle: string;
+  products: CatalogProduct[];
+}
+
 export type StoreDetail = {
   id: string;
   slug: string;
@@ -43,12 +50,16 @@ export type StoreDetail = {
   logoUrl: string | null;
   bannerUrl: string | null;
   verified: boolean;
+  /** stores.settings.official === true — the platform-owned Modalia store. */
+  official: boolean;
   products: CatalogProduct[];
   categories: string[];
   /** Seller-configured appearance (from stores.settings). */
   accent: StoreAccentId;
   announcement: string | null;
   sections: StoreSectionView[];
+  /** Admin-curated collections from stores.settings.official_collections (enabled only, localized titles). */
+  collections: StoreCollectionView[];
   featuredProducts: CatalogProduct[];
   featuredCategories: CatalogCategory[];
   newProducts: CatalogProduct[];
@@ -77,10 +88,13 @@ function toCatalogProduct(product: ProductRow, storeName: string, locale: string
     slug: product.slug,
     name: text(product.name, locale, product.slug),
     price: Number(product.base_price),
+    compareAtPrice: product.compare_at_price ?? null,
     storeName,
     categorySlug: category?.slug ?? null,
     imagePath: publicUrl(images[0]?.storage_path ?? null),
     imageAlt: text(images[0]?.alt_text ?? null, locale, ""),
+    secondImagePath: publicUrl(images[1]?.storage_path ?? null),
+    secondImageAlt: text(images[1]?.alt_text ?? null, locale, ""),
     createdAt: product.created_at,
   } satisfies CatalogProduct;
 }
@@ -106,6 +120,7 @@ export const getStoreDetail = createServerFn({ method: "GET" })
     const store = storeResult.data;
 
     const settings = normalizeStoreSettings(store.settings);
+    const official = (store.settings as { official?: unknown } | null)?.official === true;
     const defaults = defaultStoreSettings().sections;
     const defaultTitle = (kind: StoreSectionKind) =>
       localizeText(defaults.find((section) => section.kind === kind)?.title, data.locale, kind);
@@ -180,6 +195,32 @@ export const getStoreDetail = createServerFn({ method: "GET" })
       .filter((section) => section.enabled)
       .map((section) => ({ id: section.id, kind: section.kind, title: localizeText(section.title, data.locale, defaultTitle(section.kind)) }));
 
+    // Admin-curated collections: resolve product ids to published products only,
+    // preserving the curated order. Never shown when empty.
+    const enabledCollections = settings.official_collections.filter(
+      (collection) => collection.enabled && collection.product_ids.length > 0,
+    );
+    const collectionProductIds = [...new Set(enabledCollections.flatMap((collection) => collection.product_ids))];
+    const collectionRowsResult = collectionProductIds.length
+      ? await publishedQuery(supabase, store.id, PRODUCT_SELECT).in("id", collectionProductIds)
+      : { data: [] as ProductRow[], error: null };
+    const collectionById = new Map(
+      ((collectionRowsResult.data ?? []) as ProductRow[]).map((product) => [
+        product.id,
+        toCatalogProduct(product, store.name, data.locale),
+      ]),
+    );
+    const collections: StoreCollectionView[] = enabledCollections
+      .map((collection) => ({
+        id: collection.id,
+        title: localizeText(collection.title, data.locale, ""),
+        subtitle: localizeText(collection.subtitle, data.locale, ""),
+        products: collection.product_ids
+          .map((id) => collectionById.get(id))
+          .filter((product): product is CatalogProduct => Boolean(product)),
+      }))
+      .filter((collection) => collection.title.length > 0 && collection.products.length > 0);
+
     return {
       id: store.id,
       slug: store.slug,
@@ -188,11 +229,13 @@ export const getStoreDetail = createServerFn({ method: "GET" })
       logoUrl: publicUrl(store.logo_path),
       bannerUrl: publicUrl(store.banner_path),
       verified: store.verification_status === "verified",
+      official,
       products,
       categories: [...new Set(products.map((product) => product.categorySlug).filter((category): category is string => Boolean(category)))],
       accent: settings.accent,
       announcement,
       sections,
+      collections,
       featuredProducts,
       featuredCategories,
       newProducts,

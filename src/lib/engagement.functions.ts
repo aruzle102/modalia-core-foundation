@@ -3,6 +3,8 @@ import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
 import { platformConfig } from "@/config/platform";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { rateLimitEndpoint } from "@/lib/rate-limit";
+import { assertAdmin } from "@/lib/admin-auth";
 
 /**
  * Public engagement entry points (newsletter + contact form).
@@ -37,6 +39,7 @@ const newsletterInput = z.object({
 export const subscribeNewsletter = createServerFn({ method: "POST" })
   .inputValidator((data) => newsletterInput.parse(data))
   .handler(async ({ data }) => {
+    rateLimitEndpoint("subscribeNewsletter", 10);
     const supabase = publicClient();
     const { error } = await supabase.from("newsletter_subscribers").upsert(
       {
@@ -62,6 +65,7 @@ const contactInput = z.object({
 export const submitContactMessage = createServerFn({ method: "POST" })
   .inputValidator((data) => contactInput.parse(data))
   .handler(async ({ data }) => {
+    rateLimitEndpoint("submitContactMessage", 10);
     const supabase = publicClient();
     const { error } = await supabase.from("contact_messages").insert({
       name: data.name,
@@ -121,15 +125,6 @@ const settingsInput = z.object({
 });
 
 const adminOnly = [requireSupabaseAuth] as const;
-
-type SupabaseRpc = (fn: string) => Promise<{ data: unknown; error: unknown }>;
-
-async function assertAdmin(context: unknown) {
-  const supabase = (context as { supabase?: { rpc?: SupabaseRpc } } | null | undefined)?.supabase;
-  if (!supabase?.rpc) throw new Error("Unauthorized");
-  const { data, error } = await supabase.rpc("is_super_admin");
-  if (error || data !== true) throw new Error("Forbidden");
-}
 
 /** Admin-only write of site settings. */
 export const updateSiteSettings = createServerFn({ method: "POST" })

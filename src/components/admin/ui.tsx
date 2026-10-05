@@ -25,7 +25,7 @@ export function AdminCard({
   className,
 }: {
   title?: string;
-  subtitle?: string;
+  subtitle?: string | undefined;
   actions?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
@@ -63,8 +63,8 @@ export function Stat({ label, value, hint }: { label: string; value: React.React
 /* ------------------------------- StatusPill ------------------------------ */
 
 const GREEN = new Set(["delivered", "approved", "active", "paid", "verified"]);
-const AMBER = new Set(["pending", "preparing", "processing"]);
-const BLUE = new Set(["confirmed", "shipped", "in_transit"]);
+const AMBER = new Set(["pending", "preparing", "processing", "under_review"]);
+const BLUE = new Set(["confirmed", "shipped", "in_transit", "converted"]);
 const RED = new Set(["cancelled", "rejected", "failed_delivery", "suspended", "disabled"]);
 const SLATE = new Set(["returned", "refunded", "archived", "hidden"]);
 
@@ -97,7 +97,7 @@ export function StatusPill({ status, className }: { status: string; className?: 
 
 /* ------------------------------- EmptyState ------------------------------ */
 
-export function EmptyState({ title, text, action }: { title: string; text?: string; action?: React.ReactNode }) {
+export function EmptyState({ title, text, action }: { title: string; text?: string | undefined; action?: React.ReactNode }) {
   return (
     <div className="flex flex-col items-center justify-center gap-2 px-4 py-12 text-center">
       <div className="flex h-11 w-11 items-center justify-center rounded-full bg-muted">
@@ -144,7 +144,7 @@ export function ConfirmDialog({
   description?: string;
   confirmLabel?: string;
   onConfirm: () => void;
-  danger?: boolean;
+  danger?: boolean | undefined;
 }) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>

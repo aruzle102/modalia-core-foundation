@@ -9,7 +9,7 @@ import { errMsg } from "../admin/_shared";
 
 export const Route = createFileRoute("/_authenticated/seller/customers")({
   validateSearch: (search: Record<string, unknown>) => ({ locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined) }),
-  head: () => ({ meta: [{ title: "Customers — Seller — Modalia" }, { name: "description", content: "Customers who bought from your store." }] }),
+  head: () => ({ meta: [{ name: "robots", content: "noindex,nofollow" }, { title: "Customers — Seller — Modalia" }, { name: "description", content: "Customers who bought from your store." }] }),
   component: SellerCustomersPage,
 });
 

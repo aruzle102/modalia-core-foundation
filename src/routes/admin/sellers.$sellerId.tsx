@@ -1,4 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { strParam } from "@/hooks/use-url-state";
+import { BackLink } from "@/components/routing/back-link";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -6,6 +8,7 @@ import {
   ArrowLeft,
   BadgeCheck,
   Ban,
+  Pencil,
   Power,
   ShieldCheck,
   Star,
@@ -33,10 +36,15 @@ import {
   updateStoreVerification,
   updateCommissionRate,
 } from "@/lib/admin-sellers.functions";
+import { EditSellerDialog } from "@/components/admin/EditSellerDialog";
+import { useAdminT } from "@/components/admin/use-admin-t";
 
 export const Route = createFileRoute("/admin/sellers/$sellerId")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    back: strParam(search["back"]),
+  }),
   head: () => ({
-    meta: [{ title: "Seller Profile — Modalia Admin" }],
+    meta: [{ name: "robots", content: "noindex,nofollow" }, { title: "Seller Profile — Modalia Admin" }],
   }),
   component: SellerProfilePage,
 });
@@ -57,13 +65,16 @@ function isOfficialStore(settings: unknown): boolean {
 
 function SellerProfilePage() {
   const { sellerId } = Route.useParams();
+  const { back } = Route.useSearch();
   const queryClient = useQueryClient();
+  const t = useAdminT().sellers;
   const [confirmAction, setConfirmAction] = useState<null | {
     kind: "suspend" | "disable" | "verify";
     title: string;
     description: string;
     confirmLabel: string;
   }>(null);
+  const [editOpen, setEditOpen] = useState(false);
   const [commissionInput, setCommissionInput] = useState("");
 
   const profileQuery = useQuery({
@@ -134,13 +145,17 @@ function SellerProfilePage() {
       <AdminShell
         title={store?.name ?? seller?.legal_name ?? "Seller profile"}
         subtitle="Seller account, store, sales, and activity."
+        breadcrumbs={[
+          { label: "Sellers", to: "/admin/sellers" },
+          { label: store?.name ?? seller?.legal_name ?? "Seller profile" },
+        ]}
         actions={
-          <Link to="/admin/sellers">
-            <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" asChild>
+            <BackLink back={back} fallbackTo="/admin/sellers">
               <ArrowLeft className="size-4 me-1.5" />
-              All sellers
-            </Button>
-          </Link>
+              Back to sellers
+            </BackLink>
+          </Button>
         }
       >
         {profileQuery.isLoading ? (
@@ -157,6 +172,10 @@ function SellerProfilePage() {
               subtitle={seller.email ?? ""}
               actions={
                 <div className="flex flex-wrap gap-2">
+                  <Button size="sm" variant="outline" onClick={() => setEditOpen(true)}>
+                    <Pencil className="size-4 me-1.5" />
+                    {t.edit}
+                  </Button>
                   {seller.account_status !== "active" && (
                     <Button
                       size="sm"
@@ -391,7 +410,7 @@ function SellerProfilePage() {
                 title="Products"
                 subtitle={`${profile.stats.productCount} products`}
                 actions={
-                  <Link to="/admin/products">
+                  <Link to="/admin/products" search={{ q: "", moderation: "all", status: "all", sellerId, page: 1, create: "" }}>
                     <Button variant="outline" size="sm">
                       View products
                     </Button>
@@ -594,7 +613,7 @@ function SellerProfilePage() {
                       {profile.application.proposed_store_name}
                     </span>
                   </div>
-                  <Link to="/admin/applications">
+                  <Link to="/admin/applications" search={{ q: "", status: "all", page: 1, application: "" }}>
                     <Button variant="outline" size="sm">
                       Open applications
                     </Button>
@@ -619,6 +638,20 @@ function SellerProfilePage() {
             else if (confirmAction?.kind === "verify") verifyMutation.mutate();
           }}
         />
+        {editOpen && seller ? (
+          <EditSellerDialog
+            sellerId={seller.id}
+            initial={{
+              legal_name: seller.legal_name,
+              first_name: seller.first_name,
+              last_name: seller.last_name,
+              phone: seller.phone,
+              email: seller.email,
+            }}
+            onClose={() => setEditOpen(false)}
+            onSaved={refresh}
+          />
+        ) : null}
       </AdminShell>
     </AdminGate>
   );

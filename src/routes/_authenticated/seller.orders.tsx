@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,12 +8,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AdminCard, EmptyState, StatusPill, TableSkeleton, Field, fmtDateTime, fmtMoney } from "@/components/admin/ui";
 import { listSellerOrders } from "@/lib/seller-orders.functions";
 import { getLocale } from "@/lib/i18n";
+import { numParam, strParam, useBackParam, useDebouncedUrlParam, useUrlState } from "@/hooks/use-url-state";
 import { SellerShell } from "@/components/seller/SellerShell";
 import { errMsg, Pager } from "../admin/_shared";
 
 export const Route = createFileRoute("/_authenticated/seller/orders")({
-  validateSearch: (search: Record<string, unknown>) => ({ locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined) }),
-  head: () => ({ meta: [{ title: "Orders — Seller — Modalia" }, { name: "description", content: "Manage your store's orders." }] }),
+  validateSearch: (search: Record<string, unknown>) => ({
+    locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined),
+    q: strParam(search["q"]),
+    status: strParam(search["status"]),
+    page: numParam(search["page"], 1),
+  }),
+  head: () => ({ meta: [{ name: "robots", content: "noindex,nofollow" }, { title: "Orders — Seller — Modalia" }, { name: "description", content: "Manage your store's orders." }] }),
   component: SellerOrdersPage,
 });
 
@@ -33,9 +39,14 @@ const STATUS_OPTIONS = [
 
 function SellerOrdersPage() {
   const { locale } = Route.useSearch();
-  const [search, setSearch] = useState("");
-  const [status, setStatus] = useState<string>("");
-  const [page, setPage] = useState(1);
+  const backParam = useBackParam();
+  const url = useUrlState({ status: "", page: 1 });
+  const search = strParam(url.search["q"]);
+  const status = strParam(url.search["status"]);
+  const page = numParam(url.search["page"], 1);
+  const [searchInput, setSearchInput] = useDebouncedUrlParam("q", "", {
+    onCommit: () => url.set({ page: 1 }),
+  });
 
   const payload = useMemo(() => {
     const q = search.trim();
@@ -56,7 +67,7 @@ function SellerOrdersPage() {
   const total = ordersQuery.data?.total ?? 0;
   const pageSize = ordersQuery.data?.pageSize ?? 20;
 
-  const resetPage = () => setPage(1);
+  const resetFilters = () => url.set({ q: "", status: "", page: 1 });
   const hasFilters = search.trim() !== "" || status !== "";
 
   return (
@@ -73,7 +84,7 @@ function SellerOrdersPage() {
               type="button"
               variant="ghost"
               size="sm"
-              onClick={() => { setSearch(""); setStatus(""); setPage(1); }}
+              onClick={() => resetFilters()}
             >
               <X className="size-4" />
               Clear
@@ -86,15 +97,15 @@ function SellerOrdersPage() {
             <div className="relative">
               <Search className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                value={search}
-                onChange={(e) => { setSearch(e.target.value); resetPage(); }}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
                 placeholder="Order no, phone or name…"
                 className="ps-9"
               />
             </div>
           </Field>
           <Field label="Status">
-            <Select value={status} onValueChange={(v) => { setStatus(v === "all" ? "" : v); resetPage(); }}>
+            <Select value={status || "all"} onValueChange={(v) => url.set({ status: v === "all" ? "" : v, page: 1 })}>
               <SelectTrigger><SelectValue placeholder="All statuses" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All statuses</SelectItem>
@@ -144,7 +155,7 @@ function SellerOrdersPage() {
                         <Link
                           to="/seller/orders/$orderId"
                           params={{ orderId: order.id }}
-                          search={{ locale }}
+                          search={{ locale, back: backParam, q: search, status, page }}
                           className="font-semibold text-primary underline-offset-4 hover:underline"
                         >
                           {order.orderNumber}
@@ -163,7 +174,7 @@ function SellerOrdersPage() {
                 </tbody>
               </table>
             </AdminCard>
-            <Pager page={page} total={total} pageSize={pageSize} onPage={setPage} />
+            <Pager page={page} total={total} pageSize={pageSize} onPage={(p) => url.set({ page: p }, { push: true })} />
           </div>
         )}
       </div>

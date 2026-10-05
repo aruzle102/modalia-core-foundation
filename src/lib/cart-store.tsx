@@ -40,8 +40,8 @@ function readCart(): CartLine[] {
 }
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<CartLine[]>([]);
-  useEffect(() => { setItems(readCart()); }, []);
+  // Lazy init from localStorage so a refresh never flashes an empty cart.
+  const [items, setItems] = useState<CartLine[]>(readCart);
   useEffect(() => { if (typeof window !== "undefined") localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); }, [items]);
   const addItem = useCallback((item: CartLine) => setItems((current) => {
     const existing = current.find((line) => line.variantId === item.variantId);

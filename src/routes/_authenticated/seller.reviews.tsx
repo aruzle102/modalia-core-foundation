@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { BadgeCheck, Flag, Star } from "lucide-react";
 import { toast } from "sonner";
@@ -8,12 +8,17 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AdminCard, EmptyState, StatusPill, TableSkeleton, fmtDateTime } from "@/components/admin/ui";
 import { listSellerReviews, flagReviewForRemoderation } from "@/lib/seller-orders.functions";
 import { getLocale } from "@/lib/i18n";
+import { numParam, strParam, useUrlState } from "@/hooks/use-url-state";
 import { SellerShell } from "@/components/seller/SellerShell";
 import { errMsg, Pager } from "../admin/_shared";
 
 export const Route = createFileRoute("/_authenticated/seller/reviews")({
-  validateSearch: (search: Record<string, unknown>) => ({ locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined) }),
-  head: () => ({ meta: [{ title: "Reviews — Seller — Modalia" }, { name: "description", content: "Reviews on your products." }] }),
+  validateSearch: (search: Record<string, unknown>) => ({
+    locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined),
+    queue: strParam(search["queue"], "all"),
+    page: numParam(search["page"], 1),
+  }),
+  head: () => ({ meta: [{ name: "robots", content: "noindex,nofollow" }, { title: "Reviews — Seller — Modalia" }, { name: "description", content: "Reviews on your products." }] }),
   component: SellerReviewsPage,
 });
 
@@ -30,9 +35,12 @@ type Queue = (typeof QUEUES)[number]["value"];
 
 function SellerReviewsPage() {
   const { locale } = Route.useSearch();
-  const [queue, setQueue] = useState<Queue>("all");
-  const [page, setPage] = useState(1);
+  const url = useUrlState({ queue: "all", page: 1 });
+  const queue = strParam(url.search["queue"], "all") as Queue;
+  const page = numParam(url.search["page"], 1);
   const queryClient = useQueryClient();
+
+  const setQueue = (next: Queue) => url.set({ queue: next, page: 1 }, { push: true });
 
   const payload = useMemo(
     () => ({ page, ...(queue !== "all" ? { status: queue as "pending" | "flagged" | "approved" | "rejected" | "hidden" } : {}) }),
@@ -64,7 +72,7 @@ function SellerReviewsPage() {
       title="Reviews"
     >
       <p className="text-body text-muted-foreground">"Reviews left on your own products. You can flag a review for re-moderation — the final decision stays with the platform team."</p>
-      <Tabs value={queue} onValueChange={(v) => { setQueue(v as Queue); setPage(1); }}>
+      <Tabs value={queue} onValueChange={(v) => setQueue(v as Queue)}>
         <TabsList className="flex flex-wrap">
           {QUEUES.map((q) => (
             <TabsTrigger key={q.value} value={q.value}>{q.label}</TabsTrigger>
@@ -130,7 +138,7 @@ function SellerReviewsPage() {
                 </AdminCard>
               ))}
             </div>
-            <Pager page={page} total={total} pageSize={pageSize} onPage={setPage} />
+            <Pager page={page} total={total} pageSize={pageSize} onPage={(p) => url.set({ page: p }, { push: true })} />
           </div>
         )}
       </div>

@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import type { Database, Json } from "@/integrations/supabase/types";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertAdmin } from "@/lib/admin-auth";
 
 /**
  * Admin Order Operations Center — server functions (Phase 1/4, Problem 2).
@@ -85,7 +86,6 @@ const SELLER_TRANSITIONS: Record<SellerOrderStatus, SellerOrderStatus[]> = {
 };
 
 const adminOnly = [requireSupabaseAuth] as const;
-async function assertAdmin(context: any){if (!context) throw new Error("Unauthorized"); const {data,error}=await context.supabase.rpc("is_super_admin");if(error||data!==true)throw new Error("Forbidden");}
 
 const PAGE_SIZE = 25;
 
@@ -296,6 +296,7 @@ export const listAdminOrders = createServerFn({ method: "GET" })
       query = query.or(
         [
           `order_number.ilike.${pattern}`,
+          `guest_email.ilike.${pattern}`,
           `guest_phone.ilike.${pattern}`,
           `first_name.ilike.${pattern}`,
           `last_name.ilike.${pattern}`,

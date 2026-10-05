@@ -12,12 +12,16 @@ import {
   getInventoryOverview,
 } from "@/lib/seller-products.functions";
 import { getLocale, localeDirections } from "@/lib/i18n";
+import { numParam, strParam, useBackParam, useUrlState } from "@/hooks/use-url-state";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/seller/inventory")({
   validateSearch: (search: Record<string, unknown>) => ({
     locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined),
+    filter: strParam(search["filter"], "all"),
+    historyPage: numParam(search["historyPage"], 1),
   }),
+  head: () => ({ meta: [{ name: "robots", content: "noindex,nofollow" }] }),
   component: InventoryPage,
 });
 
@@ -43,12 +47,17 @@ const statusTone: Record<OverviewRow["status"], string> = {
 function InventoryPage() {
   const { locale } = Route.useSearch();
   const queryClient = useQueryClient();
-  const [filter, setFilter] = useState<"all" | "ok" | "low" | "out">("all");
+  const backParam = useBackParam();
+  const url = useUrlState({ filter: "all", historyPage: 1 });
+  const filter = strParam(url.search["filter"], "all") as "all" | "ok" | "low" | "out";
+  const historyPage = numParam(url.search["historyPage"], 1);
   const [editing, setEditing] = useState<string | null>(null);
   const [qtyInput, setQtyInput] = useState("");
   const [thresholdInput, setThresholdInput] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [historyPage, setHistoryPage] = useState(1);
+
+  const setFilter = (next: "all" | "ok" | "low" | "out") => url.set({ filter: next });
+  const setHistoryPage = (next: number) => url.set({ historyPage: next }, { push: true });
 
   const overview = useQuery({
     queryKey: ["seller-inventory"],
@@ -190,7 +199,7 @@ function InventoryPage() {
                           <Link
                             to="/seller/products/$productId"
                             params={{ productId: r.productId }}
-                            search={{ locale }}
+                            search={{ locale, back: backParam, q: "", status: "", moderation: "", page: 1 }}
                             className="font-medium hover:underline"
                           >
                             {r.productName}
@@ -334,7 +343,7 @@ function InventoryPage() {
                       variant="outline"
                       size="sm"
                       disabled={historyPage <= 1}
-                      onClick={() => setHistoryPage((n) => n - 1)}
+                      onClick={() => setHistoryPage(historyPage - 1)}
                     >
                       Previous
                     </Button>
@@ -342,7 +351,7 @@ function InventoryPage() {
                       variant="outline"
                       size="sm"
                       disabled={historyPage >= Math.ceil(historyTotal / 25)}
-                      onClick={() => setHistoryPage((n) => n + 1)}
+                      onClick={() => setHistoryPage(historyPage + 1)}
                     >
                       Next
                     </Button>

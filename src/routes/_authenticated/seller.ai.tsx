@@ -1,19 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Check, Copy, Info, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { AdminCard, EmptyState, Field, TableSkeleton } from "@/components/admin/ui";
 import { getSellerAiCatalog, type AiCatalogProduct } from "@/lib/seller-orders.functions";
+import { aiSellerDraft, aiApplySellerDraft } from "@/lib/ai.functions";
 import { getLocale } from "@/lib/i18n";
 import { SellerShell } from "@/components/seller/SellerShell";
 import { errMsg } from "../admin/_shared";
 
 export const Route = createFileRoute("/_authenticated/seller/ai")({
   validateSearch: (search: Record<string, unknown>) => ({ locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined) }),
-  head: () => ({ meta: [{ title: "AI tools — Seller — Modalia" }, { name: "description", content: "Rule-based writing helpers for your listings." }] }),
+  head: () => ({ meta: [{ name: "robots", content: "noindex,nofollow" }, { title: "AI tools — Seller — Modalia" }, { name: "description", content: "Rule-based writing helpers for your listings." }] }),
   component: SellerAiPage,
 });
 
@@ -197,9 +198,151 @@ function SellerAiPage() {
               </div>
             </AdminCard>
           ) : null}
+
+          {product ? <AiDraftStudio key={product.id} productId={product.id} productName={product.name} /> : null}
         </div>
       )}
     </SellerShell>
+  );
+}
+
+/**
+ * AI draft studio: generates description drafts, tag and category
+ * suggestions for the selected product. Drafts are NEVER auto-published —
+ * the seller reviews, edits, and explicitly applies them. Applying only
+ * edits the description text; the product's publication status is untouched.
+ */
+function AiDraftStudio({ productId, productName }: { productId: string; productName: string }) {
+  const [draft, setDraft] = useState<string>("");
+  const [edited, setEdited] = useState<string>("");
+  const [source, setSource] = useState<"provider" | "rules" | null>(null);
+  const [tags, setTags] = useState<string[]>([]);
+  const [categories, setCategories] = useState<Array<{ slug: string; name: string }>>([]);
+  const [note, setNote] = useState<string>("");
+  const [applied, setApplied] = useState(false);
+
+  const generate = useMutation({
+    mutationFn: (kind: "description" | "tags" | "category") =>
+      aiSellerDraft({ data: { productId, kind, locale: "en" } }),
+    onSuccess: (result) => {
+      setSource(result.source);
+      setApplied(false);
+      if (result.kind === "description" && "draft" in result && result.draft) {
+        setDraft(result.draft);
+        setEdited(result.draft);
+      }
+      if (result.kind === "tags") setTags(result.tags);
+      if (result.kind === "category" && "categories" in result) {
+        setCategories(result.categories as Array<{ slug: string; name: string }>);
+        if ("note" in result && typeof result.note === "string") setNote(result.note);
+      }
+    },
+  });
+
+  const apply = useMutation({
+    mutationFn: () => aiApplySellerDraft({ data: { productId, locale: "en", description: edited } }),
+    onSuccess: () => setApplied(true),
+  });
+
+  const resetFor = () => {
+    setApplied(false);
+  };
+
+  return (
+    <AdminCard
+      title="Description draft studio"
+      subtitle={`Drafts for “${productName}”. Nothing here publishes anything.`}
+      actions={<Sparkles className="size-4 text-muted-foreground" />}
+    >
+      <div className="space-y-5">
+        <div className="flex items-start gap-3 rounded-2xl border border-sky-500/30 bg-sky-500/10 p-4">
+          <Info className="mt-0.5 size-5 shrink-0 text-sky-600 dark:text-sky-400" />
+          <div className="text-sm">
+            <p className="font-semibold text-sky-800 dark:text-sky-300">Human approval required.</p>
+            <p className="mt-1 text-sky-800/80 dark:text-sky-300/80">
+              Generated text is a draft built only from your product's real fields. Review and edit it, then apply it
+              explicitly. Applying edits the description text only — your product's publication status never changes
+              automatically.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" variant="outline" disabled={generate.isPending} onClick={() => { resetFor(); generate.mutate("description"); }}>
+            {generate.isPending && generate.variables === "description" ? "Generating…" : "Generate description draft"}
+          </Button>
+          <Button type="button" variant="outline" disabled={generate.isPending} onClick={() => { resetFor(); generate.mutate("tags"); }}>
+            {generate.isPending && generate.variables === "tags" ? "Suggesting…" : "Suggest tags"}
+          </Button>
+          <Button type="button" variant="outline" disabled={generate.isPending} onClick={() => { resetFor(); generate.mutate("category"); }}>
+            {generate.isPending && generate.variables === "category" ? "Matching…" : "Suggest category"}
+          </Button>
+        </div>
+
+        {generate.isError ? (
+          <p className="text-sm text-destructive">Generation failed: {errMsg(generate.error)}</p>
+        ) : null}
+
+        {source ? (
+          <p className="text-xs text-muted-foreground">
+            Generated by {source === "provider" ? "the connected AI provider" : "the rule-based assistant (no external AI)"} — from your product data only.
+          </p>
+        ) : null}
+
+        {draft ? (
+          <div className="space-y-3">
+            <Field label="Draft — review and edit before applying">
+              <Textarea value={edited} onChange={(e) => { setEdited(e.target.value); setApplied(false); }} rows={10} dir="auto" />
+            </Field>
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                type="button"
+                disabled={apply.isPending || !edited.trim() || applied}
+                onClick={() => apply.mutate()}
+              >
+                {apply.isPending ? "Applying…" : "Apply to product description"}
+              </Button>
+              {applied ? (
+                <p className="text-sm text-emerald-600 dark:text-emerald-400">
+                  Saved. Publication status unchanged — publish from the product editor when ready.
+                </p>
+              ) : null}
+              {apply.isError ? <p className="text-sm text-destructive">{errMsg(apply.error)}</p> : null}
+            </div>
+          </div>
+        ) : null}
+
+        {tags.length ? (
+          <div>
+            <p className="text-sm font-medium">Tag suggestions</p>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {tags.map((tag) => (
+                <span key={tag} className="rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground" dir="auto">
+                  {tag}
+                </span>
+              ))}
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">Extracted or suggested from your product name, category and attributes. Add the ones you like in the product editor.</p>
+          </div>
+        ) : null}
+
+        {categories.length ? (
+          <div>
+            <p className="text-sm font-medium">Category suggestions</p>
+            <ul className="mt-2 space-y-1 text-sm">
+              {categories.map((c) => (
+                <li key={c.slug} className="flex items-center gap-2">
+                  <Check className="size-4 text-emerald-600" />
+                  <span dir="auto">{c.name}</span>
+                  <span className="text-xs text-muted-foreground">({c.slug})</span>
+                </li>
+              ))}
+            </ul>
+            {note ? <p className="mt-2 text-xs text-muted-foreground">{note}</p> : null}
+          </div>
+        ) : null}
+      </div>
+    </AdminCard>
   );
 }
 

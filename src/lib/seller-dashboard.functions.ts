@@ -16,6 +16,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireSeller, type SellerContext } from "@/lib/seller-auth";
+import { pickLocalizedName } from "@/lib/names";
 
 const sellerOnly = [requireSupabaseAuth] as const;
 
@@ -57,16 +58,6 @@ async function countRows(table: string, diagnostics: TableDiagnostic[], query: a
   }
 }
 
-/** Pick the display name from a {en,fr,ar} jsonb object (pattern from src/routes/admin/_shared.tsx). */
-function pickName(name: unknown, fallback: string): string {
-  if (!name || typeof name !== "object" || Array.isArray(name)) return fallback;
-  const n = name as Record<string, unknown>;
-  for (const key of ["en", "fr", "ar"]) {
-    const v = n[key];
-    if (typeof v === "string" && v.trim()) return v.trim();
-  }
-  return fallback;
-}
 
 const num = (value: unknown): number => {
   const n = Number(value ?? 0);
@@ -280,7 +271,7 @@ export const getSellerOverview = createServerFn({ method: "GET" })
         const variant = row.product_variants;
         const product = variant?.products;
         lowStockAlerts.push({
-          productName: pickName(product?.name, variant?.sku ?? "Variant"),
+          productName: pickLocalizedName(product?.name, variant?.sku ?? "Variant"),
           slug: product?.slug ?? "",
           variantSku: variant?.sku ?? "",
           qty,
@@ -374,7 +365,7 @@ const limitInput = z.object({ limit: z.number().int().min(1).max(25).default(5) 
 
 function itemName(item: { title: unknown; product_snapshot: unknown }, fallback: string): string {
   const snap = (item.product_snapshot ?? {}) as Record<string, unknown>;
-  return pickName(item.title, "") || pickName(snap["title"], "") || fallback;
+  return pickLocalizedName(item.title, "") || pickLocalizedName(snap["title"], "") || fallback;
 }
 
 /** Top products by revenue (SUM(order_items.total)) across this seller's non-cancelled seller_orders. */
@@ -437,7 +428,7 @@ export const getSellerTopCategories = createServerFn({ method: "GET" })
     const categoryNames = new Map<string, string>(
       ((categoriesResult.data ?? []) as CategoryLiteRow[]).map((c) => [
         c.id,
-        pickName(c.name, c.slug) || c.id.slice(0, 8),
+        pickLocalizedName(c.name, c.slug) || c.id.slice(0, 8),
       ]),
     );
 

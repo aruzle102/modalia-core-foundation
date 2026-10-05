@@ -1,14 +1,38 @@
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
+# Modalia — public crawler policy
+# The dynamic sitemap is served by the server at /sitemap.xml (see src/server.ts).
+# Private flows (admin, seller, account, checkout, cart, auth) stay out of the index.
 
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /seller
+Disallow: /account
+Disallow: /checkout
+Disallow: /cart
+Disallow: /auth
+Disallow: /order-success
+Disallow: /wishlist
+
+User-agent: Googlebot
+Allow: /
+Disallow: /admin
+Disallow: /seller
+Disallow: /account
+Disallow: /checkout
+Disallow: /cart
+Disallow: /auth
+Disallow: /order-success
+Disallow: /wishlist
+
+User-agent: Bingbot
+Allow: /
+Disallow: /admin
+Disallow: /seller
+Disallow: /account
+Disallow: /checkout
+Disallow: /cart
+Disallow: /auth
+Disallow: /order-success
+Disallow: /wishlist
+
+Sitemap: https://modalia-core-foundation.lovable.app/sitemap.xml

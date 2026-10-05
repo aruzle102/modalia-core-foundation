@@ -15,6 +15,13 @@ export type CatalogProduct = {
   imagePath: string | null;
   imageAlt: string;
   createdAt: string;
+  /** Product-level compare-at price. Present only when the source query selected it. */
+  compareAtPrice?: number | null;
+  /** Second image by sort_order, for hover crossfade on cards. */
+  secondImagePath?: string | null;
+  secondImageAlt?: string;
+  /** Summed available stock across active variants. Absent when unknown — never guess. */
+  totalStock?: number;
 };
 
 export type CatalogCategory = {
@@ -81,20 +88,56 @@ async function fetchDiscoveryData(locale: string): Promise<DiscoveryData> {
     const [sectionResult, categoryResult, productResult, storeResult] = await Promise.all([
       supabase.from("homepage_sections").select("section_key,kind,title,subtitle,content").eq("enabled", true).order("sort_order"),
       supabase.from("categories").select("id,slug,name").eq("status", "active").is("parent_id", null).order("sort_order"),
-      supabase.from("products").select("id,slug,name,base_price,created_at,category:categories(slug),seller:sellers(stores(name)),images:product_images(storage_path,alt_text,sort_order)").eq("status", "active").eq("publication_status", "published").eq("moderation_status", "approved").eq("visibility", "public").order("created_at", { ascending: false }).limit(24),
+      supabase.from("products").select("id,slug,name,base_price,compare_at_price,created_at,category:categories(slug),seller:sellers(stores(name)),images:product_images(storage_path,alt_text,sort_order)").eq("status", "active").eq("publication_status", "published").eq("moderation_status", "approved").eq("visibility", "public").order("created_at", { ascending: false }).limit(24),
       supabase.from("stores").select("id,slug,name,description,logo_path,banner_path,seller_id").eq("status", "active").order("created_at", { ascending: false }).limit(12),
     ]);
     if (sectionResult.error || categoryResult.error || productResult.error || storeResult.error) {
       console.error("Catalog query failed", { sections: sectionResult.error?.message, categories: categoryResult.error?.message, products: productResult.error?.message, stores: storeResult.error?.message });
     }
 
-    const products = (productResult.data ?? []).map((product) => {
+    const rows = productResult.data ?? [];
+    const productIds = rows.map((product) => product.id);
+
+    // Real per-product stock: sum available (quantity - reserved) across active variants.
+    // One batched lookup; if it fails we simply omit totalStock so no badge is shown.
+    const stockByProduct = new Map<string, number>();
+    if (productIds.length) {
+      const variantResult = await supabase
+        .from("product_variants")
+        .select("id,product_id")
+        .eq("status", "active")
+        .in("product_id", productIds);
+      if (!variantResult.error) {
+        const variantToProduct = new Map(
+          (variantResult.data ?? []).map((variant) => [variant.id, variant.product_id] as const),
+        );
+        const variantIds = [...variantToProduct.keys()];
+        if (variantIds.length) {
+          const inventoryResult = await supabase
+            .from("inventory")
+            .select("variant_id,quantity,reserved_quantity")
+            .in("variant_id", variantIds);
+          if (!inventoryResult.error) {
+            for (const row of inventoryResult.data ?? []) {
+              const pid = variantToProduct.get(row.variant_id);
+              if (!pid) continue;
+              const availableQty = Math.max(0, (row.quantity ?? 0) - (row.reserved_quantity ?? 0));
+              stockByProduct.set(pid, (stockByProduct.get(pid) ?? 0) + availableQty);
+            }
+          }
+        }
+      }
+    }
+
+    const products = rows.map((product) => {
       const images = Array.isArray(product.images) ? [...product.images].sort((a, b) => a.sort_order - b.sort_order) : [];
       const firstImage = images[0];
+      const secondImage = images[1];
       const seller = Array.isArray(product.seller) ? product.seller[0] : product.seller;
       const sellerStores = seller && Array.isArray(seller.stores) ? seller.stores : [];
       const category = Array.isArray(product.category) ? product.category[0] : product.category;
-      return { id: product.id, slug: product.slug, name: localized(product.name, locale, product.slug), price: Number(product.base_price), storeName: sellerStores[0]?.name ?? "Modalia store", categorySlug: category?.slug ?? null, imagePath: publicUrl(firstImage?.storage_path ?? null), imageAlt: localized(firstImage?.alt_text ?? null, locale, ""), createdAt: product.created_at };
+      const totalStock = stockByProduct.get(product.id);
+      return { id: product.id, slug: product.slug, name: localized(product.name, locale, product.slug), price: Number(product.base_price), compareAtPrice: product.compare_at_price ?? null, storeName: sellerStores[0]?.name ?? "Modalia store", categorySlug: category?.slug ?? null, imagePath: publicUrl(firstImage?.storage_path ?? null), imageAlt: localized(firstImage?.alt_text ?? null, locale, ""), secondImagePath: publicUrl(secondImage?.storage_path ?? null), secondImageAlt: localized(secondImage?.alt_text ?? null, locale, ""), ...(totalStock === undefined ? {} : { totalStock }), createdAt: product.created_at };
     });
     const categoryCounts = new Map<string, number>();
     products.forEach((product) => { if (product.categorySlug) categoryCounts.set(product.categorySlug, (categoryCounts.get(product.categorySlug) ?? 0) + 1); });

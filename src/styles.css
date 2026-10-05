@@ -492,6 +492,51 @@ html {
     animation: none !important;
   }
 }
+
+/* Brand entrance: brief cinematic wordmark reveal, fades out (JS unmounts after 1.25s). */
+.brand-entrance {
+  animation: brand-entrance 1.2s cubic-bezier(0.16, 0.8, 0.24, 1) forwards;
+  pointer-events: none;
+}
+.brand-entrance-word > span {
+  display: inline-block;
+  opacity: 0;
+  animation: brand-entrance-letter 0.65s cubic-bezier(0.16, 0.8, 0.24, 1) forwards;
+}
+.brand-entrance-word > span:nth-child(1) { animation-delay: 0.04s; }
+.brand-entrance-word > span:nth-child(2) { animation-delay: 0.1s; }
+.brand-entrance-word > span:nth-child(3) { animation-delay: 0.16s; }
+.brand-entrance-word > span:nth-child(4) { animation-delay: 0.22s; }
+.brand-entrance-word > span:nth-child(5) { animation-delay: 0.28s; }
+.brand-entrance-word > span:nth-child(6) { animation-delay: 0.34s; }
+.brand-entrance-word > span:nth-child(7) { animation-delay: 0.4s; }
+@keyframes brand-entrance-letter {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes brand-entrance {
+  0% {
+    opacity: 1;
+  }
+  72% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .brand-entrance {
+    display: none;
+  }
+}
 .success-orbit {
   box-shadow:
     0 0 0 12px rgba(0, 0, 0, 0.04),

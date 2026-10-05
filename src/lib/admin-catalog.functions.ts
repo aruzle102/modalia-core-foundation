@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database, Json } from "@/integrations/supabase/types";
+import { emitSellerNotification } from "@/lib/notifications.functions";
 
 type ProductUpdate = Database["public"]["Tables"]["products"]["Update"];
 type ShippingRuleInsert = Database["public"]["Tables"]["shipping_rules"]["Insert"];
@@ -181,6 +182,32 @@ export const moderateAdminProduct = createServerFn({ method: "POST" })
       decision: data.decision,
       reason: data.reason ?? null,
     });
+
+    // Notify the seller about the moderation decision (best-effort).
+    try {
+      const productRow = await supabaseAdmin.from("products").select("id,seller_id,name").eq("id", data.id).maybeSingle();
+      const sellerId = productRow.data?.seller_id;
+      if (sellerId) {
+        const rawName = productRow.data?.name as Record<string, unknown> | string | null;
+        const productName =
+          typeof rawName === "string"
+            ? rawName
+            : typeof rawName?.["fr"] === "string"
+              ? (rawName["fr"] as string)
+              : typeof rawName?.["en"] === "string"
+                ? (rawName["en"] as string)
+                : "Product";
+        await emitSellerNotification(sellerId, {
+          type: data.decision === "approve" ? "product_approved" : data.decision === "reject" ? "product_rejected" : "product_hidden",
+          params: { productName, reason: data.reason?.trim() || undefined },
+          link: `/seller/products/${data.id}`,
+          payload: { product_id: data.id, decision: data.decision },
+        });
+      }
+    } catch {
+      /* notifications are best-effort */
+    }
+
     return { ok: true as const };
   });
 
@@ -1060,6 +1087,19 @@ export const updateSettlementStatus = createServerFn({ method: "POST" })
       to: data.status,
       payment_reference: data.payment_reference ?? null,
     });
+
+    // Notify the seller about the settlement decision (best-effort).
+    try {
+      await emitSellerNotification(settlement.seller_id, {
+        type: "settlement_updated",
+        params: { amount: Number(settlement.amount ?? 0), currency: "DZD", status: data.status },
+        link: "/seller/settlements",
+        payload: { settlement_id: data.id, status: data.status },
+      });
+    } catch {
+      /* notifications are best-effort */
+    }
+
     return { ok: true as const };
   });
 

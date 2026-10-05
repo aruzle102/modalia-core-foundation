@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database, Json } from "@/integrations/supabase/types";
+import { emitSellerNotification } from "@/lib/notifications.functions";
 
 type SellerRow = Database["public"]["Tables"]["sellers"]["Row"];
 type StoreRow = Database["public"]["Tables"]["stores"]["Row"];
@@ -570,6 +571,19 @@ export const updateSellerStatus = createServerFn({ method: "POST" })
       resource_id: data.sellerId,
       metadata: { from: seller.account_status, to: data.accountStatus },
     });
+
+    // Notify the seller's team about the account status change (best-effort).
+    try {
+      await emitSellerNotification(data.sellerId, {
+        type: "store_status_changed",
+        params: { status: data.accountStatus },
+        link: "/seller/settings",
+        payload: { seller_id: data.sellerId, from: seller.account_status, to: data.accountStatus },
+      });
+    } catch {
+      /* notifications are best-effort */
+    }
+
     return { ok: true as const, accountStatus: data.accountStatus };
   });
 
@@ -588,7 +602,7 @@ export const updateStoreVerification = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: store } = await supabaseAdmin
       .from("stores")
-      .select("id,verification_status")
+      .select("id,verification_status,seller_id")
       .eq("id", data.storeId)
       .single();
     if (!store) throw new Error("Store not found.");
@@ -604,6 +618,21 @@ export const updateStoreVerification = createServerFn({ method: "POST" })
       resource_id: data.storeId,
       metadata: { from: store.verification_status, to: data.verificationStatus },
     });
+
+    // Notify the seller's team about the verification change (best-effort).
+    try {
+      if (store.seller_id) {
+        await emitSellerNotification(store.seller_id, {
+          type: "store_verification_changed",
+          params: { status: data.verificationStatus },
+          link: "/seller/settings",
+          payload: { store_id: data.storeId, to: data.verificationStatus },
+        });
+      }
+    } catch {
+      /* notifications are best-effort */
+    }
+
     return { ok: true as const, verificationStatus: data.verificationStatus };
   });
 

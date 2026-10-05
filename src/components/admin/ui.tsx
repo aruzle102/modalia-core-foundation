@@ -177,7 +177,7 @@ export function Field({
 }: {
   label: string;
   children: React.ReactNode;
-  hint?: string;
+  hint?: string | undefined;
   error?: string | undefined;
 }) {
   return (

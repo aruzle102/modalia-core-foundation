@@ -1970,27 +1970,33 @@ export type Database = {
       }
       seller_staff: {
         Row: {
+          active: boolean
           created_at: string
           id: string
           permissions: Json
           role: Database["public"]["Enums"]["app_role"]
           seller_id: string
+          title: string | null
           user_id: string
         }
         Insert: {
+          active?: boolean
           created_at?: string
           id?: string
           permissions?: Json
           role?: Database["public"]["Enums"]["app_role"]
           seller_id: string
+          title?: string | null
           user_id: string
         }
         Update: {
+          active?: boolean
           created_at?: string
           id?: string
           permissions?: Json
           role?: Database["public"]["Enums"]["app_role"]
           seller_id?: string
+          title?: string | null
           user_id?: string
         }
         Relationships: [

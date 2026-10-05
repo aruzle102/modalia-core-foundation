@@ -11,10 +11,8 @@ import type { SupportedLocale } from "@/config/platform";
  * horizontal drag to tilt the card group, and a gentle vertical drift tied to
  * page scroll. Transparent background so it blends into the page design.
  *
- * Contract note (worker 2/6, phase 3/4): the shared `useDeviceTier()` hook
- * from `@/hooks/use-device-tier` and `loadThree()` from `@/lib/three-loader`
- * did not exist yet when this was written, so a local fallback with the same
- * contract shape is embedded below. Swap it for the shared hook when it lands.
+ * Loading: `three` is dynamically imported inside `init()` (lazy chunk, never
+ * in the main bundle) and the component stays invisible if the import fails.
  */
 
 type DeviceTier = "high" | "mid" | "low" | "data-saver";
@@ -65,9 +63,22 @@ function useDeviceTier(): DeviceInfo {
 // Modalia luxury palette: dark bronze, champagne, ivory, deep charcoal.
 const CARD_COLORS = [0x1b1510, 0xd9c193, 0xf1e9da, 0x8a6f45, 0x2c241b] as const;
 const GOLD_ACCENT = 0xc9a961;
-const PARTICLE_COUNT = 200;
+const PARTICLE_COUNT_FULL = 200;
+const PARTICLE_COUNT_LITE = 60;
 
-export function HeroScene({ className, locale }: { className?: string; locale: SupportedLocale }) {
+/** Render quality: "full" for high-tier devices, "lite" (fewer particles,
+ *  capped pixel ratio, no MSAA) for mid-tier devices. */
+export type HeroSceneQuality = "full" | "lite";
+
+export function HeroScene({
+  className,
+  locale,
+  quality = "full",
+}: {
+  className?: string;
+  locale: SupportedLocale;
+  quality?: HeroSceneQuality;
+}) {
   const t = getTranslations(locale).viewer3d;
   const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -75,8 +86,9 @@ export function HeroScene({ className, locale }: { className?: string; locale: S
   const { tier, reducedMotion, webgl } = useDeviceTier();
   const [ready, setReady] = useState(false);
 
-  // Only ever initialise on high-tier devices with WebGL and no reduced motion.
-  const eligible = tier === "high" && webgl && !reducedMotion;
+  // Eligible on high (full) and mid (lite) tier devices with WebGL and no
+  // reduced motion; low / data-saver keep the static 2.5D CSS fallback.
+  const eligible = (tier === "high" || tier === "mid") && webgl && !reducedMotion;
 
   useEffect(() => {
     if (!eligible) return;
@@ -138,7 +150,7 @@ export function HeroScene({ className, locale }: { className?: string; locale: S
     async function init() {
       let THREE: typeof import("three");
       try {
-        // Local fallback for `@/lib/three-loader`'s loadThree().
+        // Lazy chunk: `three` is never in the main bundle.
         THREE = await import("three");
       } catch {
         return; // three failed to load: stay invisible, never throw.
@@ -148,11 +160,13 @@ export function HeroScene({ className, locale }: { className?: string; locale: S
       const renderer = new THREE.WebGLRenderer({
         canvas,
         alpha: true,
-        antialias: true,
+        antialias: quality !== "lite",
         powerPreference: "low-power",
       });
       rendererRef = renderer;
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.setPixelRatio(
+        Math.min(window.devicePixelRatio || 1, quality === "lite" ? 1.25 : 2),
+      );
       renderer.setClearColor(0x000000, 0);
       track(renderer);
 
@@ -240,9 +254,10 @@ export function HeroScene({ className, locale }: { className?: string; locale: S
         });
       });
 
-      // --- Champagne dust particles. ---
-      const positions = new Float32Array(PARTICLE_COUNT * 3);
-      for (let i = 0; i < PARTICLE_COUNT; i++) {
+      // --- Champagne dust particles (reduced count on lite quality). ---
+      const particleCount = quality === "lite" ? PARTICLE_COUNT_LITE : PARTICLE_COUNT_FULL;
+      const positions = new Float32Array(particleCount * 3);
+      for (let i = 0; i < particleCount; i++) {
         positions[i * 3] = (Math.random() - 0.5) * 13;
         positions[i * 3 + 1] = (Math.random() - 0.5) * 7;
         positions[i * 3 + 2] = (Math.random() - 0.5) * 7;
@@ -276,6 +291,10 @@ export function HeroScene({ className, locale }: { className?: string; locale: S
         }
       };
       const onPointerDown = (event: PointerEvent) => {
+        // Touch stays free for page scrolling; drag-to-rotate is a mouse/pen
+        // interaction only. (Canvas CSS is `touch-pan-y` so vertical swipes
+        // scroll the page instead of being swallowed by the scene.)
+        if (event.pointerType !== "mouse" && event.pointerType !== "pen") return;
         dragging = true;
         lastPointerX = event.clientX;
         container.setPointerCapture(event.pointerId);
@@ -391,7 +410,7 @@ export function HeroScene({ className, locale }: { className?: string; locale: S
       }
       setReady(false);
     };
-  }, [eligible]);
+  }, [eligible, quality]);
 
   if (!eligible) return null;
 
@@ -401,14 +420,14 @@ export function HeroScene({ className, locale }: { className?: string; locale: S
       className={`relative overflow-hidden ${className ?? ""}`}
       aria-hidden="true"
     >
-      <canvas ref={canvasRef} className="block h-full w-full touch-none" />
+      <canvas ref={canvasRef} className="block h-full w-full touch-pan-y" />
       {ready && (
         <button
           type="button"
           onClick={() => resetRef.current()}
           aria-label={t.resetScene}
           title={t.resetScene}
-          className="absolute bottom-3 end-3 z-10 flex size-8 items-center justify-center rounded-full border border-white/20 bg-black/30 text-white/80 backdrop-blur-sm transition-colors hover:bg-black/50 hover:text-white"
+          className="absolute bottom-3 end-3 z-10 flex size-10 items-center justify-center rounded-full border border-white/20 bg-black/30 text-white/80 backdrop-blur-sm transition-colors hover:bg-black/50 hover:text-white"
         >
           <RotateCcw className="size-4" aria-hidden />
         </button>

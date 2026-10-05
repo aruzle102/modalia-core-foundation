@@ -1,12 +1,14 @@
 import { useState, type MouseEvent } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Check, Heart, Search, ShoppingBag } from "lucide-react";
+import { ArrowRight, Check, Heart, ShoppingBag } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatPrice } from "@/lib/i18n/format";
 import { getTranslations } from "@/lib/i18n";
 import { useCart } from "@/lib/cart-store";
 import { isWishlisted, toggleWishlist } from "@/lib/wishlist-store";
+import { microAnimationClass, replayAnimation } from "@/lib/motion";
 import type { CatalogCategory, CatalogProduct, CatalogStore } from "@/lib/catalog.functions";
+import { VerifiedBadge } from "@/components/marketplace/VerifiedBadge";
 import type { SupportedLocale } from "@/config/platform";
 
 const NEW_BADGE_DAYS = 14;
@@ -45,16 +47,17 @@ export function ProductCard({
 
   const handleWishlist = (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
-    setWishlisted(
-      toggleWishlist({
-        productId: product.id,
-        slug: product.slug,
-        name: product.name,
-        price: product.price,
-        image: product.imagePath,
-        storeName: product.storeName,
-      }),
-    );
+    const added = toggleWishlist({
+      productId: product.id,
+      slug: product.slug,
+      name: product.name,
+      price: product.price,
+      image: product.imagePath,
+      storeName: product.storeName,
+    });
+    setWishlisted(added);
+    // Commerce micro-feedback: pop the heart when the item is saved.
+    if (added) replayAnimation(event.currentTarget, microAnimationClass.wishlistPop);
   };
 
   const handleQuickAdd = (event: MouseEvent<HTMLButtonElement>) => {
@@ -71,12 +74,16 @@ export function ProductCard({
       storeName: product.storeName,
     });
     setJustAdded(true);
+    // Commerce micro-feedback: nudge confirms the item landed in the cart.
+    replayAnimation(event.currentTarget, microAnimationClass.cartNudge);
     window.setTimeout(() => setJustAdded(false), 1500);
   };
 
   return (
     <article className="group relative min-w-0">
-      <div className="relative aspect-[4/5] overflow-hidden rounded-xl bg-muted shadow-[0_1px_2px_rgba(0,0,0,0.06)] transition-all duration-500 ease-out group-hover:-translate-y-1 group-hover:shadow-[0_28px_56px_-24px_rgba(0,0,0,0.35)] motion-reduce:transition-none motion-reduce:group-hover:translate-y-0">
+      <div
+        className={`relative aspect-[4/5] overflow-hidden rounded-xl bg-muted shadow-[0_1px_2px_rgba(0,0,0,0.06)] transition-all duration-500 ease-out group-hover:-translate-y-1 group-hover:shadow-[0_28px_56px_-24px_rgba(0,0,0,0.35)] motion-reduce:transition-none motion-reduce:group-hover:translate-y-0 ${soldOut ? "saturate-50" : ""}`}
+      >
         <Link
           to="/product/$slug"
           params={{ slug: product.slug }}
@@ -90,7 +97,7 @@ export function ProductCard({
               alt={product.imageAlt || product.name}
               loading="lazy"
               sizes="(min-width: 1024px) 25vw, 50vw"
-              className="size-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.06] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+              className={`size-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.06] motion-reduce:transition-none motion-reduce:group-hover:scale-100 ${soldOut ? "opacity-75" : ""}`}
             />
           ) : product.secondImagePath ? (
             <img
@@ -107,7 +114,7 @@ export function ProductCard({
               {product.name}
             </div>
           )}
-          {product.imagePath && product.secondImagePath ? (
+          {product.imagePath && product.secondImagePath && !soldOut ? (
             <img
               src={product.secondImagePath}
               alt=""
@@ -145,7 +152,7 @@ export function ProductCard({
           onClick={handleWishlist}
           aria-pressed={wishlisted}
           aria-label={t.wishlist(product.name)}
-          className={`card-action ${wishlisted ? "is-active" : ""} absolute end-3 top-3 z-10 grid size-9 place-items-center rounded-full bg-background/85 text-foreground shadow-sm backdrop-blur-sm hover:bg-background`}
+          className={`card-action ${wishlisted ? "is-active" : ""} absolute end-3 top-3 z-10 grid size-10 place-items-center rounded-full bg-background/85 text-foreground shadow-sm backdrop-blur-sm hover:bg-background`}
         >
           <Heart
             className={`size-4 transition-colors ${wishlisted ? "fill-destructive text-destructive" : ""}`}
@@ -156,7 +163,7 @@ export function ProductCard({
           onClick={handleQuickAdd}
           disabled={soldOut}
           aria-live="polite"
-          className="card-action absolute inset-x-3 bottom-3 z-10 flex h-10 items-center justify-center gap-2 rounded-lg bg-background/90 text-small font-medium text-foreground shadow-lg backdrop-blur-md hover:bg-background disabled:cursor-not-allowed disabled:opacity-60"
+          className="card-action absolute inset-x-3 bottom-3 z-10 flex h-11 items-center justify-center gap-2 rounded-lg bg-background/90 text-small font-medium text-foreground shadow-lg backdrop-blur-md hover:bg-background disabled:cursor-not-allowed disabled:opacity-60"
         >
           {soldOut ? (
             t.soldOut
@@ -174,8 +181,10 @@ export function ProductCard({
         </button>
       </div>
       <div className="mt-3 px-0.5">
-        <p className="text-caption text-muted-foreground">{product.storeName}</p>
-        <h3 className="mt-1 line-clamp-1 text-body font-medium text-foreground">
+        <p className="truncate text-caption text-muted-foreground ltr:text-[10px] ltr:uppercase ltr:tracking-[0.16em]">
+          {product.storeName}
+        </p>
+        <h3 className="mt-1 line-clamp-1 font-display text-[15px] font-semibold leading-snug text-foreground">
           <Link
             to="/product/$slug"
             params={{ slug: product.slug }}
@@ -265,44 +274,74 @@ export function CategoryRail({
   );
 }
 
+/**
+ * Store cards as brands: banner visual, logo, store name (never translated),
+ * the blue verification badge for verified stores, and the real product count.
+ */
 export function StoreRail({ stores, locale }: { stores: CatalogStore[]; locale: SupportedLocale }) {
   const t = getTranslations(locale).card;
+  const storeT = getTranslations(locale).store;
   return (
-    <div className="grid gap-px overflow-hidden rounded-xl border border-border bg-border sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-x-5 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
       {stores.map((store) => (
         <Link
           key={store.id}
           to="/store/$slug"
           params={{ slug: store.slug }}
           search={{ locale }}
-          className="group min-h-48 bg-background p-5 transition-colors duration-300 hover:bg-muted/60"
+          className="group block min-w-0"
+          aria-label={store.name}
         >
-          <div className="flex items-center gap-3">
+          <div className="relative aspect-[16/10] overflow-hidden rounded-xl bg-secondary">
+            {store.bannerPath ? (
+              <img
+                src={store.bannerPath}
+                alt=""
+                aria-hidden
+                loading="lazy"
+                sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                className="size-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+              />
+            ) : (
+              <div
+                aria-hidden
+                className="flex size-full items-center justify-center bg-[radial-gradient(circle_at_30%_20%,var(--color-muted)_0%,transparent_70%)]"
+              >
+                <span className="font-display text-7xl font-semibold tracking-tight text-foreground/15">
+                  {store.name.slice(0, 1)}
+                </span>
+              </div>
+            )}
+          </div>
+          <div className="mt-4 flex items-start gap-3 px-0.5">
             {store.logoPath ? (
               <img
                 src={store.logoPath}
                 alt=""
-                className="size-10 rounded-full object-cover ring-1 ring-border"
+                aria-hidden
                 loading="lazy"
+                className="size-11 shrink-0 rounded-full object-cover ring-1 ring-border"
               />
             ) : (
-              <div className="grid size-10 shrink-0 place-items-center rounded-full bg-secondary text-small font-semibold ring-1 ring-border">
+              <div
+                aria-hidden
+                className="grid size-11 shrink-0 place-items-center rounded-full bg-secondary font-display text-base font-semibold text-foreground ring-1 ring-border"
+              >
                 {store.name.slice(0, 1)}
               </div>
             )}
             <div className="min-w-0">
-              <h3 className="truncate text-h3 text-foreground">{store.name}</h3>
-              <p className="text-caption text-muted-foreground">
+              <h3 className="flex items-center gap-1.5 font-display text-lg font-semibold leading-snug text-foreground">
+                <span className="truncate transition-colors group-hover:text-foreground/70">
+                  {store.name}
+                </span>
+                <VerifiedBadge verified={store.verified} label={storeT.verifiedStore} />
+              </h3>
+              <p className="mt-0.5 text-caption text-muted-foreground">
                 {t.productsCount(store.productCount)}
               </p>
             </div>
           </div>
-          {store.description ? (
-            <p className="mt-6 line-clamp-2 text-small text-muted-foreground">
-              {store.description}
-            </p>
-          ) : null}
-          <ArrowRight className="mt-6 size-4 text-muted-foreground transition-transform duration-300 group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1 motion-reduce:transition-none" />
         </Link>
       ))}
     </div>
@@ -330,7 +369,7 @@ export function ProductGrid({
       </section>
     );
   return (
-    <div className="grid grid-cols-2 gap-x-3 gap-y-8 sm:grid-cols-3 lg:grid-cols-4 lg:gap-x-5">
+    <div className="grid grid-cols-2 gap-x-4 gap-y-10 sm:grid-cols-3 lg:grid-cols-4 lg:gap-x-6">
       {products.map((product) => (
         <ProductCard key={product.id} product={product} locale={locale} />
       ))}
@@ -352,16 +391,5 @@ export function DiscoverySkeleton() {
         ))}
       </div>
     </div>
-  );
-}
-
-export function SearchEmpty({ query, locale }: { query: string; locale: SupportedLocale }) {
-  const t = getTranslations(locale).card;
-  return (
-    <section className="py-16 text-center">
-      <Search className="mx-auto size-6 text-muted-foreground" />
-      <h1 className="mt-4 text-display text-foreground">{t.searchTitle(query)}</h1>
-      <p className="mx-auto mt-3 max-w-sm text-body text-muted-foreground">{t.searchText}</p>
-    </section>
   );
 }

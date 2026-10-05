@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { ArrowLeft } from "lucide-react";
@@ -9,6 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { AdminCard, StatusPill, EmptyState, Field, fmtDateTime, fmtMoney } from "@/components/admin/ui";
 import { getSellerOrderDetail, updateSellerOrderStatus, addSellerOrderNote } from "@/lib/seller-orders.functions";
 import { getLocale } from "@/lib/i18n";
+import { strParam } from "@/hooks/use-url-state";
+import { BackLink } from "@/components/routing/back-link";
 import { SellerShell } from "@/components/seller/SellerShell";
 import { errMsg } from "../admin/_shared";
 
@@ -20,9 +22,12 @@ const detailQuery = (sellerOrderId: string) =>
   });
 
 export const Route = createFileRoute("/_authenticated/seller/orders/$orderId")({
-  validateSearch: (search: Record<string, unknown>) => ({ locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined) }),
+  validateSearch: (search: Record<string, unknown>) => ({
+    locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined),
+    back: strParam(search["back"]),
+  }),
   loader: ({ context, params }) => context.queryClient.ensureQueryData(detailQuery(params.orderId)),
-  head: () => ({ meta: [{ title: "Order detail — Seller — Modalia" }] }),
+  head: () => ({ meta: [{ name: "robots", content: "noindex,nofollow" }, { title: "Order detail — Seller — Modalia" }] }),
   errorComponent: () => (
     <SellerShell
       eyebrow="Seller workspace"
@@ -36,7 +41,7 @@ export const Route = createFileRoute("/_authenticated/seller/orders/$orderId")({
 
 function SellerOrderDetailPage() {
   const { orderId } = Route.useParams();
-  const { locale } = Route.useSearch();
+  const { locale, back } = Route.useSearch();
   const { data } = useSuspenseQuery(detailQuery(orderId));
   const queryClient = useQueryClient();
 
@@ -89,12 +94,16 @@ function SellerOrderDetailPage() {
     <SellerShell
       eyebrow="Seller workspace"
       title={`Order ${data.orderNumber}`}
+      breadcrumbs={[
+        { label: "Orders", to: "/seller/orders", search: { locale } },
+        { label: `Order ${data.orderNumber}` },
+      ]}
       actions={
         <Button asChild variant="outline" size="sm">
-          <Link to="/seller/orders" search={{ locale }}>
+          <BackLink back={back} fallbackTo="/seller/orders" fallbackSearch={{ locale }}>
             <ArrowLeft className="size-4" />
             All orders
-          </Link>
+          </BackLink>
         </Button>
       }
     >

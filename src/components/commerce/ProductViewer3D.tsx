@@ -12,10 +12,8 @@ import type { SupportedLocale } from "@/config/platform";
  * exposes drag-to-orbit (spherical), wheel/pinch zoom (clamped), and a reset
  * button. Honest states: loading spinner, genuine error with retry.
  *
- * Contract note (worker 2/6, phase 3/4): `@/hooks/use-device-tier` and
- * `@/lib/three-loader` did not exist yet, so the two checks needed here
- * (WebGL support, reduced motion) are implemented locally with the same
- * semantics. Swap for the shared helpers when they land.
+ * Loading: `three` and GLTFLoader are dynamically imported (lazy chunk, never
+ * in the main bundle); the component stays in its loading state if they fail.
  */
 
 type ViewerStatus = "loading" | "ready" | "error";
@@ -105,7 +103,7 @@ export function ProductViewer3D({
     async function init() {
       let THREE: typeof import("three");
       try {
-        // Local fallback for `@/lib/three-loader`'s loadThree().
+        // Lazy chunk: `three` is never in the main bundle.
         THREE = await import("three");
       } catch {
         if (!disposed) setStatus("error");

@@ -5,6 +5,7 @@ import {
   FileText,
   FolderTree,
   LayoutDashboard,
+  LayoutTemplate,
   Package,
   ScrollText,
   ShoppingBag,
@@ -28,6 +29,7 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", to: "/admin", icon: <LayoutDashboard className="h-4 w-4" />, exact: true },
+  { label: "Homepage", to: "/admin/homepage", icon: <LayoutTemplate className="h-4 w-4" /> },
   { label: "Orders", to: "/admin/orders", icon: <ShoppingBag className="h-4 w-4" /> },
   { label: "Applications", to: "/admin/applications", icon: <FileText className="h-4 w-4" /> },
   { label: "Sellers", to: "/admin/sellers", icon: <Users className="h-4 w-4" /> },

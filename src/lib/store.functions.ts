@@ -77,10 +77,13 @@ function toCatalogProduct(product: ProductRow, storeName: string, locale: string
     slug: product.slug,
     name: text(product.name, locale, product.slug),
     price: Number(product.base_price),
+    compareAtPrice: product.compare_at_price ?? null,
     storeName,
     categorySlug: category?.slug ?? null,
     imagePath: publicUrl(images[0]?.storage_path ?? null),
     imageAlt: text(images[0]?.alt_text ?? null, locale, ""),
+    secondImagePath: publicUrl(images[1]?.storage_path ?? null),
+    secondImageAlt: text(images[1]?.alt_text ?? null, locale, ""),
     createdAt: product.created_at,
   } satisfies CatalogProduct;
 }

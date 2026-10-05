@@ -29,7 +29,9 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireSeller } from "@/lib/seller-auth";
+import { assertAdmin } from "@/lib/admin-auth";
 import type { CatalogProduct } from "@/lib/catalog.functions";
+import { pickLocalizedName } from "@/lib/names";
 
 export type AnalyticsEventType =
   | "page_view"
@@ -103,27 +105,11 @@ function publicClient() {
   });
 }
 
-async function assertAdmin(context: any) {
-  if (!context) throw new Error("Unauthorized");
-  const { data, error } = await callRpc(context.supabase as SupabaseClient, "is_super_admin", {});
-  if (error || data !== true) throw new Error("Forbidden");
-}
-
 const num = (value: unknown): number => {
   const n = Number(value ?? 0);
   return Number.isFinite(n) ? n : 0;
 };
 
-/** Pick a display name from an {en,fr,ar} jsonb object. */
-function pickName(name: unknown, fallback: string): string {
-  if (!name || typeof name !== "object" || Array.isArray(name)) return fallback;
-  const n = name as Record<string, unknown>;
-  for (const key of ["en", "fr", "ar"]) {
-    const v = n[key];
-    if (typeof v === "string" && v.trim()) return v.trim();
-  }
-  return fallback;
-}
 
 function localizedText(value: unknown, locale: string, fallback: string): string {
   if (!value || typeof value !== "object" || Array.isArray(value)) return fallback;
@@ -335,7 +321,7 @@ export const getAdminAnalytics = createServerFn({ method: "GET" })
       const p = productById.get(id);
       return {
         productId: id,
-        name: p ? pickName(p.name, "Untitled product") : `Product ${id.slice(0, 8)}`,
+        name: p ? pickLocalizedName(p.name, "Untitled product") : `Product ${id.slice(0, 8)}`,
         slug: p?.slug ?? "",
         views: viewsByProduct.get(id) ?? 0,
       };
@@ -385,7 +371,7 @@ export const getAdminAnalytics = createServerFn({ method: "GET" })
     const categoryById = new Map(categoryRows.map((c) => [c.id, c]));
     const categories = topCategoryIds.map((id) => ({
       categoryId: id,
-      name: categoryById.get(id) ? pickName(categoryById.get(id)!.name, "Category") : `Category ${id.slice(0, 8)}`,
+      name: categoryById.get(id) ? pickLocalizedName(categoryById.get(id)!.name, "Category") : `Category ${id.slice(0, 8)}`,
       views: viewsByCategory.get(id) ?? 0,
     }));
 
@@ -550,7 +536,7 @@ export const getSellerAnalytics = createServerFn({ method: "GET" })
     const nameById = new Map(nameRows.map((p) => [p.id, p]));
     const topProducts = topIds.map((id) => ({
       productId: id,
-      name: nameById.get(id) ? pickName(nameById.get(id)!.name, "Untitled product") : `Product ${id.slice(0, 8)}`,
+      name: nameById.get(id) ? pickLocalizedName(nameById.get(id)!.name, "Untitled product") : `Product ${id.slice(0, 8)}`,
       views: byProduct.get(id)?.views ?? 0,
       carts: byProduct.get(id)?.carts ?? 0,
     }));
@@ -667,4 +653,41 @@ export const getRelatedProducts = createServerFn({ method: "GET" })
     if (error || !rows?.length) return { products: [] as CatalogProduct[], hasData: false };
     const ids = (rows as { product_id: string }[]).map((r) => r.product_id);
     return enrichProductCards(client, ids, data.locale);
+  });
+
+const bestsellersInput = z.object({
+  limit: z.coerce.number().int().min(1).max(12).default(8),
+  locale: z.string().min(2).max(5).default("en"),
+});
+
+/**
+ * "Best sellers": products ranked by real sold quantity across order items
+ * whose seller order is not cancelled/refunded. Aggregation uses the
+ * service-role client (order rows are not anon-readable) and exposes only
+ * ranked product ids + totals — no customer or order data leaves the server.
+ * Empty until real sales exist — never a fabricated ranking.
+ */
+export const getBestsellers = createServerFn({ method: "GET" })
+  .inputValidator((data) => bestsellersInput.parse(data))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows, error } = await supabaseAdmin
+      .from("order_items")
+      .select("product_id, quantity, seller_orders!inner(status)")
+      .not("product_id", "is", null)
+      .neq("seller_orders.status", "cancelled")
+      .neq("seller_orders.status", "refunded")
+      .limit(5000);
+    if (error || !rows?.length) return { products: [] as CatalogProduct[], hasData: false };
+    const totals = new Map<string, number>();
+    for (const row of rows as { product_id: string | null; quantity: number }[]) {
+      if (!row.product_id) continue;
+      totals.set(row.product_id, (totals.get(row.product_id) ?? 0) + num(row.quantity));
+    }
+    const ranked = [...totals.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, data.limit)
+      .map(([id]) => id);
+    if (!ranked.length) return { products: [] as CatalogProduct[], hasData: false };
+    return enrichProductCards(publicClient(), ranked, data.locale);
   });

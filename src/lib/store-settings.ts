@@ -51,12 +51,22 @@ export interface StoreSectionConfig {
   enabled: boolean;
 }
 
+export interface StoreCollectionConfig {
+  id: string;
+  title: TrilingualText;
+  subtitle: TrilingualText;
+  product_ids: string[];
+  enabled: boolean;
+}
+
 export interface StoreSettings {
   accent: StoreAccentId;
   featured_product_ids: string[];
   featured_category_ids: string[];
   sections: StoreSectionConfig[];
   announcement: TrilingualText;
+  /** Admin-curated collections for the official store (plain text only). */
+  official_collections: StoreCollectionConfig[];
 }
 
 export const storeAccentSchema = z.enum(STORE_ACCENT_IDS);
@@ -75,12 +85,21 @@ export const storeSectionSchema = z.object({
   enabled: z.boolean(),
 });
 
+export const storeCollectionSchema = z.object({
+  id: z.string().trim().min(1).max(64),
+  title: trilingualSchema(120),
+  subtitle: trilingualSchema(160),
+  product_ids: z.array(z.string().uuid()).max(60),
+  enabled: z.boolean(),
+});
+
 export const storeSettingsSchema = z.object({
   accent: storeAccentSchema.optional(),
   featured_product_ids: z.array(z.string().uuid()).max(50).optional(),
   featured_category_ids: z.array(z.string().uuid()).max(24).optional(),
   sections: z.array(storeSectionSchema).max(12).optional(),
   announcement: trilingualSchema(120).optional(),
+  official_collections: z.array(storeCollectionSchema).max(20).optional(),
 });
 
 export function defaultStoreSettings(): StoreSettings {
@@ -96,6 +115,7 @@ export function defaultStoreSettings(): StoreSettings {
       { id: "best", kind: "best", title: { fr: "Meilleures ventes", en: "Best sellers", ar: "الأكثر مبيعاً" }, enabled: false },
     ],
     announcement: { fr: "", en: "", ar: "" },
+    official_collections: [],
   };
 }
 
@@ -111,6 +131,7 @@ export function normalizeStoreSettings(raw: unknown): StoreSettings {
     featured_category_ids: data.featured_category_ids ?? defaults.featured_category_ids,
     sections: data.sections ?? defaults.sections,
     announcement: data.announcement ?? defaults.announcement,
+    official_collections: data.official_collections ?? defaults.official_collections,
   };
 }
 

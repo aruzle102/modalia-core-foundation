@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -13,8 +14,9 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
 import { CartProvider } from "@/lib/cart-store";
+import { PageFade } from "@/lib/motion";
 
-import { getLocale, getTranslations, localeDirections, resolveLocale } from "../lib/i18n";
+import { getTranslations, resolveLocale } from "../lib/i18n";
 
 function NotFoundComponent() {
   const locale = resolveLocale();
@@ -44,7 +46,6 @@ function NotFoundComponent() {
 }
 
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
-  console.error(error);
   const router = useRouter();
   useEffect(() => {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
@@ -137,12 +138,17 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  // Route transition (250ms fade-and-rise); keyed by pathname only so
+  // search-param-only navigations (filters, pagination) don't remount.
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   return (
     <QueryClientProvider client={queryClient}>
       <CartProvider>
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-        <Outlet />
+        <PageFade routeKey={pathname}>
+          <Outlet />
+        </PageFade>
       </CartProvider>
     </QueryClientProvider>
   );

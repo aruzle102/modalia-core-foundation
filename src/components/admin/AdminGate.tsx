@@ -3,12 +3,11 @@ import type { ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import type { Session } from "@supabase/supabase-js";
-import { Check, Copy, Loader2, LogIn, RefreshCw, ShieldAlert } from "lucide-react";
+import { Loader2, LogIn, LogOut, RefreshCw, ShieldAlert } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { checkAdminAccess } from "@/lib/admin-session.functions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
 
 export type AdminSessionStatus = "checking" | "signed-out" | "denied" | "error" | "ready";
 
@@ -16,7 +15,6 @@ export interface AdminSession {
   status: AdminSessionStatus;
   error: string | null;
   userEmail: string | null;
-  userId: string | null;
   retry: () => void;
 }
 
@@ -70,14 +68,9 @@ export function useAdminSession(): AdminSession {
 
   return {
     status,
-    error:
-      status === "error"
-        ? (queryErrorMessage ?? "Authorization check failed.")
-        : status === "denied"
-          ? "Forbidden: super_admin role required"
-          : null,
+    // Deliberately generic: server error text is never surfaced to the user.
+    error: status === "error" ? "The admin access check failed." : null,
     userEmail: session?.user?.email ?? null,
-    userId: session?.user?.id ?? null,
     retry: () => {
       void access.refetch();
     },
@@ -109,13 +102,21 @@ function GateCard({
   );
 }
 
+/** Sign out and land on the sign-in page (used to switch accounts). */
+async function switchAccount() {
+  await supabase.auth.signOut();
+  window.location.assign("/auth?locale=en");
+}
+
 /**
  * Guards the admin area. Renders children only when the signed-in user is a
- * super_admin; otherwise shows a helpful access state card.
+ * super_admin; otherwise shows a neutral access state card.
+ *
+ * Note: admin role grants are SQL-only (supabase/super_admin_bootstrap.sql).
+ * This gate never exposes SQL, user IDs, or technical error detail.
  */
 export function AdminGate({ children }: { children: ReactNode }) {
-  const { status, error, userEmail, userId, retry } = useAdminSession();
-  const [copied, setCopied] = useState(false);
+  const { status, userEmail, retry } = useAdminSession();
 
   if (status === "checking") {
     return (
@@ -140,55 +141,29 @@ export function AdminGate({ children }: { children: ReactNode }) {
   }
 
   if (status === "denied") {
-    const sql = userId
-      ? `INSERT INTO public.user_roles (user_id, role) VALUES ('${userId}', 'super_admin') ON CONFLICT (user_id, role) DO NOTHING;`
-      : "";
-    const copySql = async () => {
-      if (!sql) return;
-      try {
-        await navigator.clipboard.writeText(sql);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      } catch {
-        setCopied(false);
-      }
-    };
     return (
       <GateCard
         icon={<ShieldAlert className="h-6 w-6 text-destructive" />}
         title="Access denied"
-        description="This account is signed in but does not have the super_admin role."
+        description="You're signed in, but this account doesn't have admin access."
       >
-        <div className="w-full rounded-md bg-muted px-3 py-2 text-start text-xs">
-          <p className="truncate text-muted-foreground">
-            Email: <span className="text-foreground">{userEmail ?? "—"}</span>
+        {userEmail ? (
+          <p className="text-sm text-muted-foreground">
+            Signed in as <span className="font-medium text-foreground">{userEmail}</span>
           </p>
-          <p className="truncate text-muted-foreground">
-            User ID: <span className="font-mono text-foreground">{userId ?? "—"}</span>
-          </p>
-        </div>
-        {sql ? (
-          <div className="w-full">
-            <p className="mb-1 text-xs text-muted-foreground">
-              Run this in the Supabase SQL Editor to grant access:
-            </p>
-            <div className="relative rounded-md border bg-background p-2">
-              <pre className="overflow-x-auto pe-10 text-start font-mono text-[11px] leading-relaxed whitespace-pre-wrap break-all">
-                {sql}
-              </pre>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="absolute end-1 top-1 h-7 w-7"
-                onClick={copySql}
-                aria-label="Copy SQL"
-              >
-                {copied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
-              </Button>
-            </div>
-          </div>
         ) : null}
+        <p className="text-sm text-muted-foreground">
+          If you believe this is a mistake, contact the site administrator.
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <Button asChild variant="outline">
+            <Link to="/" search={{ locale: "en" }}>Back to store</Link>
+          </Button>
+          <Button type="button" variant="ghost" onClick={() => void switchAccount()}>
+            <LogOut className="me-2 h-4 w-4" />
+            Switch account
+          </Button>
+        </div>
       </GateCard>
     );
   }
@@ -198,11 +173,8 @@ export function AdminGate({ children }: { children: ReactNode }) {
       <GateCard
         icon={<ShieldAlert className="h-6 w-6 text-destructive" />}
         title="Something went wrong"
-        description="The admin access check failed."
+        description="The admin access check failed. Please try again — if the problem persists, contact the site administrator."
       >
-        <p className={cn("w-full rounded-md bg-muted px-3 py-2 font-mono text-xs break-all text-start")}>
-          {error ?? "Unknown error"}
-        </p>
         <Button type="button" variant="outline" onClick={retry}>
           <RefreshCw className="me-2 h-4 w-4" />
           Retry

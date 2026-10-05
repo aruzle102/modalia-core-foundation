@@ -174,6 +174,13 @@
   line-height: 1.35;
   font-weight: 600;
 }
+@utility text-h2 {
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  line-height: 1.25;
+  font-weight: 600;
+  letter-spacing: 0;
+}
 @utility text-body {
   font-size: 1rem;
   line-height: 1.6;
@@ -254,6 +261,85 @@
     opacity: 1;
     transform: none;
     pointer-events: auto;
+  }
+}
+
+/* ---------------- Modalia motion system (src/lib/motion.ts) ----------------
+   Route transitions, 2.5D gallery parallax, and commerce micro-feedback.
+   The global prefers-reduced-motion rule above collapses all durations,
+   and each effect additionally guards itself. */
+
+/* Route transition: quick fade-and-rise on navigation (see PageFade). */
+.page-fade {
+  animation: page-fade-in 250ms cubic-bezier(0.16, 0.8, 0.24, 1);
+}
+@keyframes page-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 2.5D gallery parallax: subtle pointer depth on the fallback product
+   image (JS sets --par-x/--par-y on the container; composes with the
+   magnifier zoom which uses the separate `scale` property). */
+.gallery-parallax {
+  transform: translate3d(var(--par-x, 0px), var(--par-y, 0px), 0);
+  will-change: transform;
+}
+@media (prefers-reduced-motion: reduce) {
+  .gallery-parallax {
+    transform: none;
+  }
+}
+
+/* Wishlist pop: confirms "saved" when the heart is toggled. */
+.wish-pop {
+  animation: wish-pop 350ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes wish-pop {
+  0% {
+    transform: scale(0.6);
+  }
+  55% {
+    transform: scale(1.25);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Cart nudge: directional confirmation when an item lands in the cart. */
+.cart-nudge {
+  animation: cart-nudge 300ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes cart-nudge {
+  0% {
+    transform: translateX(0);
+  }
+  40% {
+    transform: translateX(5px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+[dir="rtl"] .cart-nudge {
+  animation-name: cart-nudge-rtl;
+}
+@keyframes cart-nudge-rtl {
+  0% {
+    transform: translateX(0);
+  }
+  40% {
+    transform: translateX(-5px);
+  }
+  100% {
+    transform: translateX(0);
   }
 }
 
@@ -595,6 +681,7 @@ html[lang="ar"] h2,
 html[lang="ar"] h3,
 html[lang="ar"] h4,
 html[lang="ar"] .text-display,
+html[lang="ar"] .text-h2,
 html[lang="ar"] .text-h3,
 html[lang="ar"] .text-eyebrow {
   letter-spacing: 0;

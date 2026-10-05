@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { AdminGate } from "@/components/admin/AdminGate";
@@ -41,8 +41,14 @@ import {
   type AdminCouponRow,
 } from "@/lib/admin-catalog.functions";
 import { errMsg, Pager } from "./_shared";
+import { numParam, strParam, useUrlState } from "@/hooks/use-url-state";
 
 export const Route = createFileRoute("/admin/coupons")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    page: numParam(search["page"], 1),
+    create: strParam(search["create"]),
+  }),
+  head: () => ({ meta: [{ name: "robots", content: "noindex,nofollow" }] }),
   component: AdminCouponsPage,
 });
 
@@ -60,9 +66,16 @@ function AdminCouponsPage() {
 
 function CouponsManager() {
   const queryClient = useQueryClient();
-  const [page, setPage] = useState(1);
+  const url = useUrlState({ page: 1 });
+  const page = numParam(url.search["page"], 1);
+  const setPage = (next: number) => url.set({ page: next }, { push: true });
   const [editing, setEditing] = useState<CouponRow | null | "new">(null);
   const [deleting, setDeleting] = useState<CouponRow | null>(null);
+
+  // Deep link: /admin/coupons?create=coupon opens the new-coupon dialog.
+  useEffect(() => {
+    if (strParam(url.search["create"]) === "coupon") setEditing("new");
+  }, [url.search["create"]]);
 
   const couponsQuery = useQuery({
     queryKey: ["admin-coupons", page],
@@ -199,7 +212,10 @@ function CouponsManager() {
           key={editing === "new" ? "new" : (editing as CouponRow).id}
           coupon={editing === "new" ? null : (editing as CouponRow)}
           sellers={sellersQuery.data?.sellers ?? []}
-          onClose={() => setEditing(null)}
+          onClose={() => {
+            setEditing(null);
+            url.set({ create: undefined });
+          }}
           onSaved={invalidate}
         />
       ) : null}

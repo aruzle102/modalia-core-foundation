@@ -14,7 +14,7 @@ import { errMsg } from "../admin/_shared";
 
 export const Route = createFileRoute("/_authenticated/seller/ai")({
   validateSearch: (search: Record<string, unknown>) => ({ locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined) }),
-  head: () => ({ meta: [{ title: "AI tools — Seller — Modalia" }, { name: "description", content: "Rule-based writing helpers for your listings." }] }),
+  head: () => ({ meta: [{ name: "robots", content: "noindex,nofollow" }, { title: "AI tools — Seller — Modalia" }, { name: "description", content: "Rule-based writing helpers for your listings." }] }),
   component: SellerAiPage,
 });
 

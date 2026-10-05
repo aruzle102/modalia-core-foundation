@@ -1,14 +1,17 @@
-import { useMemo, type ReactNode } from "react";
+import { useEffect, useMemo, type ReactNode } from "react";
 import { getLocale, getTranslations, localeDirections } from "@/lib/i18n";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import type { LinkProps } from "@tanstack/react-router";
+import { supabase } from "@/integrations/supabase/client";
 import {
+  Ban,
   BarChart3,
   ExternalLink,
   Layers,
   LayoutDashboard,
   LifeBuoy,
   LogIn,
+  LogOut,
   Package,
   Paintbrush,
   Percent,
@@ -28,6 +31,7 @@ import {
 } from "lucide-react";
 import { SellerCommandBar } from "./SellerCommandBar";
 import { SellerGateCard, SellerShellSkeleton, useSellerSession } from "./ui";
+import type { SellerSuspendedReason } from "./ui";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -93,20 +97,70 @@ function useSellerLocale() {
   }, []);
 }
 
+type SellerAuthStrings = ReturnType<typeof getTranslations>["sellerAuth"];
+
+function suspendedMessage(
+  reason: SellerSuspendedReason | null,
+  t: SellerAuthStrings,
+): string {
+  switch (reason) {
+    case "suspended":
+      return t.blockedSuspended;
+    case "disabled":
+      return t.blockedDisabled;
+    case "pending":
+      return t.blockedPending;
+    case "staff-deactivated":
+      return t.blockedStaff;
+    default:
+      return t.blockedTitle;
+  }
+}
+
+import { Crumbs, type Crumb } from "@/components/routing/crumbs";
+
 export function SellerShell({
   title,
   eyebrow,
   actions,
+  breadcrumbs,
   children,
 }: {
   title: string;
   eyebrow?: string;
   actions?: ReactNode;
+  breadcrumbs?: Crumb[];
   children: ReactNode;
 }) {
-  const { status, error, seller, retry } = useSellerSession();
+  const { status, error, seller, suspendedReason, retry } = useSellerSession();
   const locale = useSellerLocale();
   const dirProps = { dir: localeDirections[locale], lang: locale } as const;
+  const nav = useNavigate();
+  const t = getTranslations(locale).sellerAuth;
+
+  // Forced password rotation: a first-time owner who reaches the workspace
+  // (e.g. via a bookmarked deep link) is routed to the change-password page
+  // before any work. The flag is owner-only; suspended owners never get here
+  // (status !== "ready"). href is used because the route tree regenerates at
+  // build time.
+  useEffect(() => {
+    if (status === "ready" && seller?.isOwner && seller?.mustResetPassword) {
+      void nav({ href: `/seller/change-password?locale=${locale}`, replace: true });
+    }
+  }, [status, seller, locale, nav]);
+  // Preserve the intended route so the seller returns here after signing in.
+  const intended = useMemo(
+    () =>
+      typeof window === "undefined"
+        ? "/seller"
+        : window.location.pathname + window.location.search,
+    [],
+  );
+
+  async function handleSignOut() {
+    await supabase.auth.signOut();
+    await nav({ to: "/seller/login", search: { locale }, replace: true });
+  }
 
   if (status === "checking") {
     return (
@@ -121,12 +175,34 @@ export function SellerShell({
       <div {...dirProps} className="min-h-screen bg-background text-foreground">
         <SellerGateCard
           icon={<LogIn className="h-6 w-6 text-muted-foreground" />}
-          title="Sign in required"
-          description="You need to sign in to access your seller workspace."
+          title={t.gateTitle}
+          description={t.gateSub}
         >
           <Button asChild>
-            <Link to="/auth" search={{ locale }}>
-              Sign in
+            <Link to="/seller/login" search={{ locale, redirect: intended }}>
+              {t.signIn}
+            </Link>
+          </Button>
+        </SellerGateCard>
+      </div>
+    );
+  }
+
+  if (status === "suspended") {
+    return (
+      <div {...dirProps} className="min-h-screen bg-background text-foreground">
+        <SellerGateCard
+          icon={<Ban className="h-6 w-6 text-destructive" />}
+          title={t.blockedTitle}
+          description={suspendedMessage(suspendedReason, t)}
+        >
+          <Button type="button" variant="outline" onClick={handleSignOut}>
+            <LogOut className="me-2 h-4 w-4" aria-hidden="true" />
+            {t.logout}
+          </Button>
+          <Button asChild variant="ghost">
+            <Link to="/" search={{ locale }}>
+              {t.backToMarketplace}
             </Link>
           </Button>
         </SellerGateCard>
@@ -217,6 +293,16 @@ export function SellerShell({
             viewAllTo="/seller/notifications"
             preferencesTo="/seller/notifications/preferences"
           />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={handleSignOut}
+            title={t.logout}
+            aria-label={t.logout}
+          >
+            <LogOut className="h-4 w-4" aria-hidden="true" />
+          </Button>
         </div>
         {/* Mobile nav: compact horizontally-scrollable under the topbar */}
         <nav className="border-t lg:hidden" aria-label="Seller">
@@ -239,6 +325,7 @@ export function SellerShell({
 
         <main id="main-content" tabIndex={-1} className="min-w-0 flex-1">
           <div className="mx-auto w-full max-w-7xl px-4 py-6 lg:px-8">
+            {breadcrumbs && breadcrumbs.length > 0 ? <Crumbs items={breadcrumbs} /> : null}
             <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
                 {eyebrow ? (

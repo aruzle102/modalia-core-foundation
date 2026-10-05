@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { keepPreviousData, queryOptions, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { ArrowLeft, Info } from "lucide-react";
@@ -8,6 +7,7 @@ import { AdminCard, EmptyState, Stat, fmtMoney } from "@/components/admin/ui";
 import { Donut, OrdersBars, SalesLine, TopList } from "@/components/seller/SellerCharts";
 import { FunnelChart } from "@/components/analytics/FunnelChart";
 import { getLocale } from "@/lib/i18n";
+import { numParam, useUrlState } from "@/hooks/use-url-state";
 import {
   getSellerOrderStatusBreakdown,
   getSellerOverview,
@@ -39,15 +39,21 @@ const engagementQuery = (days: number) =>
   });
 
 export const Route = createFileRoute("/_authenticated/seller/analytics")({
-  validateSearch: (search: Record<string, unknown>) => ({ locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined) }),
-  loader: ({ context }) =>
-    Promise.all([
+  validateSearch: (search: Record<string, unknown>) => ({
+    locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined),
+    days: numParam(search["days"], 30),
+  }),
+  loaderDeps: ({ search }) => ({ days: search.days }),
+  loader: ({ context, deps }) => {
+    const days = numParam(deps.days, 30);
+    return Promise.all([
       context.queryClient.ensureQueryData(overviewQuery),
-      context.queryClient.ensureQueryData(seriesQuery(30)),
+      context.queryClient.ensureQueryData(seriesQuery(days)),
       context.queryClient.ensureQueryData(topProductsQuery),
       context.queryClient.ensureQueryData(topCategoriesQuery),
       context.queryClient.ensureQueryData(breakdownQuery),
-    ]),
+    ]);
+  },
   pendingComponent: () => <div className="px-6 py-24 text-center text-muted-foreground">Loading analytics…</div>,
   errorComponent: () => (
     <div role="alert" className="px-6 py-24 text-center text-muted-foreground">
@@ -56,6 +62,7 @@ export const Route = createFileRoute("/_authenticated/seller/analytics")({
   ),
   head: () => ({
     meta: [
+      { name: "robots", content: "noindex,nofollow" },
       { title: "Sales analytics — Modalia" },
       { name: "description", content: "Deeper sales, product and settlement analytics for your store." },
       { property: "og:title", content: "Sales analytics — Modalia" },
@@ -69,7 +76,9 @@ export const Route = createFileRoute("/_authenticated/seller/analytics")({
 });
 
 function SellerAnalyticsPage() {
-  const [days, setDays] = useState<number>(30);
+  const url = useUrlState({ days: 30 });
+  const days = numParam(url.search["days"], 30);
+  const setDays = (next: number) => url.set({ days: next }, { push: true });
   const { locale } = Route.useSearch();
   const { data: overview } = useSuspenseQuery(overviewQuery);
   const { data: topProducts } = useSuspenseQuery(topProductsQuery);

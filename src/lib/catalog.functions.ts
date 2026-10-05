@@ -66,8 +66,9 @@ function publicUrl(path: string | null) {
 }
 
 function createPublicClient() {
-  const url = process.env["SUPABASE_URL"];
-  const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
+  // Prefer server env; fall back to VITE_ vars (some hosts only inject those).
+  const url = process.env["SUPABASE_URL"] || process.env["VITE_SUPABASE_URL"];
+  const key = process.env["SUPABASE_PUBLISHABLE_KEY"] || process.env["VITE_SUPABASE_PUBLISHABLE_KEY"];
   if (!url || !key) throw new Error("The marketplace catalogue is unavailable.");
   return createClient<Database>(url, key, {
     auth: { persistSession: false, autoRefreshToken: false },

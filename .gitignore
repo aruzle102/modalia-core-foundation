@@ -30,8 +30,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
-# Environment secrets — never commit real values
-.env
-.env.local
-.env.*.local

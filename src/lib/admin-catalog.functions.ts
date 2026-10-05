@@ -3,8 +3,10 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database, Json } from "@/integrations/supabase/types";
 import { emitSellerNotification } from "@/lib/notifications.functions";
+import { assertAdmin } from "@/lib/admin-auth";
 
 type ProductUpdate = Database["public"]["Tables"]["products"]["Update"];
+type ProductInsert = Database["public"]["Tables"]["products"]["Insert"];
 type ShippingRuleInsert = Database["public"]["Tables"]["shipping_rules"]["Insert"];
 type SettlementUpdate = Database["public"]["Tables"]["seller_settlements"]["Update"];
 
@@ -13,20 +15,14 @@ type SettlementUpdate = Database["public"]["Tables"]["seller_settlements"]["Upda
  *
  * Covers products, categories, reviews, coupons, shipping rules, seller
  * settlements and audit logs. Every function is admin-only:
- * `.middleware([requireSupabaseAuth])` plus a local `assertAdmin` that calls
- * the `is_super_admin` RPC — same pattern as src/lib/admin.functions.ts.
+ * `.middleware([requireSupabaseAuth])` plus the shared `assertAdmin` from
+ * `@/lib/admin-auth` that calls the `is_super_admin` RPC.
  *
  * All financial math and validation happen server-side; client values are
  * never trusted. Important mutations are written to public.audit_logs.
  */
 
 const adminOnly = [requireSupabaseAuth] as const;
-
-async function assertAdmin(context: any) {
-  if (!context) throw new Error("Unauthorized");
-  const { data, error } = await context.supabase.rpc("is_super_admin");
-  if (error || data !== true) throw new Error("Forbidden");
-}
 
 async function adminClient() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -294,6 +290,114 @@ export const setProductStatus = createServerFn({ method: "POST" })
   });
 
 // ---------------------------------------------------------------------------
+// Admin product creation
+// ---------------------------------------------------------------------------
+
+/** Minimal slugifier for admin-created products: latin chars, dashes. */
+function slugifyProductName(name: string): string {
+  return name
+    .normalize("NFKD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60);
+}
+
+const createAdminProductInput = z.object({
+  seller_id: z.string().uuid(),
+  name: z.string().trim().min(2).max(120),
+  name_locale: z.enum(["ar", "fr", "en"]),
+  base_price: z.number().positive().max(100_000_000),
+  category_id: z.string().uuid().nullable().optional(),
+});
+
+/**
+ * Admin-only product creation. The product is inserted as a private draft
+ * (status `draft`, visibility `private`, moderation `pending`) attached to the
+ * chosen seller and their store when one exists; the seller completes it from
+ * their own dashboard. The slug is generated server-side and guaranteed
+ * unique.
+ */
+export const createAdminProduct = createServerFn({ method: "POST" })
+  .middleware(adminOnly)
+  .inputValidator((data) => createAdminProductInput.parse(data))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const supabaseAdmin = await adminClient();
+
+    const { data: seller, error: sellerError } = await supabaseAdmin
+      .from("sellers")
+      .select("id,account_status")
+      .eq("id", data.seller_id)
+      .maybeSingle();
+    if (sellerError || !seller) throw new Error("Seller not found.");
+    if (seller.account_status === "disabled" || seller.account_status === "suspended") {
+      throw new Error("Cannot create a product for a disabled or suspended seller.");
+    }
+
+    if (data.category_id) {
+      const { data: category, error: catError } = await supabaseAdmin
+        .from("categories")
+        .select("id")
+        .eq("id", data.category_id)
+        .maybeSingle();
+      if (catError || !category) throw new Error("Category not found.");
+    }
+
+    // The seller's store (one store per seller), when it exists.
+    const { data: store } = await supabaseAdmin
+      .from("stores")
+      .select("id")
+      .eq("seller_id", data.seller_id)
+      .maybeSingle();
+
+    const base = slugifyProductName(data.name) || "product";
+    let slug = base;
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const candidate = attempt === 0 ? base : `${base}-${Math.random().toString(36).slice(2, 8)}`;
+      const { data: clash } = await supabaseAdmin
+        .from("products")
+        .select("id")
+        .eq("slug", candidate)
+        .maybeSingle();
+      if (!clash) {
+        slug = candidate;
+        break;
+      }
+      slug = `${base}-${Math.random().toString(36).slice(2, 8)}`;
+    }
+    {
+      const { data: clash } = await supabaseAdmin.from("products").select("id").eq("slug", slug).maybeSingle();
+      if (clash) throw new Error("Could not generate a unique slug. Please try again.");
+    }
+
+    const insert: ProductInsert = {
+      seller_id: data.seller_id,
+      store_id: store?.id ?? null,
+      slug,
+      name: { [data.name_locale]: data.name } as Json,
+      base_price: data.base_price,
+      category_id: data.category_id ?? null,
+      status: "draft",
+      currency: "DZD",
+    };
+    const { data: created, error: insertError } = await supabaseAdmin
+      .from("products")
+      .insert(insert)
+      .select("id,slug")
+      .single();
+    if (insertError || !created) throw new Error(insertError?.message ?? "Could not create the product.");
+
+    await auditLog(context.userId ?? null, "product_created", "product", created.id, {
+      slug,
+      seller_id: data.seller_id,
+      via: "admin",
+    });
+    return { ok: true as const, id: created.id, slug: created.slug };
+  });
+
+// ---------------------------------------------------------------------------
 // Categories
 // ---------------------------------------------------------------------------
 
@@ -466,7 +570,7 @@ export const listAdminReviews = createServerFn({ method: "GET" })
     let query = context.supabase
       .from("reviews")
       .select(
-        "id, product_id, rating, body, moderation_status, flagged_at, verified_purchase, moderation_reason, first_name, last_name, created_at, products!inner(id, slug, name)",
+        "id, product_id, rating, body, moderation_status, flagged_at, verified_purchase, moderation_reason, first_name, last_name, created_at, image_path, products!inner(id, slug, name)",
         { count: "exact" },
       )
       .order("created_at", { ascending: false })
@@ -478,8 +582,28 @@ export const listAdminReviews = createServerFn({ method: "GET" })
     }
     const { data: rows, error, count } = await query;
     if (error) throw new Error(error.message);
+    // Pending (unapproved) review photos are not publicly readable — mint
+    // short-lived signed URLs so moderators can actually see what they are
+    // approving.
+    const supabaseAdmin = await adminClient();
+    const reviews = await Promise.all(
+      (rows ?? []).map(async (row) => {
+        let imageUrl: string | null = null;
+        if (row.image_path) {
+          try {
+            const { data: signed } = await supabaseAdmin.storage
+              .from("review-images")
+              .createSignedUrl(row.image_path, 3600);
+            imageUrl = signed?.signedUrl ?? null;
+          } catch {
+            imageUrl = null;
+          }
+        }
+        return { ...row, image_url: imageUrl };
+      }),
+    );
     return {
-      reviews: rows ?? [],
+      reviews,
       total: count ?? 0,
       page: data.page,
       pageSize: PAGE_SIZE,
@@ -506,6 +630,22 @@ export const moderateReview = createServerFn({ method: "POST" })
       moderated_at: new Date().toISOString(),
     };
     const supabaseAdmin = await adminClient();
+    // On reject/hide, remove the guest's photo from the review-images bucket
+    // (best-effort) so rejected imagery never stays publicly reachable.
+    if (data.decision !== "approve") {
+      try {
+        const { data: row } = await supabaseAdmin
+          .from("reviews")
+          .select("image_path")
+          .eq("id", data.id)
+          .maybeSingle();
+        if (row?.image_path) {
+          await supabaseAdmin.storage.from("review-images").remove([row.image_path]);
+        }
+      } catch {
+        /* best effort */
+      }
+    }
     const { error } = await supabaseAdmin.from("reviews").update(update).eq("id", data.id);
     if (error) throw new Error(error.message);
     await auditLog(context.userId ?? null, `review_${data.decision}d`, "review", data.id, {
@@ -537,7 +677,7 @@ export type AdminProductListItem = Pick<
 export type AdminSettlementListItem = Pick<
   Database["public"]["Tables"]["seller_settlements"]["Row"],
   | "id" | "seller_id" | "amount" | "currency" | "period_start" | "period_end"
-  | "status" | "payment_reference" | "verified_by" | "verified_at" | "settled_at"
+  | "status" | "payment_reference" | "payment_proof_path" | "verified_by" | "verified_at" | "settled_at"
   | "notes" | "created_at"
 >;
 export type AdminShippingRuleListItem = Pick<
@@ -938,7 +1078,7 @@ export const listSettlements = createServerFn({ method: "GET" })
     let query = context.supabase
       .from("seller_settlements")
       .select(
-        "id, seller_id, amount, currency, period_start, period_end, status, payment_reference, verified_by, verified_at, settled_at, notes, created_at",
+        "id, seller_id, amount, currency, period_start, period_end, status, payment_reference, payment_proof_path, verified_by, verified_at, settled_at, notes, created_at",
         { count: "exact" },
       )
       .order("created_at", { ascending: false })
@@ -1047,6 +1187,12 @@ export const updateSettlementStatus = createServerFn({ method: "POST" })
         id: z.string().uuid(),
         status: z.enum(["approved", "paid", "rejected", "cancelled"]),
         payment_reference: z.string().max(200).optional(),
+        payment_proof_path: z
+          .string()
+          .max(500)
+          .refine((p) => !p.includes(".."), { message: "Invalid proof path." })
+          .nullable()
+          .optional(),
         notes: z.string().max(1000).optional(),
       })
       .parse(data),
@@ -1073,6 +1219,7 @@ export const updateSettlementStatus = createServerFn({ method: "POST" })
       updated_at: new Date().toISOString(),
     };
     if (data.payment_reference !== undefined) update.payment_reference = data.payment_reference.trim() || null;
+    if (data.payment_proof_path !== undefined) update.payment_proof_path = data.payment_proof_path?.trim() || null;
     if (data.notes !== undefined) update.notes = data.notes.trim() || null;
     if (data.status === "paid") update.settled_at = new Date().toISOString();
     if (data.status === "approved") {
@@ -1086,6 +1233,7 @@ export const updateSettlementStatus = createServerFn({ method: "POST" })
       from: settlement.status,
       to: data.status,
       payment_reference: data.payment_reference ?? null,
+      payment_proof_attached: data.payment_proof_path != null && data.payment_proof_path !== "",
     });
 
     // Notify the seller about the settlement decision (best-effort).
@@ -1136,4 +1284,244 @@ export const listAuditLogs = createServerFn({ method: "GET" })
       page: data.page,
       pageSize: PAGE_SIZE,
     };
+  });
+// ---------------------------------------------------------------------------
+// Bulk product operations — only reversible actions (Phase 3/8, Worker 4)
+// ---------------------------------------------------------------------------
+
+const bulkModerateInput = z.object({
+  ids: z.array(z.string().uuid()).min(1).max(50),
+  decision: z.enum(["approve", "reject", "hide"]),
+  reason: z.string().max(500).optional(),
+});
+
+/**
+ * Bulk moderation. Only reversible decisions are allowed in bulk:
+ * approve / hide / reject — every one of them can be undone from the
+ * product table (re-approve, re-hide, re-submit). Destructive deletes are
+ * intentionally not offered in bulk.
+ */
+export const bulkModerateAdminProducts = createServerFn({ method: "POST" })
+  .middleware(adminOnly)
+  .inputValidator((data) => bulkModerateInput.parse(data))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const supabaseAdmin = await adminClient();
+    const now = new Date().toISOString();
+    const base = {
+      moderated_by: context.userId ?? null,
+      moderated_at: now,
+      moderation_reason: data.reason?.trim() || null,
+    };
+    const update =
+      data.decision === "approve"
+        ? {
+            ...base,
+            moderation_status: "approved",
+            publication_status: "published",
+            visibility: "public",
+            status: "active" as const,
+            published_at: now,
+          }
+        : data.decision === "hide"
+          ? { ...base, visibility: "hidden", publication_status: "hidden" }
+          : {
+              ...base,
+              moderation_status: "rejected",
+              publication_status: "rejected",
+              visibility: "hidden",
+              status: "draft" as const,
+            };
+    const { data: rows, error } = await supabaseAdmin
+      .from("products")
+      .update(update)
+      .in("id", data.ids)
+      .select("id,seller_id");
+    if (error) throw new Error(error.message);
+    const affected = rows ?? [];
+    await auditLog(context.userId ?? null, `product_bulk_${data.decision}d`, "product", null, {
+      product_ids: affected.map((r) => r.id),
+      decision: data.decision,
+      reason: data.reason ?? null,
+    });
+    try {
+      const sellerIds = [...new Set(affected.map((r) => r.seller_id).filter(Boolean))];
+      for (const sellerId of sellerIds) {
+        await emitSellerNotification(sellerId as string, {
+          type:
+            data.decision === "approve"
+              ? "product_approved"
+              : data.decision === "reject"
+                ? "product_rejected"
+                : "product_hidden",
+          params: { productName: `${affected.length} products`, reason: data.reason?.trim() || undefined },
+          link: "/seller/products",
+          payload: { decision: data.decision, bulk: true },
+        });
+      }
+    } catch {
+      /* notifications are best-effort */
+    }
+    return { ok: true as const, count: affected.length };
+  });
+
+const bulkStatusInput = z.object({
+  ids: z.array(z.string().uuid()).min(1).max(50),
+  status: z.enum(["active", "archived"]),
+});
+
+/** Bulk publish / archive — both reversible from the product table. */
+export const bulkSetProductStatus = createServerFn({ method: "POST" })
+  .middleware(adminOnly)
+  .inputValidator((data) => bulkStatusInput.parse(data))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const supabaseAdmin = await adminClient();
+    const { data: rows, error } = await supabaseAdmin
+      .from("products")
+      .update({ status: data.status, updated_at: new Date().toISOString() })
+      .in("id", data.ids)
+      .select("id");
+    if (error) throw new Error(error.message);
+    const affected = rows ?? [];
+    await auditLog(context.userId ?? null, `product_bulk_${data.status}`, "product", null, {
+      product_ids: affected.map((r) => r.id),
+      status: data.status,
+    });
+    return { ok: true as const, count: affected.length };
+  });
+
+// ---------------------------------------------------------------------------
+// Settlement payment proofs (Phase 3/8, Worker 4)
+// ---------------------------------------------------------------------------
+
+const proofUrlInput = z.object({ settlementId: z.string().uuid() });
+
+/**
+ * Mint a short-lived signed URL for a settlement's payment proof.
+ * The bucket is private and super-admin only; sellers never see raw paths.
+ */
+export const getSettlementProofUrl = createServerFn({ method: "GET" })
+  .middleware(adminOnly)
+  .inputValidator((data) => proofUrlInput.parse(data))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const supabaseAdmin = await adminClient();
+    const { data: settlement, error } = await supabaseAdmin
+      .from("seller_settlements")
+      .select("id, payment_proof_path")
+      .eq("id", data.settlementId)
+      .maybeSingle();
+    if (error || !settlement) throw new Error("Settlement not found.");
+    const path = settlement.payment_proof_path as string | null;
+    if (!path) throw new Error("No payment proof attached to this settlement.");
+    if (path.includes("..")) throw new Error("Invalid proof path.");
+    const { data: signed, error: signError } = await supabaseAdmin.storage
+      .from("settlement-proofs")
+      .createSignedUrl(path, 600);
+    if (signError || !signed?.signedUrl) throw new Error("Could not generate the proof link.");
+    return { url: signed.signedUrl as string };
+  });
+
+// ---------------------------------------------------------------------------
+// Admin commissions overview (Phase 3/8, Worker 4)
+// ---------------------------------------------------------------------------
+
+const listAdminCommissionsInput = z.object({
+  q: z.string().max(100).optional(),
+  page: z.number().int().min(1).default(1),
+});
+
+export type AdminCommissionRow = {
+  sellerId: string;
+  legalName: string;
+  email: string | null;
+  commissionRate: number;
+  orderCount: number;
+  gross: number;
+  commission: number;
+  net: number;
+  history: { id: string; rate: number; effectiveFrom: string; changedBy: string | null }[];
+};
+
+/**
+ * Per-seller commission overview: current rate, earned order counts, and the
+ * Gross / Commission / Net money split computed from per-order snapshots
+ * (seller_orders.subtotal / commission_total — historical snapshots, never
+ * recalculated). Rate history carries effective dates.
+ */
+export const listAdminCommissions = createServerFn({ method: "GET" })
+  .middleware(adminOnly)
+  .inputValidator((data) => listAdminCommissionsInput.parse(data))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const supabaseAdmin = await adminClient();
+    const from = (data.page - 1) * PAGE_SIZE;
+    const q = (data.q ?? "").replace(/[,()]/g, "").trim().slice(0, 100);
+
+    let query = supabaseAdmin
+      .from("sellers")
+      .select("id, legal_name, email, commission_rate", { count: "exact" });
+    if (q) query = query.or(`legal_name.ilike.%${q}%,email.ilike.%${q}%`);
+    const { data: sellers, error, count } = await query
+      .order("legal_name")
+      .range(from, from + PAGE_SIZE - 1);
+    if (error) throw new Error(error.message);
+    const sellerIds = (sellers ?? []).map((s) => s.id);
+
+    const [ordersRes, historyRes] = await Promise.all([
+      sellerIds.length
+        ? supabaseAdmin
+            .from("seller_orders")
+            .select("seller_id, subtotal, commission_total, status")
+            .in("seller_id", sellerIds)
+            .in("status", ["delivered", "fulfilled"])
+        : Promise.resolve({ data: [] as { seller_id: string; subtotal: number | null; commission_total: number | null; status: string }[], error: null }),
+      sellerIds.length
+        ? supabaseAdmin
+            .from("seller_commission_history")
+            .select("id, seller_id, rate, effective_from, changed_by")
+            .in("seller_id", sellerIds)
+            .order("effective_from", { ascending: false })
+        : Promise.resolve({ data: [] as { id: string; seller_id: string; rate: number; effective_from: string; changed_by: string | null }[], error: null }),
+    ]);
+    if (ordersRes.error) throw new Error(ordersRes.error.message);
+    if (historyRes.error) throw new Error(historyRes.error.message);
+
+    const ordersBySeller = new Map<string, { count: number; gross: number; commission: number }>();
+    for (const o of ordersRes.data ?? []) {
+      const agg = ordersBySeller.get(o.seller_id) ?? { count: 0, gross: 0, commission: 0 };
+      agg.count += 1;
+      agg.gross += Number(o.subtotal ?? 0);
+      agg.commission += Number(o.commission_total ?? 0);
+      ordersBySeller.set(o.seller_id, agg);
+    }
+    const historyBySeller = new Map<string, AdminCommissionRow["history"]>();
+    for (const h of historyRes.data ?? []) {
+      const list = historyBySeller.get(h.seller_id) ?? [];
+      list.push({
+        id: h.id,
+        rate: Number(h.rate),
+        effectiveFrom: h.effective_from,
+        changedBy: h.changed_by,
+      });
+      historyBySeller.set(h.seller_id, list);
+    }
+
+    const rows: AdminCommissionRow[] = (sellers ?? []).map((s) => {
+      const agg = ordersBySeller.get(s.id) ?? { count: 0, gross: 0, commission: 0 };
+      return {
+        sellerId: s.id,
+        legalName: s.legal_name,
+        email: s.email,
+        commissionRate: Number(s.commission_rate ?? 0),
+        orderCount: agg.count,
+        gross: agg.gross,
+        commission: agg.commission,
+        net: agg.gross - agg.commission,
+        history: historyBySeller.get(s.id) ?? [],
+      };
+    });
+
+    return { rows, total: count ?? 0, page: data.page, pageSize: PAGE_SIZE };
   });

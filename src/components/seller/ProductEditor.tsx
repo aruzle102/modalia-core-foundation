@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Link, useBlocker, useNavigate } from "@tanstack/react-router";
+import { useBlocker, useNavigate, useSearch } from "@tanstack/react-router";
+import { BackLink } from "@/components/routing/back-link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangle,
@@ -42,10 +43,39 @@ import {
   getProductEditor,
   getSellerBrands,
   getSellerCategories,
+  getSellerColors,
   saveProduct,
   submitForModeration,
 } from "@/lib/seller-products.functions";
+import {
+  requestSellerMediaUpload,
+  finalizeSellerMediaUpload,
+  deleteSellerMediaObject,
+} from "@/lib/seller-media.functions";
+import {
+  MediaUploader,
+  type UploaderLabels,
+} from "@/components/media/MediaUploader";
 import { cn } from "@/lib/utils";
+
+/* The seller workspace is English-only (existing convention); the shared
+ * uploader takes translated labels, so the admin media manager passes its
+ * own trilingual set while the editor uses English. */
+const SELLER_UPLOADER_LABELS: UploaderLabels = {
+  dropHint: "Drag images or 3D models (GLB/GLTF) here or",
+  browse: "Browse files",
+  uploading: "Uploading…",
+  finalizing: "Validating…",
+  done: "Done",
+  errUnsupported: "Unsupported file type. Allowed: JPG, PNG, WebP, GIF, GLB, GLTF.",
+  errTooLarge: "File too large — up to 10 MB for images, up to 50 MB for 3D models.",
+  errEmpty: "The file is empty.",
+  errCorrupt: "The file is corrupt or not a genuine file of this type.",
+  errTooSmall: "Image too small — minimum 64×64 px.",
+  errTooLargeDims: "Image too large — maximum 8000×8000 px.",
+  errUploadFailed: "Upload failed. Please try again.",
+  errKindMismatch: "The file type does not match the expected kind.",
+};
 
 /* ------------------------------------------------------------------ types */
 
@@ -59,6 +89,7 @@ interface OptionValueState {
   key: string;
   label: LocaleText;
   value: string;
+  colorId?: string | null;
 }
 
 interface OptionState {
@@ -88,6 +119,7 @@ interface ImageState {
   storagePath: string;
   isPrimary: boolean;
   mediaType: "image" | "model_3d";
+  altText?: LocaleText;
 }
 
 interface EditorSnapshot {
@@ -174,6 +206,8 @@ function emptySnapshot(): EditorSnapshot {
 export function ProductEditor({ mode, productId }: { mode: "create" | "edit"; productId?: string }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const routeSearch = useSearch({ strict: false }) as Record<string, unknown>;
+  const backParam = typeof routeSearch["back"] === "string" ? routeSearch["back"] : "";
 
   const editorQuery = useQuery({
     queryKey: ["seller-product-editor", productId],
@@ -187,6 +221,10 @@ export function ProductEditor({ mode, productId }: { mode: "create" | "edit"; pr
   const brandsQuery = useQuery({
     queryKey: ["seller-brands"],
     queryFn: () => getSellerBrands(),
+  });
+  const colorsQuery = useQuery({
+    queryKey: ["seller-colors"],
+    queryFn: () => getSellerColors(),
   });
 
   const [snap, setSnap] = useState<EditorSnapshot>(() => {
@@ -204,7 +242,6 @@ export function ProductEditor({ mode, productId }: { mode: "create" | "edit"; pr
   const [dirty, setDirty] = useState(false);
   const [locale, setLocale] = useState<"fr" | "en" | "ar">("fr");
   const [tagInput, setTagInput] = useState("");
-  const [imageInput, setImageInput] = useState("");
   const [bulkPrice, setBulkPrice] = useState("");
   const [bulkStock, setBulkStock] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -224,7 +261,7 @@ export function ProductEditor({ mode, productId }: { mode: "create" | "edit"; pr
         name: asLocale(o.name),
         values: (o.product_option_values ?? [])
           .sort((a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
-          .map((v: any) => ({ key: v.id, label: asLocale(v.label), value: v.value })),
+          .map((v: any) => ({ key: v.id, label: asLocale(v.label), value: v.value, colorId: v.color_id ?? null })),
       }));
     const valueLabel = new Map<string, string>();
     for (const o of options)
@@ -261,6 +298,7 @@ export function ProductEditor({ mode, productId }: { mode: "create" | "edit"; pr
         storagePath: img.storage_path,
         isPrimary: !!img.is_primary,
         mediaType: img.media_type === "model_3d" ? "model_3d" : "image",
+        altText: asLocale(img.alt_text),
       }));
     const meta: any = p.metadata ?? {};
     setSnap({
@@ -392,7 +430,7 @@ export function ProductEditor({ mode, productId }: { mode: "create" | "edit"; pr
         } catch {
           /* ignore */
         }
-        navigate({ to: "/seller/products/$productId", params: { productId: res.productId }, search: { locale } });
+        navigate({ to: "/seller/products/$productId", params: { productId: res.productId }, search: { locale, back: backParam, q: "", status: "", moderation: "", page: 1 } });
       } else {
         setSavedAt(new Date().toLocaleTimeString());
       }
@@ -412,7 +450,7 @@ export function ProductEditor({ mode, productId }: { mode: "create" | "edit"; pr
   const duplicateMutation = useMutation({
     mutationFn: () => duplicateProduct({ data: { productId: productId as string } }),
     onSuccess: (res) =>
-      navigate({ to: "/seller/products/$productId", params: { productId: res.productId }, search: { locale } }),
+      navigate({ to: "/seller/products/$productId", params: { productId: res.productId }, search: { locale, back: backParam, q: "", status: "", moderation: "", page: 1 } }),
     onError: (e) => setError(e instanceof Error ? e.message : "Unable to duplicate."),
   });
 
@@ -432,22 +470,20 @@ export function ProductEditor({ mode, productId }: { mode: "create" | "edit"; pr
     setTagInput("");
   };
 
-  const addImage = () => {
-    const path = imageInput.trim();
-    if (!path) return;
+  const addUploadedMedia = (media: { path: string; kind: "image" | "model_3d" }) => {
     patch((s) => ({
       ...s,
       images: [
         ...s.images,
         {
           key: `img-${uid()}`,
-          storagePath: path,
+          storagePath: media.path,
           isPrimary: s.images.length === 0,
-          mediaType: "image",
+          mediaType: media.kind,
+          altText: { ...EMPTY_LOCALE },
         },
       ],
     }));
-    setImageInput("");
   };
 
   const addOption = () => {
@@ -467,6 +503,9 @@ export function ProductEditor({ mode, productId }: { mode: "create" | "edit"; pr
   const editorProduct: any = editorQuery.data?.product;
   const categories: any[] = categoriesQuery.data?.categories ?? [];
   const brands: any[] = brandsQuery.data?.brands ?? [];
+  const colors: { id: string; name: unknown; slug: string; hex_value: string | null }[] =
+    colorsQuery.data?.colors ?? [];
+  const colorById = new Map(colors.map((c) => [c.id, c]));
   const canSubmit =
     mode === "edit" &&
     (editorProduct?.moderation_status === "draft" ||
@@ -483,7 +522,7 @@ export function ProductEditor({ mode, productId }: { mode: "create" | "edit"; pr
             text="This product does not exist or you do not have access to it."
             action={
               <Button asChild>
-                <Link to="/seller/products" search={{ locale }}>Back to products</Link>
+                <BackLink back={backParam} fallbackTo="/seller/products">Back to products</BackLink>
               </Button>
             }
           />
@@ -758,22 +797,26 @@ export function ProductEditor({ mode, productId }: { mode: "create" | "edit"; pr
             title="Media"
             subtitle="Images and 3D models — first primary image is the cover"
           >
-            <div className="flex gap-2">
-              <Input
-                value={imageInput}
-                onChange={(e) => setImageInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    addImage();
-                  }
-                }}
-                placeholder="Paste a storage path or image URL, press Enter"
-              />
-              <Button type="button" variant="outline" onClick={addImage}>
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
+            <MediaUploader
+              acceptKind="any"
+              labels={SELLER_UPLOADER_LABELS}
+              requestUpload={async (file, kind) => {
+                const res = await requestSellerMediaUpload({
+                  data: {
+                    filename: file.name,
+                    mimeType: file.type || undefined,
+                    sizeBytes: file.size,
+                    mediaKind: kind,
+                  },
+                });
+                return { path: res.path, signedUrl: res.signedUrl, mediaKind: res.mediaKind };
+              }}
+              finalizeUpload={async (path, kind) => {
+                const res = await finalizeSellerMediaUpload({ data: { path, mediaKind: kind } });
+                return { width: res.width, height: res.height };
+              }}
+              onUploaded={addUploadedMedia}
+            />
             {snap.images.length ? (
               <ul className="mt-4 space-y-2">
                 {snap.images.map((img, i) => (
@@ -833,12 +876,22 @@ export function ProductEditor({ mode, productId }: { mode: "create" | "edit"; pr
                     <button
                       type="button"
                       aria-label="Remove media"
-                      onClick={() =>
+                      onClick={() => {
+                        // Uploaded but never saved to the product: delete the
+                        // orphan object right away. Saved rows are cleaned up
+                        // by saveProduct's reference-counted sync.
+                        if (!img.id && img.storagePath) {
+                          deleteSellerMediaObject({
+                            data: { path: img.storagePath },
+                          }).catch(() => {
+                            /* best-effort cleanup */
+                          });
+                        }
                         patch((s) => ({
                           ...s,
                           images: s.images.filter((x) => x.key !== img.key),
-                        }))
-                      }
+                        }));
+                      }}
                       className="rounded p-1.5 text-muted-foreground hover:text-destructive"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -900,6 +953,52 @@ export function ProductEditor({ mode, productId }: { mode: "create" | "edit"; pr
                     <div className="mt-3 flex flex-wrap gap-1.5">
                       {opt.values.map((val, vi) => (
                         <Badge key={val.key} variant="secondary" className="gap-1.5 py-1 ps-2.5">
+                          <Select
+                            value={val.colorId ?? "none"}
+                            onValueChange={(v: string) =>
+                              patch((s) => ({
+                                ...s,
+                                options: s.options.map((o, j) =>
+                                  j === oi
+                                    ? {
+                                        ...o,
+                                        values: o.values.map((x, k) =>
+                                          k === vi
+                                            ? { ...x, colorId: v === "none" ? null : v }
+                                            : x,
+                                        ),
+                                      }
+                                    : o,
+                                ),
+                              }))
+                            }
+                          >
+                            <SelectTrigger
+                              aria-label="Value color"
+                              className="h-6 w-6 shrink-0 rounded-full border p-0 [&>svg]:hidden"
+                              style={{
+                                backgroundColor: val.colorId
+                                  ? (colorById.get(val.colorId)?.hex_value ?? "#cccccc")
+                                  : "transparent",
+                              }}
+                            >
+                              <span className="sr-only">Color</span>
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="none">No color</SelectItem>
+                              {colors.map((c) => (
+                                <SelectItem key={c.id} value={c.id}>
+                                  <span className="flex items-center gap-2">
+                                    <span
+                                      className="h-4 w-4 rounded-full border"
+                                      style={{ backgroundColor: c.hex_value ?? "#cccccc" }}
+                                    />
+                                    {asLocale(c.name).en || asLocale(c.name).fr || c.slug}
+                                  </span>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                           <Input
                             className="h-6 w-24 border-0 bg-transparent p-0 text-xs shadow-none focus-visible:ring-0"
                             value={val.value}
@@ -1252,13 +1351,18 @@ function buildPayload(snap: EditorSnapshot, id?: string) {
       isPrimary: img.isPrimary,
       sortOrder: i,
       mediaType: img.mediaType,
+      altText: clean(img.altText ?? { ...EMPTY_LOCALE }),
     })),
     options: snap.options.map((o) => ({
       code: o.code,
       name: clean(o.name),
       values: o.values
         .filter((v) => v.value.trim())
-        .map((v) => ({ label: clean(v.label), value: v.value.trim() })),
+        .map((v) => ({
+          label: clean(v.label),
+          value: v.value.trim(),
+          colorId: v.colorId ?? null,
+        })),
     })),
     variants: variants.map((v) => ({
       id: v.id,

@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { type SupportedLocale } from "@/config/platform";
 import { localeLabels, persistLocale, type Translation } from "@/lib/i18n";
 import {
@@ -28,6 +29,7 @@ import {
   type SiteSettingKey,
 } from "@/lib/engagement.functions";
 import { useCart } from "@/lib/cart-store";
+import { AiAssistantButton, AiAssistantDrawer } from "@/components/marketplace/ai-assistant";
 
 const supportedLocales: SupportedLocale[] = ["en", "fr", "ar"];
 
@@ -51,6 +53,7 @@ function switchLocale(locale: SupportedLocale) {
 
 export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translation }) {
   const [open, setOpen] = useState(false);
+  const [assistantOpen, setAssistantOpen] = useState(false);
   const cart = useCart();
 
   const navLink = "text-nav text-muted-foreground hover:text-foreground";
@@ -81,6 +84,7 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
         </nav>
 
         <div className="flex items-center gap-1">
+          <AiAssistantButton locale={locale} t={t} onOpen={() => setAssistantOpen(true)} />
           <div className="relative hidden sm:block">
             <select
               aria-label="Choose language"
@@ -122,6 +126,13 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
               </span>
             ) : null}
           </Link>
+          <NotificationBell
+            scope="customer"
+            locale={locale}
+            t={t.notifications}
+            viewAllTo="/notifications"
+            preferencesTo="/notifications/preferences"
+          />
           <Link to="/auth" search={{ locale }}>
             <Button
               variant="ghost"
@@ -232,6 +243,7 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
           </div>
         </nav>
       ) : null}
+      <AiAssistantDrawer locale={locale} t={t} open={assistantOpen} onOpenChange={setAssistantOpen} />
     </header>
   );
 }

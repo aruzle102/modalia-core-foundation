@@ -26,13 +26,16 @@ import { Route as ShopRouteImport } from './routes/shop'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TrackOrderRouteImport } from './routes/track-order'
 import { Route as WishlistRouteImport } from './routes/wishlist'
+import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedSellerRouteImport } from './routes/_authenticated/seller'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as AdminAnalyticsRouteImport } from './routes/admin/analytics'
 import { Route as AdminApplicationsRouteImport } from './routes/admin/applications'
 import { Route as AdminAuditRouteImport } from './routes/admin/audit'
 import { Route as AdminCategoriesRouteImport } from './routes/admin/categories'
 import { Route as AdminCouponsRouteImport } from './routes/admin/coupons'
 import { Route as AdminHomepageRouteImport } from './routes/admin/homepage'
+import { Route as AdminNotificationsRouteImport } from './routes/admin/notifications'
 import { Route as AdminOrdersRouteImport } from './routes/admin/orders'
 import { Route as AdminProductsRouteImport } from './routes/admin/products'
 import { Route as AdminReviewsRouteImport } from './routes/admin/reviews'
@@ -43,6 +46,7 @@ import { Route as CategorySlugRouteImport } from './routes/category.$slug'
 import { Route as ProductSlugRouteImport } from './routes/product.$slug'
 import { Route as StoreSlugRouteImport } from './routes/store.$slug'
 import { Route as AuthenticatedAccountOrdersRouteImport } from './routes/_authenticated/account.orders'
+import { Route as AuthenticatedNotificationsPreferencesRouteImport } from './routes/_authenticated/notifications.preferences'
 import { Route as AuthenticatedSellerAiRouteImport } from './routes/_authenticated/seller.ai'
 import { Route as AuthenticatedSellerAnalyticsRouteImport } from './routes/_authenticated/seller.analytics'
 import { Route as AuthenticatedSellerAppearanceRouteImport } from './routes/_authenticated/seller.appearance'
@@ -51,6 +55,7 @@ import { Route as AuthenticatedSellerCommissionRouteImport } from './routes/_aut
 import { Route as AuthenticatedSellerCouponsRouteImport } from './routes/_authenticated/seller.coupons'
 import { Route as AuthenticatedSellerCustomersRouteImport } from './routes/_authenticated/seller.customers'
 import { Route as AuthenticatedSellerInventoryRouteImport } from './routes/_authenticated/seller.inventory'
+import { Route as AuthenticatedSellerNotificationsRouteImport } from './routes/_authenticated/seller.notifications'
 import { Route as AuthenticatedSellerOrdersRouteImport } from './routes/_authenticated/seller.orders'
 import { Route as AuthenticatedSellerProductsRouteImport } from './routes/_authenticated/seller.products'
 import { Route as AuthenticatedSellerPromotionsRouteImport } from './routes/_authenticated/seller.promotions'
@@ -64,6 +69,7 @@ import { Route as AuthenticatedSellerSupportRouteImport } from './routes/_authen
 import { Route as AdminOrdersOrderIdRouteImport } from './routes/admin/orders.$orderId'
 import { Route as AdminSellersSellerIdRouteImport } from './routes/admin/sellers.$sellerId'
 import { Route as AuthenticatedAccountOrdersOrderIdRouteImport } from './routes/_authenticated/account.orders.$orderId'
+import { Route as AuthenticatedSellerNotificationsPreferencesRouteImport } from './routes/_authenticated/seller.notifications.preferences'
 import { Route as AuthenticatedSellerOrdersOrderIdRouteImport } from './routes/_authenticated/seller.orders.$orderId'
 import { Route as AuthenticatedSellerProductsProductIdRouteImport } from './routes/_authenticated/seller.products.$productId'
 import { Route as AuthenticatedSellerProductsNewRouteImport } from './routes/_authenticated/seller.products.new'
@@ -152,6 +158,12 @@ const WishlistRoute = WishlistRouteImport.update({
   path: '/wishlist',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedNotificationsRoute =
+  AuthenticatedNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSellerRoute = AuthenticatedSellerRouteImport.update({
   id: '/seller',
   path: '/seller',
@@ -160,6 +172,11 @@ const AuthenticatedSellerRoute = AuthenticatedSellerRouteImport.update({
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/admin/',
   path: '/admin/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
+  id: '/admin/analytics',
+  path: '/admin/analytics',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminApplicationsRoute = AdminApplicationsRouteImport.update({
@@ -185,6 +202,11 @@ const AdminCouponsRoute = AdminCouponsRouteImport.update({
 const AdminHomepageRoute = AdminHomepageRouteImport.update({
   id: '/admin/homepage',
   path: '/admin/homepage',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminNotificationsRoute = AdminNotificationsRouteImport.update({
+  id: '/admin/notifications',
+  path: '/admin/notifications',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminOrdersRoute = AdminOrdersRouteImport.update({
@@ -238,6 +260,12 @@ const AuthenticatedAccountOrdersRoute =
     path: '/account/orders',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedNotificationsPreferencesRoute =
+  AuthenticatedNotificationsPreferencesRouteImport.update({
+    id: '/preferences',
+    path: '/preferences',
+    getParentRoute: () => AuthenticatedNotificationsRoute,
+  } as any)
 const AuthenticatedSellerAiRoute = AuthenticatedSellerAiRouteImport.update({
   id: '/ai',
   path: '/ai',
@@ -283,6 +311,12 @@ const AuthenticatedSellerInventoryRoute =
   AuthenticatedSellerInventoryRouteImport.update({
     id: '/inventory',
     path: '/inventory',
+    getParentRoute: () => AuthenticatedSellerRoute,
+  } as any)
+const AuthenticatedSellerNotificationsRoute =
+  AuthenticatedSellerNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
     getParentRoute: () => AuthenticatedSellerRoute,
   } as any)
 const AuthenticatedSellerOrdersRoute =
@@ -361,6 +395,12 @@ const AuthenticatedAccountOrdersOrderIdRoute =
     path: '/$orderId',
     getParentRoute: () => AuthenticatedAccountOrdersRoute,
   } as any)
+const AuthenticatedSellerNotificationsPreferencesRoute =
+  AuthenticatedSellerNotificationsPreferencesRouteImport.update({
+    id: '/preferences',
+    path: '/preferences',
+    getParentRoute: () => AuthenticatedSellerNotificationsRoute,
+  } as any)
 const AuthenticatedSellerOrdersOrderIdRoute =
   AuthenticatedSellerOrdersOrderIdRouteImport.update({
     id: '/$orderId',
@@ -397,12 +437,15 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/track-order': typeof TrackOrderRoute
   '/wishlist': typeof WishlistRoute
+  '/notifications': typeof AuthenticatedNotificationsRouteWithChildren
   '/seller': typeof AuthenticatedSellerRouteWithChildren
+  '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/audit': typeof AdminAuditRoute
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/coupons': typeof AdminCouponsRoute
   '/admin/homepage': typeof AdminHomepageRoute
+  '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/orders': typeof AdminOrdersRouteWithChildren
   '/admin/products': typeof AdminProductsRoute
   '/admin/reviews': typeof AdminReviewsRoute
@@ -414,6 +457,7 @@ export interface FileRoutesByFullPath {
   '/store/$slug': typeof StoreSlugRoute
   '/admin/': typeof AdminIndexRoute
   '/account/orders': typeof AuthenticatedAccountOrdersRouteWithChildren
+  '/notifications/preferences': typeof AuthenticatedNotificationsPreferencesRoute
   '/seller/ai': typeof AuthenticatedSellerAiRoute
   '/seller/analytics': typeof AuthenticatedSellerAnalyticsRoute
   '/seller/appearance': typeof AuthenticatedSellerAppearanceRoute
@@ -422,6 +466,7 @@ export interface FileRoutesByFullPath {
   '/seller/coupons': typeof AuthenticatedSellerCouponsRoute
   '/seller/customers': typeof AuthenticatedSellerCustomersRoute
   '/seller/inventory': typeof AuthenticatedSellerInventoryRoute
+  '/seller/notifications': typeof AuthenticatedSellerNotificationsRouteWithChildren
   '/seller/orders': typeof AuthenticatedSellerOrdersRouteWithChildren
   '/seller/products': typeof AuthenticatedSellerProductsRouteWithChildren
   '/seller/promotions': typeof AuthenticatedSellerPromotionsRoute
@@ -435,6 +480,7 @@ export interface FileRoutesByFullPath {
   '/admin/orders/$orderId': typeof AdminOrdersOrderIdRoute
   '/admin/sellers/$sellerId': typeof AdminSellersSellerIdRoute
   '/account/orders/$orderId': typeof AuthenticatedAccountOrdersOrderIdRoute
+  '/seller/notifications/preferences': typeof AuthenticatedSellerNotificationsPreferencesRoute
   '/seller/orders/$orderId': typeof AuthenticatedSellerOrdersOrderIdRoute
   '/seller/products/$productId': typeof AuthenticatedSellerProductsProductIdRoute
   '/seller/products/new': typeof AuthenticatedSellerProductsNewRoute
@@ -456,12 +502,15 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/track-order': typeof TrackOrderRoute
   '/wishlist': typeof WishlistRoute
+  '/notifications': typeof AuthenticatedNotificationsRouteWithChildren
   '/seller': typeof AuthenticatedSellerRouteWithChildren
+  '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/audit': typeof AdminAuditRoute
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/coupons': typeof AdminCouponsRoute
   '/admin/homepage': typeof AdminHomepageRoute
+  '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/orders': typeof AdminOrdersRouteWithChildren
   '/admin/products': typeof AdminProductsRoute
   '/admin/reviews': typeof AdminReviewsRoute
@@ -473,6 +522,7 @@ export interface FileRoutesByTo {
   '/store/$slug': typeof StoreSlugRoute
   '/admin': typeof AdminIndexRoute
   '/account/orders': typeof AuthenticatedAccountOrdersRouteWithChildren
+  '/notifications/preferences': typeof AuthenticatedNotificationsPreferencesRoute
   '/seller/ai': typeof AuthenticatedSellerAiRoute
   '/seller/analytics': typeof AuthenticatedSellerAnalyticsRoute
   '/seller/appearance': typeof AuthenticatedSellerAppearanceRoute
@@ -481,6 +531,7 @@ export interface FileRoutesByTo {
   '/seller/coupons': typeof AuthenticatedSellerCouponsRoute
   '/seller/customers': typeof AuthenticatedSellerCustomersRoute
   '/seller/inventory': typeof AuthenticatedSellerInventoryRoute
+  '/seller/notifications': typeof AuthenticatedSellerNotificationsRouteWithChildren
   '/seller/orders': typeof AuthenticatedSellerOrdersRouteWithChildren
   '/seller/products': typeof AuthenticatedSellerProductsRouteWithChildren
   '/seller/promotions': typeof AuthenticatedSellerPromotionsRoute
@@ -494,6 +545,7 @@ export interface FileRoutesByTo {
   '/admin/orders/$orderId': typeof AdminOrdersOrderIdRoute
   '/admin/sellers/$sellerId': typeof AdminSellersSellerIdRoute
   '/account/orders/$orderId': typeof AuthenticatedAccountOrdersOrderIdRoute
+  '/seller/notifications/preferences': typeof AuthenticatedSellerNotificationsPreferencesRoute
   '/seller/orders/$orderId': typeof AuthenticatedSellerOrdersOrderIdRoute
   '/seller/products/$productId': typeof AuthenticatedSellerProductsProductIdRoute
   '/seller/products/new': typeof AuthenticatedSellerProductsNewRoute
@@ -517,12 +569,15 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/track-order': typeof TrackOrderRoute
   '/wishlist': typeof WishlistRoute
+  '/_authenticated/notifications': typeof AuthenticatedNotificationsRouteWithChildren
   '/_authenticated/seller': typeof AuthenticatedSellerRouteWithChildren
+  '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/audit': typeof AdminAuditRoute
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/coupons': typeof AdminCouponsRoute
   '/admin/homepage': typeof AdminHomepageRoute
+  '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/orders': typeof AdminOrdersRouteWithChildren
   '/admin/products': typeof AdminProductsRoute
   '/admin/reviews': typeof AdminReviewsRoute
@@ -534,6 +589,7 @@ export interface FileRoutesById {
   '/store/$slug': typeof StoreSlugRoute
   '/admin/': typeof AdminIndexRoute
   '/_authenticated/account/orders': typeof AuthenticatedAccountOrdersRouteWithChildren
+  '/_authenticated/notifications/preferences': typeof AuthenticatedNotificationsPreferencesRoute
   '/_authenticated/seller/ai': typeof AuthenticatedSellerAiRoute
   '/_authenticated/seller/analytics': typeof AuthenticatedSellerAnalyticsRoute
   '/_authenticated/seller/appearance': typeof AuthenticatedSellerAppearanceRoute
@@ -542,6 +598,7 @@ export interface FileRoutesById {
   '/_authenticated/seller/coupons': typeof AuthenticatedSellerCouponsRoute
   '/_authenticated/seller/customers': typeof AuthenticatedSellerCustomersRoute
   '/_authenticated/seller/inventory': typeof AuthenticatedSellerInventoryRoute
+  '/_authenticated/seller/notifications': typeof AuthenticatedSellerNotificationsRouteWithChildren
   '/_authenticated/seller/orders': typeof AuthenticatedSellerOrdersRouteWithChildren
   '/_authenticated/seller/products': typeof AuthenticatedSellerProductsRouteWithChildren
   '/_authenticated/seller/promotions': typeof AuthenticatedSellerPromotionsRoute
@@ -555,6 +612,7 @@ export interface FileRoutesById {
   '/admin/orders/$orderId': typeof AdminOrdersOrderIdRoute
   '/admin/sellers/$sellerId': typeof AdminSellersSellerIdRoute
   '/_authenticated/account/orders/$orderId': typeof AuthenticatedAccountOrdersOrderIdRoute
+  '/_authenticated/seller/notifications/preferences': typeof AuthenticatedSellerNotificationsPreferencesRoute
   '/_authenticated/seller/orders/$orderId': typeof AuthenticatedSellerOrdersOrderIdRoute
   '/_authenticated/seller/products/$productId': typeof AuthenticatedSellerProductsProductIdRoute
   '/_authenticated/seller/products/new': typeof AuthenticatedSellerProductsNewRoute
@@ -578,12 +636,15 @@ export interface FileRouteTypes {
     | '/terms'
     | '/track-order'
     | '/wishlist'
+    | '/notifications'
     | '/seller'
+    | '/admin/analytics'
     | '/admin/applications'
     | '/admin/audit'
     | '/admin/categories'
     | '/admin/coupons'
     | '/admin/homepage'
+    | '/admin/notifications'
     | '/admin/orders'
     | '/admin/products'
     | '/admin/reviews'
@@ -595,6 +656,7 @@ export interface FileRouteTypes {
     | '/store/$slug'
     | '/admin/'
     | '/account/orders'
+    | '/notifications/preferences'
     | '/seller/ai'
     | '/seller/analytics'
     | '/seller/appearance'
@@ -603,6 +665,7 @@ export interface FileRouteTypes {
     | '/seller/coupons'
     | '/seller/customers'
     | '/seller/inventory'
+    | '/seller/notifications'
     | '/seller/orders'
     | '/seller/products'
     | '/seller/promotions'
@@ -616,6 +679,7 @@ export interface FileRouteTypes {
     | '/admin/orders/$orderId'
     | '/admin/sellers/$sellerId'
     | '/account/orders/$orderId'
+    | '/seller/notifications/preferences'
     | '/seller/orders/$orderId'
     | '/seller/products/$productId'
     | '/seller/products/new'
@@ -637,12 +701,15 @@ export interface FileRouteTypes {
     | '/terms'
     | '/track-order'
     | '/wishlist'
+    | '/notifications'
     | '/seller'
+    | '/admin/analytics'
     | '/admin/applications'
     | '/admin/audit'
     | '/admin/categories'
     | '/admin/coupons'
     | '/admin/homepage'
+    | '/admin/notifications'
     | '/admin/orders'
     | '/admin/products'
     | '/admin/reviews'
@@ -654,6 +721,7 @@ export interface FileRouteTypes {
     | '/store/$slug'
     | '/admin'
     | '/account/orders'
+    | '/notifications/preferences'
     | '/seller/ai'
     | '/seller/analytics'
     | '/seller/appearance'
@@ -662,6 +730,7 @@ export interface FileRouteTypes {
     | '/seller/coupons'
     | '/seller/customers'
     | '/seller/inventory'
+    | '/seller/notifications'
     | '/seller/orders'
     | '/seller/products'
     | '/seller/promotions'
@@ -675,6 +744,7 @@ export interface FileRouteTypes {
     | '/admin/orders/$orderId'
     | '/admin/sellers/$sellerId'
     | '/account/orders/$orderId'
+    | '/seller/notifications/preferences'
     | '/seller/orders/$orderId'
     | '/seller/products/$productId'
     | '/seller/products/new'
@@ -697,12 +767,15 @@ export interface FileRouteTypes {
     | '/terms'
     | '/track-order'
     | '/wishlist'
+    | '/_authenticated/notifications'
     | '/_authenticated/seller'
+    | '/admin/analytics'
     | '/admin/applications'
     | '/admin/audit'
     | '/admin/categories'
     | '/admin/coupons'
     | '/admin/homepage'
+    | '/admin/notifications'
     | '/admin/orders'
     | '/admin/products'
     | '/admin/reviews'
@@ -714,6 +787,7 @@ export interface FileRouteTypes {
     | '/store/$slug'
     | '/admin/'
     | '/_authenticated/account/orders'
+    | '/_authenticated/notifications/preferences'
     | '/_authenticated/seller/ai'
     | '/_authenticated/seller/analytics'
     | '/_authenticated/seller/appearance'
@@ -722,6 +796,7 @@ export interface FileRouteTypes {
     | '/_authenticated/seller/coupons'
     | '/_authenticated/seller/customers'
     | '/_authenticated/seller/inventory'
+    | '/_authenticated/seller/notifications'
     | '/_authenticated/seller/orders'
     | '/_authenticated/seller/products'
     | '/_authenticated/seller/promotions'
@@ -735,6 +810,7 @@ export interface FileRouteTypes {
     | '/admin/orders/$orderId'
     | '/admin/sellers/$sellerId'
     | '/_authenticated/account/orders/$orderId'
+    | '/_authenticated/seller/notifications/preferences'
     | '/_authenticated/seller/orders/$orderId'
     | '/_authenticated/seller/products/$productId'
     | '/_authenticated/seller/products/new'
@@ -758,11 +834,13 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute
   TrackOrderRoute: typeof TrackOrderRoute
   WishlistRoute: typeof WishlistRoute
+  AdminAnalyticsRoute: typeof AdminAnalyticsRoute
   AdminApplicationsRoute: typeof AdminApplicationsRoute
   AdminAuditRoute: typeof AdminAuditRoute
   AdminCategoriesRoute: typeof AdminCategoriesRoute
   AdminCouponsRoute: typeof AdminCouponsRoute
   AdminHomepageRoute: typeof AdminHomepageRoute
+  AdminNotificationsRoute: typeof AdminNotificationsRoute
   AdminOrdersRoute: typeof AdminOrdersRouteWithChildren
   AdminProductsRoute: typeof AdminProductsRoute
   AdminReviewsRoute: typeof AdminReviewsRoute
@@ -896,6 +974,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WishlistRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/notifications': {
+      id: '/_authenticated/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof AuthenticatedNotificationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/seller': {
       id: '/_authenticated/seller'
       path: '/seller'
@@ -908,6 +993,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/analytics': {
+      id: '/admin/analytics'
+      path: '/admin/analytics'
+      fullPath: '/admin/analytics'
+      preLoaderRoute: typeof AdminAnalyticsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/applications': {
@@ -943,6 +1035,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/homepage'
       fullPath: '/admin/homepage'
       preLoaderRoute: typeof AdminHomepageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/notifications': {
+      id: '/admin/notifications'
+      path: '/admin/notifications'
+      fullPath: '/admin/notifications'
+      preLoaderRoute: typeof AdminNotificationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/orders': {
@@ -1015,6 +1114,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAccountOrdersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/notifications/preferences': {
+      id: '/_authenticated/notifications/preferences'
+      path: '/preferences'
+      fullPath: '/notifications/preferences'
+      preLoaderRoute: typeof AuthenticatedNotificationsPreferencesRouteImport
+      parentRoute: typeof AuthenticatedNotificationsRoute
+    }
     '/_authenticated/seller/ai': {
       id: '/_authenticated/seller/ai'
       path: '/ai'
@@ -1069,6 +1175,13 @@ declare module '@tanstack/react-router' {
       path: '/inventory'
       fullPath: '/seller/inventory'
       preLoaderRoute: typeof AuthenticatedSellerInventoryRouteImport
+      parentRoute: typeof AuthenticatedSellerRoute
+    }
+    '/_authenticated/seller/notifications': {
+      id: '/_authenticated/seller/notifications'
+      path: '/notifications'
+      fullPath: '/seller/notifications'
+      preLoaderRoute: typeof AuthenticatedSellerNotificationsRouteImport
       parentRoute: typeof AuthenticatedSellerRoute
     }
     '/_authenticated/seller/orders': {
@@ -1162,6 +1275,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAccountOrdersOrderIdRouteImport
       parentRoute: typeof AuthenticatedAccountOrdersRoute
     }
+    '/_authenticated/seller/notifications/preferences': {
+      id: '/_authenticated/seller/notifications/preferences'
+      path: '/preferences'
+      fullPath: '/seller/notifications/preferences'
+      preLoaderRoute: typeof AuthenticatedSellerNotificationsPreferencesRouteImport
+      parentRoute: typeof AuthenticatedSellerNotificationsRoute
+    }
     '/_authenticated/seller/orders/$orderId': {
       id: '/_authenticated/seller/orders/$orderId'
       path: '/$orderId'
@@ -1185,6 +1305,36 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface AuthenticatedNotificationsRouteChildren {
+  AuthenticatedNotificationsPreferencesRoute: typeof AuthenticatedNotificationsPreferencesRoute
+}
+
+const AuthenticatedNotificationsRouteChildren: AuthenticatedNotificationsRouteChildren =
+  {
+    AuthenticatedNotificationsPreferencesRoute:
+      AuthenticatedNotificationsPreferencesRoute,
+  }
+
+const AuthenticatedNotificationsRouteWithChildren =
+  AuthenticatedNotificationsRoute._addFileChildren(
+    AuthenticatedNotificationsRouteChildren,
+  )
+
+interface AuthenticatedSellerNotificationsRouteChildren {
+  AuthenticatedSellerNotificationsPreferencesRoute: typeof AuthenticatedSellerNotificationsPreferencesRoute
+}
+
+const AuthenticatedSellerNotificationsRouteChildren: AuthenticatedSellerNotificationsRouteChildren =
+  {
+    AuthenticatedSellerNotificationsPreferencesRoute:
+      AuthenticatedSellerNotificationsPreferencesRoute,
+  }
+
+const AuthenticatedSellerNotificationsRouteWithChildren =
+  AuthenticatedSellerNotificationsRoute._addFileChildren(
+    AuthenticatedSellerNotificationsRouteChildren,
+  )
 
 interface AuthenticatedSellerOrdersRouteChildren {
   AuthenticatedSellerOrdersOrderIdRoute: typeof AuthenticatedSellerOrdersOrderIdRoute
@@ -1227,6 +1377,7 @@ interface AuthenticatedSellerRouteChildren {
   AuthenticatedSellerCouponsRoute: typeof AuthenticatedSellerCouponsRoute
   AuthenticatedSellerCustomersRoute: typeof AuthenticatedSellerCustomersRoute
   AuthenticatedSellerInventoryRoute: typeof AuthenticatedSellerInventoryRoute
+  AuthenticatedSellerNotificationsRoute: typeof AuthenticatedSellerNotificationsRouteWithChildren
   AuthenticatedSellerOrdersRoute: typeof AuthenticatedSellerOrdersRouteWithChildren
   AuthenticatedSellerProductsRoute: typeof AuthenticatedSellerProductsRouteWithChildren
   AuthenticatedSellerPromotionsRoute: typeof AuthenticatedSellerPromotionsRoute
@@ -1248,6 +1399,8 @@ const AuthenticatedSellerRouteChildren: AuthenticatedSellerRouteChildren = {
   AuthenticatedSellerCouponsRoute: AuthenticatedSellerCouponsRoute,
   AuthenticatedSellerCustomersRoute: AuthenticatedSellerCustomersRoute,
   AuthenticatedSellerInventoryRoute: AuthenticatedSellerInventoryRoute,
+  AuthenticatedSellerNotificationsRoute:
+    AuthenticatedSellerNotificationsRouteWithChildren,
   AuthenticatedSellerOrdersRoute: AuthenticatedSellerOrdersRouteWithChildren,
   AuthenticatedSellerProductsRoute:
     AuthenticatedSellerProductsRouteWithChildren,
@@ -1280,11 +1433,13 @@ const AuthenticatedAccountOrdersRouteWithChildren =
   )
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRouteWithChildren
   AuthenticatedSellerRoute: typeof AuthenticatedSellerRouteWithChildren
   AuthenticatedAccountOrdersRoute: typeof AuthenticatedAccountOrdersRouteWithChildren
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedNotificationsRoute: AuthenticatedNotificationsRouteWithChildren,
   AuthenticatedSellerRoute: AuthenticatedSellerRouteWithChildren,
   AuthenticatedAccountOrdersRoute: AuthenticatedAccountOrdersRouteWithChildren,
 }
@@ -1334,11 +1489,13 @@ const rootRouteChildren: RootRouteChildren = {
   TermsRoute: TermsRoute,
   TrackOrderRoute: TrackOrderRoute,
   WishlistRoute: WishlistRoute,
+  AdminAnalyticsRoute: AdminAnalyticsRoute,
   AdminApplicationsRoute: AdminApplicationsRoute,
   AdminAuditRoute: AdminAuditRoute,
   AdminCategoriesRoute: AdminCategoriesRoute,
   AdminCouponsRoute: AdminCouponsRoute,
   AdminHomepageRoute: AdminHomepageRoute,
+  AdminNotificationsRoute: AdminNotificationsRoute,
   AdminOrdersRoute: AdminOrdersRouteWithChildren,
   AdminProductsRoute: AdminProductsRoute,
   AdminReviewsRoute: AdminReviewsRoute,

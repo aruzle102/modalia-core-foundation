@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import {
+  BarChart3,
   ExternalLink,
   FileText,
   FolderTree,
@@ -16,6 +17,8 @@ import {
   Wallet,
 } from "lucide-react";
 import { CommandBar } from "./CommandBar";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { getTranslations } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 import type { LinkProps } from "@tanstack/react-router";
@@ -29,6 +32,7 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", to: "/admin", icon: <LayoutDashboard className="h-4 w-4" />, exact: true },
+  { label: "Analytics", to: "/admin/analytics", icon: <BarChart3 className="h-4 w-4" /> },
   { label: "Homepage", to: "/admin/homepage", icon: <LayoutTemplate className="h-4 w-4" /> },
   { label: "Orders", to: "/admin/orders", icon: <ShoppingBag className="h-4 w-4" /> },
   { label: "Applications", to: "/admin/applications", icon: <FileText className="h-4 w-4" /> },
@@ -87,6 +91,12 @@ export function AdminShell({
           </Link>
           <div className="flex-1" />
           <CommandBar />
+          <NotificationBell
+            scope="admin"
+            locale="en"
+            t={getTranslations("en").notifications}
+            viewAllTo="/admin/notifications"
+          />
           <Link
             to="/"
             search={{ locale: "en" }}
@@ -115,7 +125,7 @@ export function AdminShell({
           </nav>
         </aside>
 
-        <main className="min-w-0 flex-1">
+        <main id="main-content" tabIndex={-1} className="min-w-0 flex-1">
           <div className="mx-auto w-full max-w-7xl px-4 py-6 lg:px-8">
             <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">

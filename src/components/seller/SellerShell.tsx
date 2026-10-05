@@ -1,5 +1,5 @@
 import { useMemo, type ReactNode } from "react";
-import { getLocale, localeDirections } from "@/lib/i18n";
+import { getLocale, getTranslations, localeDirections } from "@/lib/i18n";
 import { Link } from "@tanstack/react-router";
 import type { LinkProps } from "@tanstack/react-router";
 import {
@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { SellerCommandBar } from "./SellerCommandBar";
 import { SellerGateCard, SellerShellSkeleton, useSellerSession } from "./ui";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -209,6 +210,13 @@ export function SellerShell({
               <span className="hidden sm:inline">View store</span>
             </Link>
           ) : null}
+          <NotificationBell
+            scope="seller"
+            locale={locale}
+            t={getTranslations(locale).notifications}
+            viewAllTo="/seller/notifications"
+            preferencesTo="/seller/notifications/preferences"
+          />
         </div>
         {/* Mobile nav: compact horizontally-scrollable under the topbar */}
         <nav className="border-t lg:hidden" aria-label="Seller">
@@ -229,7 +237,7 @@ export function SellerShell({
           </nav>
         </aside>
 
-        <main className="min-w-0 flex-1">
+        <main id="main-content" tabIndex={-1} className="min-w-0 flex-1">
           <div className="mx-auto w-full max-w-7xl px-4 py-6 lg:px-8">
             <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">

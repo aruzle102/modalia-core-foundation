@@ -113,12 +113,20 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 });
 
 function RootShell({ children }: { children: ReactNode }) {
+  const locale = resolveLocale();
+  const t = getTranslations(locale);
   return (
     <html lang="en">
       <head>
         <HeadContent />
       </head>
       <body className="bg-background font-sans text-foreground antialiased">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:start-4 focus:top-4 focus:z-[100] focus:rounded-full focus:bg-foreground focus:px-4 focus:py-2 focus:text-small focus:text-background"
+        >
+          {t.common.skipToContent}
+        </a>
         {children}
         <Toaster />
         <Scripts />

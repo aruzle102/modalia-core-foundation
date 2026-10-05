@@ -1,13 +1,253 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
-import { Package, Settings2, Store, Wallet } from "lucide-react";
+import { AlertTriangle, ArrowRight, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { SiteFooter, SiteHeader } from "@/components/layout/site-shell";
-import { getSellerDashboard } from "@/lib/seller.functions";
-import { getLocale, getTranslations, localeDirections } from "@/lib/i18n";
-import { formatPrice } from "@/lib/localization";
+import { SellerShell } from "@/components/seller/SellerShell";
+import { getLocale } from "@/lib/i18n";
+import { AdminCard, EmptyState, Stat, StatusPill, fmtDate, fmtMoney } from "@/components/admin/ui";
+import { Donut, SalesLine, TopList } from "@/components/seller/SellerCharts";
+import {
+  getSellerOrderStatusBreakdown,
+  getSellerOverview,
+  getSellerRecentOrders,
+  getSellerSalesSeries,
+  getSellerTopProducts,
+} from "@/lib/seller-dashboard.functions";
 
-const q=queryOptions({queryKey:["seller-dashboard"],queryFn:()=>getSellerDashboard()});
-export const Route=createFileRoute("/_authenticated/seller")({validateSearch:(search:Record<string,unknown>)=>({locale:getLocale(typeof search["locale"] === "string"?search["locale"]:undefined)}),loader:({context})=>context.queryClient.ensureQueryData(q),component:SellerDashboard});
-function SellerDashboard(){const {locale}=Route.useSearch();const t=getTranslations(locale);const {data}=useSuspenseQuery(q);if(!data)return <div dir={localeDirections[locale]}><SiteHeader locale={locale} t={t}/><main className="mx-auto max-w-3xl px-4 py-20"><h1 className="text-display">Seller workspace</h1><p className="mt-3 text-body text-muted-foreground">Your seller application must be approved before the workspace opens.</p><Button asChild className="mt-6"><Link to="/become-a-seller" search={{locale}}>Apply to sell</Link></Button></main><SiteFooter locale={locale} t={t}/></div>;const store=Array.isArray(data.seller.stores)?data.seller.stores[0]:data.seller.stores;const gross=data.orders.reduce((s:any,o:any)=>s+Number(o.subtotal||0)+Number(o.shipping_total||0),0);return <div dir={localeDirections[locale]} lang={locale} className="min-h-screen bg-background"><SiteHeader locale={locale} t={t}/><main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8"><div className="flex flex-wrap items-end justify-between gap-5"><div><p className="text-eyebrow text-muted-foreground">Seller workspace</p><h1 className="mt-2 text-display">{store?.name??data.seller.legal_name}</h1><p className="mt-3 text-body text-muted-foreground">Manage products, orders and your store from one place.</p></div><div className="flex gap-2"><Button asChild variant="outline"><Link to="/seller/orders" search={{locale}}>Orders</Link></Button>{store?<Button asChild><Link to="/store/$slug" params={{slug:store.slug}} search={{locale}}>View store</Link></Button>:null}</div></div><div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4"><Metric icon={Package} label="Products" value={String(data.products.length)}/><Metric icon={Store} label="Orders" value={String(data.orders.length)}/><Metric icon={Wallet} label="Gross sales" value={formatPrice(gross,locale)}/><Metric icon={Settings2} label="Commission" value={`${(Number(data.seller.commission_rate)*100).toFixed(0)}%`}/></div><div className="mt-8 grid gap-8 lg:grid-cols-[1fr_380px]"><section className="rounded-[28px] border border-border bg-card p-6"><div className="flex items-center justify-between"><div><p className="text-eyebrow text-muted-foreground">Catalog</p><h2 className="mt-1 text-h3">Your products</h2></div><Button asChild><Link to="/seller/products" search={{locale}}>Manage products</Link></Button></div><div className="mt-6 divide-y divide-border">{data.products.slice(0,8).map((p:any)=><div key={p.id} className="flex items-center justify-between gap-4 py-4"><div><p className="font-medium">{typeof p.name?.[locale]==="string"?p.name[locale]:p.name?.fr??p.slug}</p><p className="text-caption text-muted-foreground">{p.publication_status} · {formatPrice(Number(p.base_price),locale)}</p></div><span className="rounded-full bg-muted px-2.5 py-1 text-[10px] font-semibold uppercase">{p.moderation_status}</span></div>)}{!data.products.length?<p className="py-8 text-small text-muted-foreground">No products yet.</p>:null}</div></section><section className="rounded-[28px] bg-zinc-950 p-6 text-white"><p className="text-eyebrow text-white/45">Settlement</p><h2 className="mt-2 text-2xl font-semibold">Keep your payout history clear.</h2><p className="mt-3 text-small leading-6 text-white/55">Commissions are calculated on eligible completed sales. Platform settlement remains manual until verified.</p><div className="mt-7 space-y-3">{data.settlements.slice(0,5).map((s:any)=><div key={s.id} className="flex justify-between border-b border-white/10 pb-3"><span className="text-small text-white/55">{s.status}</span><span className="font-medium">{formatPrice(Number(s.amount),locale)}</span></div>)}</div></section></div></main><SiteFooter locale={locale} t={t}/></div>}
-function Metric({icon:Icon,label,value}:{icon:any;label:string;value:string}){return <div className="rounded-[24px] border border-border bg-card p-5"><Icon className="size-5 text-muted-foreground"/><p className="mt-8 text-caption text-muted-foreground">{label}</p><p className="mt-1 text-2xl font-semibold tracking-tight">{value}</p></div>}
+const overviewQuery = queryOptions({ queryKey: ["seller-overview"], queryFn: () => getSellerOverview() });
+const seriesQuery = queryOptions({ queryKey: ["seller-series", 30], queryFn: () => getSellerSalesSeries({ data: { days: 30 } }) });
+const topProductsQuery = queryOptions({
+  queryKey: ["seller-top-products", 5],
+  queryFn: () => getSellerTopProducts({ data: { limit: 5 } }),
+});
+const breakdownQuery = queryOptions({ queryKey: ["seller-status-breakdown"], queryFn: () => getSellerOrderStatusBreakdown() });
+const recentQuery = queryOptions({
+  queryKey: ["seller-recent-orders", 8],
+  queryFn: () => getSellerRecentOrders({ data: { limit: 8 } }),
+});
+
+export const Route = createFileRoute("/_authenticated/seller")({
+  validateSearch: (search: Record<string, unknown>) => ({ locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined) }),
+  loader: ({ context }) =>
+    Promise.all([
+      context.queryClient.ensureQueryData(overviewQuery),
+      context.queryClient.ensureQueryData(seriesQuery),
+      context.queryClient.ensureQueryData(topProductsQuery),
+      context.queryClient.ensureQueryData(breakdownQuery),
+      context.queryClient.ensureQueryData(recentQuery),
+    ]),
+  pendingComponent: () => <div className="px-6 py-24 text-center text-muted-foreground">Loading seller overview…</div>,
+  errorComponent: () => (
+    <div role="alert" className="px-6 py-24 text-center text-muted-foreground">
+      Seller overview could not be loaded.
+    </div>
+  ),
+  head: () => ({
+    meta: [
+      { title: "Seller overview — Modalia" },
+      { name: "description", content: "Your store's sales, orders, stock and earnings at a glance." },
+      { property: "og:title", content: "Seller overview — Modalia" },
+      { property: "og:description", content: "Your store's sales, orders, stock and earnings at a glance." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+    links: [{ rel: "canonical", href: "/seller" }],
+  }),
+  component: SellerOverviewPage,
+});
+
+function SellerOverviewPage() {
+  const { locale } = Route.useSearch();
+  const { data: overview } = useSuspenseQuery(overviewQuery);
+  const { data: series } = useSuspenseQuery(seriesQuery);
+  const { data: topProducts } = useSuspenseQuery(topProductsQuery);
+  const { data: breakdown } = useSuspenseQuery(breakdownQuery);
+  const { data: recent } = useSuspenseQuery(recentQuery);
+
+  const { kpis, currency, lowStockAlerts } = overview;
+  const stockIssues = kpis.lowStockCount + kpis.outOfStockCount;
+
+  return (
+    <SellerShell
+      title={overview.seller.legalName}
+      eyebrow="Seller overview"
+      actions={
+        <>
+          <Button asChild variant="outline">
+            <Link to="/seller/orders" search={{ locale }}>Orders</Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link to="/seller/analytics" search={{ locale }}>Analytics</Link>
+          </Button>
+          <Button asChild>
+            <Link to="/seller/products" search={{ locale }}>Manage products</Link>
+          </Button>
+        </>
+      }
+    >
+      {/* KPI grid — every figure computed from real rows, see seller-dashboard.functions.ts */}
+      <section aria-label="Key metrics" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <Stat label="Net earnings" value={fmtMoney(kpis.netEarnings, currency)} hint="Delivered sales minus commission payable" />
+        <Stat
+          label="Delivered sales"
+          value={fmtMoney(kpis.totalDeliveredSales, currency)}
+          hint={`${kpis.deliveredCount} delivered ${kpis.deliveredCount === 1 ? "order" : "orders"}`}
+        />
+        <Stat
+          label="Orders"
+          value={String(kpis.ordersCount)}
+          hint={kpis.pendingOrdersCount > 0 ? `${kpis.pendingOrdersCount} awaiting fulfilment` : "All orders fulfilled"}
+        />
+        <Stat label="Avg. order value" value={fmtMoney(kpis.averageOrderValue, currency)} hint="Across delivered orders" />
+        <Stat label="Commission payable" value={fmtMoney(kpis.commissionPayable, currency)} hint="Owed on delivered sales" />
+        <Stat
+          label="Pending settlement"
+          value={fmtMoney(kpis.pendingSettlementAmount, currency)}
+          hint={kpis.pendingSettlementAmount > 0 ? "Queued for payout" : "Nothing queued"}
+        />
+        <Stat
+          label="Products"
+          value={String(kpis.productsCount)}
+          hint={stockIssues > 0 ? `${kpis.lowStockCount} low · ${kpis.outOfStockCount} out of stock` : "Stock levels healthy"}
+        />
+        <Stat label="Settled to date" value={fmtMoney(kpis.settledAmount, currency)} hint="Approved / paid settlements" />
+      </section>
+
+      {/* Settlement nudge */}
+      {kpis.pendingSettlementAmount > 0 ? (
+        <div className="mt-6 flex flex-wrap items-center gap-4 rounded-2xl bg-zinc-950 p-5 text-white">
+          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10">
+            <Wallet className="h-5 w-5" aria-hidden="true" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-small font-semibold">{fmtMoney(kpis.pendingSettlementAmount, currency)} is queued for payout</p>
+            <p className="mt-0.5 text-small text-white/55">
+              Settlements are processed by the platform team. Track payout history in Analytics.
+            </p>
+          </div>
+          <Button asChild variant="secondary" size="sm">
+            <Link to="/seller/analytics" search={{ locale }}>
+              View analytics <ArrowRight className="ms-1 h-4 w-4" aria-hidden="true" />
+            </Link>
+          </Button>
+        </div>
+      ) : null}
+
+      {/* Charts */}
+      <section className="mt-8 grid gap-6 lg:grid-cols-3">
+        <AdminCard title="Sales — last 30 days" subtitle="Delivered sales and order counts per day" className="lg:col-span-2">
+          <SalesLine data={series} />
+        </AdminCard>
+        <AdminCard title="Order statuses" subtitle="Your orders by current status">
+          <Donut data={breakdown.map((b) => ({ label: b.status, value: b.count }))} centerLabel="orders" />
+        </AdminCard>
+      </section>
+
+      {/* Top products + stock alerts */}
+      <section className="mt-6 grid gap-6 lg:grid-cols-2">
+        <AdminCard
+          title="Top products"
+          subtitle="By revenue across non-cancelled orders"
+          actions={
+            <Button asChild variant="ghost" size="sm">
+              <Link to="/seller/analytics" search={{ locale }}>
+                Details <ArrowRight className="ms-1 h-4 w-4" aria-hidden="true" />
+              </Link>
+            </Button>
+          }
+        >
+          <TopList
+            rows={topProducts.map((p) => ({
+              label: p.name,
+              value: fmtMoney(p.revenue, currency),
+              hint: `${p.units} ${p.units === 1 ? "unit" : "units"} sold`,
+            }))}
+          />
+        </AdminCard>
+        <AdminCard
+          title="Stock alerts"
+          subtitle={stockIssues > 0 ? `${stockIssues} variants need attention` : "All variants above their low-stock threshold"}
+          actions={
+            <Button asChild variant="ghost" size="sm">
+              <Link to="/seller/products" search={{ locale }}>
+                Manage inventory <ArrowRight className="ms-1 h-4 w-4" aria-hidden="true" />
+              </Link>
+            </Button>
+          }
+        >
+          {lowStockAlerts.length > 0 ? (
+            <ul className="divide-y divide-border">
+              {lowStockAlerts.map((a, i) => (
+                <li key={`${a.variantSku}-${i}`} className="flex items-center gap-3 py-3">
+                  <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" aria-hidden="true" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-small font-medium">{a.productName}</p>
+                    <p className="text-caption text-muted-foreground tabular-nums">
+                      {a.variantSku ? `${a.variantSku} · ` : ""}Qty {a.qty} / threshold {a.threshold}
+                    </p>
+                  </div>
+                  {a.outOfStock ? <StatusPill status="out_of_stock" /> : <StatusPill status="low_stock" />}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <EmptyState title="Stock levels healthy" text="No variant is at or below its low-stock threshold." />
+          )}
+        </AdminCard>
+      </section>
+
+      {/* Recent orders */}
+      <AdminCard
+        title="Recent orders"
+        subtitle="Latest orders across your store"
+        className="mt-6"
+        actions={
+          <Button asChild variant="ghost" size="sm">
+            <Link to="/seller/orders" search={{ locale }}>
+              All orders <ArrowRight className="ms-1 h-4 w-4" aria-hidden="true" />
+            </Link>
+          </Button>
+        }
+      >
+        {recent.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-small">
+              <thead>
+                <tr className="border-b border-border text-start text-caption uppercase tracking-wide text-muted-foreground">
+                  <th scope="col" className="py-2 pe-4 text-start font-medium">Order</th>
+                  <th scope="col" className="py-2 pe-4 text-start font-medium">Customer</th>
+                  <th scope="col" className="py-2 pe-4 text-start font-medium">Status</th>
+                  <th scope="col" className="py-2 pe-4 text-start font-medium">Date</th>
+                  <th scope="col" className="py-2 text-end font-medium">Total</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {recent.map((o) => (
+                  <tr key={o.id}>
+                    <td className="py-3 pe-4 font-medium tabular-nums">{o.orderNumber}</td>
+                    <td className="py-3 pe-4 text-muted-foreground">{o.customer}</td>
+                    <td className="py-3 pe-4">
+                      <StatusPill status={o.status} />
+                    </td>
+                    <td className="py-3 pe-4 text-muted-foreground">{fmtDate(o.createdAt)}</td>
+                    <td className="py-3 text-end font-medium tabular-nums">{fmtMoney(o.total, currency)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <EmptyState
+            title="No orders yet"
+            text="Orders for your products will appear here as soon as customers check out."
+            action={
+              <Button asChild variant="outline" size="sm">
+                <Link to="/seller/products" search={{ locale }}>Add products</Link>
+              </Button>
+            }
+          />
+        )}
+      </AdminCard>
+    </SellerShell>
+  );
+}

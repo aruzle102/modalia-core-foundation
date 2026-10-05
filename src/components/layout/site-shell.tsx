@@ -4,8 +4,10 @@ import { useQuery } from "@tanstack/react-query";
 import {
   Banknote,
   ChevronDown,
+  ChevronRight,
   Clock,
   Facebook,
+  Globe,
   Heart,
   Instagram,
   Mail,
@@ -21,7 +23,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
-import { type SupportedLocale } from "@/config/platform";
+import { platformConfig, type SupportedLocale } from "@/config/platform";
 import { localeLabels, persistLocale, type Translation } from "@/lib/i18n";
 import {
   getSiteSettings,
@@ -33,7 +35,24 @@ import { AiAssistantButton, AiAssistantDrawer } from "@/components/marketplace/a
 
 const supportedLocales: SupportedLocale[] = ["en", "fr", "ar"];
 
-const shopSearch = (locale: SupportedLocale, extras?: { focus?: string; view?: string }) => ({
+const shopSearch = (
+  locale: SupportedLocale,
+  extras?: { focus?: string; view?: "" | "categories" | "stores" },
+): {
+  locale: SupportedLocale;
+  q: string;
+  category: string;
+  sort: "newest" | "price_asc" | "price_desc";
+  page: number;
+  focus: string;
+  view: "" | "categories" | "stores";
+  brands: string[];
+  stores: string[];
+  colors: string[];
+  sizes: string[];
+  inStock: boolean;
+  onSale: boolean;
+} => ({
   locale,
   q: "",
   category: "",
@@ -41,6 +60,12 @@ const shopSearch = (locale: SupportedLocale, extras?: { focus?: string; view?: s
   page: 1,
   focus: extras?.focus ?? "",
   view: extras?.view ?? "",
+  brands: [],
+  stores: [],
+  colors: [],
+  sizes: [],
+  inStock: false,
+  onSale: false,
 });
 
 /** Switch language: persist the choice, then reload the same page in the new locale. */
@@ -77,9 +102,6 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
           </Link>
           <Link to="/shop" search={shopSearch(locale, { view: "stores" })} className={navLink}>
             {t.nav.stores}
-          </Link>
-          <Link to="/become-a-seller" search={{ locale }} className={navLink}>
-            {t.nav.sellers}
           </Link>
         </nav>
 
@@ -156,84 +178,120 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
       </div>
 
       {open ? (
-        <nav className="border-t border-border px-4 py-4 lg:hidden" aria-label="Mobile navigation">
-          <div className="mx-auto flex max-w-7xl flex-col gap-3">
-            <Link to="/" search={{ locale }} onClick={() => setOpen(false)} className="text-nav">
-              {t.nav.home}
-            </Link>
-            <Link
-              to="/shop"
-              search={shopSearch(locale)}
-              onClick={() => setOpen(false)}
-              className="text-nav"
-            >
-              {t.nav.shop}
-            </Link>
-            <Link
-              to="/shop"
-              search={shopSearch(locale, { view: "categories" })}
-              onClick={() => setOpen(false)}
-              className="text-nav"
-            >
-              {t.nav.categories}
-            </Link>
-            <Link
-              to="/shop"
-              search={shopSearch(locale, { view: "stores" })}
-              onClick={() => setOpen(false)}
-              className="text-nav"
-            >
-              {t.nav.stores}
-            </Link>
-            <Link
-              to="/track-order"
-              search={{ locale }}
-              onClick={() => setOpen(false)}
-              className="text-nav"
-            >
-              {t.nav.trackOrder}
-            </Link>
-            <Link
-              to="/wishlist"
-              search={{ locale }}
-              onClick={() => setOpen(false)}
-              className="text-nav"
-            >
-              {t.nav.wishlist}
-            </Link>
-            <Link
-              to="/cart"
-              search={{ locale }}
-              onClick={() => setOpen(false)}
-              className="text-nav"
-            >
-              {t.nav.cart}
-              {cart.count ? ` (${cart.count})` : ""}
-            </Link>
-            <Link
-              to="/become-a-seller"
-              search={{ locale }}
-              onClick={() => setOpen(false)}
-              className="text-nav"
-            >
-              {t.nav.sellers}
-            </Link>
-            <Link
-              to="/auth"
-              search={{ locale }}
-              onClick={() => setOpen(false)}
-              className="text-nav"
-            >
-              {t.nav.account}
-            </Link>
-            <div className="flex gap-4 pt-2">
+        <nav className="border-t border-border lg:hidden" aria-label="Mobile navigation">
+          <div className="mx-auto max-w-7xl px-4 pb-8 pt-2 sm:px-6">
+            <ul className="divide-y divide-border">
+              <li>
+                <Link
+                  to="/"
+                  search={{ locale }}
+                  onClick={() => setOpen(false)}
+                  className="flex items-center justify-between py-4 text-h3 text-foreground"
+                >
+                  {t.nav.home}
+                  <ChevronRight
+                    className="size-4 text-muted-foreground rtl:rotate-180"
+                    aria-hidden="true"
+                  />
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/shop"
+                  search={shopSearch(locale)}
+                  onClick={() => setOpen(false)}
+                  className="flex items-center justify-between py-4 text-h3 text-foreground"
+                >
+                  {t.nav.shop}
+                  <ChevronRight
+                    className="size-4 text-muted-foreground rtl:rotate-180"
+                    aria-hidden="true"
+                  />
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/shop"
+                  search={shopSearch(locale, { view: "categories" })}
+                  onClick={() => setOpen(false)}
+                  className="flex items-center justify-between py-4 text-h3 text-foreground"
+                >
+                  {t.nav.categories}
+                  <ChevronRight
+                    className="size-4 text-muted-foreground rtl:rotate-180"
+                    aria-hidden="true"
+                  />
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/shop"
+                  search={shopSearch(locale, { view: "stores" })}
+                  onClick={() => setOpen(false)}
+                  className="flex items-center justify-between py-4 text-h3 text-foreground"
+                >
+                  {t.nav.stores}
+                  <ChevronRight
+                    className="size-4 text-muted-foreground rtl:rotate-180"
+                    aria-hidden="true"
+                  />
+                </Link>
+              </li>
+            </ul>
+            <ul className="mt-2 grid grid-cols-2 gap-1 border-t border-border pt-4">
+              <li>
+                <Link
+                  to="/track-order"
+                  search={{ locale }}
+                  onClick={() => setOpen(false)}
+                  className="block rounded-lg px-2 py-2.5 text-small text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                >
+                  {t.nav.trackOrder}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/wishlist"
+                  search={{ locale }}
+                  onClick={() => setOpen(false)}
+                  className="block rounded-lg px-2 py-2.5 text-small text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                >
+                  {t.nav.wishlist}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/cart"
+                  search={{ locale }}
+                  onClick={() => setOpen(false)}
+                  className="block rounded-lg px-2 py-2.5 text-small text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                >
+                  {t.nav.cart}
+                  {cart.count ? ` (${cart.count})` : ""}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/auth"
+                  search={{ locale }}
+                  onClick={() => setOpen(false)}
+                  className="block rounded-lg px-2 py-2.5 text-small text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                >
+                  {t.nav.account}
+                </Link>
+              </li>
+            </ul>
+            <div className="mt-2 flex items-center gap-1 border-t border-border pt-4">
               {supportedLocales.map((value) => (
                 <button
                   key={value}
                   type="button"
                   onClick={() => switchLocale(value)}
+                  aria-current={value === locale ? "true" : undefined}
                   className={
-                    value === locale ? "text-nav text-foreground" : "text-nav text-muted-foreground"
+                    value === locale
+                      ? "rounded-full bg-foreground px-4 py-1.5 text-small font-medium text-background"
+                      : "rounded-full px-4 py-1.5 text-small text-muted-foreground transition-colors hover:text-foreground"
                   }
                 >
                   {localeLabels[value]}
@@ -330,7 +388,7 @@ export function SiteFooter({ locale, t }: { locale: SupportedLocale; t: Translat
 
   return (
     <footer className="border-t border-border bg-card">
-      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1.4fr] lg:px-8">
+      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-2 lg:grid-cols-[1.3fr_0.85fr_0.85fr_0.85fr_0.85fr_1.25fr] lg:gap-8 lg:px-8">
         <div>
           <Link to="/" search={{ locale }} className="text-wordmark text-foreground">
             Modalia
@@ -380,6 +438,12 @@ export function SiteFooter({ locale, t }: { locale: SupportedLocale; t: Translat
                 {t.nav.stores}
               </Link>
             </li>
+          </ul>
+        </nav>
+
+        <nav aria-label={t.footer.columns.sell}>
+          <p className="text-small font-semibold text-foreground">{t.footer.columns.sell}</p>
+          <ul className="mt-4 space-y-3 text-small text-muted-foreground">
             <li>
               <Link to="/become-a-seller" search={{ locale }} className={linkClass}>
                 {t.footer.links.becomeSeller}
@@ -414,6 +478,27 @@ export function SiteFooter({ locale, t }: { locale: SupportedLocale; t: Translat
             <li>
               <Link to="/contact" search={{ locale }} className={linkClass}>
                 {t.footer.links.contact}
+              </Link>
+            </li>
+          </ul>
+        </nav>
+
+        <nav aria-label={t.footer.columns.legal}>
+          <p className="text-small font-semibold text-foreground">{t.footer.columns.legal}</p>
+          <ul className="mt-4 space-y-3 text-small text-muted-foreground">
+            <li>
+              <Link to="/privacy" search={{ locale }} className={linkClass}>
+                {t.footer.links.privacy}
+              </Link>
+            </li>
+            <li>
+              <Link to="/terms" search={{ locale }} className={linkClass}>
+                {t.footer.links.terms}
+              </Link>
+            </li>
+            <li>
+              <Link to="/about" search={{ locale }} className={linkClass}>
+                {t.footer.links.about}
               </Link>
             </li>
           </ul>
@@ -463,14 +548,38 @@ export function SiteFooter({ locale, t }: { locale: SupportedLocale; t: Translat
       </div>
 
       <div className="border-t border-border px-4 py-5 sm:px-6 lg:px-8">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 text-caption text-muted-foreground">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-6 gap-y-4 text-caption text-muted-foreground">
           <span>
             © {new Date().getFullYear()} Modalia · {t.footer.rights}
           </span>
-          <span className="inline-flex items-center gap-1.5">
-            <Banknote className="size-4" />
-            {t.footer.cashOnDelivery}
-          </span>
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1">
+              <Banknote className="size-3.5" aria-hidden="true" />
+              {t.footer.cashOnDelivery}
+            </span>
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1 font-semibold tracking-wider"
+              title={platformConfig.market.currency}
+            >
+              {platformConfig.market.currency}
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <Globe className="size-3.5" aria-hidden="true" />
+              <span className="sr-only">{t.footer.languageLabel}</span>
+              <select
+                aria-label={t.footer.languageLabel}
+                value={locale}
+                onChange={(e) => switchLocale(e.target.value as SupportedLocale)}
+                className="bg-transparent text-caption text-muted-foreground outline-none"
+              >
+                {supportedLocales.map((value) => (
+                  <option key={value} value={value}>
+                    {localeLabels[value]}
+                  </option>
+                ))}
+              </select>
+            </span>
+          </div>
         </div>
       </div>
     </footer>

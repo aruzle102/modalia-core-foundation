@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database, Json } from "@/integrations/supabase/types";
 import { emitSellerNotification } from "@/lib/notifications.functions";
+import { assertAdmin } from "@/lib/admin-auth";
 
 type SellerRow = Database["public"]["Tables"]["sellers"]["Row"];
 type StoreRow = Database["public"]["Tables"]["stores"]["Row"];
@@ -21,12 +22,6 @@ type ProfileReview = {
 
 const adminOnly = [requireSupabaseAuth] as const;
 
-async function assertAdmin(context: any) {
-  if (!context) throw new Error("Unauthorized");
-  const { data, error } = await context.supabase.rpc("is_super_admin");
-  if (error || data !== true) throw new Error("Forbidden");
-}
-
 const PAGE_SIZE = 25;
 
 /** Strip postgrest filter-breaking characters from free-text search. */
@@ -38,7 +33,14 @@ function sanitizeSearch(q: string): string {
 /* Seller applications                                                 */
 /* ------------------------------------------------------------------ */
 
-const applicationStatusSchema = z.enum(["pending", "approved", "rejected", "suspended"]);
+const applicationStatusSchema = z.enum([
+  "pending",
+  "under_review",
+  "approved",
+  "rejected",
+  "converted",
+  "suspended",
+]);
 
 const listApplicationsInput = z.object({
   status: applicationStatusSchema.optional(),
@@ -120,7 +122,7 @@ export const getApplication = createServerFn({ method: "GET" })
 const reviewApplicationInput = z
   .object({
     id: z.string().uuid(),
-    decision: z.enum(["approve", "reject"]),
+    decision: z.enum(["approve", "reject", "start_review"]),
     rejectionReason: z.string().max(2000).optional(),
     adminNotes: z.string().max(5000).optional(),
   })
@@ -141,19 +143,45 @@ export const reviewApplication = createServerFn({ method: "POST" })
       .eq("id", data.id)
       .single();
     if (error || !application) throw new Error("Application not found.");
-    if (application.status !== "pending") throw new Error("Only pending applications can be reviewed.");
     const now = new Date().toISOString();
+    const notesPatch =
+      data.adminNotes !== undefined ? { admin_notes: data.adminNotes } : {};
+
+    if (data.decision === "start_review") {
+      // pending -> under_review: an admin picked the application up.
+      // reviewed_at stays NULL until a final decision is recorded.
+      if (application.status !== "pending") {
+        throw new Error("Only pending applications can be moved to under review.");
+      }
+      const { error: updateError } = await supabaseAdmin
+        .from("seller_applications")
+        .update({ status: "under_review", reviewed_by: context.userId, ...notesPatch })
+        .eq("id", data.id);
+      if (updateError) throw new Error(updateError.message);
+      await supabaseAdmin.from("audit_logs").insert({
+        actor_id: context.userId,
+        action: "seller_application_under_review",
+        resource: "seller_application",
+        resource_id: data.id,
+        metadata: { decision: "start_review" },
+      });
+      return { ok: true as const, status: "under_review" as const };
+    }
+
+    if (application.status !== "pending" && application.status !== "under_review") {
+      throw new Error("Only pending or under-review applications can be decided.");
+    }
 
     if (data.decision === "approve") {
       // Approval only flags the application. The seller login/store is provisioned
-      // separately via createSellerAccount so credentials are handled explicitly.
+      // separately via provisionSeller so credentials are handled explicitly.
       const { error: updateError } = await supabaseAdmin
         .from("seller_applications")
         .update({
           status: "approved",
           reviewed_at: now,
           reviewed_by: context.userId,
-          ...(data.adminNotes !== undefined ? { admin_notes: data.adminNotes } : {}),
+          ...notesPatch,
         })
         .eq("id", data.id);
       if (updateError) throw new Error(updateError.message);
@@ -162,7 +190,7 @@ export const reviewApplication = createServerFn({ method: "POST" })
         action: "seller_application_approved",
         resource: "seller_application",
         resource_id: data.id,
-        metadata: { decision: "approve" },
+        metadata: { decision: "approve", from: application.status },
       });
       return { ok: true as const, status: "approved" as const };
     }
@@ -175,7 +203,7 @@ export const reviewApplication = createServerFn({ method: "POST" })
         reviewed_at: now,
         reviewed_by: context.userId,
         rejection_reason: reason,
-        ...(data.adminNotes !== undefined ? { admin_notes: data.adminNotes } : {}),
+        ...notesPatch,
       })
       .eq("id", data.id);
     if (updateError) throw new Error(updateError.message);
@@ -184,7 +212,7 @@ export const reviewApplication = createServerFn({ method: "POST" })
       action: "seller_application_rejected",
       resource: "seller_application",
       resource_id: data.id,
-      metadata: { decision: "reject", rejection_reason: reason },
+      metadata: { decision: "reject", from: application.status, rejection_reason: reason },
     });
     // Never send email/SMS notifications from this flow.
     return { ok: true as const, status: "rejected" as const };
@@ -311,6 +339,9 @@ export const createSellerAccount = createServerFn({ method: "POST" })
           email: application.email,
           status: "active",
           account_status: "active",
+          // Temporary password was provisioned above (shown once to the
+          // admin); the owner must rotate it on first sign-in.
+          must_reset_password: true,
           commission_rate: 0.1,
           approved_at: now,
         })
@@ -365,7 +396,7 @@ export const createSellerAccount = createServerFn({ method: "POST" })
 
       const { error: applicationUpdateError } = await supabaseAdmin
         .from("seller_applications")
-        .update({ seller_id: seller.id, status: "approved" })
+        .update({ seller_id: seller.id, status: "converted" })
         .eq("id", application.id);
       if (applicationUpdateError) throw new Error(applicationUpdateError.message);
 
@@ -386,6 +417,319 @@ export const createSellerAccount = createServerFn({ method: "POST" })
       });
 
       return { tempPassword, userId: authUserId, sellerId: seller.id, storeSlug: slug };
+    } catch (err) {
+      // Best-effort compensation: never leave a half-provisioned account behind.
+      if (sellerId) await supabaseAdmin.from("sellers").delete().eq("id", sellerId);
+      if (createdNewUser) await supabaseAdmin.auth.admin.deleteUser(authUserId);
+      throw err;
+    }
+  });
+
+/* ------------------------------------------------------------------ */
+/* Seller onboarding wizard: store slug availability + full provisioning */
+/* ------------------------------------------------------------------ */
+
+export const checkStoreSlug = createServerFn({ method: "GET" })
+  .middleware(adminOnly)
+  .inputValidator((data) => z.object({ slug: z.string().trim().min(1).max(80) }).parse(data))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const normalized =
+      data.slug
+        .toLowerCase()
+        .normalize("NFKD")
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-+|-+$)/g, "") || "store";
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: clash } = await supabaseAdmin
+      .from("stores")
+      .select("id")
+      .eq("slug", normalized)
+      .maybeSingle();
+    let suggestion: string | null = null;
+    if (clash) {
+      for (let i = 2; i < 100; i++) {
+        const candidate = `${normalized}-${i}`;
+        const { data: next } = await supabaseAdmin
+          .from("stores")
+          .select("id")
+          .eq("slug", candidate)
+          .maybeSingle();
+        if (!next) {
+          suggestion = candidate;
+          break;
+        }
+      }
+    }
+    return { slug: normalized, available: !clash, suggestion };
+  });
+
+/** Permission keys the wizard may grant to a staff account (subset of the permissions table). */
+export const WIZARD_STAFF_PERMISSIONS = [
+  { key: "products.view", label: "View products" },
+  { key: "products.create", label: "Create products" },
+  { key: "products.edit", label: "Edit products" },
+  { key: "products.delete", label: "Delete products" },
+  { key: "inventory.view", label: "View inventory" },
+  { key: "inventory.edit", label: "Edit inventory" },
+  { key: "orders.view", label: "View orders" },
+  { key: "orders.update", label: "Update orders" },
+  { key: "analytics.view", label: "View analytics" },
+  { key: "store.edit", label: "Edit store settings" },
+  { key: "discounts.manage", label: "Manage discounts" },
+  { key: "staff.manage", label: "Manage staff" },
+  { key: "settings.manage", label: "Manage settings" },
+] as const;
+
+const wizardPermissionKeys: Set<string> = new Set(WIZARD_STAFF_PERMISSIONS.map((p) => p.key));
+
+const provisionSellerInput = z
+  .object({
+    applicationId: z.string().uuid().optional(),
+    firstName: z.string().trim().min(2).max(100),
+    lastName: z.string().trim().min(2).max(100),
+    phone: z
+      .string()
+      .trim()
+      .regex(/^\+213[5-7][0-9]{8}$/, "Use an Algerian mobile number, for example +213551234567."),
+    email: z.string().trim().email().max(255),
+    storeName: z.string().trim().min(2).max(160),
+    storeSlug: z
+      .string()
+      .trim()
+      .min(2)
+      .max(80)
+      .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug may only contain lowercase letters, numbers and dashes.")
+      .optional(),
+    storeDescription: z.string().trim().max(2000).optional(),
+    commissionRate: z.number().min(0).max(100),
+    role: z.enum(["seller_owner", "seller_staff"]),
+    staffTitle: z.string().trim().max(120).optional(),
+    staffPermissions: z.array(z.string().min(1).max(60)).max(30).default([]),
+  })
+  .refine((d) => d.role !== "seller_staff" || d.staffPermissions.length > 0, {
+    message: "Choose at least one permission for a staff account.",
+    path: ["staffPermissions"],
+  })
+  .refine((d) => d.staffPermissions.every((k) => wizardPermissionKeys.has(k)), {
+    message: "One or more permission keys are not recognized.",
+    path: ["staffPermissions"],
+  });
+
+export type ProvisionSellerResult = {
+  tempPassword: string;
+  userId: string;
+  sellerId: string;
+  storeId: string;
+  storeSlug: string;
+  linkedExistingUser: boolean;
+};
+
+/**
+ * Full seller+store provisioning for the admin onboarding wizard.
+ * Creates REAL records: auth user (Supabase Auth Admin API, service_role never
+ * leaves the server), sellers row, stores row with a unique slug, user_roles
+ * row (+ seller_staff row for staff roles), commission history row, audit log.
+ * The temporary password is returned once to the admin and never logged,
+ * never put in a URL, and never stored.
+ */
+export const provisionSeller = createServerFn({ method: "POST" })
+  .middleware(adminOnly)
+  .inputValidator((data) => provisionSellerInput.parse(data))
+  .handler(async ({ data, context }): Promise<ProvisionSellerResult> => {
+    await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    let application: { id: string; status: string; seller_id: string | null } | null = null;
+    if (data.applicationId) {
+      const { data: appRow, error: appError } = await supabaseAdmin
+        .from("seller_applications")
+        .select("id,status,seller_id")
+        .eq("id", data.applicationId)
+        .single();
+      if (appError || !appRow) throw new Error("Application not found.");
+      if (appRow.status !== "approved") {
+        throw new Error("Application must be approved before provisioning a seller account.");
+      }
+      if (appRow.seller_id) {
+        throw new Error("A seller account already exists for this application.");
+      }
+      application = appRow;
+    }
+
+    const commissionFraction = data.commissionRate / 100;
+    const tempPassword = (crypto.randomUUID() + crypto.randomUUID()).slice(0, 20);
+    const displayName = `${data.firstName} ${data.lastName}`.trim();
+
+    let authUserId: string;
+    let createdNewUser = false;
+    let linkedExistingUser = false;
+
+    const { data: created, error: createError } = await supabaseAdmin.auth.admin.createUser({
+      email: data.email,
+      password: tempPassword,
+      email_confirm: true,
+      user_metadata: {
+        display_name: displayName,
+        force_password_reset: true,
+        provisioned_by: "modalia-admin",
+      },
+    });
+
+    if (createError) {
+      const alreadyExists = /already been registered|already exists|duplicate/i.test(
+        createError.message ?? "",
+      );
+      if (!alreadyExists) throw new Error(`Could not create login: ${createError.message}`);
+      const { data: listed, error: listError } = await supabaseAdmin.auth.admin.listUsers({
+        perPage: 200,
+      });
+      if (listError) throw new Error("A login with this email already exists.");
+      const existing = (listed?.users ?? []).find(
+        (u) => u.email?.toLowerCase() === data.email.toLowerCase(),
+      );
+      if (!existing) throw new Error("A login with this email already exists.");
+      const { error: passwordError } = await supabaseAdmin.auth.admin.updateUserById(existing.id, {
+        password: tempPassword,
+        email_confirm: true,
+        user_metadata: {
+          display_name: displayName,
+          force_password_reset: true,
+          provisioned_by: "modalia-admin",
+        },
+      });
+      if (passwordError) throw new Error(`Could not reset login password: ${passwordError.message}`);
+      authUserId = existing.id;
+      linkedExistingUser = true;
+    } else if (!created?.user) {
+      throw new Error("Could not create login.");
+    } else {
+      authUserId = created.user.id;
+      createdNewUser = true;
+    }
+
+    const now = new Date().toISOString();
+    let sellerId: string | null = null;
+    let storeId: string | null = null;
+    try {
+      const { data: seller, error: sellerError } = await supabaseAdmin
+        .from("sellers")
+        .insert({
+          owner_id: authUserId,
+          legal_name: data.storeName,
+          first_name: data.firstName,
+          last_name: data.lastName,
+          phone: data.phone,
+          email: data.email,
+          status: "active",
+          account_status: "active",
+          commission_rate: commissionFraction,
+          approved_at: now,
+        })
+        .select("id")
+        .single();
+      if (sellerError || !seller) throw new Error(sellerError?.message ?? "Could not create seller.");
+      sellerId = seller.id;
+
+      // Unique store slug.
+      const base =
+        data.storeSlug ??
+        (data.storeName
+          .toLowerCase()
+          .normalize("NFKD")
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/(^-+|-+$)/g, "") || "store");
+      let slug = base;
+      let attempt = 1;
+      for (;;) {
+        const { data: clash } = await supabaseAdmin
+          .from("stores")
+          .select("id")
+          .eq("slug", slug)
+          .maybeSingle();
+        if (!clash) break;
+        attempt += 1;
+        slug = `${base}-${attempt}`;
+      }
+
+      const { data: store, error: storeError } = await supabaseAdmin
+        .from("stores")
+        .insert({
+          seller_id: seller.id,
+          name: data.storeName,
+          slug,
+          status: "active",
+          verification_status: "unverified",
+          description: data.storeDescription || null,
+        })
+        .select("id")
+        .single();
+      if (storeError || !store) throw new Error(storeError?.message ?? "Could not create store.");
+      storeId = store.id;
+
+      const { error: roleError } = await supabaseAdmin
+        .from("user_roles")
+        .upsert({ user_id: authUserId, role: data.role }, { onConflict: "user_id,role" });
+      if (roleError) throw new Error(roleError.message);
+
+      if (data.role === "seller_staff") {
+        const { error: staffError } = await supabaseAdmin.from("seller_staff").upsert(
+          {
+            seller_id: seller.id,
+            user_id: authUserId,
+            role: "seller_staff",
+            title: data.staffTitle?.trim() || "Staff",
+            permissions: data.staffPermissions,
+            active: true,
+          },
+          { onConflict: "seller_id,user_id" },
+        );
+        if (staffError) throw new Error(staffError.message);
+      }
+
+      const { error: historyError } = await supabaseAdmin
+        .from("seller_commission_history")
+        .insert({
+          seller_id: seller.id,
+          rate: commissionFraction,
+          effective_from: now,
+          changed_by: context.userId,
+        });
+      if (historyError) throw new Error(historyError.message);
+
+      if (application) {
+        const { error: applicationUpdateError } = await supabaseAdmin
+          .from("seller_applications")
+          .update({ seller_id: seller.id, status: "converted" })
+          .eq("id", application.id);
+        if (applicationUpdateError) throw new Error(applicationUpdateError.message);
+      }
+
+      await supabaseAdmin.from("audit_logs").insert({
+        actor_id: context.userId,
+        action: "seller_account_provisioned",
+        resource: "seller",
+        resource_id: seller.id,
+        metadata: {
+          application_id: application?.id ?? null,
+          store_id: store.id,
+          store_slug: slug,
+          user_id: authUserId,
+          email: data.email,
+          role: data.role,
+          commission_rate: commissionFraction,
+          linked_existing_user: linkedExistingUser,
+        },
+      });
+
+      return {
+        tempPassword,
+        userId: authUserId,
+        sellerId: seller.id,
+        storeId: store.id,
+        storeSlug: slug,
+        linkedExistingUser,
+      };
     } catch (err) {
       // Best-effort compensation: never leave a half-provisioned account behind.
       if (sellerId) await supabaseAdmin.from("sellers").delete().eq("id", sellerId);
@@ -438,7 +782,34 @@ export const listSellers = createServerFn({ method: "GET" })
       .order("created_at", { ascending: false })
       .range(from, from + PAGE_SIZE - 1);
     if (error) throw new Error(error.message);
-    return { items: items ?? [], total: count ?? 0, page: data.page, pageSize: PAGE_SIZE };
+    const pageItems = items ?? [];
+
+    // Per-seller aggregates for the list columns (Products / Orders / Sales).
+    // Two batched queries instead of N+1; sales = delivered seller-order subtotals.
+    const stats: Record<string, { productCount: number; orderCount: number; salesTotal: number }> = {};
+    const pageSellerIds = pageItems.map((s) => s.id as string);
+    if (pageSellerIds.length) {
+      const [productsRes, ordersRes] = await Promise.all([
+        supabaseAdmin.from("products").select("seller_id").in("seller_id", pageSellerIds).limit(5000),
+        supabaseAdmin
+          .from("seller_orders")
+          .select("seller_id, subtotal, status")
+          .in("seller_id", pageSellerIds)
+          .limit(5000),
+      ]);
+      for (const p of productsRes.data ?? []) {
+        const id = p.seller_id as string;
+        stats[id] = stats[id] ?? { productCount: 0, orderCount: 0, salesTotal: 0 };
+        stats[id].productCount += 1;
+      }
+      for (const o of ordersRes.data ?? []) {
+        const id = o.seller_id as string;
+        stats[id] = stats[id] ?? { productCount: 0, orderCount: 0, salesTotal: 0 };
+        stats[id].orderCount += 1;
+        if (o.status === "delivered") stats[id].salesTotal += Number(o.subtotal ?? 0);
+      }
+    }
+    return { items: pageItems, total: count ?? 0, page: data.page, pageSize: PAGE_SIZE, stats };
   });
 
 export const getSellerProfile = createServerFn({ method: "GET" })
@@ -634,6 +1005,68 @@ export const updateStoreVerification = createServerFn({ method: "POST" })
     }
 
     return { ok: true as const, verificationStatus: data.verificationStatus };
+  });
+
+const updateSellerDetailsInput = z.object({
+  sellerId: z.string().uuid(),
+  legalName: z.string().trim().min(2).max(160),
+  firstName: z.string().trim().min(1).max(100),
+  lastName: z.string().trim().min(1).max(100),
+  phone: z
+    .string()
+    .trim()
+    .regex(/^\+213[5-7][0-9]{8}$/, "Use an Algerian mobile number, for example +213551234567.")
+    .nullable()
+    .optional(),
+  email: z.string().trim().email().max(255).nullable().optional(),
+});
+
+/** Edit a seller's identity/contact details. Audited with a from/to diff. */
+export const updateSellerDetails = createServerFn({ method: "POST" })
+  .middleware(adminOnly)
+  .inputValidator((data) => updateSellerDetailsInput.parse(data))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: seller } = await supabaseAdmin
+      .from("sellers")
+      .select("id, legal_name, first_name, last_name, phone, email")
+      .eq("id", data.sellerId)
+      .maybeSingle();
+    if (!seller) throw new Error("Seller not found.");
+    const patch = {
+      legal_name: data.legalName,
+      first_name: data.firstName,
+      last_name: data.lastName,
+      phone: data.phone?.trim() || null,
+      email: data.email?.trim() || null,
+      updated_at: new Date().toISOString(),
+    };
+    const { error } = await supabaseAdmin.from("sellers").update(patch).eq("id", data.sellerId);
+    if (error) throw new Error(error.message);
+    await supabaseAdmin.from("audit_logs").insert({
+      actor_id: context.userId,
+      action: "seller_details_updated",
+      resource: "seller",
+      resource_id: data.sellerId,
+      metadata: {
+        from: {
+          legal_name: seller.legal_name,
+          first_name: seller.first_name,
+          last_name: seller.last_name,
+          phone: seller.phone,
+          email: seller.email,
+        },
+        to: {
+          legal_name: patch.legal_name,
+          first_name: patch.first_name,
+          last_name: patch.last_name,
+          phone: patch.phone,
+          email: patch.email,
+        },
+      },
+    });
+    return { ok: true as const };
   });
 
 export const updateCommissionRate = createServerFn({ method: "POST" })

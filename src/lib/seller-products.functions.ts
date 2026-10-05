@@ -115,6 +115,7 @@ const nonEmptyLocale = localeText.refine(
 const optionValueInput = z.object({
   label: localeText,
   value: z.string().min(1).max(120),
+  colorId: uuid.nullable().optional(),
 });
 
 const optionInput = z.object({
@@ -149,6 +150,7 @@ const imageInput = z.object({
   isPrimary: z.boolean().default(false),
   sortOrder: z.number().int().min(0).default(0),
   mediaType: z.enum(["image", "model_3d"]).default("image"),
+  altText: localeText.optional(),
 });
 
 const saveProductSchema = z.object({
@@ -200,6 +202,20 @@ export const getSellerBrands = createServerFn({ method: "GET" })
       .order("name");
     if (error) throw new Error(error.message);
     return { brands: data ?? [] };
+  });
+
+export const getSellerColors = createServerFn({ method: "GET" })
+  .middleware(sellerOnly)
+  .handler(async ({ context }) => {
+    await requireSeller(context, "products.view");
+    const sb = context.supabase as Sb;
+    const { data, error } = await sb
+      .from("colors")
+      .select("id, name, slug, hex_value")
+      .eq("active", true)
+      .order("sort_order");
+    if (error) throw new Error(error.message);
+    return { colors: data ?? [] };
   });
 
 export const listSellerProducts = createServerFn({ method: "GET" })
@@ -265,7 +281,7 @@ export const getProductEditor = createServerFn({ method: "GET" })
       .from("products")
       .select(
         "*, categories(id, name), brands(id, name), " +
-          "product_options(id, code, name, sort_order, product_option_values(id, label, value, sort_order)), " +
+          "product_options(id, code, name, sort_order, product_option_values(id, label, value, color_id, sort_order)), " +
           "product_variants(id, sku, price, compare_at_price, barcode, weight_grams, available, status, image_id, sort_order, variant_option_values(product_option_value_id), inventory(quantity, reserved_quantity, low_stock_threshold)), " +
           "product_images(id, storage_path, alt_text, is_primary, sort_order, media_type, variant_id), " +
           "product_tag_assignments(product_tags(id, name, slug))",
@@ -487,6 +503,7 @@ export const saveProduct = createServerFn({ method: "POST" })
             product_option_id: insertedOpt.id,
             label: val.label as unknown as Json,
             value: val.value,
+            color_id: val.colorId ?? null,
             sort_order: j,
           })
           .select("id")
@@ -599,7 +616,7 @@ export const saveProduct = createServerFn({ method: "POST" })
     // Images — sync by id: update existing, insert new, delete removed.
     const { data: existingImages, error: imgSelErr } = await sb
       .from("product_images")
-      .select("id")
+      .select("id, storage_path")
       .eq("product_id", productId);
     if (imgSelErr) throw new Error(imgSelErr.message);
     const existingImageIds = new Set((existingImages ?? []).map((r) => r.id));
@@ -607,6 +624,10 @@ export const saveProduct = createServerFn({ method: "POST" })
       data.images.filter((img) => img.id && existingImageIds.has(img.id)).map((img) => img.id as string),
     );
     const removedImageIds = [...existingImageIds].filter((id) => !inputImageIds.has(id));
+    // Storage paths of removed rows, for orphan cleanup after the delete.
+    const removedImagePaths = (existingImages ?? [])
+      .filter((r) => removedImageIds.includes(r.id))
+      .map((r) => r.storage_path);
 
     let primarySeen = false;
     for (let i = 0; i < data.images.length; i++) {
@@ -615,7 +636,7 @@ export const saveProduct = createServerFn({ method: "POST" })
       if (img.isPrimary) primarySeen = true;
       const row = {
         storage_path: img.storagePath,
-        alt_text: null,
+        alt_text: (img.altText ?? {}) as unknown as Json,
         is_primary: isPrimary,
         sort_order: img.sortOrder ?? i,
         media_type: img.mediaType,
@@ -642,6 +663,24 @@ export const saveProduct = createServerFn({ method: "POST" })
         .eq("product_id", productId);
       const { error: imgDelErr } = await sb.from("product_images").delete().in("id", removedImageIds);
       if (imgDelErr) throw new Error(imgDelErr.message);
+      // Delete storage objects left unreferenced by any product_images row
+      // (duplicateProduct copies storage paths between products, so a blind
+      // delete would break the copies). Runs under the seller's session, so
+      // the "Seller staff can delete own media" storage policy applies.
+      const uniqPaths = [...new Set(removedImagePaths.filter(Boolean))];
+      if (uniqPaths.length) {
+        const { data: refs, error: refErr } = await sb
+          .from("product_images")
+          .select("storage_path")
+          .in("storage_path", uniqPaths);
+        if (refErr) throw new Error(refErr.message);
+        const referenced = new Set((refs ?? []).map((r) => r.storage_path));
+        const orphans = uniqPaths.filter((p) => !referenced.has(p));
+        if (orphans.length) {
+          const { error: rmErr } = await sb.storage.from("product-media").remove(orphans);
+          if (rmErr) throw new Error(rmErr.message);
+        }
+      }
     }
 
     // Link variants to images chosen in the matrix (variant.imageId refs image ids).
@@ -693,7 +732,7 @@ type DuplicateProductSource = {
     code: string;
     name: Json;
     sort_order: number;
-    product_option_values: { id: string; label: Json; value: string; sort_order: number }[];
+    product_option_values: { id: string; label: Json; value: string; color_id: string | null; sort_order: number }[];
   }[];
   product_variants: {
     id: string;
@@ -726,7 +765,7 @@ export const duplicateProduct = createServerFn({ method: "POST" })
     const { data: source, error } = (await sb
       .from("products")
       .select(
-        "*, product_options(id, code, name, sort_order, product_option_values(id, label, value, sort_order)), " +
+        "*, product_options(id, code, name, sort_order, product_option_values(id, label, value, color_id, sort_order)), " +
           "product_variants(id, sku, price, compare_at_price, barcode, weight_grams, sort_order, variant_option_values(product_option_value_id)), " +
           "product_images(storage_path, alt_text, is_primary, sort_order, media_type), " +
           "product_tag_assignments(tag_id)",
@@ -806,6 +845,7 @@ export const duplicateProduct = createServerFn({ method: "POST" })
             product_option_id: newOpt.id,
             label: val.label,
             value: val.value,
+            color_id: (val as { color_id?: string | null }).color_id ?? null,
             sort_order: val.sort_order,
           })
           .select("id")

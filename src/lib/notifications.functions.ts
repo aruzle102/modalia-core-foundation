@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireSeller } from "@/lib/seller-auth";
+import { assertAdmin } from "@/lib/admin-auth";
 import type { Json } from "@/integrations/supabase/types";
 
 /**
@@ -78,11 +79,6 @@ const pageInput = z.object({
 async function adminClient() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   return supabaseAdmin;
-}
-
-async function assertAdmin(context: { supabase: any }) {
-  const { data, error } = await context.supabase.rpc("is_super_admin");
-  if (error || data !== true) throw new Error("Forbidden: admin access required.");
 }
 
 type Recipient =

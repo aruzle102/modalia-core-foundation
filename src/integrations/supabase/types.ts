@@ -351,14 +351,10 @@ export type Database = {
           discount_value: number
           ends_at: string | null
           id: string
-          max_discount_amount: number | null
-          min_order_amount: number | null
-          per_customer_limit: number | null
           seller_id: string | null
           starts_at: string | null
           status: string
           updated_at: string
-          usage_count: number
           usage_limit: number | null
         }
         Insert: {
@@ -368,14 +364,10 @@ export type Database = {
           discount_value: number
           ends_at?: string | null
           id?: string
-          max_discount_amount?: number | null
-          min_order_amount?: number | null
-          per_customer_limit?: number | null
           seller_id?: string | null
           starts_at?: string | null
           status?: string
           updated_at?: string
-          usage_count?: number
           usage_limit?: number | null
         }
         Update: {
@@ -385,14 +377,10 @@ export type Database = {
           discount_value?: number
           ends_at?: string | null
           id?: string
-          max_discount_amount?: number | null
-          min_order_amount?: number | null
-          per_customer_limit?: number | null
           seller_id?: string | null
           starts_at?: string | null
           status?: string
           updated_at?: string
-          usage_count?: number
           usage_limit?: number | null
         }
         Relationships: [
@@ -1982,33 +1970,27 @@ export type Database = {
       }
       seller_staff: {
         Row: {
-          active: boolean
           created_at: string
           id: string
           permissions: Json
           role: Database["public"]["Enums"]["app_role"]
           seller_id: string
-          title: string | null
           user_id: string
         }
         Insert: {
-          active?: boolean
           created_at?: string
           id?: string
           permissions?: Json
           role?: Database["public"]["Enums"]["app_role"]
           seller_id: string
-          title?: string | null
           user_id: string
         }
         Update: {
-          active?: boolean
           created_at?: string
           id?: string
           permissions?: Json
           role?: Database["public"]["Enums"]["app_role"]
           seller_id?: string
-          title?: string | null
           user_id?: string
         }
         Relationships: [

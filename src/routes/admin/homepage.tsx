@@ -11,9 +11,12 @@ import {
   GripVertical,
   Image as ImageIcon,
   LayoutGrid,
+  Megaphone,
+  Newspaper,
   Pencil,
   Plus,
   RefreshCw,
+  Smartphone,
   Sparkles,
   Store,
   ThumbsUp,
@@ -34,6 +37,7 @@ import {
 import { errMsg, pickName } from "./_shared";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -59,6 +63,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { getLocale } from "@/lib/i18n";
+import { strParam, useUrlState } from "@/hooks/use-url-state";
 import { updateHomepageSection } from "@/lib/admin.functions";
 import {
   HOMEPAGE_KINDS,
@@ -75,9 +80,11 @@ import {
 export const Route = createFileRoute("/admin/homepage")({
   validateSearch: (search: Record<string, unknown>) => ({
     locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined),
+    create: strParam(search["create"]),
   }),
   head: () => ({
     meta: [
+      { name: "robots", content: "noindex,nofollow" },
       { title: "Homepage builder — Modalia Admin" },
       { name: "description", content: "Reorder, toggle and edit the sections of the Modalia storefront homepage." },
     ],
@@ -96,6 +103,9 @@ const KIND_META: Record<HomepageKind, { label: string; icon: ReactNode }> = {
   flash_sale: { label: "Flash sale", icon: <Zap className="size-4" /> },
   stores: { label: "Stores rail", icon: <Store className="size-4" /> },
   recommendations: { label: "Recommendations rail", icon: <ThumbsUp className="size-4" /> },
+  editorial: { label: "Editorial campaign", icon: <Megaphone className="size-4" /> },
+  blog: { label: "Blog / journal", icon: <Newspaper className="size-4" /> },
+  app_banner: { label: "App banner", icon: <Smartphone className="size-4" /> },
 };
 
 const RAIL_KINDS: readonly HomepageKind[] = [
@@ -106,6 +116,27 @@ const RAIL_KINDS: readonly HomepageKind[] = [
   "stores",
   "recommendations",
 ];
+
+/** Kinds whose storefront content is a free-form JSON object (editorial
+    campaign, journal posts, app banner links). */
+const CONTENT_JSON_KINDS: readonly HomepageKind[] = ["editorial", "blog", "app_banner"];
+
+/** Hint shown in the admin editor for the free-form content of these kinds. */
+const CONTENT_JSON_HINT: Record<string, string> = {
+  editorial:
+    'JSON object: { "image": "https://…", "image_alt": "…", "cta_label": "…", "cta_href": "/shop" }',
+  blog:
+    'JSON object: { "posts": [ { "title": "…", "excerpt": "…", "image": "https://…", "href": "https://…" } ] }',
+  app_banner:
+    'JSON object: { "ios_url": "https://…", "android_url": "https://…", "image": "https://…" } — shown only when at least one store URL is set.',
+};
+
+/** Raw editable text for a section's content (string or object). */
+function rawContentJson(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (value && typeof value === "object") return JSON.stringify(value, null, 2);
+  return "{}";
+}
 
 /* --------------------------------- helpers --------------------------------- */
 
@@ -178,6 +209,7 @@ function HomepageBuilderPage() {
 
 function BuilderManager() {
   const queryClient = useQueryClient();
+  const url = useUrlState();
   const sectionsQuery = useQuery({
     queryKey: sectionsKey,
     queryFn: () => getHomepageSections(),
@@ -190,6 +222,11 @@ function BuilderManager() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<HomepageSection | null>(null);
+
+  // Deep link: /admin/homepage?create=section opens the add-section dialog.
+  useEffect(() => {
+    if (strParam(url.search["create"]) === "section") setAddOpen(true);
+  }, [url.search["create"]]);
 
   useEffect(() => {
     if (sectionsQuery.data) setItems(sectionsQuery.data.sections);
@@ -352,9 +389,13 @@ function BuilderManager() {
 
       <AddSectionDialog
         open={addOpen}
-        onOpenChange={setAddOpen}
+        onOpenChange={(open) => {
+          setAddOpen(open);
+          if (!open) url.set({ create: undefined });
+        }}
         onCreated={(section) => {
           setAddOpen(false);
+          url.set({ create: undefined });
           invalidate();
           setEditingId(section.id);
         }}
@@ -730,6 +771,8 @@ interface SettingsForm {
   promoAr: string;
   promoFr: string;
   promoEn: string;
+  // editorial / blog / app_banner (free-form JSON content)
+  contentJson: string;
 }
 
 function formFromSection(section: HomepageSection): SettingsForm {
@@ -759,6 +802,7 @@ function formFromSection(section: HomepageSection): SettingsForm {
     promoAr: promo.ar,
     promoFr: promo.fr,
     promoEn: promo.en,
+    contentJson: rawContentJson(section.content),
   };
 }
 
@@ -801,6 +845,18 @@ function SectionSettingsSheet({
         const promo = compactLoc(form.promoAr, form.promoFr, form.promoEn);
         content["promo_label"] = Object.keys(promo).length > 0 ? promo : null;
       }
+      if (CONTENT_JSON_KINDS.includes(section.kind)) {
+        let parsed: unknown;
+        try {
+          parsed = JSON.parse(form.contentJson) as unknown;
+        } catch {
+          throw new Error("Content is not valid JSON.");
+        }
+        if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+          throw new Error("Content must be a JSON object.");
+        }
+        Object.assign(content, parsed as Record<string, unknown>);
+      }
       return updateHomepageContent({
         data: {
           sectionId: section.id,
@@ -822,11 +878,23 @@ function SectionSettingsSheet({
   });
 
   const isRail = RAIL_KINDS.includes(section.kind);
+  const isContentJsonKind = CONTENT_JSON_KINDS.includes(section.kind);
   const limitNumber = Number.parseInt(form.limit, 10);
   const limitError =
     form.limit.trim() && (!Number.isFinite(limitNumber) || limitNumber <= 0)
       ? "Enter a positive number, or leave empty for the default."
       : null;
+  const contentJsonError = (() => {
+    if (!isContentJsonKind) return null;
+    try {
+      const parsed = JSON.parse(form.contentJson) as unknown;
+      return !parsed || typeof parsed !== "object" || Array.isArray(parsed)
+        ? "Content must be a JSON object."
+        : null;
+    } catch {
+      return "Content is not valid JSON.";
+    }
+  })();
 
   return (
     <Sheet open onOpenChange={(open) => { if (!open) onClose(); }}>
@@ -952,6 +1020,28 @@ function SectionSettingsSheet({
             </section>
           ) : null}
 
+          {isContentJsonKind ? (
+            <section className="space-y-4">
+              <h3 className="text-sm font-semibold">{KIND_META[section.kind].label} content</h3>
+              <Field
+                label="Content (JSON)"
+                hint={CONTENT_JSON_HINT[section.kind] ?? "Free-form JSON object."}
+                error={contentJsonError ?? undefined}
+              >
+                <Textarea
+                  dir="ltr"
+                  spellCheck={false}
+                  rows={8}
+                  className="font-mono text-xs"
+                  placeholder="{}"
+                  value={form.contentJson}
+                  onChange={(event) => set("contentJson", event.target.value)}
+                  aria-invalid={Boolean(contentJsonError)}
+                />
+              </Field>
+            </section>
+          ) : null}
+
           <section className="space-y-4">
             <h3 className="text-sm font-semibold">Scheduling</h3>
             <p className="text-caption text-muted-foreground">
@@ -982,7 +1072,7 @@ function SectionSettingsSheet({
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button disabled={save.isPending || Boolean(limitError)} onClick={() => save.mutate()}>
+          <Button disabled={save.isPending || Boolean(limitError) || Boolean(contentJsonError)} onClick={() => save.mutate()}>
             {save.isPending ? "Saving…" : "Save changes"}
           </Button>
         </SheetFooter>

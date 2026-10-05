@@ -8,6 +8,7 @@ import { AdminCard, EmptyState, Field, StatusPill, TableSkeleton, fmtDateTime } 
 import { SellerShell } from "@/components/seller/SellerShell";
 import { createSupportRequest, listSupportRequests } from "@/lib/seller-support.functions";
 import { getLocale, getTranslations } from "@/lib/i18n";
+import { RouteError } from "@/components/routing/route-states";
 
 const q = queryOptions({ queryKey: ["seller-support"], queryFn: () => listSupportRequests() });
 
@@ -15,6 +16,12 @@ export const Route = createFileRoute("/_authenticated/seller/support")({
   validateSearch: (search: Record<string, unknown>) => ({ locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined) }),
   loader: ({ context }) => context.queryClient.ensureQueryData(q),
   pendingComponent: TableSkeleton,
+  errorComponent: ({ reset }) => (
+    <SellerShell eyebrow="Seller workspace" title="Support">
+      <RouteError message="Support requests could not be loaded. Check your connection and try again." reset={reset} />
+    </SellerShell>
+  ),
+  head: () => ({ meta: [{ name: "robots", content: "noindex,nofollow" }] }),
   component: SupportPage,
 });
 

@@ -8,6 +8,7 @@ import { SellerShell } from "@/components/seller/SellerShell";
 import { listSettlements, requestSettlement } from "@/lib/seller-finance.functions";
 import { getLocale, getTranslations } from "@/lib/i18n";
 import { formatPrice } from "@/lib/localization";
+import { RouteError } from "@/components/routing/route-states";
 
 const q = queryOptions({ queryKey: ["seller-settlements"], queryFn: () => listSettlements() });
 
@@ -15,6 +16,12 @@ export const Route = createFileRoute("/_authenticated/seller/settlements")({
   validateSearch: (search: Record<string, unknown>) => ({ locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined) }),
   loader: ({ context }) => context.queryClient.ensureQueryData(q),
   pendingComponent: TableSkeleton,
+  errorComponent: ({ reset }) => (
+    <SellerShell eyebrow="Seller workspace" title="Settlements">
+      <RouteError message="Settlements could not be loaded. Check your connection and try again." reset={reset} />
+    </SellerShell>
+  ),
+  head: () => ({ meta: [{ name: "robots", content: "noindex,nofollow" }] }),
   component: SettlementsPage,
 });
 

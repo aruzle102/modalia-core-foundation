@@ -1,20 +1,172 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
-import { SiteFooter, SiteHeader } from "@/components/layout/site-shell";
-import { OrdersEmpty, SellerOrdersList } from "@/components/marketplace/order-views";
-import { getMySellerOrders } from "@/lib/orders.functions";
-import { getLocale, getTranslations, localeDirections } from "@/lib/i18n";
-
-const sellerOrdersQuery = () => queryOptions({ queryKey: ["seller-orders"], queryFn: () => getMySellerOrders({ data: { page: 1, pageSize: 20 } }) });
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Search, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AdminCard, EmptyState, StatusPill, TableSkeleton, Field, fmtDateTime, fmtMoney } from "@/components/admin/ui";
+import { listSellerOrders } from "@/lib/seller-orders.functions";
+import { getLocale } from "@/lib/i18n";
+import { SellerShell } from "@/components/seller/SellerShell";
+import { errMsg, Pager } from "../admin/_shared";
 
 export const Route = createFileRoute("/_authenticated/seller/orders")({
   validateSearch: (search: Record<string, unknown>) => ({ locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined) }),
-  loader: ({ context }) => context.queryClient.ensureQueryData(sellerOrdersQuery()),
-  pendingComponent: () => <div className="px-6 py-24 text-center text-muted-foreground">Loading seller orders…</div>,
-  errorComponent: () => <div role="alert" className="px-6 py-24 text-center text-muted-foreground">Seller orders could not be loaded.</div>,
-  notFoundComponent: () => <div className="px-6 py-24 text-center text-muted-foreground">No seller orders found.</div>,
-  head: () => ({ meta: [{ title: "Seller orders — Modalia" }, { name: "description", content: "Manage your store’s order operations." }, { property: "og:title", content: "Seller orders — Modalia" }, { property: "og:description", content: "Manage your store’s order operations." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }], links: [{ rel: "canonical", href: "/seller/orders" }] }),
+  head: () => ({ meta: [{ title: "Orders — Seller — Modalia" }, { name: "description", content: "Manage your store's orders." }] }),
   component: SellerOrdersPage,
 });
 
-function SellerOrdersPage() { const { locale } = Route.useSearch(); const { data } = useSuspenseQuery(sellerOrdersQuery()); const t = getTranslations(locale); return <div dir={localeDirections[locale]} lang={locale} className="min-h-screen bg-background"><SiteHeader locale={locale} t={t} /><main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8"><p className="text-eyebrow text-muted-foreground">Seller workspace</p><h1 className="mt-2 text-display text-foreground">Orders</h1><p className="mt-3 text-body text-muted-foreground">Only orders for your own store are shown here.</p><section className="mt-10">{data.orders.length ? <SellerOrdersList orders={data.orders} locale={locale} /> : <OrdersEmpty />}</section></main><SiteFooter locale={locale} t={t} /></div>; }
+const STATUS_OPTIONS = [
+  "pending",
+  "accepted",
+  "processing",
+  "ready_for_shipping",
+  "handed_to_courier",
+  "in_transit",
+  "fulfilled",
+  "delivered",
+  "cancelled",
+  "returned",
+  "refunded",
+] as const;
+
+function SellerOrdersPage() {
+  const { locale } = Route.useSearch();
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState<string>("");
+  const [page, setPage] = useState(1);
+
+  const payload = useMemo(() => {
+    const q = search.trim();
+    return {
+      page,
+      ...(q ? { q } : {}),
+      ...(status ? { status: status as (typeof STATUS_OPTIONS)[number] } : {}),
+    };
+  }, [search, status, page]);
+
+  const ordersQuery = useQuery({
+    queryKey: ["seller-orders", payload],
+    queryFn: () => listSellerOrders({ data: payload }),
+    retry: false,
+  });
+
+  const orders = ordersQuery.data?.orders ?? [];
+  const total = ordersQuery.data?.total ?? 0;
+  const pageSize = ordersQuery.data?.pageSize ?? 20;
+
+  const resetPage = () => setPage(1);
+  const hasFilters = search.trim() !== "" || status !== "";
+
+  return (
+    <SellerShell
+      eyebrow="Seller workspace"
+      title="Orders"
+    >
+      <p className="text-body text-muted-foreground">"Only your own store's orders are shown here."</p>
+      <AdminCard
+        title="Filters"
+        actions={
+          hasFilters ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => { setSearch(""); setStatus(""); setPage(1); }}
+            >
+              <X className="size-4" />
+              Clear
+            </Button>
+          ) : null
+        }
+      >
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Field label="Search">
+            <div className="relative">
+              <Search className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); resetPage(); }}
+                placeholder="Order no, phone or name…"
+                className="ps-9"
+              />
+            </div>
+          </Field>
+          <Field label="Status">
+            <Select value={status} onValueChange={(v) => { setStatus(v === "all" ? "" : v); resetPage(); }}>
+              <SelectTrigger><SelectValue placeholder="All statuses" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All statuses</SelectItem>
+                {STATUS_OPTIONS.map((option) => (
+                  <SelectItem key={option} value={option} className="capitalize">
+                    {option.replace(/_/g, " ")}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Field>
+        </div>
+      </AdminCard>
+
+      <div className="mt-6">
+        {ordersQuery.isLoading ? (
+          <TableSkeleton rows={6} />
+        ) : ordersQuery.isError ? (
+          <AdminCard>
+            <EmptyState title="Orders could not be loaded" text={errMsg(ordersQuery.error)} />
+          </AdminCard>
+        ) : orders.length === 0 ? (
+          <AdminCard>
+            <EmptyState
+              title="No orders yet"
+              text={hasFilters ? "No orders match your filters." : "When customers buy from your store, their orders will appear here."}
+            />
+          </AdminCard>
+        ) : (
+          <div className="space-y-4">
+            <AdminCard className="overflow-x-auto">
+              <table className="w-full min-w-[720px] text-sm">
+                <thead>
+                  <tr className="border-b border-border text-start text-xs uppercase tracking-wide text-muted-foreground">
+                    <th className="py-3 pe-4 text-start font-medium">Order</th>
+                    <th className="py-3 pe-4 text-start font-medium">Customer</th>
+                    <th className="py-3 pe-4 text-start font-medium">Items</th>
+                    <th className="py-3 pe-4 text-start font-medium">Total</th>
+                    <th className="py-3 pe-4 text-start font-medium">Status</th>
+                    <th className="py-3 text-start font-medium">Placed</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {orders.map((order) => (
+                    <tr key={order.id} className="align-top">
+                      <td className="py-3 pe-4">
+                        <Link
+                          to="/seller/orders/$orderId"
+                          params={{ orderId: order.id }}
+                          search={{ locale }}
+                          className="font-semibold text-primary underline-offset-4 hover:underline"
+                        >
+                          {order.orderNumber}
+                        </Link>
+                      </td>
+                      <td className="py-3 pe-4">
+                        <p className="font-medium">{[order.firstName, order.lastName].filter(Boolean).join(" ") || "—"}</p>
+                        <p className="text-xs text-muted-foreground" dir="ltr">{order.phone ?? "—"}</p>
+                      </td>
+                      <td className="py-3 pe-4 tabular-nums">{order.itemCount}</td>
+                      <td className="py-3 pe-4 tabular-nums">{fmtMoney(order.subtotal + order.shippingTotal)}</td>
+                      <td className="py-3 pe-4"><StatusPill status={order.status} /></td>
+                      <td className="py-3 text-xs text-muted-foreground">{fmtDateTime(order.createdAt)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </AdminCard>
+            <Pager page={page} total={total} pageSize={pageSize} onPage={setPage} />
+          </div>
+        )}
+      </div>
+    </SellerShell>
+  );
+}

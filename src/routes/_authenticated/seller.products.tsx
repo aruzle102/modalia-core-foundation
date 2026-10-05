@@ -1,13 +1,404 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useMatch } from "@tanstack/react-router";
 import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Copy, Loader2, Pencil, Plus, Search } from "lucide-react";
+import { SellerShell } from "@/components/seller/SellerShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { SiteFooter, SiteHeader } from "@/components/layout/site-shell";
-import { createSellerProduct, getSellerDashboard } from "@/lib/seller.functions";
-import { getLocale, getTranslations, localeDirections } from "@/lib/i18n";
-import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { AdminCard, EmptyState, StatusPill } from "@/components/admin/ui";
+import {
+  bulkUpdateProducts,
+  duplicateProduct,
+  listSellerProducts,
+} from "@/lib/seller-products.functions";
+import { getLocale, localeDirections } from "@/lib/i18n";
 
-const q=queryOptions({queryKey:["seller-dashboard"],queryFn:()=>getSellerDashboard()});
-export const Route=createFileRoute("/_authenticated/seller/products")({validateSearch:(search:Record<string,unknown>)=>({locale:getLocale(typeof search["locale"] === "string"?search["locale"]:undefined)}),loader:({context})=>context.queryClient.ensureQueryData(q),component:ProductsPage});
-function ProductsPage(){const {locale}=Route.useSearch();const t=getTranslations(locale);const {data}=useSuspenseQuery(q);const qc=useQueryClient();const [form,setForm]=useState({name:"",description:"",price:"",sku:"",stock:"",weight:""});const mutation=useMutation({mutationFn:()=>createSellerProduct({data:{storeId:(Array.isArray(data?.seller.stores)?data?.seller.stores[0]:data?.seller.stores)?.id,name:form.name,description:form.description,price:Number(form.price),sku:form.sku,stock:Number(form.stock),weightGrams:form.weight?Number(form.weight):undefined}}),onSuccess:()=>{qc.invalidateQueries({queryKey:["seller-dashboard"]});setForm({name:"",description:"",price:"",sku:"",stock:"",weight:""})}});if(!data)return null;return <div dir={localeDirections[locale]} lang={locale} className="min-h-screen bg-background"><SiteHeader locale={locale} t={t}/><main className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8"><p className="text-eyebrow text-muted-foreground">Seller catalog</p><h1 className="mt-2 text-display">Products</h1><div className="mt-8 grid gap-8 lg:grid-cols-[380px_1fr]"><form onSubmit={e=>{e.preventDefault();mutation.mutate()}} className="h-fit rounded-[28px] border border-border bg-card p-6"><h2 className="text-h3">Add product</h2><p className="mt-2 text-small text-muted-foreground">New seller products enter moderation before publishing.</p>{([['name','Name'],['sku','SKU'],['price','Price (DZD)'],['stock','Stock'],['weight','Weight (g)']] as const).map(([key,label])=><label key={key} className="mt-4 block text-small">{label}<Input required={key!=='weight'} type={key==='price'||key==='stock'||key==='weight'?'number':'text'} className="mt-2" value={(form as any)[key]} onChange={e=>setForm({...form,[key]:e.target.value})}/></label>)}<label className="mt-4 block text-small">Description<textarea className="mt-2 min-h-24 w-full rounded-xl border border-input bg-background px-3 py-3" value={form.description} onChange={e=>setForm({...form,description:e.target.value})}/></label>{mutation.error?<p className="mt-4 text-small text-destructive">{mutation.error instanceof Error?mutation.error.message:"Unable to create product."}</p>:null}<Button className="mt-5 w-full rounded-full" disabled={mutation.isPending}>{mutation.isPending?"Creating…":"Create product"}</Button></form><section className="rounded-[28px] border border-border bg-card p-6"><h2 className="text-h3">Current catalog</h2><div className="mt-5 divide-y divide-border">{data.products.map((p:any)=><div key={p.id} className="flex flex-wrap items-center justify-between gap-4 py-4"><div><p className="font-medium">{p.name?.[locale]??p.name?.fr??p.slug}</p><p className="text-caption text-muted-foreground">{p.sku??"No SKU"} · {Number(p.base_price).toLocaleString()} DZD</p></div><div className="flex gap-2"><span className="rounded-full bg-muted px-2.5 py-1 text-[10px] uppercase">{p.publication_status}</span><span className="rounded-full bg-muted px-2.5 py-1 text-[10px] uppercase">{p.moderation_status}</span></div></div>)}{!data.products.length?<p className="py-10 text-small text-muted-foreground">No products yet.</p>:null}</div></section></div></main><SiteFooter locale={locale} t={t}/></div>}
+export const Route = createFileRoute("/_authenticated/seller/products")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined),
+  }),
+  component: ProductsRoute,
+});
+
+/** Child routes (new / $productId) render in the Outlet; this route shows the table. */
+function ProductsRoute() {
+  const child = useMatch({
+    from: "/_authenticated/seller/products",
+    strict: true,
+    shouldThrow: false,
+  });
+  return child ? <ProductsTable /> : <Outlet />;
+}
+
+type ProductRow = {
+  id: string;
+  slug: string;
+  name: unknown;
+  sku: string | null;
+  base_price: number;
+  status: string;
+  moderation_status: string;
+  publication_status: string;
+  visibility: string;
+  created_at: string;
+  categories: { name: unknown } | null;
+  brands: { name: string } | null;
+  product_variants: {
+    id: string;
+    sku: string;
+    inventory: { quantity: number; reserved_quantity: number; low_stock_threshold: number }[] | null;
+  }[];
+};
+
+function localeName(name: unknown, fallback: string): string {
+  if (name && typeof name === "object" && !Array.isArray(name)) {
+    const n = name as Record<string, unknown>;
+    for (const k of ["fr", "en", "ar"]) {
+      if (typeof n[k] === "string" && n[k]) return n[k] as string;
+    }
+  }
+  return fallback;
+}
+
+function stockTone(p: ProductRow): { label: string; tone: string } {
+  let total = 0;
+  let low = false;
+  for (const v of p.product_variants ?? []) {
+    const inv = v.inventory?.[0];
+    const available = (inv?.quantity ?? 0) - (inv?.reserved_quantity ?? 0);
+    total += Math.max(0, available);
+    if (available > 0 && available <= (inv?.low_stock_threshold ?? 0)) low = true;
+  }
+  if (total <= 0) return { label: "Out of stock", tone: "text-destructive" };
+  if (low) return { label: `${total} — low`, tone: "text-amber-600" };
+  return { label: String(total), tone: "text-muted-foreground" };
+}
+
+function ProductsTable() {
+  const { locale } = Route.useSearch();
+  const queryClient = useQueryClient();
+  const [q, setQ] = useState("");
+  const [status, setStatus] = useState("");
+  const [moderation, setModeration] = useState("");
+  const [page, setPage] = useState(1);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
+  const query = useQuery({
+    queryKey: ["seller-products", q, status, moderation, page],
+    queryFn: () =>
+      listSellerProducts({
+        data: {
+          q: q || undefined,
+          status: (status || undefined) as "draft" | "active" | "archived" | undefined,
+          moderation: moderation || undefined,
+          page,
+        },
+      }),
+  });
+
+  const invalidate = () =>
+    queryClient.invalidateQueries({ queryKey: ["seller-products"] });
+
+  const bulkMutation = useMutation({
+    mutationFn: (action: "archive" | "hide" | "submit") =>
+      bulkUpdateProducts({ data: { ids: selected, action } }),
+    onSuccess: () => {
+      setSelected([]);
+      setError(null);
+      invalidate();
+    },
+    onError: (e) => setError(e instanceof Error ? e.message : "Bulk action failed."),
+  });
+
+  const duplicateMutation = useMutation({
+    mutationFn: (productId: string) => duplicateProduct({ data: { productId } }),
+    onSuccess: () => invalidate(),
+    onError: (e) => setError(e instanceof Error ? e.message : "Duplicate failed."),
+  });
+
+  const products = (query.data?.products ?? []) as ProductRow[];
+  const total = query.data?.total ?? 0;
+  const pageSize = query.data?.pageSize ?? 25;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+  const toggleAll = (checked: boolean) =>
+    setSelected(checked ? products.map((p) => p.id) : []);
+
+  return (
+    <SellerShell
+      title="Products"
+      eyebrow="Seller OS"
+      actions={
+        <Button asChild>
+          <Link to="/seller/products/new" search={{ locale }}>
+            <Plus className="me-1.5 h-4 w-4" /> New product
+          </Link>
+        </Button>
+      }
+    >
+      <div dir={localeDirections[locale]} className="space-y-4">
+        <AdminCard>
+          <div className="flex flex-wrap gap-3">
+            <div className="relative min-w-56 flex-1">
+              <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                className="ps-9"
+                placeholder="Search name or SKU…"
+                value={q}
+                onChange={(e) => {
+                  setQ(e.target.value);
+                  setPage(1);
+                }}
+              />
+            </div>
+            <Select
+              value={status || "all"}
+              onValueChange={(v) => {
+                setStatus(v === "all" ? "" : v);
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All statuses</SelectItem>
+                <SelectItem value="draft">Draft</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="archived">Archived</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select
+              value={moderation || "all"}
+              onValueChange={(v) => {
+                setModeration(v === "all" ? "" : v);
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="w-44">
+                <SelectValue placeholder="Moderation" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All moderation</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="approved">Approved</SelectItem>
+                <SelectItem value="rejected">Rejected</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </AdminCard>
+
+        {error ? (
+          <p role="alert" className="rounded-md bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            {error}
+          </p>
+        ) : null}
+
+        {selected.length > 0 ? (
+          <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted/40 px-4 py-2.5">
+            <span className="text-sm font-medium">{selected.length} selected</span>
+            <div className="flex-1" />
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={bulkMutation.isPending}
+              onClick={() => bulkMutation.mutate("submit")}
+            >
+              Submit for review
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={bulkMutation.isPending}
+              onClick={() => bulkMutation.mutate("hide")}
+            >
+              Hide
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={bulkMutation.isPending}
+              onClick={() => bulkMutation.mutate("archive")}
+            >
+              Archive
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setSelected([])}>
+              Clear
+            </Button>
+          </div>
+        ) : null}
+
+        <AdminCard>
+          {query.isPending ? (
+            <div className="space-y-3">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="h-14 animate-pulse rounded-lg bg-muted" />
+              ))}
+            </div>
+          ) : query.isError ? (
+            <EmptyState
+              title="Could not load products"
+              text={query.error instanceof Error ? query.error.message : "Try again."}
+              action={<Button onClick={() => query.refetch()}>Retry</Button>}
+            />
+          ) : !products.length ? (
+            <EmptyState
+              title="No products yet"
+              text="Create your first product to start selling."
+              action={
+                <Button asChild>
+                  <Link to="/seller/products/new" search={{ locale }}>
+                    <Plus className="me-1.5 h-4 w-4" /> New product
+                  </Link>
+                </Button>
+              }
+            />
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[820px] text-sm">
+                <thead>
+                  <tr className="border-b text-start text-xs text-muted-foreground">
+                    <th className="w-10 px-3 py-2.5">
+                      <Checkbox
+                        checked={selected.length > 0 && selected.length === products.length}
+                        onCheckedChange={(c) => toggleAll(c === true)}
+                        aria-label="Select all"
+                      />
+                    </th>
+                    <th className="px-3 py-2.5 text-start font-medium">Product</th>
+                    <th className="px-3 py-2.5 text-start font-medium">Price</th>
+                    <th className="px-3 py-2.5 text-start font-medium">Stock</th>
+                    <th className="px-3 py-2.5 text-start font-medium">Status</th>
+                    <th className="px-3 py-2.5 text-start font-medium">Moderation</th>
+                    <th className="w-24 px-3 py-2.5 text-end font-medium">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {products.map((p) => {
+                    const stock = stockTone(p);
+                    return (
+                      <tr key={p.id} className="border-b last:border-0 hover:bg-muted/30">
+                        <td className="px-3 py-3">
+                          <Checkbox
+                            checked={selected.includes(p.id)}
+                            onCheckedChange={(c) =>
+                              setSelected((s) =>
+                                c === true ? [...s, p.id] : s.filter((id) => id !== p.id),
+                              )
+                            }
+                            aria-label={`Select ${p.slug}`}
+                          />
+                        </td>
+                        <td className="px-3 py-3">
+                          <Link
+                            to="/seller/products/$productId"
+                            params={{ productId: p.id }}
+                            search={{ locale }}
+                            className="font-medium hover:underline"
+                          >
+                            {localeName(p.name, p.slug)}
+                          </Link>
+                          <p className="font-mono text-xs text-muted-foreground">
+                            {p.sku ?? "No SKU"} · {p.product_variants?.length ?? 0} variant
+                            {(p.product_variants?.length ?? 0) === 1 ? "" : "s"}
+                          </p>
+                        </td>
+                        <td className="px-3 py-3 tabular-nums">
+                          {Number(p.base_price).toLocaleString()} DZD
+                        </td>
+                        <td className="px-3 py-3">
+                          <span className={stock.tone}>{stock.label}</span>
+                        </td>
+                        <td className="px-3 py-3">
+                          <StatusPill status={p.status} />
+                        </td>
+                        <td className="px-3 py-3">
+                          <div className="flex gap-1.5">
+                            <StatusPill status={p.moderation_status} />
+                            <StatusPill status={p.visibility} />
+                          </div>
+                        </td>
+                        <td className="px-3 py-3 text-end">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                Actions
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem asChild>
+                                <Link
+                                  to="/seller/products/$productId"
+                                  params={{ productId: p.id }}
+                                  search={{ locale }}
+                                >
+                                  <Pencil className="me-2 h-4 w-4" /> Edit
+                                </Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => duplicateMutation.mutate(p.id)}
+                                disabled={duplicateMutation.isPending}
+                              >
+                                {duplicateMutation.isPending ? (
+                                  <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                                ) : (
+                                  <Copy className="me-2 h-4 w-4" />
+                                )}
+                                Duplicate
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </AdminCard>
+
+        {totalPages > 1 ? (
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
+            <span>
+              Page {page} of {totalPages} · {total} products
+            </span>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page <= 1}
+                onClick={() => setPage((n) => n - 1)}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page >= totalPages}
+                onClick={() => setPage((n) => n + 1)}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        ) : null}
+      </div>
+    </SellerShell>
+  );
+}

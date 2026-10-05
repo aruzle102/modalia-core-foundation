@@ -46,6 +46,7 @@ export const Route = createFileRoute("/_authenticated/seller/coupons")({
   validateSearch: (search: Record<string, unknown>) => ({
     locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined),
   }),
+  head: () => ({ meta: [{ name: "robots", content: "noindex,nofollow" }] }),
   component: CouponsPage,
 });
 

@@ -8,6 +8,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AdminGate } from "@/components/admin/AdminGate";
 import { AdminShell } from "@/components/admin/AdminShell";
 import {
+  numParam,
+  strParam,
+  useBackParam,
+  useDebouncedUrlParam,
+  useUrlState,
+} from "@/hooks/use-url-state";
+import {
   AdminCard,
   Stat,
   StatusPill,
@@ -21,8 +28,23 @@ import { getAdminDashboard } from "@/lib/admin.functions";
 import { listAdminOrders } from "@/lib/admin-orders.functions";
 
 export const Route = createFileRoute("/admin/orders")({
+  // List state (search / filters / page) lives in the URL so Back works and
+  // filtered views are shareable.
+  validateSearch: (search: Record<string, unknown>) => ({
+    q: strParam(search["q"]),
+    status: strParam(search["status"]),
+    sellerId: strParam(search["sellerId"]),
+    wilaya: strParam(search["wilaya"]),
+    paymentMethod: strParam(search["paymentMethod"]),
+    minTotal: strParam(search["minTotal"]),
+    maxTotal: strParam(search["maxTotal"]),
+    from: strParam(search["from"]),
+    to: strParam(search["to"]),
+    page: numParam(search["page"], 1),
+  }),
   head: () => ({
     meta: [
+      { name: "robots", content: "noindex,nofollow" },
       { title: "Orders — Admin — Modalia" },
       { name: "description", content: "Search, filter and manage customer orders." },
     ],
@@ -52,20 +74,28 @@ function statusLabel(status: string): string {
 }
 
 function OrdersPage() {
-  const [search, setSearch] = useState("");
-  const [status, setStatus] = useState<string>("");
-  const [sellerId, setSellerId] = useState<string>("");
-  const [wilaya, setWilaya] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState<string>("");
-  const [minTotal, setMinTotal] = useState("");
-  const [maxTotal, setMaxTotal] = useState("");
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
-  const [page, setPage] = useState(1);
+  const url = useUrlState({ page: 1 });
+  const backParam = useBackParam();
+  const page = numParam(url.search["page"], 1);
+  const q = strParam(url.search["q"]);
+  const status = strParam(url.search["status"]);
+  const sellerId = strParam(url.search["sellerId"]);
+  const wilaya = strParam(url.search["wilaya"]);
+  const paymentMethod = strParam(url.search["paymentMethod"]);
+  const minTotal = strParam(url.search["minTotal"]);
+  const maxTotal = strParam(url.search["maxTotal"]);
+  const from = strParam(url.search["from"]);
+  const to = strParam(url.search["to"]);
+  const [search, setSearch] = useDebouncedUrlParam("q", "", {
+    onCommit: () => url.set({ page: 1 }),
+  });
   const [filtersOpen, setFiltersOpen] = useState(false);
 
+  const setPage = (next: number) => url.set({ page: next }, { push: true });
+  const setFilter = (patch: Record<string, string | undefined>) => url.set({ ...patch, page: 1 });
+
   const payload = useMemo(() => {
-    const trimmedSearch = search.trim();
+    const trimmedSearch = q.trim();
     const trimmedWilaya = wilaya.trim();
     const min = minTotal.trim() === "" ? undefined : Number(minTotal);
     const max = maxTotal.trim() === "" ? undefined : Number(maxTotal);
@@ -81,7 +111,7 @@ function OrdersPage() {
       ...(from ? { from } : {}),
       ...(to ? { to } : {}),
     };
-  }, [search, status, sellerId, wilaya, paymentMethod, minTotal, maxTotal, from, to, page]);
+  }, [q, status, sellerId, wilaya, paymentMethod, minTotal, maxTotal, from, to, page]);
 
   const ordersQuery = useQuery({
     queryKey: ["admin-orders", payload],
@@ -101,22 +131,23 @@ function OrdersPage() {
   const pageRevenue = orders.reduce((sum, order) => sum + order.grandTotal, 0);
   const sellers = sellersQuery.data ?? [];
 
-  const resetPage = () => setPage(1);
   const hasActiveFilters =
-    search.trim() !== "" || status !== "" || sellerId !== "" || wilaya.trim() !== "" ||
+    q.trim() !== "" || status !== "" || sellerId !== "" || wilaya.trim() !== "" ||
     paymentMethod !== "" || minTotal.trim() !== "" || maxTotal.trim() !== "" || from !== "" || to !== "";
 
   const clearFilters = () => {
-    setSearch("");
-    setStatus("");
-    setSellerId("");
-    setWilaya("");
-    setPaymentMethod("");
-    setMinTotal("");
-    setMaxTotal("");
-    setFrom("");
-    setTo("");
-    setPage(1);
+    url.set({
+      q: undefined,
+      status: undefined,
+      sellerId: undefined,
+      wilaya: undefined,
+      paymentMethod: undefined,
+      minTotal: undefined,
+      maxTotal: undefined,
+      from: undefined,
+      to: undefined,
+      page: 1,
+    });
   };
 
   return (
@@ -159,14 +190,14 @@ function OrdersPage() {
                 <Search className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   value={search}
-                  onChange={(event) => { setSearch(event.target.value); resetPage(); }}
+                  onChange={(event) => setSearch(event.target.value)}
                   placeholder="Order no, phone or name…"
                   className="ps-9"
                 />
               </div>
             </Field>
             <Field label="Status">
-              <Select value={status} onValueChange={(value) => { setStatus(value === "all" ? "" : value); resetPage(); }}>
+              <Select value={status} onValueChange={(value) => setFilter({ status: value === "all" ? "" : value })}>
                 <SelectTrigger><SelectValue placeholder="All statuses" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All statuses</SelectItem>
@@ -177,7 +208,7 @@ function OrdersPage() {
               </Select>
             </Field>
             <Field label="Seller">
-              <Select value={sellerId} onValueChange={(value) => { setSellerId(value === "all" ? "" : value); resetPage(); }}>
+              <Select value={sellerId} onValueChange={(value) => setFilter({ sellerId: value === "all" ? "" : value })}>
                 <SelectTrigger><SelectValue placeholder="All sellers" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All sellers</SelectItem>
@@ -190,12 +221,12 @@ function OrdersPage() {
             <Field label="Wilaya">
               <Input
                 value={wilaya}
-                onChange={(event) => { setWilaya(event.target.value); resetPage(); }}
+                onChange={(event) => setFilter({ wilaya: event.target.value })}
                 placeholder="e.g. Alger"
               />
             </Field>
             <Field label="Payment method">
-              <Select value={paymentMethod} onValueChange={(value) => { setPaymentMethod(value === "all" ? "" : value); resetPage(); }}>
+              <Select value={paymentMethod} onValueChange={(value) => setFilter({ paymentMethod: value === "all" ? "" : value })}>
                 <SelectTrigger><SelectValue placeholder="All methods" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All methods</SelectItem>
@@ -209,7 +240,7 @@ function OrdersPage() {
                 min="0"
                 inputMode="decimal"
                 value={minTotal}
-                onChange={(event) => { setMinTotal(event.target.value); resetPage(); }}
+                onChange={(event) => setFilter({ minTotal: event.target.value })}
                 placeholder="0"
               />
             </Field>
@@ -219,16 +250,16 @@ function OrdersPage() {
                 min="0"
                 inputMode="decimal"
                 value={maxTotal}
-                onChange={(event) => { setMaxTotal(event.target.value); resetPage(); }}
+                onChange={(event) => setFilter({ maxTotal: event.target.value })}
                 placeholder="No limit"
               />
             </Field>
             <div className="grid grid-cols-2 gap-3">
               <Field label="From">
-                <Input type="date" value={from} onChange={(event) => { setFrom(event.target.value); resetPage(); }} />
+                <Input type="date" value={from} onChange={(event) => setFilter({ from: event.target.value })} />
               </Field>
               <Field label="To">
-                <Input type="date" value={to} onChange={(event) => { setTo(event.target.value); resetPage(); }} />
+                <Input type="date" value={to} onChange={(event) => setFilter({ to: event.target.value })} />
               </Field>
             </div>
           </div>
@@ -282,6 +313,7 @@ function OrdersPage() {
                           <Link
                             to="/admin/orders/$orderId"
                             params={{ orderId: order.id }}
+                            search={{ back: backParam, q, status, sellerId, wilaya, paymentMethod, minTotal, maxTotal, from, to, page }}
                             className="font-medium text-primary underline-offset-4 hover:underline"
                           >
                             {order.orderNumber}
@@ -317,7 +349,7 @@ function OrdersPage() {
                     variant="outline"
                     size="sm"
                     disabled={safePage <= 1 || ordersQuery.isFetching}
-                    onClick={() => setPage((current) => Math.max(1, current - 1))}
+                    onClick={() => setPage(Math.max(1, safePage - 1))}
                   >
                     <ChevronLeft className="size-4" />
                     Previous
@@ -327,7 +359,7 @@ function OrdersPage() {
                     variant="outline"
                     size="sm"
                     disabled={safePage >= totalPages || ordersQuery.isFetching}
-                    onClick={() => setPage((current) => current + 1)}
+                    onClick={() => setPage(safePage + 1)}
                   >
                     Next
                     <ChevronRight className="size-4" />

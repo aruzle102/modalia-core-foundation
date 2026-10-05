@@ -26,11 +26,17 @@ import {
   listSellerProducts,
 } from "@/lib/seller-products.functions";
 import { getLocale, localeDirections } from "@/lib/i18n";
+import { numParam, strParam, useBackParam, useDebouncedUrlParam, useUrlState } from "@/hooks/use-url-state";
 
 export const Route = createFileRoute("/_authenticated/seller/products")({
   validateSearch: (search: Record<string, unknown>) => ({
     locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined),
+    q: strParam(search["q"]),
+    status: strParam(search["status"]),
+    moderation: strParam(search["moderation"]),
+    page: numParam(search["page"], 1),
   }),
+  head: () => ({ meta: [{ name: "robots", content: "noindex,nofollow" }] }),
   component: ProductsRoute,
 });
 
@@ -91,12 +97,20 @@ function stockTone(p: ProductRow): { label: string; tone: string } {
 function ProductsTable() {
   const { locale } = Route.useSearch();
   const queryClient = useQueryClient();
-  const [q, setQ] = useState("");
-  const [status, setStatus] = useState("");
-  const [moderation, setModeration] = useState("");
-  const [page, setPage] = useState(1);
+  const backParam = useBackParam();
+  const url = useUrlState({ status: "", moderation: "", page: 1 });
+  const q = strParam(url.search["q"]);
+  const status = strParam(url.search["status"]);
+  const moderation = strParam(url.search["moderation"]);
+  const page = numParam(url.search["page"], 1);
+  const [searchInput, setSearchInput] = useDebouncedUrlParam("q", "", {
+    onCommit: () => url.set({ page: 1 }),
+  });
   const [selected, setSelected] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+
+  const setPage = (next: number) => url.set({ page: next }, { push: true });
+  const setFilter = (patch: Record<string, string>) => url.set({ ...patch, page: 1 });
 
   const query = useQuery({
     queryKey: ["seller-products", q, status, moderation, page],
@@ -145,7 +159,7 @@ function ProductsTable() {
       eyebrow="Seller OS"
       actions={
         <Button asChild>
-          <Link to="/seller/products/new" search={{ locale }}>
+          <Link to="/seller/products/new" search={{ locale, back: backParam, q, status, moderation, page }}>
             <Plus className="me-1.5 h-4 w-4" /> New product
           </Link>
         </Button>
@@ -159,19 +173,13 @@ function ProductsTable() {
               <Input
                 className="ps-9"
                 placeholder="Search name or SKU…"
-                value={q}
-                onChange={(e) => {
-                  setQ(e.target.value);
-                  setPage(1);
-                }}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
               />
             </div>
             <Select
               value={status || "all"}
-              onValueChange={(v) => {
-                setStatus(v === "all" ? "" : v);
-                setPage(1);
-              }}
+              onValueChange={(v) => setFilter({ status: v === "all" ? "" : v })}
             >
               <SelectTrigger className="w-40">
                 <SelectValue placeholder="Status" />
@@ -185,10 +193,7 @@ function ProductsTable() {
             </Select>
             <Select
               value={moderation || "all"}
-              onValueChange={(v) => {
-                setModeration(v === "all" ? "" : v);
-                setPage(1);
-              }}
+              onValueChange={(v) => setFilter({ moderation: v === "all" ? "" : v })}
             >
               <SelectTrigger className="w-44">
                 <SelectValue placeholder="Moderation" />
@@ -262,7 +267,7 @@ function ProductsTable() {
               text="Create your first product to start selling."
               action={
                 <Button asChild>
-                  <Link to="/seller/products/new" search={{ locale }}>
+                  <Link to="/seller/products/new" search={{ locale, back: backParam, q, status, moderation, page }}>
                     <Plus className="me-1.5 h-4 w-4" /> New product
                   </Link>
                 </Button>
@@ -308,7 +313,7 @@ function ProductsTable() {
                           <Link
                             to="/seller/products/$productId"
                             params={{ productId: p.id }}
-                            search={{ locale }}
+                            search={{ locale, back: backParam, q, status, moderation, page }}
                             className="font-medium hover:underline"
                           >
                             {localeName(p.name, p.slug)}
@@ -345,7 +350,7 @@ function ProductsTable() {
                                 <Link
                                   to="/seller/products/$productId"
                                   params={{ productId: p.id }}
-                                  search={{ locale }}
+                                  search={{ locale, back: backParam, q, status, moderation, page }}
                                 >
                                   <Pencil className="me-2 h-4 w-4" /> Edit
                                 </Link>
@@ -383,7 +388,7 @@ function ProductsTable() {
                 variant="outline"
                 size="sm"
                 disabled={page <= 1}
-                onClick={() => setPage((n) => n - 1)}
+                onClick={() => setPage(page - 1)}
               >
                 Previous
               </Button>
@@ -391,7 +396,7 @@ function ProductsTable() {
                 variant="outline"
                 size="sm"
                 disabled={page >= totalPages}
-                onClick={() => setPage((n) => n + 1)}
+                onClick={() => setPage(page + 1)}
               >
                 Next
               </Button>

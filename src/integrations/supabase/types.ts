@@ -80,6 +80,7 @@ export type Database = {
           email: string | null
           id: string
           notified_at: string | null
+          unsubscribe_token: string | null
           variant_id: string
         }
         Insert: {
@@ -88,6 +89,7 @@ export type Database = {
           email?: string | null
           id?: string
           notified_at?: string | null
+          unsubscribe_token?: string | null
           variant_id: string
         }
         Update: {
@@ -96,6 +98,7 @@ export type Database = {
           email?: string | null
           id?: string
           notified_at?: string | null
+          unsubscribe_token?: string | null
           variant_id?: string
         }
         Relationships: [
@@ -2131,6 +2134,7 @@ export type Database = {
           id: string
           last_name: string | null
           legal_name: string
+          must_reset_password: boolean
           owner_id: string
           phone: string | null
           status: Database["public"]["Enums"]["store_status"]
@@ -2146,6 +2150,7 @@ export type Database = {
           id?: string
           last_name?: string | null
           legal_name: string
+          must_reset_password?: boolean
           owner_id: string
           phone?: string | null
           status?: Database["public"]["Enums"]["store_status"]
@@ -2161,6 +2166,7 @@ export type Database = {
           id?: string
           last_name?: string | null
           legal_name?: string
+          must_reset_password?: boolean
           owner_id?: string
           phone?: string | null
           status?: Database["public"]["Enums"]["store_status"]
@@ -2584,6 +2590,9 @@ export type Database = {
         | "flash_sale"
         | "stores"
         | "recommendations"
+        | "editorial"
+        | "blog"
+        | "app_banner"
       order_status:
         | "pending"
         | "confirmed"
@@ -2603,8 +2612,10 @@ export type Database = {
       seller_account_status: "pending" | "active" | "suspended" | "disabled"
       seller_application_status:
         | "pending"
+        | "under_review"
         | "approved"
         | "rejected"
+        | "converted"
         | "suspended"
       seller_order_status:
         | "pending"
@@ -2773,6 +2784,9 @@ export const Constants = {
         "flash_sale",
         "stores",
         "recommendations",
+        "editorial",
+        "blog",
+        "app_banner",
       ],
       order_status: [
         "pending",
@@ -2794,8 +2808,10 @@ export const Constants = {
       seller_account_status: ["pending", "active", "suspended", "disabled"],
       seller_application_status: [
         "pending",
+        "under_review",
         "approved",
         "rejected",
+        "converted",
         "suspended",
       ],
       seller_order_status: [

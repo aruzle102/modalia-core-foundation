@@ -1,10 +1,10 @@
-import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { keepPreviousData, queryOptions, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { Info } from "lucide-react";
 import { AdminGate } from "@/components/admin/AdminGate";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { AdminCard, EmptyState, Stat } from "@/components/admin/ui";
+import { numParam, useUrlState } from "@/hooks/use-url-state";
 import { TopList } from "@/components/admin/Charts";
 import { FunnelChart } from "@/components/analytics/FunnelChart";
 import { getAdminAnalytics } from "@/lib/analytics.functions";
@@ -22,8 +22,11 @@ const analyticsQuery = (days: number) =>
 export const Route = createFileRoute("/admin/analytics")({
   validateSearch: (search: Record<string, unknown>) => ({
     locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined),
+    days: numParam(search["days"], 30),
   }),
-  loader: ({ context }) => context.queryClient.ensureQueryData(analyticsQuery(30)),
+  loaderDeps: ({ search }) => ({ days: search.days }),
+  loader: ({ context, deps }) =>
+    context.queryClient.ensureQueryData(analyticsQuery(numParam(deps.days, 30))),
   pendingComponent: () => <div className="px-6 py-24 text-center text-muted-foreground">Loading analytics…</div>,
   errorComponent: () => (
     <div role="alert" className="px-6 py-24 text-center text-muted-foreground">
@@ -32,6 +35,7 @@ export const Route = createFileRoute("/admin/analytics")({
   ),
   head: () => ({
     meta: [
+      { name: "robots", content: "noindex,nofollow" },
       { title: "Analytics — Admin — Modalia" },
       { name: "description", content: "Real storefront analytics: funnels, trending products, searches and velocity." },
       { property: "og:title", content: "Analytics — Admin — Modalia" },
@@ -97,9 +101,11 @@ function VelocityBars({ data }: { data: { date: string; purchases: number }[] })
 }
 
 function AdminAnalyticsPage() {
-  const [days, setDays] = useState<number>(30);
+  const url = useUrlState({ days: 30 });
+  const days = numParam(url.search["days"], 30);
+  const setDays = (next: number) => url.set({ days: next });
   const { data } = useQuery({ ...analyticsQuery(days), placeholderData: keepPreviousData });
-  const suspense = useSuspenseQuery(analyticsQuery(30));
+  const suspense = useSuspenseQuery(analyticsQuery(days));
   const analytics = data ?? suspense.data;
 
   const { totals, funnel, trendingProducts, popularSearches, velocity, categories, sellers } = analytics;

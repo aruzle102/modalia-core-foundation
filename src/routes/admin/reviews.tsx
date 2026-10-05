@@ -25,8 +25,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { listAdminReviews, moderateReview, type ReviewQueue } from "@/lib/admin-catalog.functions";
 import { errMsg, pickName, Pager } from "./_shared";
+import { numParam, strParam, useUrlState } from "@/hooks/use-url-state";
 
 export const Route = createFileRoute("/admin/reviews")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    tab: strParam(search["tab"], "pending"),
+    page: numParam(search["page"], 1),
+  }),
+  head: () => ({ meta: [{ name: "robots", content: "noindex,nofollow" }] }),
   component: AdminReviewsPage,
 });
 
@@ -50,8 +56,11 @@ function AdminReviewsPage() {
 
 function ReviewsManager() {
   const queryClient = useQueryClient();
-  const [queue, setQueue] = useState<ReviewQueue>("pending");
-  const [page, setPage] = useState(1);
+  const url = useUrlState({ tab: "pending", page: 1 });
+  const queue = strParam(url.search["tab"], "pending") as ReviewQueue;
+  const page = numParam(url.search["page"], 1);
+  const setQueue = (next: ReviewQueue) => url.set({ tab: next, page: 1 }, { push: true });
+  const setPage = (next: number) => url.set({ page: next }, { push: true });
   const [moderating, setModerating] = useState<{ id: string; decision: "approve" | "reject" | "hide" } | null>(null);
 
   const reviewsQuery = useQuery({
@@ -78,13 +87,7 @@ function ReviewsManager() {
 
   return (
     <div className="space-y-6">
-      <Tabs
-        value={queue}
-        onValueChange={(v) => {
-          setQueue(v as ReviewQueue);
-          setPage(1);
-        }}
-      >
+      <Tabs value={queue} onValueChange={(v) => setQueue(v as ReviewQueue)}>
         <TabsList>
           {QUEUES.map((q) => (
             <TabsTrigger key={q.value} value={q.value}>{q.label}</TabsTrigger>
@@ -122,6 +125,15 @@ function ReviewsManager() {
                     <tr key={r.id} className="align-top">
                       <td className="px-3 py-3">
                         <p className="max-w-md whitespace-pre-wrap">{r.body ?? "—"}</p>
+                        {r.image_url ? (
+                          <a href={r.image_url} target="_blank" rel="noreferrer" className="mt-2 inline-block">
+                            <img
+                              src={r.image_url}
+                              alt="Review attachment"
+                              className="size-20 rounded-lg border border-border object-cover"
+                            />
+                          </a>
+                        ) : null}
                         <p className="mt-1 text-caption text-muted-foreground">
                           {reviewer} · {fmtDateTime(r.created_at)}
                           {r.verified_purchase ? " · verified purchase" : ""}

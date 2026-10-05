@@ -60,6 +60,6 @@ function StaffPage() {
         </div>
       </section>
     </main>
-    <SiteFooter t={t} />
+    <SiteFooter locale={locale} t={t} />
   </div>;
 }

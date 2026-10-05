@@ -17,4 +17,4 @@ export const Route = createFileRoute("/_authenticated/account/orders/$orderId")(
   component: OrderPage,
 });
 
-function OrderPage() { const { orderId } = Route.useParams(); const { locale } = Route.useSearch(); const { data: order } = useSuspenseQuery(orderQuery(orderId)); const t = getTranslations(locale); return <div dir={localeDirections[locale]} lang={locale} className="min-h-screen bg-background"><SiteHeader locale={locale} t={t} />{order ? <OrderDetailView order={order} locale={locale} /> : <main className="px-6 py-24 text-center text-muted-foreground">Order not found.</main>}<SiteFooter t={t} /></div>; }
+function OrderPage() { const { orderId } = Route.useParams(); const { locale } = Route.useSearch(); const { data: order } = useSuspenseQuery(orderQuery(orderId)); const t = getTranslations(locale); return <div dir={localeDirections[locale]} lang={locale} className="min-h-screen bg-background"><SiteHeader locale={locale} t={t} />{order ? <OrderDetailView order={order} locale={locale} /> : <main className="px-6 py-24 text-center text-muted-foreground">Order not found.</main>}<SiteFooter locale={locale} t={t} /></div>; }

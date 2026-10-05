@@ -2,18 +2,12 @@ import { useState, type MouseEvent } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, Check, Heart, Search, ShoppingBag } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatPrice } from "@/lib/localization";
+import { formatPrice } from "@/lib/i18n/format";
+import { getTranslations } from "@/lib/i18n";
 import { useCart } from "@/lib/cart-store";
 import { isWishlisted, toggleWishlist } from "@/lib/wishlist-store";
 import type { CatalogCategory, CatalogProduct, CatalogStore } from "@/lib/catalog.functions";
 import type { SupportedLocale } from "@/config/platform";
-
-function productCountLabel(count: number, locale: SupportedLocale): string {
-  if (locale === "ar")
-    return count === 1 ? "منتج واحد" : count === 2 ? "منتجان" : `${count} منتجات`;
-  if (locale === "fr") return `${count} ${count === 1 ? "produit" : "produits"}`;
-  return `${count} ${count === 1 ? "product" : "products"}`;
-}
 
 const NEW_BADGE_DAYS = 14;
 const LOW_STOCK_THRESHOLD = 5;
@@ -29,33 +23,6 @@ function discountPercent(price: number, compareAtPrice: number | null | undefine
   return Math.round(((compareAtPrice - price) / compareAtPrice) * 100);
 }
 
-const cardCopy = {
-  ar: {
-    new: "جديد",
-    onlyLeft: (count: number) => `بقي ${count} فقط`,
-    soldOut: "نفد المخزون",
-    quickAdd: "أضف إلى السلة",
-    added: "أُضيف إلى السلة",
-    wishlist: (name: string) => `احفظ ${name} في المفضلة`,
-  },
-  fr: {
-    new: "Nouveau",
-    onlyLeft: (count: number) => `Plus que ${count}`,
-    soldOut: "Épuisé",
-    quickAdd: "Ajouter au panier",
-    added: "Ajouté au panier",
-    wishlist: (name: string) => `Ajouter ${name} aux favoris`,
-  },
-  en: {
-    new: "New",
-    onlyLeft: (count: number) => `Only ${count} left`,
-    soldOut: "Sold out",
-    quickAdd: "Add to bag",
-    added: "Added to bag",
-    wishlist: (name: string) => `Save ${name} to wishlist`,
-  },
-} as const;
-
 export function ProductCard({
   product,
   locale,
@@ -66,7 +33,7 @@ export function ProductCard({
   const { addItem } = useCart();
   const [wishlisted, setWishlisted] = useState(() => isWishlisted(product.id));
   const [justAdded, setJustAdded] = useState(false);
-  const t = cardCopy[locale];
+  const t = getTranslations(locale).card;
 
   // Badges come from real data only: discount from compareAtPrice,
   // low stock from summed variant inventory, "new" from createdAt.
@@ -238,6 +205,7 @@ export function CategoryRail({
   categories: CatalogCategory[];
   locale: SupportedLocale;
 }) {
+  const t = getTranslations(locale).card;
   return (
     <div className="flex gap-3 overflow-x-auto pb-2 lg:grid lg:grid-cols-6 lg:overflow-visible lg:pb-0">
       {categories.map((category, index) => {
@@ -284,7 +252,7 @@ export function CategoryRail({
                     : "mt-1 text-caption text-muted-foreground"
                 }
               >
-                {productCountLabel(category.productCount, locale)}
+                {t.productsCount(category.productCount)}
               </p>
               <ArrowRight
                 className={`${featured ? "text-primary-foreground/70" : "text-muted-foreground"} mt-5 size-4 transition-transform duration-300 group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1 motion-reduce:transition-none`}
@@ -298,6 +266,7 @@ export function CategoryRail({
 }
 
 export function StoreRail({ stores, locale }: { stores: CatalogStore[]; locale: SupportedLocale }) {
+  const t = getTranslations(locale).card;
   return (
     <div className="grid gap-px overflow-hidden rounded-xl border border-border bg-border sm:grid-cols-2 lg:grid-cols-3">
       {stores.map((store) => (
@@ -324,7 +293,7 @@ export function StoreRail({ stores, locale }: { stores: CatalogStore[]; locale: 
             <div className="min-w-0">
               <h3 className="truncate text-h3 text-foreground">{store.name}</h3>
               <p className="text-caption text-muted-foreground">
-                {productCountLabel(store.productCount, locale)}
+                {t.productsCount(store.productCount)}
               </p>
             </div>
           </div>
@@ -343,20 +312,21 @@ export function StoreRail({ stores, locale }: { stores: CatalogStore[]; locale: 
 export function ProductGrid({
   products,
   locale,
-  emptyTitle = "No products found",
-  emptyText = "Try changing your search or browse another category.",
+  emptyTitle,
+  emptyText,
 }: {
   products: CatalogProduct[];
   locale: SupportedLocale;
   emptyTitle?: string;
   emptyText?: string;
 }) {
+  const t = getTranslations(locale).card;
   if (!products.length)
     return (
       <section className="border-y border-border py-16 text-center">
         <ShoppingBag className="mx-auto size-6 text-muted-foreground" />
-        <h2 className="mt-4 text-h3 text-foreground">{emptyTitle}</h2>
-        <p className="mx-auto mt-2 max-w-sm text-small text-muted-foreground">{emptyText}</p>
+        <h2 className="mt-4 text-h3 text-foreground">{emptyTitle ?? t.emptyTitle}</h2>
+        <p className="mx-auto mt-2 max-w-sm text-small text-muted-foreground">{emptyText ?? t.emptyText}</p>
       </section>
     );
   return (
@@ -385,14 +355,13 @@ export function DiscoverySkeleton() {
   );
 }
 
-export function SearchEmpty({ query }: { query: string }) {
+export function SearchEmpty({ query, locale }: { query: string; locale: SupportedLocale }) {
+  const t = getTranslations(locale).card;
   return (
     <section className="py-16 text-center">
       <Search className="mx-auto size-6 text-muted-foreground" />
-      <h1 className="mt-4 text-display text-foreground">No matches for “{query}”</h1>
-      <p className="mx-auto mt-3 max-w-sm text-body text-muted-foreground">
-        Search products, stores, categories, and brands as the marketplace grows.
-      </p>
+      <h1 className="mt-4 text-display text-foreground">{t.searchTitle(query)}</h1>
+      <p className="mx-auto mt-3 max-w-sm text-body text-muted-foreground">{t.searchText}</p>
     </section>
   );
 }

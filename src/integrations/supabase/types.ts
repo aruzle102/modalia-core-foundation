@@ -630,33 +630,85 @@ export type Database = {
       }
       notifications: {
         Row: {
-          body: Json | null
+          body: Json
           created_at: string
           id: string
+          is_admin: boolean
+          link: string | null
+          payload: Json
           read_at: string | null
+          seller_id: string | null
           title: Json
           type: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
-          body?: Json | null
+          body?: Json
           created_at?: string
           id?: string
+          is_admin?: boolean
+          link?: string | null
+          payload?: Json
           read_at?: string | null
+          seller_id?: string | null
           title: Json
           type: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
-          body?: Json | null
+          body?: Json
           created_at?: string
           id?: string
+          is_admin?: boolean
+          link?: string | null
+          payload?: Json
           read_at?: string | null
+          seller_id?: string | null
           title?: Json
           type?: string
-          user_id?: string
+          user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "notifications_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_preferences: {
+        Row: {
+          id: string
+          prefs: Json
+          seller_id: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          id?: string
+          prefs?: Json
+          seller_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          id?: string
+          prefs?: Json
+          seller_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_preferences_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       order_items: {
         Row: {
@@ -2500,6 +2552,7 @@ export type Database = {
         Returns: boolean
       }
       is_super_admin: { Args: never; Returns: boolean }
+      current_seller_id: { Args: never; Returns: string }
       media_seller_id: { Args: { object_name: string }; Returns: string }
       seller_can: {
         Args: { _permission: string; _seller_id: string }

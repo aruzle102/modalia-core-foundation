@@ -1,9 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertAdmin } from "@/lib/admin-auth";
 
 const adminOnly = [requireSupabaseAuth] as const;
-async function assertAdmin(context: any){if (!context) throw new Error("Unauthorized"); const {data,error}=await context.supabase.rpc("is_super_admin");if(error||data!==true)throw new Error("Forbidden");}
 
 export type TableDiagnostic = { table: string; ok: boolean; message?: string };
 

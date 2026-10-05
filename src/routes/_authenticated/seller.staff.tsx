@@ -11,6 +11,7 @@ import { SellerShell } from "@/components/seller/SellerShell";
 import { STAFF_PERMISSIONS, STAFF_TITLES, STAFF_TITLE_SUGGESTIONS, inviteStaff, listStaff, updateStaff, type StaffTitle } from "@/lib/seller-team.functions";
 import type { SellerPermission } from "@/lib/seller-auth";
 import { getLocale, getTranslations } from "@/lib/i18n";
+import { RouteError } from "@/components/routing/route-states";
 
 const q = queryOptions({ queryKey: ["seller-staff"], queryFn: () => listStaff() });
 
@@ -18,6 +19,12 @@ export const Route = createFileRoute("/_authenticated/seller/staff")({
   validateSearch: (search: Record<string, unknown>) => ({ locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined) }),
   loader: ({ context }) => context.queryClient.ensureQueryData(q),
   pendingComponent: TableSkeleton,
+  errorComponent: ({ reset }) => (
+    <SellerShell eyebrow="Seller workspace" title="Staff">
+      <RouteError message="Staff list could not be loaded. Check your connection and try again." reset={reset} />
+    </SellerShell>
+  ),
+  head: () => ({ meta: [{ name: "robots", content: "noindex,nofollow" }] }),
   component: StaffPage,
 });
 

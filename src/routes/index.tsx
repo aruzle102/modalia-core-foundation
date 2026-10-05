@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
+import { queryOptions, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { ArrowRight, Banknote, MapPin, Store } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,9 +14,12 @@ import {
 } from "@/components/marketplace/discovery";
 import { SiteFooter, SiteHeader } from "@/components/layout/site-shell";
 import { useReveal } from "@/hooks/use-reveal";
-import { getDiscoveryData, type HomepageSection } from "@/lib/catalog.functions";
+import { getDiscoveryData, type CatalogProduct, type HomepageSection } from "@/lib/catalog.functions";
+import { pageHead, siteMeta, organizationJsonLd, websiteJsonLd } from "@/lib/seo";
 import { subscribeNewsletter } from "@/lib/engagement.functions";
-import { getLocale, getTranslations, localeDirections } from "@/lib/i18n";
+import { getTrendingProducts } from "@/lib/analytics.functions";
+import { getRecentlyViewed, track } from "@/lib/analytics";
+import { getLocale, getTranslations, localeDirections, type Translation } from "@/lib/i18n";
 import type { SupportedLocale } from "@/config/platform";
 
 const HeroScene = lazy(() =>
@@ -29,144 +32,7 @@ const homeQuery = (locale: string) =>
     queryFn: () => getDiscoveryData({ data: { locale } }),
   });
 
-type HomeCopy = {
-  heroEyebrow: string;
-  heroFallbackTitle: string;
-  heroFallbackSubtitle: string;
-  exploreEyebrow: string;
-  browseCategories: string;
-  trendingEyebrow: string;
-  trendingTitle: string;
-  editorialEyebrow: string;
-  freshEyebrow: string;
-  newArrivals: string;
-  flashEyebrow: string;
-  endsIn: string;
-  startsIn: string;
-  days: string;
-  hours: string;
-  minutes: string;
-  seconds: string;
-  independentEyebrow: string;
-  storesToDiscover: string;
-  recsEyebrow: string;
-  recsTitle: string;
-  trustEyebrow: string;
-  trustTitle: string;
-  trust: { icon: "cash" | "map" | "store"; label: string }[];
-  newsletterTitle: string;
-  newsletterText: string;
-  newArrivalsEmptyTitle: string;
-  newArrivalsEmptyText: string;
-};
-
-const homeCopy: Record<SupportedLocale, HomeCopy> = {
-  ar: {
-    heroEyebrow: "موداليا · الجزائر",
-    heroFallbackTitle: "وجهة مدروسة لكل ما يهمّك.",
-    heroFallbackSubtitle: "اكتشف منتجات ومتاجر مختارة بعناية للحياة اليومية العصرية.",
-    exploreEyebrow: "استكشف",
-    browseCategories: "تصفّح حسب الفئة",
-    trendingEyebrow: "رائج الآن",
-    trendingTitle: "الأكثر طلبًا",
-    editorialEyebrow: "افتتاحية",
-    freshEyebrow: "مختارات طازجة",
-    newArrivals: "وصل حديثًا",
-    flashEyebrow: "عرض خاطف",
-    endsIn: "ينتهي خلال",
-    startsIn: "يبدأ خلال",
-    days: "أيام",
-    hours: "ساعات",
-    minutes: "دقائق",
-    seconds: "ثوانٍ",
-    independentEyebrow: "مستقلّة بالتصميم",
-    storesToDiscover: "متاجر تستحق الاكتشاف",
-    recsEyebrow: "مختارات لك",
-    recsTitle: "قد يعجبك أيضًا",
-    trustEyebrow: "لماذا موداليا",
-    trustTitle: "تسوّق بثقة",
-    trust: [
-      { icon: "cash", label: "الدفع عند الاستلام" },
-      { icon: "map", label: "التوصيل إلى 58 ولاية" },
-      { icon: "store", label: "متاجر مستقلة" },
-    ],
-    newsletterTitle: "انضم إلى النشرة",
-    newsletterText: "جديد المنتجات والمتاجر، مرة في الشهر. بلا إزعاج.",
-    newArrivalsEmptyTitle: "المنتجات الجديدة ستظهر هنا",
-    newArrivalsEmptyText: "المنتجات المعتمدة تنضم تلقائيًا إلى هذه المجموعة فور توفرها.",
-  },
-  fr: {
-    heroEyebrow: "Modalia · Algérie",
-    heroFallbackTitle: "Une destination pensée pour l’essentiel.",
-    heroFallbackSubtitle:
-      "Découvrez des produits et des boutiques sélectionnés avec soin pour le quotidien moderne.",
-    exploreEyebrow: "Explorer",
-    browseCategories: "Parcourir par catégorie",
-    trendingEyebrow: "En ce moment",
-    trendingTitle: "Les plus demandés",
-    editorialEyebrow: "Éditorial",
-    freshEyebrow: "Sélection fraîche",
-    newArrivals: "Nouveautés",
-    flashEyebrow: "Vente flash",
-    endsIn: "Se termine dans",
-    startsIn: "Commence dans",
-    days: "jours",
-    hours: "heures",
-    minutes: "minutes",
-    seconds: "secondes",
-    independentEyebrow: "Indépendant par design",
-    storesToDiscover: "Des boutiques à découvrir",
-    recsEyebrow: "Pour vous",
-    recsTitle: "Vous aimerez aussi",
-    trustEyebrow: "Pourquoi Modalia",
-    trustTitle: "Achetez en confiance",
-    trust: [
-      { icon: "cash", label: "Paiement à la livraison" },
-      { icon: "map", label: "Livraison vers 58 wilayas" },
-      { icon: "store", label: "Boutiques indépendantes" },
-    ],
-    newsletterTitle: "Rejoignez la newsletter",
-    newsletterText: "Nouveautés et boutiques, une fois par mois. Sans spam.",
-    newArrivalsEmptyTitle: "Les nouveautés apparaîtront ici",
-    newArrivalsEmptyText:
-      "Les produits approuvés rejoignent automatiquement cette collection dès leur disponibilité.",
-  },
-  en: {
-    heroEyebrow: "Modalia · Algeria",
-    heroFallbackTitle: "A considered place for what matters.",
-    heroFallbackSubtitle: "Discover products and stores selected for modern everyday life.",
-    exploreEyebrow: "Explore",
-    browseCategories: "Browse by category",
-    trendingEyebrow: "Right now",
-    trendingTitle: "Most wanted",
-    editorialEyebrow: "Editorial",
-    freshEyebrow: "Fresh selection",
-    newArrivals: "New arrivals",
-    flashEyebrow: "Flash sale",
-    endsIn: "Ends in",
-    startsIn: "Starts in",
-    days: "days",
-    hours: "hours",
-    minutes: "minutes",
-    seconds: "seconds",
-    independentEyebrow: "Independent by design",
-    storesToDiscover: "Stores to discover",
-    recsEyebrow: "Picked for you",
-    recsTitle: "You may also like",
-    trustEyebrow: "Why Modalia",
-    trustTitle: "Shop with confidence",
-    trust: [
-      { icon: "cash", label: "Cash on delivery" },
-      { icon: "map", label: "Delivery to 58 wilayas" },
-      { icon: "store", label: "Independent stores" },
-    ],
-    newsletterTitle: "Join the newsletter",
-    newsletterText: "New products and stores, once a month. No spam.",
-    newArrivalsEmptyTitle: "New arrivals will appear here",
-    newArrivalsEmptyText:
-      "Approved products automatically join this collection when they become available.",
-  },
-};
+type HomeCopy = Translation["home"];
 
 export const Route = createFileRoute("/")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -175,31 +41,19 @@ export const Route = createFileRoute("/")({
   loaderDeps: ({ search }) => ({ locale: search.locale }),
   loader: ({ context, deps }) => context.queryClient.ensureQueryData(homeQuery(deps.locale)),
   pendingComponent: DiscoverySkeleton,
-  errorComponent: () => (
-    <div role="alert" className="px-6 py-24 text-center text-muted-foreground">
-      The marketplace could not be loaded. Please try again.
-    </div>
-  ),
-  notFoundComponent: () => (
-    <div className="px-6 py-24 text-center text-muted-foreground">Nothing to discover yet.</div>
-  ),
-  head: () => ({
-    meta: [
-      { title: "Modalia — Curated marketplace" },
-      {
-        name: "description",
-        content: "Discover considered products and independent stores on Modalia.",
-      },
-      { property: "og:title", content: "Modalia — Curated marketplace" },
-      {
-        property: "og:description",
-        content: "Discover considered products and independent stores on Modalia.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-    links: [{ rel: "canonical", href: "/" }],
-  }),
+  errorComponent: HomeError,
+  notFoundComponent: HomeNotFound,
+  head: (context) => {
+    const rawSearch = (context as unknown as { search?: Record<string, unknown> }).search ?? {};
+    const locale = getLocale(typeof rawSearch["locale"] === "string" ? rawSearch["locale"] : undefined);
+    const meta = siteMeta(locale);
+    return pageHead({
+      title: meta.title,
+      description: meta.description,
+      path: "/",
+      jsonLd: [organizationJsonLd(), websiteJsonLd()],
+    });
+  },
   component: HomePage,
 });
 
@@ -304,7 +158,7 @@ function Hero({
           scene above remains as the guaranteed fallback for all other devices. */}
       {showWebGL ? (
         <Suspense fallback={null}>
-          <HeroScene className="absolute inset-0" />
+          <HeroScene className="absolute inset-0" locale={locale} />
         </Suspense>
       ) : null}
       <div className="relative z-10 mx-auto grid min-h-[calc(100svh-4rem)] max-w-7xl items-end px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
@@ -414,6 +268,103 @@ function TrendingSection({
       />
       <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 lg:pb-0">
         {products.slice(0, 6).map((product) => (
+          <div key={product.id} className="w-52 shrink-0 snap-start sm:w-60">
+            <ProductCard product={product} locale={locale} />
+          </div>
+        ))}
+      </div>
+    </Reveal>
+  );
+}
+
+/**
+ * "Most viewed this week" from genuine product_view events. Renders nothing
+ * until real data exists -- never a fabricated ranking.
+ */
+function PopularNow({
+  locale,
+  copy,
+  viewAll,
+  shopSearch,
+}: {
+  locale: SupportedLocale;
+  copy: HomeCopy;
+  viewAll: string;
+  shopSearch: ShopSearch;
+}) {
+  const { data } = useQuery({
+    queryKey: ["trending-products", locale],
+    queryFn: () => getTrendingProducts({ data: { days: 7, limit: 8, locale } }),
+    staleTime: 5 * 60_000,
+    retry: false,
+  });
+  if (!data?.hasData || data.products.length === 0) return null;
+  return (
+    <Reveal>
+      <SectionHeading
+        eyebrow={copy.popularEyebrow}
+        title={copy.popularTitle}
+        href="/shop"
+        search={shopSearch}
+        viewAll={viewAll}
+      />
+      <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 lg:pb-0">
+        {data.products.map((product) => (
+          <div key={product.id} className="w-52 shrink-0 snap-start sm:w-60">
+            <ProductCard product={product} locale={locale} />
+          </div>
+        ))}
+      </div>
+    </Reveal>
+  );
+}
+
+/**
+ * "Recently viewed" from first-party localStorage only. No network, no
+ * tracking -- purely the visitor's own device history.
+ */
+function RecentlyViewed({
+  locale,
+  copy,
+  viewAll,
+  shopSearch,
+}: {
+  locale: SupportedLocale;
+  copy: HomeCopy;
+  viewAll: string;
+  shopSearch: ShopSearch;
+}) {
+  const [items, setItems] = useState<CatalogProduct[]>([]);
+  useEffect(() => {
+    const recent = getRecentlyViewed();
+    setItems(
+      recent.map(
+        (p): CatalogProduct => ({
+          id: p.id,
+          slug: p.slug,
+          name: p.name,
+          price: p.price,
+          storeName: "",
+          categorySlug: null,
+          imagePath: p.image,
+          imageAlt: p.name,
+          createdAt: "",
+        }),
+      ),
+    );
+  }, []);
+  if (items.length === 0) return null;
+  return (
+    <Reveal>
+      <SectionHeading
+        eyebrow={copy.recentEyebrow}
+        title={copy.recentTitle}
+        href="/shop"
+        search={shopSearch}
+        viewAll={viewAll}
+      />
+      <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 lg:pb-0">
+        {items.map((product) => (
           <div key={product.id} className="w-52 shrink-0 snap-start sm:w-60">
             <ProductCard product={product} locale={locale} />
           </div>
@@ -657,11 +608,27 @@ function NewsletterBand({ locale, copy }: { locale: SupportedLocale; copy: HomeC
   );
 }
 
+function HomeError() {
+  const { locale } = Route.useSearch();
+  const t = getTranslations(locale);
+  return (
+    <div role="alert" className="px-6 py-24 text-center text-muted-foreground">
+      {t.home.loadError}
+    </div>
+  );
+}
+
+function HomeNotFound() {
+  const { locale } = Route.useSearch();
+  const t = getTranslations(locale);
+  return <div className="px-6 py-24 text-center text-muted-foreground">{t.home.nothingYet}</div>;
+}
+
 function HomePage() {
   const { locale } = Route.useSearch();
   const { data } = useSuspenseQuery(homeQuery(locale));
   const t = getTranslations(locale);
-  const copy = homeCopy[locale];
+  const copy = getTranslations(locale).home;
 
   const sectionByKind = (kind: string) => data.sections.find((section) => section.kind === kind);
   const hero = sectionByKind("hero");
@@ -684,11 +651,15 @@ function HomePage() {
   const flashEndsAt = contentDate(flashContent["ends_at"]);
   const flashActive = flash && flashEndsAt !== null;
 
+  useEffect(() => {
+    track("page_view", { metadata: { page: "home" } });
+  }, []);
+
   return (
     <div dir={localeDirections[locale]} lang={locale} className="min-h-screen bg-background">
       <BrandEntrance />
       <SiteHeader locale={locale} t={t} />
-      <main>
+      <main id="main-content" tabIndex={-1}>
         <Hero locale={locale} hero={hero} copy={copy} />
 
         <div className="mx-auto max-w-7xl space-y-16 px-4 py-14 sm:space-y-20 sm:px-6 sm:py-16 lg:px-8">
@@ -714,6 +685,9 @@ function HomePage() {
               viewAll={t.common.viewAll}
             />
           ) : null}
+
+          <PopularNow locale={locale} copy={copy} viewAll={t.common.viewAll} shopSearch={shopSearch} />
+          <RecentlyViewed locale={locale} copy={copy} viewAll={t.common.viewAll} shopSearch={shopSearch} />
 
           {editorial ? <EditorialSection section={editorial} copy={copy} /> : null}
 

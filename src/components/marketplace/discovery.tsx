@@ -15,6 +15,47 @@ function productCountLabel(count: number, locale: SupportedLocale): string {
   return `${count} ${count === 1 ? "product" : "products"}`;
 }
 
+const NEW_BADGE_DAYS = 14;
+const LOW_STOCK_THRESHOLD = 5;
+
+function isNewProduct(createdAt: string): boolean {
+  const created = new Date(createdAt).getTime();
+  if (Number.isNaN(created)) return false;
+  return Date.now() - created < NEW_BADGE_DAYS * 24 * 60 * 60 * 1000;
+}
+
+function discountPercent(price: number, compareAtPrice: number | null | undefined): number | null {
+  if (compareAtPrice == null || compareAtPrice <= price) return null;
+  return Math.round(((compareAtPrice - price) / compareAtPrice) * 100);
+}
+
+const cardCopy = {
+  ar: {
+    new: "جديد",
+    onlyLeft: (count: number) => `بقي ${count} فقط`,
+    soldOut: "نفد المخزون",
+    quickAdd: "أضف إلى السلة",
+    added: "أُضيف إلى السلة",
+    wishlist: (name: string) => `احفظ ${name} في المفضلة`,
+  },
+  fr: {
+    new: "Nouveau",
+    onlyLeft: (count: number) => `Plus que ${count}`,
+    soldOut: "Épuisé",
+    quickAdd: "Ajouter au panier",
+    added: "Ajouté au panier",
+    wishlist: (name: string) => `Ajouter ${name} aux favoris`,
+  },
+  en: {
+    new: "New",
+    onlyLeft: (count: number) => `Only ${count} left`,
+    soldOut: "Sold out",
+    quickAdd: "Add to bag",
+    added: "Added to bag",
+    wishlist: (name: string) => `Save ${name} to wishlist`,
+  },
+} as const;
+
 export function ProductCard({
   product,
   locale,
@@ -25,17 +66,15 @@ export function ProductCard({
   const { addItem } = useCart();
   const [wishlisted, setWishlisted] = useState(() => isWishlisted(product.id));
   const [justAdded, setJustAdded] = useState(false);
+  const t = cardCopy[locale];
 
-  const quickAddLabel =
-    locale === "ar" ? "أضف إلى السلة" : locale === "fr" ? "Ajouter au panier" : "Add to bag";
-  const addedLabel =
-    locale === "ar" ? "أُضيف إلى السلة" : locale === "fr" ? "Ajouté au panier" : "Added to bag";
-  const wishlistLabel =
-    locale === "ar"
-      ? `احفظ ${product.name} في المفضلة`
-      : locale === "fr"
-        ? `Ajouter ${product.name} aux favoris`
-        : `Save ${product.name} to wishlist`;
+  // Badges come from real data only: discount from compareAtPrice,
+  // low stock from summed variant inventory, "new" from createdAt.
+  const sale = discountPercent(product.price, product.compareAtPrice);
+  const fresh = isNewProduct(product.createdAt);
+  const stock = product.totalStock;
+  const soldOut = stock === 0;
+  const lowStock = stock != null && stock > 0 && stock <= LOW_STOCK_THRESHOLD;
 
   const handleWishlist = (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
@@ -53,6 +92,7 @@ export function ProductCard({
 
   const handleQuickAdd = (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
+    if (soldOut) return;
     addItem({
       productId: product.id,
       variantId: product.id,
@@ -85,6 +125,14 @@ export function ProductCard({
               sizes="(min-width: 1024px) 25vw, 50vw"
               className="size-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.06] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
             />
+          ) : product.secondImagePath ? (
+            <img
+              src={product.secondImagePath}
+              alt={product.secondImageAlt || product.name}
+              loading="lazy"
+              sizes="(min-width: 1024px) 25vw, 50vw"
+              className="size-full object-cover"
+            />
           ) : (
             <div className="flex size-full items-end p-5 text-small text-muted-foreground">
               Modalia
@@ -92,13 +140,45 @@ export function ProductCard({
               {product.name}
             </div>
           )}
+          {product.imagePath && product.secondImagePath ? (
+            <img
+              src={product.secondImagePath}
+              alt=""
+              aria-hidden
+              loading="lazy"
+              sizes="(min-width: 1024px) 25vw, 50vw"
+              className="absolute inset-0 size-full object-cover opacity-0 transition-opacity duration-500 group-hover:opacity-100 motion-reduce:transition-none motion-reduce:group-hover:opacity-0"
+            />
+          ) : null}
         </Link>
+        <div className="pointer-events-none absolute start-3 top-3 z-10 flex flex-col items-start gap-1.5">
+          {sale != null ? (
+            <span className="rounded-full bg-destructive px-2.5 py-1 text-caption font-semibold text-destructive-foreground">
+              −{sale}%
+            </span>
+          ) : null}
+          {fresh ? (
+            <span className="rounded-full bg-foreground px-2.5 py-1 text-caption font-semibold text-background">
+              {t.new}
+            </span>
+          ) : null}
+          {lowStock ? (
+            <span className="rounded-full bg-background/90 px-2.5 py-1 text-caption font-medium text-foreground shadow-sm backdrop-blur-sm">
+              {t.onlyLeft(stock as number)}
+            </span>
+          ) : null}
+          {soldOut ? (
+            <span className="rounded-full bg-background/90 px-2.5 py-1 text-caption font-medium text-muted-foreground shadow-sm backdrop-blur-sm">
+              {t.soldOut}
+            </span>
+          ) : null}
+        </div>
         <button
           type="button"
           onClick={handleWishlist}
           aria-pressed={wishlisted}
-          aria-label={wishlistLabel}
-          className={`card-action ${wishlisted ? "is-active" : ""} absolute right-3 top-3 grid size-9 place-items-center rounded-full bg-background/85 text-foreground shadow-sm backdrop-blur-sm hover:bg-background`}
+          aria-label={t.wishlist(product.name)}
+          className={`card-action ${wishlisted ? "is-active" : ""} absolute end-3 top-3 z-10 grid size-9 place-items-center rounded-full bg-background/85 text-foreground shadow-sm backdrop-blur-sm hover:bg-background`}
         >
           <Heart
             className={`size-4 transition-colors ${wishlisted ? "fill-destructive text-destructive" : ""}`}
@@ -107,18 +187,21 @@ export function ProductCard({
         <button
           type="button"
           onClick={handleQuickAdd}
+          disabled={soldOut}
           aria-live="polite"
-          className="card-action absolute inset-x-3 bottom-3 flex h-10 items-center justify-center gap-2 rounded-lg bg-background/90 text-small font-medium text-foreground shadow-lg backdrop-blur-md hover:bg-background"
+          className="card-action absolute inset-x-3 bottom-3 z-10 flex h-10 items-center justify-center gap-2 rounded-lg bg-background/90 text-small font-medium text-foreground shadow-lg backdrop-blur-md hover:bg-background disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {justAdded ? (
+          {soldOut ? (
+            t.soldOut
+          ) : justAdded ? (
             <>
               <Check className="size-4" />
-              {addedLabel}
+              {t.added}
             </>
           ) : (
             <>
               <ShoppingBag className="size-4" />
-              {quickAddLabel}
+              {t.quickAdd}
             </>
           )}
         </button>
@@ -135,7 +218,14 @@ export function ProductCard({
             {product.name}
           </Link>
         </h3>
-        <p className="mt-1 text-price text-foreground">{formatPrice(product.price, locale)}</p>
+        <p className="mt-1 flex items-baseline gap-2">
+          <span className="text-price text-foreground">{formatPrice(product.price, locale)}</span>
+          {sale != null && product.compareAtPrice ? (
+            <span className="text-small text-muted-foreground line-through">
+              {formatPrice(product.compareAtPrice, locale)}
+            </span>
+          ) : null}
+        </p>
       </div>
     </article>
   );

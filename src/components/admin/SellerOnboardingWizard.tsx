@@ -38,6 +38,14 @@ import {
 } from "@/lib/admin-sellers.functions";
 import { getDefaultCommissionRate } from "@/lib/admin-ops.functions";
 import type { SellerPermission } from "@/lib/seller-auth";
+import { SELLER_ROLE_PRESETS, type SellerStaffRole } from "@/lib/seller-auth";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useAdminT } from "@/components/admin/use-admin-t";
 
 export type WizardApplication = {
@@ -153,6 +161,12 @@ export function SellerOnboardingWizard({ open, onOpenChange, application, onCrea
   const seededCommissionDefault = () => String(latestDefaultRate.current ?? 10);
   const [staffTitle, setStaffTitle] = useState("");
   const [staffPermissions, setStaffPermissions] = useState<SellerPermission[]>([]);
+  const [staffRole, setStaffRole] = useState<SellerStaffRole>("staff");
+
+  const applyStaffRole = (role: SellerStaffRole) => {
+    setStaffRole(role);
+    setStaffPermissions([...SELLER_ROLE_PRESETS[role]]);
+  };
   const [pickedSeller, setPickedSeller] = useState<PickedSeller | null>(null);
   const [sellerQuery, setSellerQuery] = useState("");
   const [sellerQueryDebounced, setSellerQueryDebounced] = useState("");
@@ -278,6 +292,7 @@ export function SellerOnboardingWizard({ open, onOpenChange, application, onCrea
             sellerId: pickedSeller.id,
             staffTitle: staffTitle.trim() || undefined,
             staffPermissions,
+            staffRole,
           },
         });
       }
@@ -777,6 +792,19 @@ export function SellerOnboardingWizard({ open, onOpenChange, application, onCrea
 
       <Field label={t.staffTitle} hint={t.staffTitleHint}>
         <Input value={staffTitle} onChange={(e) => setStaffTitle(e.target.value)} placeholder="Staff" />
+      </Field>
+
+      <Field label={t.roleLabel} hint={t.roleHint}>
+        <Select value={staffRole} onValueChange={(v) => applyStaffRole(v as SellerStaffRole)}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="manager">{t.roles.manager}</SelectItem>
+            <SelectItem value="staff">{t.roles.staff}</SelectItem>
+            <SelectItem value="viewer">{t.roles.viewer}</SelectItem>
+          </SelectContent>
+        </Select>
       </Field>
 
       <div className="space-y-4">

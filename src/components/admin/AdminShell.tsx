@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import {
   BadgeCheck,
   BarChart3,
@@ -30,6 +31,7 @@ import {
   Store,
   Ticket,
   Truck,
+  UserCog,
   UserRound,
   Users,
   Wallet,
@@ -40,6 +42,11 @@ import { useAdminLocale } from "./useAdminLocale";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { supabase } from "@/integrations/supabase/client";
 import { getTranslations, type Translation } from "@/lib/i18n";
+import {
+  ADMIN_NAV_PERMISSIONS,
+  canSeeNavItem,
+  getMyAdminIdentity,
+} from "@/lib/admin-permissions";
 import { cn } from "@/lib/utils";
 import { Crumbs, type Crumb } from "@/components/routing/crumbs";
 
@@ -62,8 +69,10 @@ interface NavGroup {
 
 /**
  * The canonical admin navigation. Every item MUST point at a real, working
- * /admin/* route — no dead links. Groups/items are trilingual via the
- * `adminNav` translation section.
+ * /admin/* route — no dead links — with one exception: /admin/team is the
+ * super-admin-only Team page reserved by the admin-members work and auto-hides
+ * for everyone else. Groups/items are trilingual via the `adminNav`
+ * translation section.
  */
 function buildNavGroups(t: AdminNavStrings): NavGroup[] {
   const items = t.items;
@@ -127,6 +136,7 @@ function buildNavGroups(t: AdminNavStrings): NavGroup[] {
       id: "system",
       label: t.groups.system,
       items: [
+        { label: items.team, to: "/admin/team", icon: <UserCog className={icon} /> },
         { label: items.ai, to: "/admin/ai", icon: <Sparkles className={icon} /> },
         { label: items.seo, to: "/admin/seo", icon: <Globe className={icon} /> },
         { label: items.settings, to: "/admin/settings", icon: <Settings className={icon} /> },
@@ -302,7 +312,34 @@ export function AdminShell({
 }) {
   const locale = useAdminLocale();
   const t = getTranslations(locale).adminNav;
-  const groups = useMemo(() => buildNavGroups(t), [t]);
+  /**
+   * Admin identity for nav filtering (UX only — server functions enforce).
+   * While loading, the nav renders unfiltered to avoid a layout flash; on
+   * error AdminGate owns the denied/error state, so we fall back to
+   * unfiltered too. Groups that end up empty are dropped.
+   */
+  const identityQuery = useQuery({
+    queryKey: ["admin-identity"],
+    queryFn: () => getMyAdminIdentity(),
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
+  const groups = useMemo(() => {
+    const built = buildNavGroups(t);
+    const identity = identityQuery.data;
+    if (!identity) return built;
+    return built
+      .map((group) => ({
+        ...group,
+        items: group.items.filter((item) =>
+          canSeeNavItem(ADMIN_NAV_PERMISSIONS[String(item.to)], {
+            kind: identity.kind,
+            permissions: identity.permissions,
+          }),
+        ),
+      }))
+      .filter((group) => group.items.length > 0);
+  }, [t, identityQuery.data]);
   const allItems = useMemo(() => groups.flatMap((g) => g.items), [groups]);
 
   return (

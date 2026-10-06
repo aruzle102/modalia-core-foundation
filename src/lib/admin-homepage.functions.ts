@@ -54,6 +54,13 @@ export const HOMEPAGE_KINDS = [
   "editorial",
   "blog",
   "app_banner",
+  "collections",
+  "customer_reviews",
+  "fashion_edit",
+  "limited_drops",
+  "newsletter",
+  "showcase",
+  "sport_edit",
 ] as const;
 
 export type HomepageKind = (typeof HOMEPAGE_KINDS)[number];

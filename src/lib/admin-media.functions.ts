@@ -77,11 +77,25 @@ const altTextSchema = z
 /** `<sellerId>/products/<productId>/<uuid>.<ext>` — rejects path games. */
 function parseManagedPath(path: string): { sellerId: string; productId: string } | null {
   const m =
-    /^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\/products\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\/[0-9a-f-]{1,64}\.(jpg|jpeg|png|webp|gif|glb|gltf)$/i.exec(
+    /^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\/products\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\/[0-9a-f-]{1,64}\.(jpg|jpeg|png|webp|gif|mp4|webm|glb|gltf)$/i.exec(
       path.trim(),
     );
   if (!m) return null;
   return { sellerId: m[1]!, productId: m[2]! };
+}
+
+/**
+ * `<sellerId>/uploads/<uuid>.<ext>` — pre-save uploads (the admin editor's
+ * "new product" mode, mirroring the seller pipeline's
+ * `<sellerId>/uploads/` staging area). Rejects path games.
+ */
+function parseStagingPath(path: string): { sellerId: string } | null {
+  const m =
+    /^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\/uploads\/[0-9a-f-]{1,64}\.(jpg|jpeg|png|webp|gif|mp4|webm|glb|gltf)$/i.exec(
+      path.trim(),
+    );
+  if (!m) return null;
+  return { sellerId: m[1]! };
 }
 
 async function getProductSeller(productId: string): Promise<string> {
@@ -158,11 +172,15 @@ export const requestMediaUpload = createServerFn({ method: "POST" })
   .inputValidator((data) =>
     z
       .object({
-        productId: uuid,
+        productId: uuid.optional(),
+        sellerId: uuid.optional(),
         filename: z.string().min(1).max(200),
         mimeType: z.string().max(120).optional(),
         sizeBytes: z.number().int().min(1),
-        mediaKind: z.enum(["image", "model_3d"]).optional(),
+        mediaKind: z.enum(["image", "video", "model_3d"]).optional(),
+      })
+      .refine((d) => Boolean(d.productId) !== Boolean(d.sellerId), {
+        message: "Provide exactly one of productId or sellerId.",
       })
       .parse(data),
   )
@@ -174,9 +192,23 @@ export const requestMediaUpload = createServerFn({ method: "POST" })
       sizeBytes: data.sizeBytes,
       expectedKind: data.mediaKind ?? null,
     });
-    const sellerId = await getProductSeller(data.productId);
-    const path = `${sellerId}/products/${data.productId}/${crypto.randomUUID()}.${extension}`;
     const supabaseAdmin = await adminClient();
+    let path: string;
+    if (data.productId) {
+      const sellerId = await getProductSeller(data.productId);
+      path = `${sellerId}/products/${data.productId}/${crypto.randomUUID()}.${extension}`;
+    } else {
+      // Pre-save staging for the admin product editor's "new product" mode:
+      // the admin has already chosen a seller, so uploads stage under that
+      // seller's prefix (mirrors the seller pipeline's <sellerId>/uploads/).
+      const { data: seller, error } = await supabaseAdmin
+        .from("sellers")
+        .select("id")
+        .eq("id", data.sellerId as string)
+        .maybeSingle();
+      if (error || !seller) throw new Error("Seller not found.");
+      path = `${seller.id}/uploads/${crypto.randomUUID()}.${extension}`;
+    }
     const { data: signed, error } = await supabaseAdmin.storage
       .from(MEDIA_BUCKET)
       .createSignedUploadUrl(path);
@@ -191,31 +223,51 @@ export const finalizeMediaUpload = createServerFn({ method: "POST" })
   .inputValidator((data) =>
     z
       .object({
-        productId: uuid,
+        productId: uuid.optional(),
+        sellerId: uuid.optional(),
         path: z.string().min(1).max(500),
-        mediaKind: z.enum(["image", "model_3d"]),
+        mediaKind: z.enum(["image", "video", "model_3d"]),
         altText: altTextSchema,
+      })
+      .refine((d) => Boolean(d.productId) !== Boolean(d.sellerId), {
+        message: "Provide exactly one of productId or sellerId.",
       })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
+    const supabaseAdmin = await adminClient();
+    if (data.sellerId) {
+      // Staging mode (admin editor "new product"): validate content, keep the
+      // object; the editor attaches the path to the product on save.
+      const staged = parseStagingPath(data.path);
+      if (!staged || staged.sellerId !== data.sellerId) {
+        throw new Error("The upload path is not valid for this seller.");
+      }
+      const dims = await downloadAndValidate(data.path, data.mediaKind);
+      await auditLog(context, "media_uploaded", "storage_object", null, {
+        seller_id: data.sellerId,
+        media_kind: data.mediaKind,
+        staged: true,
+      });
+      return { staged: true as const, width: dims.width ?? null, height: dims.height ?? null };
+    }
+    const productId = data.productId as string;
     const parsed = parseManagedPath(data.path);
-    if (!parsed || parsed.productId !== data.productId) {
+    if (!parsed || parsed.productId !== productId) {
       throw new Error("The upload path is not valid for this product.");
     }
-    const sellerId = await getProductSeller(data.productId);
+    const sellerId = await getProductSeller(productId);
     if (parsed.sellerId !== sellerId) {
       throw new Error("The upload path does not belong to this product's seller.");
     }
 
     const dims = await downloadAndValidate(data.path, data.mediaKind);
 
-    const supabaseAdmin = await adminClient();
     const { data: existing, error: countError } = await supabaseAdmin
       .from("product_images")
       .select("id, sort_order")
-      .eq("product_id", data.productId)
+      .eq("product_id", productId)
       .order("sort_order", { ascending: false })
       .limit(1);
     if (countError) throw new Error(countError.message);
@@ -223,7 +275,7 @@ export const finalizeMediaUpload = createServerFn({ method: "POST" })
     const nextOrder = existing?.[0] ? (existing[0].sort_order ?? 0) + 1 : 0;
 
     const insert: ProductImageInsert = {
-      product_id: data.productId,
+      product_id: productId,
       storage_path: data.path,
       alt_text: (data.altText ?? {}) as unknown as Json,
       is_primary: isFirst,
@@ -241,7 +293,7 @@ export const finalizeMediaUpload = createServerFn({ method: "POST" })
       throw new Error(insertError?.message ?? "Could not save the media record.");
     }
     await auditLog(context, "media_uploaded", "product_image", row.id, {
-      product_id: data.productId,
+      product_id: productId,
       media_kind: data.mediaKind,
     });
     return { image: row, width: dims.width ?? null, height: dims.height ?? null };
@@ -420,7 +472,7 @@ export const replaceMedia = createServerFn({ method: "POST" })
         imageId: uuid,
         productId: uuid,
         path: z.string().min(1).max(500),
-        mediaKind: z.enum(["image", "model_3d"]),
+        mediaKind: z.enum(["image", "video", "model_3d"]),
       })
       .parse(data),
   )

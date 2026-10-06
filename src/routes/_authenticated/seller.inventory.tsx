@@ -11,7 +11,7 @@ import {
   getInventoryHistory,
   getInventoryOverview,
 } from "@/lib/seller-products.functions";
-import { getLocale, localeDirections } from "@/lib/i18n";
+import { getLocale, getTranslations, localeDirections } from "@/lib/i18n";
 import { numParam, strParam, useBackParam, useUrlState } from "@/hooks/use-url-state";
 import { cn } from "@/lib/utils";
 
@@ -46,6 +46,7 @@ const statusTone: Record<OverviewRow["status"], string> = {
 
 function InventoryPage() {
   const { locale } = Route.useSearch();
+  const t = getTranslations(locale);
   const queryClient = useQueryClient();
   const backParam = useBackParam();
   const url = useUrlState({ filter: "all", historyPage: 1 });
@@ -211,7 +212,7 @@ function InventoryPage() {
                             <div className="flex items-center gap-1">
                               <button
                                 type="button"
-                                aria-label="Decrease"
+                                aria-label={t.common.decrease}
                                 className="rounded border p-1 hover:bg-muted"
                                 onClick={() => setQtyInput(String(Math.max(0, Number(qtyInput || 0) - 1)))}
                               >
@@ -226,7 +227,7 @@ function InventoryPage() {
                               />
                               <button
                                 type="button"
-                                aria-label="Increase"
+                                aria-label={t.common.increase}
                                 className="rounded border p-1 hover:bg-muted"
                                 onClick={() => setQtyInput(String(Number(qtyInput || 0) + 1))}
                               >
@@ -265,7 +266,7 @@ function InventoryPage() {
                                 variant="ghost"
                                 onClick={() => saveEdit(r)}
                                 disabled={adjustMutation.isPending}
-                                aria-label="Save"
+                                aria-label={t.common.save}
                               >
                                 <Check className="h-4 w-4" />
                               </Button>
@@ -273,7 +274,7 @@ function InventoryPage() {
                                 size="sm"
                                 variant="ghost"
                                 onClick={() => setEditing(null)}
-                                aria-label="Cancel"
+                                aria-label={t.common.cancel}
                               >
                                 <X className="h-4 w-4" />
                               </Button>

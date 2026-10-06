@@ -32,11 +32,13 @@ import {
 } from "@/components/admin/ui";
 import { listAdminSellersLite } from "@/lib/admin-catalog.functions";
 import { listAdminOrders } from "@/lib/admin-orders.functions";
+import { getLocale, getTranslations } from "@/lib/i18n";
 
 export const Route = createFileRoute("/admin/orders")({
   // List state (search / filters / page) lives in the URL so Back works and
   // filtered views are shareable.
   validateSearch: (search: Record<string, unknown>) => ({
+    locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined),
     q: strParam(search["q"]),
     status: strParam(search["status"]),
     sellerId: strParam(search["sellerId"]),
@@ -80,6 +82,8 @@ function statusLabel(status: string): string {
 }
 
 function OrdersPage() {
+  const { locale } = Route.useSearch();
+  const t = getTranslations(locale);
   const url = useUrlState({ page: 1 });
   const backParam = useBackParam();
   const page = numParam(url.search["page"], 1);
@@ -209,7 +213,7 @@ function OrdersPage() {
                 <Input
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Order no, phone or name…"
+                  placeholder={t.common.orderSearchPlaceholder}
                   className="ps-9"
                 />
               </div>
@@ -370,6 +374,7 @@ function OrdersPage() {
                             params={{ orderId: order.id }}
                             search={{
                               back: backParam,
+                              locale,
                               q,
                               status,
                               sellerId,

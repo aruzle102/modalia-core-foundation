@@ -91,7 +91,7 @@ function WilayasPage() {
                       <td className="px-3 py-3">
                         <Link
                           to="/admin/shipping"
-                          search={{ wilaya: w.id }}
+                          search={{ locale, wilaya: w.id }}
                           className="underline-offset-4 hover:underline"
                         >
                           {w.rule_count}

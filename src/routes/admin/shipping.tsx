@@ -44,9 +44,11 @@ import {
 import { errMsg, pickName } from "./_shared";
 
 import { strParam, useUrlState } from "@/hooks/use-url-state";
+import { getLocale, getTranslations } from "@/lib/i18n";
 
 export const Route = createFileRoute("/admin/shipping")({
   validateSearch: (search: Record<string, unknown>) => ({
+    locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined),
     wilaya: strParam(search["wilaya"]),
   }),
   head: () => ({ meta: [{ name: "robots", content: "noindex,nofollow" }] }),
@@ -66,6 +68,8 @@ function AdminShippingPage() {
 }
 
 function ShippingManager() {
+  const { locale } = Route.useSearch();
+  const t = getTranslations(locale);
   const queryClient = useQueryClient();
   const url = useUrlState({ wilaya: "" });
   const wilayaParam = strParam(url.search["wilaya"]);
@@ -150,7 +154,7 @@ function ShippingManager() {
             <div className="min-w-60 flex-1 space-y-1.5">
               <Label>Select wilaya</Label>
               <Select value={selectedWilayaId ?? ""} onValueChange={setWilayaId}>
-                <SelectTrigger><SelectValue placeholder="Choose a wilaya" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t.common.chooseWilaya} /></SelectTrigger>
                 <SelectContent>
                   {wilayas.map((w) => (
                     <SelectItem key={w.id} value={w.id}>

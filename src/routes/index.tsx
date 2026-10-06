@@ -178,9 +178,15 @@ function contentUrl(value: unknown): string | null {
   return null;
 }
 
-/** Brief cinematic brand entrance. Skipped entirely under reduced-motion. */
+/** Brief cinematic brand entrance — once per session. Skipped entirely under reduced-motion. */
 function BrandEntrance() {
-  const [done, setDone] = useState(false);
+  const [done, setDone] = useState(() => {
+    try {
+      return sessionStorage.getItem("modalia-brand-entrance") === "1";
+    } catch {
+      return false;
+    }
+  });
   const [reducedMotion, setReducedMotion] = useState(false);
 
   useEffect(() => {
@@ -188,7 +194,14 @@ function BrandEntrance() {
       setReducedMotion(true);
       return;
     }
-    const id = window.setTimeout(() => setDone(true), motionPreset.brandEntrance.dwellMs);
+    const id = window.setTimeout(() => {
+      setDone(true);
+      try {
+        sessionStorage.setItem("modalia-brand-entrance", "1");
+      } catch {
+        /* storage unavailable — entrance simply replays next visit */
+      }
+    }, motionPreset.brandEntrance.dwellMs);
     return () => window.clearTimeout(id);
   }, []);
 

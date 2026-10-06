@@ -8,7 +8,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -139,6 +139,34 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+/**
+ * Thin top progress bar shown while the router is loading the next route.
+ * Professional and non-blocking: the current page stays visible underneath —
+ * no full-screen loading flash.
+ */
+function NavigationProgress() {
+  const isLoading = useRouterState({ select: (s) => s.isLoading });
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    if (isLoading) {
+      // Small delay so instant navigations don't flicker the bar.
+      const id = window.setTimeout(() => setVisible(true), 120);
+      return () => window.clearTimeout(id);
+    }
+    setVisible(false);
+    return undefined;
+  }, [isLoading]);
+
+  if (!visible) return null;
+  return (
+    <div aria-hidden className="fixed inset-x-0 top-0 z-[100] h-0.5 overflow-hidden">
+      <div className="nav-progress-bar h-full w-full origin-left bg-primary" />
+      <style>{`@keyframes nav-progress-slide { 0% { transform: scaleX(0.15); } 60% { transform: scaleX(0.7); } 100% { transform: scaleX(0.95); } } .nav-progress-bar { animation: nav-progress-slide 1.2s ease-out forwards; }`}</style>
+    </div>
+  );
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   // Route transition (250ms fade-and-rise); keyed by pathname only so
@@ -148,6 +176,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <CartProvider>
+        <NavigationProgress />
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <PageFade routeKey={pathname}>
           <Outlet />

@@ -734,6 +734,12 @@ export const frAdmin = {
     noOfficialText: "Désignez une boutique officielle en mettant stores.settings.official à true sur sa ligne.",
     browseStores: "Parcourir les boutiques",
     openStorefront: "Voir la vitrine",
+    linkSellerDashboard: "Lier et ouvrir le tableau vendeur",
+    openSellerDashboard: "Ouvrir le tableau de bord de la boutique",
+    unlinkSellerDashboard: "Dissocier",
+    unlinkSellerDashboardHint: "Rendre la boutique officielle au vendeur système",
+    sellerDashboardLinked: "Lié — voici le tableau de bord de votre boutique officielle.",
+    sellerDashboardUnlinked: "Dissociation effectuée.",
     overview: {
       identity: "Identité de la boutique",
       seller: "Vendeur",

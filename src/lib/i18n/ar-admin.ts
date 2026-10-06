@@ -730,6 +730,12 @@ export const arAdmin = {
     noOfficialText: "حدّد متجرًا رسميًا بتعيين stores.settings.official إلى true في سجلّه.",
     browseStores: "تصفح المتاجر",
     openStorefront: "عرض الواجهة",
+    linkSellerDashboard: "ربط وفتح لوحة البائع",
+    openSellerDashboard: "فتح لوحة تحكم المتجر",
+    unlinkSellerDashboard: "إلغاء الربط",
+    unlinkSellerDashboardHint: "إعادة المتجر الرسمي إلى البائع النظامي",
+    sellerDashboardLinked: "تم الربط — هذه الآن لوحة تحكم متجرك الرسمي.",
+    sellerDashboardUnlinked: "تم إلغاء الربط.",
     overview: {
       identity: "هوية المتجر",
       seller: "البائع",

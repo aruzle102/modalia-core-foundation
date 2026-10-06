@@ -734,6 +734,12 @@ export const enAdmin = {
     noOfficialText: "Designate an official store by setting stores.settings.official to true on its row.",
     browseStores: "Browse stores",
     openStorefront: "View storefront",
+    linkSellerDashboard: "Link & open seller dashboard",
+    openSellerDashboard: "Open store dashboard",
+    unlinkSellerDashboard: "Unlink",
+    unlinkSellerDashboardHint: "Return the official store to the system seller",
+    sellerDashboardLinked: "Linked — this is now your official store dashboard.",
+    sellerDashboardUnlinked: "Unlinked.",
     overview: {
       identity: "Store identity",
       seller: "Seller",

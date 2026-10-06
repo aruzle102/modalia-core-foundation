@@ -823,3 +823,129 @@ export const getOfficialStore = createServerFn({ method: "GET" })
       },
     };
   });
+
+/* ------------------------------------------------------------------ */
+/* Official store — seller dashboard access                             */
+/* ------------------------------------------------------------------ */
+
+const SYSTEM_SELLER_GUARD = "Refusing: the official store is not attached to the platform system seller.";
+
+/**
+ * One-click access to the official store's seller dashboard.
+ *
+ * The official store is owned by a platform "system" seller (owner_id = its
+ * own id — no real login). This links the calling SUPER_ADMIN's auth user as
+ * the seller owner, so opening /seller with the admin's own session resolves
+ * the full seller dashboard (products, orders, finance, …) for the official
+ * store — editable, not read-only. Reversible via unlinkOfficialStoreOwner.
+ *
+ * Safety: refuses unless the seller is the self-owned system seller, so a
+ * real merchant's seller row can never be reassigned.
+ */
+export const linkOfficialStoreOwner = createServerFn({ method: "POST" })
+  .middleware(adminOnly)
+  .inputValidator((data) => z.object({}).parse(data))
+  .handler(async ({ context }) => {
+    const { data: isSuper } = await context.supabase.rpc("is_super_admin");
+    if (isSuper !== true) throw new Error("Forbidden: super admin only.");
+    const supabaseAdmin = await adminClient();
+
+    const { data: store, error: storeError } = await supabaseAdmin
+      .from("stores")
+      .select("seller_id")
+      .contains("settings", { official: true })
+      .maybeSingle();
+    if (storeError || !store?.seller_id) throw new Error("No official store designated.");
+
+    const { data: seller, error: sellerError } = await supabaseAdmin
+      .from("sellers")
+      .select("id, owner_id, onboarded_at")
+      .eq("id", store.seller_id)
+      .single();
+    if (sellerError || !seller) throw new Error("Official seller not found.");
+    if (seller.owner_id !== seller.id && seller.owner_id !== context.userId) {
+      throw new Error(SYSTEM_SELLER_GUARD);
+    }
+
+    const { error: linkError } = await supabaseAdmin
+      .from("sellers")
+      .update({ owner_id: context.userId })
+      .eq("id", seller.id);
+    if (linkError) throw new Error(linkError.message);
+
+    // The admin manages the store profile from /admin/official-store, so mark
+    // onboarding complete — the seller dashboard opens directly.
+    if (!seller.onboarded_at) {
+      await supabaseAdmin
+        .from("sellers")
+        .update({ onboarded_at: new Date().toISOString() })
+        .eq("id", seller.id);
+    }
+
+    await supabaseAdmin.from("audit_logs").insert({
+      actor_id: context.userId,
+      action: "official_store_owner_linked",
+      resource: "seller",
+      resource_id: seller.id,
+      metadata: { owner_id: context.userId },
+    });
+    return { ok: true as const };
+  });
+
+/** Reverse linkOfficialStoreOwner: the system seller owns itself again. */
+export const unlinkOfficialStoreOwner = createServerFn({ method: "POST" })
+  .middleware(adminOnly)
+  .inputValidator((data) => z.object({}).parse(data))
+  .handler(async ({ context }) => {
+    const { data: isSuper } = await context.supabase.rpc("is_super_admin");
+    if (isSuper !== true) throw new Error("Forbidden: super admin only.");
+    const supabaseAdmin = await adminClient();
+
+    const { data: store } = await supabaseAdmin
+      .from("stores")
+      .select("seller_id")
+      .contains("settings", { official: true })
+      .maybeSingle();
+    if (!store?.seller_id) throw new Error("No official store designated.");
+
+    const { data: seller } = await supabaseAdmin
+      .from("sellers")
+      .select("id, owner_id")
+      .eq("id", store.seller_id)
+      .single();
+    if (!seller) throw new Error("Official seller not found.");
+    if (seller.owner_id !== context.userId && seller.owner_id !== seller.id) {
+      throw new Error(SYSTEM_SELLER_GUARD);
+    }
+
+    const { error } = await supabaseAdmin
+      .from("sellers")
+      .update({ owner_id: seller.id })
+      .eq("id", seller.id);
+    if (error) throw new Error(error.message);
+
+    await supabaseAdmin.from("audit_logs").insert({
+      actor_id: context.userId,
+      action: "official_store_owner_unlinked",
+      resource: "seller",
+      resource_id: seller.id,
+    });
+    return { ok: true as const };
+  });
+
+/** Whether the calling super_admin is currently linked as the official store owner. */
+export const getOfficialStoreLinkStatus = createServerFn({ method: "GET" })
+  .middleware(adminOnly)
+  .inputValidator((data) => z.object({}).parse(data))
+  .handler(async ({ context }) => {
+    const { data: isSuper } = await context.supabase.rpc("is_super_admin");
+    if (isSuper !== true) return { linked: false };
+    const supabaseAdmin = await adminClient();
+    const { data: store } = await supabaseAdmin
+      .from("stores")
+      .select("seller_id, sellers!inner(id, owner_id)")
+      .contains("settings", { official: true })
+      .maybeSingle();
+    const ownerId = (store as unknown as { sellers?: { owner_id?: string } } | null)?.sellers?.owner_id;
+    return { linked: ownerId === context.userId };
+  });

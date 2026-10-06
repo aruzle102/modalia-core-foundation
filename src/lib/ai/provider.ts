@@ -1,26 +1,23 @@
 /**
  * AI provider abstraction for Modalia.
  *
- * SERVER-SIDE ONLY. This module reads server environment variables and must
- * never be imported from client components — only from `*.functions.ts`
- * server functions (TanStack Start strips server functions from the client
- * bundle, so provider config never reaches the browser).
+ * ARCHITECTURAL REFERENCE ONLY — NOT USED IN PRODUCTION.
+ *
+ * Version 7 removed external AI providers from the production execution
+ * path. Modalia Intelligence is deterministic and database-powered; it
+ * never calls an external API. This file is kept as an architectural
+ * reference for the provider interface design, but:
+ * - `resolveProvider()` always returns `null` in production.
+ * - `getAiMode()` always reports `{ mode: "rules" }`.
+ * - No server function calls any provider method.
+ *
+ * SERVER-SIDE ONLY. This module must never be imported from client
+ * components — only from `*.functions.ts` server functions.
  *
  * Honesty contract:
- * - No provider is configured by default. `resolveProvider()` returns `null`
- *   unless the operator explicitly opts in via environment variables.
- * - No API keys ever live in code. Only `process.env` is consulted.
- * - Every response path labels itself: "provider" (external model) or
- *   "rules" (the local rule-based assistant). The system never claims
- *   rule-based output is AI.
- *
- * Environment variables (all server-side):
- *   AI_PROVIDER       — set to "openai-compatible" to enable an external model.
- *                       Any other value (or unset) = fully disabled.
- *   AI_API_BASE_URL   — base URL of an OpenAI-compatible chat completions API,
- *                       e.g. "https://api.openai.com/v1".
- *   AI_API_KEY        — API key. Never log, never echo, never store.
- *   AI_MODEL          — model name, e.g. "gpt-4o-mini".
+ * - Every response path labels itself "rules" (the local rule-based
+ *   assistant). The system never claims rule-based output is AI.
+ * - No API keys ever live in code.
  */
 
 export type AiSource = "provider" | "rules";
@@ -158,26 +155,23 @@ export class OpenAiCompatibleProvider implements AiProvider {
 export type AiMode = { mode: "provider" | "rules"; providerLabel: string | null };
 
 /**
- * Resolve the active provider from server env vars.
- * Returns `null` (rule-based mode) unless explicitly enabled.
+ * Resolve the active provider.
+ *
+ * PRODUCTION: always returns `null`. External AI providers were removed
+ * from the production execution path in Version 7. Modalia Intelligence
+ * is deterministic and database-powered. This function is kept for
+ * architectural reference only — no production code calls it.
  */
 export function resolveProvider(): AiProvider | null {
-  const kind = process.env["AI_PROVIDER"];
-  if (kind !== "openai-compatible") return null;
-  const baseUrl = process.env["AI_API_BASE_URL"] ?? "";
-  const apiKey = process.env["AI_API_KEY"] ?? "";
-  const model = process.env["AI_MODEL"] ?? "";
-  if (!baseUrl || !apiKey || !model) return null;
-  const provider = new OpenAiCompatibleProvider({ baseUrl, apiKey, model });
-  return provider.isAvailable() ? provider : null;
+  return null;
 }
 
-/** Safe status for UI banners — contains no secrets. */
+/**
+ * Safe status for UI banners — contains no secrets.
+ * PRODUCTION: always reports rules mode. No env vars are consulted.
+ */
 export function getAiMode(): AiMode {
-  const provider = resolveProvider();
-  return provider
-    ? { mode: "provider", providerLabel: provider.label }
-    : { mode: "rules", providerLabel: null };
+  return { mode: "rules", providerLabel: null };
 }
 
 /**

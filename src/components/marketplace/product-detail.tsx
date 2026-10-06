@@ -75,6 +75,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
       name: product.name,
       image: product.media.find((m) => m.isPrimary)?.url ?? product.media[0]?.url ?? null,
       price: product.price,
+      categorySlug: product.category?.slug,
     });
   }, [product.id]);
 

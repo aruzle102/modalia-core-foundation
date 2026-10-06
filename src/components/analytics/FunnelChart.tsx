@@ -15,7 +15,7 @@ function compact(value: number): string {
   return String(Math.round(value));
 }
 
-export function FunnelChart({ stages }: { stages: FunnelStage[] }) {
+export function FunnelChart({ stages, caption }: { stages: FunnelStage[]; caption: string }) {
   const W = 720;
   const ROW_H = 64;
   const LABEL_W = 190;
@@ -84,9 +84,7 @@ export function FunnelChart({ stages }: { stages: FunnelStage[] }) {
           );
         })}
       </svg>
-      <figcaption className="mt-2 text-caption text-muted-foreground">
-        Step conversion is measured against the previous step. Each stage counts unique visitors — real recorded events, not estimates.
-      </figcaption>
+      <figcaption className="mt-2 text-caption text-muted-foreground">{caption}</figcaption>
     </figure>
   );
 }

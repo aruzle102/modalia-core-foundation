@@ -107,6 +107,7 @@ function buildNavGroups(t: AdminNavStrings): NavGroup[] {
         { label: items.communes, to: "/admin/communes", icon: <Building2 className={icon} /> },
         { label: items.coupons, to: "/admin/coupons", icon: <Ticket className={icon} /> },
         { label: items.settlements, to: "/admin/settlements", icon: <Wallet className={icon} /> },
+        { label: items.commissions, to: "/admin/commissions", icon: <Percent className={icon} /> },
         { label: items.notifications, to: "/admin/notifications", icon: <Bell className={icon} /> },
       ],
     },
@@ -254,7 +255,10 @@ function SidebarNav({ groups }: { groups: NavGroup[] }) {
             >
               <span>{group.label}</span>
               <ChevronDown
-                className={cn("h-3.5 w-3.5 transition-transform", open ? "" : "-rotate-90")}
+                className={cn(
+                  "h-3.5 w-3.5 transition-transform",
+                  open ? "" : "-rotate-90 rtl:rotate-90",
+                )}
                 aria-hidden="true"
               />
             </button>
@@ -309,7 +313,10 @@ export function AdminShell({
             <span className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-xs font-bold text-primary-foreground">
               M
             </span>
-            <span className="text-sm font-semibold tracking-tight">Modalia OS</span>
+            <span className="flex flex-col leading-none">
+              <span className="text-sm font-semibold tracking-tight">MODALIA</span>
+              <span className="text-caption text-muted-foreground">{t.areaLabel}</span>
+            </span>
           </Link>
           <div className="flex-1" />
           <CommandBar />

@@ -5,12 +5,16 @@ import { useNavigate } from "@tanstack/react-router";
 import {
   BadgeCheck,
   ExternalLink,
+  LayoutTemplate,
   Loader2,
   Package,
   Plus,
   Search,
+  Settings,
   ShoppingBag,
   Store,
+  Ticket,
+  Truck,
   User,
   UserPlus,
   Users,
@@ -39,8 +43,8 @@ interface SearchItem {
  * Searches orders (by number, email, phone, customer name), sellers, stores,
  * products and customers through the admin-only `adminGlobalSearch` server
  * function — no mock data. Clicking a result navigates to the real record.
- * A "Quick actions" group offers Create product / seller / store and opening
- * the official storefront.
+ * A "Quick actions" group offers Create product / seller (+ store) / coupon and
+ * opening shipping, homepage, settings and the official storefront.
  */
 export function CommandBar() {
   const locale = useAdminLocale();
@@ -138,6 +142,38 @@ export function CommandBar() {
         run: () => go("/admin/sellers", { search: { create: "seller" } }),
       },
       {
+        key: "action-create-coupon",
+        group: groups.actions,
+        label: t.createCoupon,
+        sub: t.createCouponHint,
+        icon: <Ticket className="h-4 w-4 text-muted-foreground" />,
+        run: () => go("/admin/coupons", { search: { create: "coupon" } }),
+      },
+      {
+        key: "action-open-shipping",
+        group: groups.actions,
+        label: t.openShipping,
+        sub: t.openShippingHint,
+        icon: <Truck className="h-4 w-4 text-muted-foreground" />,
+        run: () => go("/admin/shipping", {}),
+      },
+      {
+        key: "action-open-homepage",
+        group: groups.actions,
+        label: t.openHomepage,
+        sub: t.openHomepageHint,
+        icon: <LayoutTemplate className="h-4 w-4 text-muted-foreground" />,
+        run: () => go("/admin/homepage", {}),
+      },
+      {
+        key: "action-open-settings",
+        group: groups.actions,
+        label: t.openSettings,
+        sub: t.openSettingsHint,
+        icon: <Settings className="h-4 w-4 text-muted-foreground" />,
+        run: () => go("/admin/settings", {}),
+      },
+      {
         key: "action-official-store",
         group: groups.actions,
         label: t.openOfficialStore,
@@ -201,7 +237,9 @@ export function CommandBar() {
           label: s.name,
           sub: s.slug,
           icon: <Store className="h-4 w-4 text-muted-foreground" />,
-          run: () => go("/admin/sellers", { search: { q: s.slug } }),
+          // The sellers list search matches store *names* (not slugs), so
+          // deep-link by name to land on the right seller row.
+          run: () => go("/admin/sellers", { search: { q: s.name } }),
         });
       }
       for (const c of data.customers) {

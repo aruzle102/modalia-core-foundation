@@ -2230,6 +2230,48 @@ export type Database = {
           },
         ]
       }
+      site_buttons: {
+        Row: {
+          id: string
+          label: string
+          action_type: string
+          destination: string
+          placement: string
+          style: string
+          is_active: boolean
+          sort_order: number
+          locale: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          label: string
+          action_type: string
+          destination: string
+          placement: string
+          style?: string
+          is_active?: boolean
+          sort_order?: number
+          locale?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          label?: string
+          action_type?: string
+          destination?: string
+          placement?: string
+          style?: string
+          is_active?: boolean
+          sort_order?: number
+          locale?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       site_settings: {
         Row: {
           key: string

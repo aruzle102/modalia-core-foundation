@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { RotateCcw } from "lucide-react";
 import { getTranslations } from "@/lib/i18n";
+import { useDeviceTier } from "@/hooks/use-device-tier";
 import type { SupportedLocale } from "@/config/platform";
 
 /**
@@ -65,12 +66,34 @@ export function ProductViewer3D({
   const [status, setStatus] = useState<ViewerStatus>("loading");
   const [attempt, setAttempt] = useState(0);
   // SSR-safe lazy initializers: `false`/`null` on the server, real values on the client.
-  const [webglOk] = useState<boolean | null>(() =>
+  const [webglOk, setWebglOk] = useState<boolean | null>(() =>
     typeof window === "undefined" ? null : hasWebglSupport(),
   );
   const [reducedMotion] = useState<boolean>(() => prefersReducedMotion());
 
+  // WebGL availability can change after mount (driver install, GPU process
+  // crash/recovery), so re-check when the window regains focus or becomes
+  // visible again — the "not supported" state below must never go stale.
+  // Registry #124.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const recheck = () => setWebglOk(hasWebglSupport());
+    window.addEventListener("focus", recheck);
+    document.addEventListener("visibilitychange", recheck);
+    return () => {
+      window.removeEventListener("focus", recheck);
+      document.removeEventListener("visibilitychange", recheck);
+    };
+  }, []);
+
   const hasUrl = modelUrl.trim().length > 0;
+  const { tier } = useDeviceTier();
+  // WebGL quality budget follows the device tier: full (MSAA, high pixel
+  // ratio, high-res shadows) only on high-tier devices; mid and low get the
+  // light budget. Data-saver never reaches this component — the detail page
+  // only offers 3D when a real model URL exists and the tier is not
+  // data-saver — and reduced motion disables the idle auto-rotate below.
+  const quality: "full" | "light" = tier === "high" ? "full" : "light";
 
   useEffect(() => {
     if (!hasUrl || webglOk !== true) return;
@@ -123,16 +146,25 @@ export function ProductViewer3D({
       const renderer = new THREE.WebGLRenderer({
         canvas,
         alpha: true,
-        antialias: true,
+        antialias: quality === "full",
         powerPreference: "low-power",
       });
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.setPixelRatio(
+        Math.min(window.devicePixelRatio || 1, quality === "full" ? 2 : 1.25),
+      );
       renderer.setClearColor(0x000000, 0);
       renderer.shadowMap.enabled = true;
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
       renderer.toneMappingExposure = 1.05;
       track(renderer);
+      cleanupFns.push(() => {
+        try {
+          renderer.forceContextLoss();
+        } catch {
+          // Some drivers throw on forced context loss; the context is gone anyway.
+        }
+      });
 
       const scene = new THREE.Scene();
       const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
@@ -154,7 +186,7 @@ export function ProductViewer3D({
       const keyLight = new THREE.DirectionalLight(0xffffff, 2.1);
       keyLight.position.set(5, 8, 4);
       keyLight.castShadow = true;
-      keyLight.shadow.mapSize.set(1024, 1024);
+      keyLight.shadow.mapSize.set(quality === "full" ? 1024 : 512, quality === "full" ? 1024 : 512);
       keyLight.shadow.bias = -0.0004;
       scene.add(keyLight);
 
@@ -163,7 +195,12 @@ export function ProductViewer3D({
       let model: import("three").Group;
       try {
         const gltf = await loader.loadAsync(modelUrl);
-        if (disposed) return;
+        if (disposed) {
+          // The model finished parsing after unmount: it never rendered, but
+          // its geometries/materials/textures still exist — dispose them.
+          disposeModel(gltf.scene, THREE);
+          return;
+        }
         model = gltf.scene;
       } catch {
         if (!disposed) setStatus("error");
@@ -390,16 +427,25 @@ export function ProductViewer3D({
       }
       disposables.length = 0;
     };
-  }, [hasUrl, modelUrl, webglOk, attempt, reducedMotion]);
+  }, [hasUrl, modelUrl, webglOk, attempt, reducedMotion, quality]);
 
   if (!hasUrl) return null;
 
   if (webglOk === false) {
     return (
-      <div className={`flex items-center justify-center ${className ?? "aspect-square"}`}>
+      <div className={`flex flex-col items-center justify-center gap-3 p-6 ${className ?? "aspect-square"}`}>
         <p className="max-w-xs text-center text-sm text-muted-foreground">
-          العرض ثلاثي الأبعاد غير مدعوم على هذا الجهاز.
+          {t.unsupported}
         </p>
+        {/* Manual retry affordance: WebGL can recover after a GPU process
+            restart or driver update without a page reload. Registry #124. */}
+        <button
+          type="button"
+          onClick={() => setWebglOk(hasWebglSupport())}
+          className="rounded-full border border-border px-4 py-1.5 text-sm text-foreground transition-colors hover:bg-muted"
+        >
+          {t.retry}
+        </button>
       </div>
     );
   }
@@ -415,7 +461,7 @@ export function ProductViewer3D({
         onKeyDown={(event) => keysRef.current?.(event)}
         className="absolute inset-0 block h-full w-full touch-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-foreground/40"
         style={{ cursor: status === "ready" ? "grab" : "default" }}
-        aria-label="عارض المنتج ثلاثي الأبعاد — اسحب للتدوير، أو ركّز ثم استخدم أسهم لوحة المفاتيح"
+        aria-label={t.viewerLabel}
       />
 
       {status === "loading" && (

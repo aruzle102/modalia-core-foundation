@@ -25,14 +25,14 @@ import { Input } from "@/components/ui/input";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { platformConfig, type SupportedLocale } from "@/config/platform";
 import { localeLabels, persistLocale, type Translation } from "@/lib/i18n";
-import {
-  getSiteSettings,
-  subscribeNewsletter,
-  type SiteSettingKey,
-} from "@/lib/engagement.functions";
+import { getSiteSettings, subscribeNewsletter, type SiteSettingKey } from "@/lib/engagement.functions";
+import { SiteButtons, useVisibleSiteButtons } from "./site-buttons";
 import { getHeaderCategories } from "@/lib/catalog.functions";
 import { useCart } from "@/lib/cart-store";
 import { AiAssistantButton, AiAssistantDrawer } from "@/components/marketplace/ai-assistant";
+import { getPublicIntelligenceConfig } from "@/lib/intelligence-settings.functions";
+import { BuyNowHost } from "@/components/marketplace/buy-now";
+import { motionTw } from "@/lib/motion-tokens";
 
 const supportedLocales: SupportedLocale[] = ["en", "fr", "ar"];
 
@@ -78,6 +78,27 @@ function switchLocale(locale: SupportedLocale) {
 }
 
 /**
+ * Announcement bar fed by Admin > Button Control (placement "banner_cta").
+ * Renders nothing when no active banner buttons exist.
+ */
+function BannerBar({ locale }: { locale: SupportedLocale }) {
+  const buttons = useVisibleSiteButtons("banner_cta", locale);
+  if (buttons.length === 0) return null;
+  return (
+    <div className="border-b border-border bg-muted/60">
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-6 gap-y-1 px-4 py-2 sm:px-6 lg:px-8">
+        <SiteButtons
+          placement="banner_cta"
+          locale={locale}
+          variant="link"
+          itemClassName="text-small font-medium text-foreground/80 transition-colors hover:text-foreground"
+        />
+      </div>
+    </div>
+  );
+}
+
+/**
  * Minimal premium site header — SSENSE / Mr Porter register.
  * Left: wordmark. Center: Shop, Categories (dropdown), expanding search.
  * Right: wishlist, cart, account, locale. Sell on Modalia lives in the footer only.
@@ -101,6 +122,16 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
     retry: 1,
   });
   const categories = categoriesQuery.data?.categories ?? [];
+
+  // Smart-shopping toggle (admin Intelligence settings): when disabled, the
+  // assistant entry points are hidden entirely — no fake toggle.
+  const intelQuery = useQuery({
+    queryKey: ["public-intelligence-config", locale],
+    queryFn: () => getPublicIntelligenceConfig({ data: { locale } }),
+    staleTime: 10 * 60 * 1000,
+    retry: 1,
+  });
+  const smartShoppingEnabled = intelQuery.data?.smart_shopping_enabled !== false;
 
   // Subtle elevation once the page scrolls.
   useEffect(() => {
@@ -159,7 +190,7 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
   const underline = (
     <span
       aria-hidden="true"
-      className="absolute -bottom-1 start-0 h-px w-0 bg-foreground transition-[width] duration-200 group-hover:w-full"
+      className={`absolute -bottom-1 start-0 h-px w-0 bg-foreground transition-[width] ${motionTw.duration.base} group-hover:w-full`}
     />
   );
 
@@ -177,13 +208,13 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
             to="/"
             search={{ locale }}
             className="shrink-0 text-wordmark tracking-tight text-foreground"
-            aria-label="Modalia — home"
+            aria-label={t.nav.homeLabel}
           >
             Modalia
           </Link>
 
           {/* Center — primary nav */}
-          <nav className="hidden items-center gap-8 lg:flex" aria-label="Main navigation">
+          <nav className="hidden items-center gap-8 lg:flex" aria-label={t.nav.mainNavigation}>
             <Link to="/shop" search={shopSearch(locale)} className={navLink}>
               {t.nav.shop}
               {underline}
@@ -201,7 +232,7 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
                 {t.nav.categories}
                 <ChevronDown
                   className={
-                    "size-3.5 text-muted-foreground transition-transform duration-200 " +
+                    `size-3.5 text-muted-foreground ${motionTw.transition.transform} ${motionTw.duration.base} ` +
                     (categoriesOpen ? "rotate-180" : "")
                   }
                   aria-hidden="true"
@@ -243,6 +274,9 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
               ) : null}
             </div>
 
+            {/* Admin-configured quick links (Admin > Button Control, placement "header"). */}
+            <SiteButtons placement="header" locale={locale} variant="link" itemClassName={navLink} />
+
             {/* Expanding search */}
             {searchOpen ? (
               <form onSubmit={submitSearch} className="flex items-center" role="search">
@@ -282,11 +316,13 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
 
           {/* Right — utilities */}
           <div className="ms-auto flex items-center gap-0.5">
-            <AiAssistantButton locale={locale} t={t} onOpen={() => setAssistantOpen(true)} />
+            {smartShoppingEnabled ? (
+              <AiAssistantButton locale={locale} t={t} onOpen={() => setAssistantOpen(true)} />
+            ) : null}
 
             <div className="relative hidden sm:block">
               <select
-                aria-label="Choose language"
+                aria-label={t.nav.chooseLanguage}
                 value={locale}
                 onChange={(e) => switchLocale(e.target.value as SupportedLocale)}
                 className="h-9 cursor-pointer appearance-none bg-transparent pe-5 ps-2 text-caption tracking-wide text-muted-foreground outline-none transition-colors hover:text-foreground"
@@ -303,32 +339,34 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
               />
             </div>
 
-            <Link to="/wishlist" search={{ locale }}>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="hidden text-foreground/80 hover:text-foreground sm:inline-flex"
-                aria-label={t.nav.wishlist}
-              >
+            <Button
+              asChild
+              variant="ghost"
+              size="icon"
+              className="hidden text-foreground/80 hover:text-foreground sm:inline-flex"
+              aria-label={t.nav.wishlist}
+            >
+              <Link to="/wishlist" search={{ locale }}>
                 <Heart className="size-[18px]" />
-              </Button>
-            </Link>
+              </Link>
+            </Button>
 
-            <Link to="/cart" search={{ locale }} className="relative">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-foreground/80 hover:text-foreground"
-                aria-label={t.nav.cart}
-              >
+            <Button
+              asChild
+              variant="ghost"
+              size="icon"
+              className="text-foreground/80 hover:text-foreground"
+              aria-label={t.nav.cart}
+            >
+              <Link to="/cart" search={{ locale }} className="relative">
                 <ShoppingBag className="size-[18px]" />
-              </Button>
-              {cart.count ? (
-                <span className="absolute end-0.5 top-0.5 grid min-w-4 place-items-center bg-foreground px-1 text-[9px] font-bold leading-4 text-background">
-                  {cart.count > 99 ? "99+" : cart.count}
-                </span>
-              ) : null}
-            </Link>
+                {cart.count ? (
+                  <span className="absolute end-0.5 top-0.5 grid min-w-4 place-items-center bg-foreground px-1 text-[9px] font-bold leading-4 text-background">
+                    {cart.count > 99 ? "99+" : cart.count}
+                  </span>
+                ) : null}
+              </Link>
+            </Button>
 
             <NotificationBell
               scope="customer"
@@ -338,16 +376,17 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
               preferencesTo="/notifications/preferences"
             />
 
-            <Link to="/auth" search={{ locale }}>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="hidden text-foreground/80 hover:text-foreground sm:inline-flex"
-                aria-label={t.nav.account}
-              >
+            <Button
+              asChild
+              variant="ghost"
+              size="icon"
+              className="hidden text-foreground/80 hover:text-foreground sm:inline-flex"
+              aria-label={t.nav.account}
+            >
+              <Link to="/auth" search={{ locale }}>
                 <UserRound className="size-[18px]" />
-              </Button>
-            </Link>
+              </Link>
+            </Button>
 
             <Button
               variant="ghost"
@@ -362,6 +401,8 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
           </div>
         </div>
       </header>
+
+      <BannerBar locale={locale} />
 
       {/* Mobile slide-over drawer */}
       {drawerOpen ? (
@@ -398,7 +439,7 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
                 </div>
               </form>
 
-              <nav aria-label="Mobile navigation">
+              <nav aria-label={t.nav.mobileNavigation}>
                 <ul className="space-y-1">
                   <li>
                     <Link
@@ -454,6 +495,15 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
                       />
                     </Link>
                   </li>
+                  {/* Admin-configured quick links (placement "header"). */}
+                  <SiteButtons
+                    placement="header"
+                    locale={locale}
+                    variant="link"
+                    listItemClassName=""
+                    itemClassName="block py-2 ps-1 text-nav tracking-tight text-foreground/70 transition-colors hover:text-foreground"
+                    onNavigate={() => setDrawerOpen(false)}
+                  />
                 </ul>
 
                 <div className="my-5 border-t border-border" aria-hidden="true" />
@@ -537,7 +587,9 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
         </div>
       ) : null}
 
-      <AiAssistantDrawer locale={locale} t={t} open={assistantOpen} onOpenChange={setAssistantOpen} />
+      {smartShoppingEnabled ? (
+        <AiAssistantDrawer locale={locale} t={t} open={assistantOpen} onOpenChange={setAssistantOpen} />
+      ) : null}
     </>
   );
 }
@@ -624,6 +676,25 @@ function FooterColumn({ heading, links }: { heading: string; links: FooterLink[]
   );
 }
 
+/**
+ * Footer quick links fed by Admin > Button Control (placement "footer").
+ * Renders nothing when no active footer buttons exist.
+ */
+function FooterButtons({ locale }: { locale: SupportedLocale }) {
+  const buttons = useVisibleSiteButtons("footer", locale);
+  if (buttons.length === 0) return null;
+  return (
+    <div className="mt-10 flex flex-wrap gap-x-8 gap-y-2">
+      <SiteButtons
+        placement="footer"
+        locale={locale}
+        variant="link"
+        itemClassName="text-small text-white/65 transition-colors hover:text-white"
+      />
+    </div>
+  );
+}
+
 export function SiteFooter({ locale, t }: { locale: SupportedLocale; t: Translation }) {
   const { data } = useQuery({
     queryKey: ["site-settings"],
@@ -648,6 +719,7 @@ export function SiteFooter({ locale, t }: { locale: SupportedLocale; t: Translat
   const shop = (extras?: Record<string, unknown>) => shopSearch(locale, extras as never);
 
   return (
+    <>
     <footer className="bg-[#141311] text-white">
       {/* ── Top: wordmark + newsletter ─────────────────────────── */}
       <div className="mx-auto max-w-7xl px-4 pt-16 sm:px-6 lg:px-8 lg:pt-20">
@@ -731,6 +803,8 @@ export function SiteFooter({ locale, t }: { locale: SupportedLocale; t: Translat
             ) : null}
           </div>
         ) : null}
+        {/* ── Admin-configured quick links (placement "footer") ── */}
+        <FooterButtons locale={locale} />
       </div>
 
       {/* ── Bottom bar ─────────────────────────────────────────── */}
@@ -783,5 +857,9 @@ export function SiteFooter({ locale, t }: { locale: SupportedLocale; t: Translat
         </div>
       </div>
     </footer>
+    {/* Buy-now / quick-add variant-sheet host: claims startBuyNow requests
+        raised anywhere on the page (product cards, product detail). */}
+    <BuyNowHost locale={locale} />
+  </>
   );
 }

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { RotateCcw } from "lucide-react";
 import { getTranslations } from "@/lib/i18n";
 import { useDeviceTier } from "@/hooks/use-device-tier";
@@ -60,6 +60,16 @@ export function HeroScene({
   // Eligible on high (full) and mid (lite) tier devices with WebGL and no
   // reduced motion; low / data-saver keep the static 2.5D CSS fallback.
   const eligible = (tier === "high" || tier === "mid") && webgl && !reducedMotion;
+
+  // Content-derived key for the effect below: both hero call sites rebuild the
+  // `products` array on every render, so keying the effect on the array
+  // identity would tear down the whole WebGL scene (and re-fetch textures) on
+  // any parent re-render. The key only changes when the showcase content
+  // actually changes.
+  const productsKey = useMemo(
+    () => products.map((p) => `${p.imagePath}|${p.name}|${p.slug}`).join("||"),
+    [products],
+  );
 
   useEffect(() => {
     if (!eligible) return;
@@ -465,7 +475,7 @@ export function HeroScene({
       }
       setReady(false);
     };
-  }, [eligible, quality, products]);
+  }, [eligible, quality, productsKey]);
 
   if (!eligible) return null;
 

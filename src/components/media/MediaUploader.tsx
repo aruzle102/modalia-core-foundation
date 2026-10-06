@@ -59,8 +59,9 @@ interface TrackedFile {
 
 const ACCEPT_BY_KIND: Record<MediaKind | "any", string> = {
   image: "image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif",
+  video: "video/mp4,video/webm,.mp4,.webm",
   model_3d: ".glb,.gltf,model/gltf-binary,model/gltf+json",
-  any: "image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif,.glb,.gltf,model/gltf-binary,model/gltf+json",
+  any: "image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif,video/mp4,video/webm,.mp4,.webm,.glb,.gltf,model/gltf-binary,model/gltf+json",
 };
 
 function errorLabel(code: string | undefined, labels: UploaderLabels, fallback: string): string {

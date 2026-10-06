@@ -12,6 +12,7 @@ import type {
   FacetColor,
   FacetSize,
 } from "@/lib/catalog.functions";
+import { motionTw } from "@/lib/motion-tokens";
 
 export type ShopFilterValues = {
   minPrice?: number | undefined;
@@ -219,7 +220,7 @@ export function ShopFilters({
                   title={`${color.name} · ${color.productCount}`}
                   onClick={() => onChange({ ...values, colors: toggle(values.colors, color.slug) })}
                   style={color.hex ? { backgroundColor: color.hex } : undefined}
-                  className={`grid size-9 place-items-center rounded-full border border-border transition-all ${
+                  className={`grid size-9 place-items-center rounded-full border border-border ${motionTw.transition.interactive} ${
                     active ? "ring-2 ring-foreground ring-offset-2 ring-offset-background" : "hover:scale-110"
                   } ${color.hex ? "" : "bg-muted"}`}
                 >

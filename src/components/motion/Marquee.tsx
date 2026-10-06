@@ -16,17 +16,18 @@
  * Pauses on hover. Under `prefers-reduced-motion` the strip is static.
  */
 import type { CSSProperties, ReactNode } from "react";
+import { motionMarquee } from "@/lib/motion-tokens";
 
 export interface MarqueeProps {
   children: ReactNode;
-  /** "slow" = 70s loop, "normal" = 42s loop. */
+  /** "slow" = motionMarquee.slow loop, "normal" = motionMarquee.normal loop. */
   speed?: "slow" | "normal";
   /** Scroll direction in LTR; mirrored automatically in RTL. */
   direction?: "forward" | "reverse";
   className?: string;
 }
 
-const durations = { slow: "70s", normal: "42s" } as const;
+const durations = { slow: motionMarquee.slow, normal: motionMarquee.normal } as const;
 
 export function Marquee({
   children,

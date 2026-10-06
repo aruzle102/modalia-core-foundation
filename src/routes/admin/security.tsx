@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { AdminGate } from "@/components/admin/AdminGate";
+import { SuperAdminGate } from "@/components/admin/SuperAdminGate";
 import { AdminShell } from "@/components/admin/AdminShell";
 import {
   AdminCard,
@@ -44,6 +45,7 @@ function SecurityPage() {
 
   return (
     <AdminGate>
+      <SuperAdminGate>
       <AdminShell
         title={t.security}
         subtitle="Who holds which role, pending password resets and recent security events."
@@ -124,6 +126,7 @@ function SecurityPage() {
           </div>
         )}
       </AdminShell>
+      </SuperAdminGate>
     </AdminGate>
   );
 }

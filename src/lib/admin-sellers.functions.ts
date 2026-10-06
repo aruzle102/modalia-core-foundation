@@ -4,6 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database, Json } from "@/integrations/supabase/types";
 import { emitSellerNotification } from "@/lib/notifications.functions";
 import { assertAdmin } from "@/lib/admin-auth";
+import { assertAdminPermission } from "@/lib/admin-permissions";
 import { ALL_SELLER_PERMISSIONS, type SellerPermission } from "@/lib/seller-auth";
 
 type SellerRow = Database["public"]["Tables"]["sellers"]["Row"];
@@ -53,7 +54,7 @@ export const listApplications = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .inputValidator((data) => listApplicationsInput.parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "applications.decide");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     let query = supabaseAdmin.from("seller_applications").select("*", { count: "exact" });
     if (data.status) query = query.eq("status", data.status);
@@ -80,7 +81,7 @@ export const getApplication = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .inputValidator((data) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "applications.decide");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: application, error } = await supabaseAdmin
       .from("seller_applications")
@@ -136,7 +137,7 @@ export const reviewApplication = createServerFn({ method: "POST" })
   .middleware(adminOnly)
   .inputValidator((data) => reviewApplicationInput.parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "applications.decide");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: application, error } = await supabaseAdmin
       .from("seller_applications")
@@ -225,7 +226,7 @@ export const updateApplicationNotes = createServerFn({ method: "POST" })
     z.object({ id: z.string().uuid(), adminNotes: z.string().max(5000) }).parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "applications.decide");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin
       .from("seller_applications")
@@ -250,7 +251,7 @@ export const checkStoreSlug = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .inputValidator((data) => z.object({ slug: z.string().trim().min(1).max(80) }).parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "sellers.manage");
     const normalized =
       data.slug
         .toLowerCase()
@@ -379,6 +380,7 @@ const staffProvisionInput = z.object({
     .array(permissionKeySchema)
     .min(1, "Choose at least one permission for a staff account.")
     .max(ALL_SELLER_PERMISSIONS.length),
+  staffRole: z.enum(["manager", "staff", "viewer"]).default("staff"),
 });
 
 const provisionSellerInput = z.discriminatedUnion("mode", [ownerProvisionInput, staffProvisionInput]);
@@ -429,7 +431,7 @@ export const provisionSeller = createServerFn({ method: "POST" })
   .middleware(adminOnly)
   .inputValidator((data) => provisionSellerInput.parse(data))
   .handler(async ({ data, context }): Promise<ProvisionSellerResult> => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "sellers.manage");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const tempPassword = (crypto.randomUUID() + crypto.randomUUID()).slice(0, 20);
@@ -488,6 +490,7 @@ export const provisionSeller = createServerFn({ method: "POST" })
               role: "seller_staff",
               title: data.staffTitle?.trim() || "Staff",
               permissions: data.staffPermissions,
+              staff_role: data.staffRole,
               active: true,
             },
             { onConflict: "seller_id,user_id" },
@@ -699,7 +702,7 @@ export const listSellers = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .inputValidator((data) => listSellersInput.parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "sellers.view");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const q = data.q ? sanitizeSearch(data.q) : "";
     let sellerIdsFromStores: string[] = [];
@@ -763,7 +766,7 @@ export const getSellerProfile = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .inputValidator((data) => z.object({ sellerId: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "sellers.view");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const sellerId = data.sellerId;
 
@@ -885,7 +888,7 @@ export const updateSellerStatus = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "sellers.manage");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: seller } = await supabaseAdmin
       .from("sellers")
@@ -938,21 +941,35 @@ export const updateStaffPermissions = createServerFn({ method: "POST" })
           .min(1, "Choose at least one permission for a staff account.")
           .max(ALL_SELLER_PERMISSIONS.length),
         active: z.boolean(),
+        role: z.enum(["manager", "staff", "viewer"]).optional(),
       })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "sellers.manage");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: staff } = await supabaseAdmin
       .from("seller_staff")
-      .select("id,seller_id,permissions,active")
+      .select("id,seller_id,user_id,permissions,active")
       .eq("id", data.staffId)
       .single();
     if (!staff) throw new Error("Staff member not found.");
+    // Structural: the store owner is never a staff row — refuse if it ever happens.
+    const { data: seller } = await supabaseAdmin
+      .from("sellers")
+      .select("owner_id")
+      .eq("id", staff.seller_id)
+      .maybeSingle();
+    if (seller && seller.owner_id === staff.user_id) {
+      throw new Error("The store owner cannot be managed as staff.");
+    }
     const { error } = await supabaseAdmin
       .from("seller_staff")
-      .update({ permissions: data.permissions, active: data.active })
+      .update({
+        permissions: data.permissions,
+        active: data.active,
+        ...(data.role ? { staff_role: data.role } : {}),
+      })
       .eq("id", data.staffId);
     if (error) throw new Error(error.message);
     await supabaseAdmin.from("audit_logs").insert({
@@ -980,7 +997,7 @@ export const updateStoreVerification = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "sellers.manage");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: store } = await supabaseAdmin
       .from("stores")
@@ -1037,7 +1054,7 @@ export const updateSellerDetails = createServerFn({ method: "POST" })
   .middleware(adminOnly)
   .inputValidator((data) => updateSellerDetailsInput.parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "sellers.manage");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: seller } = await supabaseAdmin
       .from("sellers")

@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getSellerAccessStatus } from "@/lib/seller-auth";
 import {
   checkLoginAllowed,
+  clearLoginAttempts,
   isLoginRateLimitedError,
   resolveLoginRateLimitMessage,
 } from "@/lib/auth-guard.functions";
@@ -111,6 +112,9 @@ function SellerLoginPage() {
       await checkLoginAllowed({ data: { identifier: email } });
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
+      // Ownership proven: reset the brute-force bucket so stale failed
+      // attempts never lock out a legitimate user. Best-effort.
+      void clearLoginAttempts().catch(() => {});
       // Server-side status check: suspended / disabled / pending sellers and
       // deactivated staff must not enter, with a clear reason.
       const { access, mustResetPassword, onboarded, isOwner } = await getSellerAccessStatus();

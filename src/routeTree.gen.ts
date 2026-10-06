@@ -56,6 +56,7 @@ import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
 import { Route as AdminSettlementsRouteImport } from './routes/admin/settlements'
 import { Route as AdminShippingRouteImport } from './routes/admin/shipping'
 import { Route as AdminStoresRouteImport } from './routes/admin/stores'
+import { Route as AdminTeamRouteImport } from './routes/admin/team'
 import { Route as AdminWilayasRouteImport } from './routes/admin/wilayas'
 import { Route as CategorySlugRouteImport } from './routes/category.$slug'
 import { Route as ProductSlugRouteImport } from './routes/product.$slug'
@@ -331,6 +332,11 @@ const AdminShippingRoute = AdminShippingRouteImport.update({
 const AdminStoresRoute = AdminStoresRouteImport.update({
   id: '/admin/stores',
   path: '/admin/stores',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminTeamRoute = AdminTeamRouteImport.update({
+  id: '/admin/team',
+  path: '/admin/team',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminWilayasRoute = AdminWilayasRouteImport.update({
@@ -611,6 +617,7 @@ export interface FileRoutesByFullPath {
   '/admin/settlements': typeof AdminSettlementsRoute
   '/admin/shipping': typeof AdminShippingRoute
   '/admin/stores': typeof AdminStoresRouteWithChildren
+  '/admin/team': typeof AdminTeamRoute
   '/admin/wilayas': typeof AdminWilayasRoute
   '/category/$slug': typeof CategorySlugRoute
   '/product/$slug': typeof ProductSlugRoute
@@ -700,6 +707,7 @@ export interface FileRoutesByTo {
   '/admin/settlements': typeof AdminSettlementsRoute
   '/admin/shipping': typeof AdminShippingRoute
   '/admin/stores': typeof AdminStoresRouteWithChildren
+  '/admin/team': typeof AdminTeamRoute
   '/admin/wilayas': typeof AdminWilayasRoute
   '/category/$slug': typeof CategorySlugRoute
   '/product/$slug': typeof ProductSlugRoute
@@ -791,6 +799,7 @@ export interface FileRoutesById {
   '/admin/settlements': typeof AdminSettlementsRoute
   '/admin/shipping': typeof AdminShippingRoute
   '/admin/stores': typeof AdminStoresRouteWithChildren
+  '/admin/team': typeof AdminTeamRoute
   '/admin/wilayas': typeof AdminWilayasRoute
   '/category/$slug': typeof CategorySlugRoute
   '/product/$slug': typeof ProductSlugRoute
@@ -882,6 +891,7 @@ export interface FileRouteTypes {
     | '/admin/settlements'
     | '/admin/shipping'
     | '/admin/stores'
+    | '/admin/team'
     | '/admin/wilayas'
     | '/category/$slug'
     | '/product/$slug'
@@ -971,6 +981,7 @@ export interface FileRouteTypes {
     | '/admin/settlements'
     | '/admin/shipping'
     | '/admin/stores'
+    | '/admin/team'
     | '/admin/wilayas'
     | '/category/$slug'
     | '/product/$slug'
@@ -1061,6 +1072,7 @@ export interface FileRouteTypes {
     | '/admin/settlements'
     | '/admin/shipping'
     | '/admin/stores'
+    | '/admin/team'
     | '/admin/wilayas'
     | '/category/$slug'
     | '/product/$slug'
@@ -1150,6 +1162,7 @@ export interface RootRouteChildren {
   AdminSettlementsRoute: typeof AdminSettlementsRoute
   AdminShippingRoute: typeof AdminShippingRoute
   AdminStoresRoute: typeof AdminStoresRouteWithChildren
+  AdminTeamRoute: typeof AdminTeamRoute
   AdminWilayasRoute: typeof AdminWilayasRoute
   CategorySlugRoute: typeof CategorySlugRoute
   ProductSlugRoute: typeof ProductSlugRoute
@@ -1490,6 +1503,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/stores'
       fullPath: '/admin/stores'
       preLoaderRoute: typeof AdminStoresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/team': {
+      id: '/admin/team'
+      path: '/admin/team'
+      fullPath: '/admin/team'
+      preLoaderRoute: typeof AdminTeamRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/wilayas': {
@@ -2032,6 +2052,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminSettlementsRoute: AdminSettlementsRoute,
   AdminShippingRoute: AdminShippingRoute,
   AdminStoresRoute: AdminStoresRouteWithChildren,
+  AdminTeamRoute: AdminTeamRoute,
   AdminWilayasRoute: AdminWilayasRoute,
   CategorySlugRoute: CategorySlugRoute,
   ProductSlugRoute: ProductSlugRoute,

@@ -43,6 +43,33 @@ export type Database = {
           },
         ]
       }
+      admin_members: {
+        Row: {
+          active: boolean
+          created_at: string
+          created_by: string | null
+          permissions: Json
+          role: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          permissions?: Json
+          role: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          permissions?: Json
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           action: string
@@ -2115,6 +2142,7 @@ export type Database = {
           permissions: Json
           role: Database["public"]["Enums"]["app_role"]
           seller_id: string
+          staff_role: string | null
           title: string | null
           user_id: string
         }
@@ -2125,6 +2153,7 @@ export type Database = {
           permissions?: Json
           role?: Database["public"]["Enums"]["app_role"]
           seller_id: string
+          staff_role?: string | null
           title?: string | null
           user_id: string
         }
@@ -2135,6 +2164,7 @@ export type Database = {
           permissions?: Json
           role?: Database["public"]["Enums"]["app_role"]
           seller_id?: string
+          staff_role?: string | null
           title?: string | null
           user_id?: string
         }

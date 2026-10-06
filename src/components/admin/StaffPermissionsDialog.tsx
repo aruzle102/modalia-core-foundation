@@ -18,6 +18,14 @@ import {
   type WizardPermissionGroup,
 } from "@/lib/admin-sellers.functions";
 import { useAdminT } from "@/components/admin/use-admin-t";
+import { SELLER_ROLE_PRESETS, type SellerStaffRole } from "@/lib/seller-auth";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { errMsg } from "@/routes/admin/_shared";
 
 const PERMISSION_GROUP_ORDER: WizardPermissionGroup[] = [
@@ -36,6 +44,7 @@ export type StaffPermissionsInitial = {
   title: string | null;
   permissions: string[];
   active: boolean;
+  staffRole?: string | null;
 };
 
 /**
@@ -57,11 +66,19 @@ export function StaffPermissionsDialog({
   const wizard = t.sellers.sellerWizard;
   const [permissions, setPermissions] = useState<string[]>(staff.permissions ?? []);
   const [active, setActive] = useState(staff.active);
+  const [role, setRole] = useState<SellerStaffRole>(
+    staff.staffRole === "manager" || staff.staffRole === "viewer" ? staff.staffRole : "staff",
+  );
+
+  const applyRole = (r: SellerStaffRole) => {
+    setRole(r);
+    setPermissions([...SELLER_ROLE_PRESETS[r]]);
+  };
 
   const mutation = useMutation({
     mutationFn: () =>
       updateStaffPermissions({
-        data: { staffId: staff.id, permissions, active },
+        data: { staffId: staff.id, permissions, active, role },
       }),
     onSuccess: () => {
       toast.success(p.staffPermsUpdated);
@@ -88,6 +105,18 @@ export function StaffPermissionsDialog({
         <div className="space-y-4">
           <Field label={p.staffPermsActive}>
             <Switch checked={active} onCheckedChange={setActive} />
+          </Field>
+          <Field label={p.roleLabel} hint={p.roleHint}>
+            <Select value={role} onValueChange={(v) => applyRole(v as SellerStaffRole)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="manager">{p.roles.manager}</SelectItem>
+                <SelectItem value="staff">{p.roles.staff}</SelectItem>
+                <SelectItem value="viewer">{p.roles.viewer}</SelectItem>
+              </SelectContent>
+            </Select>
           </Field>
           {PERMISSION_GROUP_ORDER.map((group) => {
             const perms = WIZARD_STAFF_PERMISSIONS.filter((perm) => perm.group === group);

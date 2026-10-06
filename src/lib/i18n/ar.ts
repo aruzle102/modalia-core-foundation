@@ -54,6 +54,7 @@ export const ar = {
         ai: "الذكاء الاصطناعي",
         seo: "تحسين الظهور",
         media: "الوسائط",
+        team: "الفريق",
         settings: "الإعدادات",
         security: "الأمان",
         auditLogs: "سجلات التدقيق",

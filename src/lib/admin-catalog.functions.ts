@@ -4,6 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database, Json } from "@/integrations/supabase/types";
 import { emitSellerNotification } from "@/lib/notifications.functions";
 import { assertAdmin } from "@/lib/admin-auth";
+import { assertAdminPermission } from "@/lib/admin-permissions";
 import { scanProductForModerationFlags, type ModerationFlag } from "@/lib/moderation-rules";
 
 type ProductUpdate = Database["public"]["Tables"]["products"]["Update"];
@@ -71,7 +72,7 @@ export type CategoryRow = Database["public"]["Tables"]["categories"]["Row"];
 export const listAdminSellersLite = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .handler(async ({ context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "sellers.view");
     const { data, error } = await context.supabase
       .from("sellers")
       .select("id, legal_name, account_status")
@@ -101,7 +102,7 @@ export const listAdminProducts = createServerFn({ method: "GET" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "products.view");
     const from = (data.page - 1) * PAGE_SIZE;
     let query = context.supabase
       .from("products")
@@ -174,7 +175,7 @@ export const moderateAdminProduct = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "products.manage");
     const now = new Date().toISOString();
     const base = {
       moderated_by: context.userId ?? null,
@@ -264,7 +265,7 @@ export const updateAdminProduct = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "products.manage");
     const supabaseAdmin = await adminClient();
 
     // Fetch current row so cross-field checks (compare_at_price > base_price)
@@ -317,7 +318,7 @@ export const setProductStatus = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "products.manage");
     const supabaseAdmin = await adminClient();
     const update: ProductUpdate = { status: data.status, updated_at: new Date().toISOString() };
     if (data.status === "archived") {
@@ -366,7 +367,7 @@ export const createAdminProduct = createServerFn({ method: "POST" })
   .middleware(adminOnly)
   .inputValidator((data) => createAdminProductInput.parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "products.manage");
     const supabaseAdmin = await adminClient();
 
     const { data: seller, error: sellerError } = await supabaseAdmin
@@ -454,7 +455,7 @@ export type CategoryNode = CategoryRow & { children: CategoryNode[] };
 export const listAdminCategories = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .handler(async ({ context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "categories.manage");
     const { data, error } = await context.supabase
       .from("categories")
       .select("id, parent_id, slug, name, status, sort_order, image_url, gender, featured, seo_title, seo_description")
@@ -503,7 +504,7 @@ export const upsertCategory = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "categories.manage");
     const supabaseAdmin = await adminClient();
     if (data.parent_id) {
       if (data.id && data.parent_id === data.id) {
@@ -560,7 +561,7 @@ export const deleteCategory = createServerFn({ method: "POST" })
   .middleware(adminOnly)
   .inputValidator((data) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "categories.manage");
     const supabaseAdmin = await adminClient();
     const { count: childCount, error: childError } = await supabaseAdmin
       .from("categories")
@@ -607,7 +608,7 @@ export const reorderCategories = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "categories.manage");
     const supabaseAdmin = await adminClient();
     // V8 #36: reject unknown parent_ids BEFORE writing — a typo'd UUID would
     // otherwise silently orphan the category under a non-existent parent.
@@ -664,7 +665,7 @@ export const listAdminReviews = createServerFn({ method: "GET" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "reviews.manage");
     const from = (data.page - 1) * PAGE_SIZE;
     let query = context.supabase
       .from("reviews")
@@ -721,7 +722,7 @@ export const moderateReview = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "reviews.manage");
     const update = {
       moderation_status:
         data.decision === "approve" ? "approved" : data.decision === "hide" ? "hidden" : "rejected",
@@ -833,7 +834,7 @@ export const listAdminCoupons = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .inputValidator((data) => pageInput.parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "coupons.manage");
     const from = (data.page - 1) * PAGE_SIZE;
     const {
       data: rows,
@@ -890,7 +891,7 @@ export const upsertCoupon = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "coupons.manage");
     const supabaseAdmin = await adminClient();
 
     // Code is uppercase + unique platform-wide.
@@ -955,7 +956,7 @@ export const setCouponStatus = createServerFn({ method: "POST" })
     z.object({ id: z.string().uuid(), status: z.enum(["active", "inactive"]) }).parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "coupons.manage");
     const supabaseAdmin = await adminClient();
     const { error } = await supabaseAdmin
       .from("coupons")
@@ -972,7 +973,7 @@ export const deleteCoupon = createServerFn({ method: "POST" })
   .middleware(adminOnly)
   .inputValidator((data) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "coupons.manage");
     const supabaseAdmin = await adminClient();
     const { data: coupon } = await supabaseAdmin
       .from("coupons")
@@ -999,7 +1000,7 @@ export const deleteCoupon = createServerFn({ method: "POST" })
 export const listWilayas = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .handler(async ({ context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "shipping.manage");
     const { data, error } = await context.supabase
       .from("wilayas")
       .select("id, code, name, active")
@@ -1016,7 +1017,7 @@ export const listCommunes = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .inputValidator((data) => z.object({ wilayaId: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "shipping.manage");
     const { data: rows, error } = await context.supabase
       .from("communes")
       .select("id, wilaya_id, code, name, active")
@@ -1037,7 +1038,7 @@ export const listShippingRules = createServerFn({ method: "GET" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "shipping.manage");
     let query = context.supabase
       .from("shipping_rules")
       .select(
@@ -1072,7 +1073,7 @@ export const upsertShippingRule = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "shipping.manage");
     const supabaseAdmin = await adminClient();
 
     const { data: wilaya, error: wilayaError } = await supabaseAdmin
@@ -1147,7 +1148,7 @@ export const setShippingRuleEnabled = createServerFn({ method: "POST" })
   .middleware(adminOnly)
   .inputValidator((data) => z.object({ id: z.string().uuid(), enabled: z.boolean() }).parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "shipping.manage");
     const supabaseAdmin = await adminClient();
     const { error } = await supabaseAdmin
       .from("shipping_rules")
@@ -1170,7 +1171,7 @@ export const setWilayaActive = createServerFn({ method: "POST" })
     z.object({ wilayaId: z.string().uuid(), active: z.boolean() }).parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "shipping.manage");
     const supabaseAdmin = await adminClient();
     const { error } = await supabaseAdmin
       .from("wilayas")
@@ -1193,7 +1194,7 @@ export const setCommuneActive = createServerFn({ method: "POST" })
     z.object({ communeId: z.string().uuid(), active: z.boolean() }).parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "shipping.manage");
     const supabaseAdmin = await adminClient();
     const { error } = await supabaseAdmin
       .from("communes")
@@ -1244,7 +1245,7 @@ export const listSettlements = createServerFn({ method: "GET" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "settlements.manage");
     const from = (data.page - 1) * PAGE_SIZE;
     let query = context.supabase
       .from("seller_settlements")
@@ -1270,7 +1271,7 @@ export const settlementReference = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .inputValidator((data) => z.object({ sellerId: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "settlements.manage");
     const s = context.supabase;
 
     const { data: orders, error: ordersError } = await s
@@ -1319,7 +1320,7 @@ export const createSettlement = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "settlements.manage");
     const supabaseAdmin = await adminClient();
     const { data: seller, error: sellerError } = await supabaseAdmin
       .from("sellers")
@@ -1368,7 +1369,7 @@ export const updateSettlementStatus = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "settlements.manage");
     const supabaseAdmin = await adminClient();
     const { data: settlement, error: fetchError } = await supabaseAdmin
       .from("seller_settlements")
@@ -1486,7 +1487,7 @@ export const bulkModerateAdminProducts = createServerFn({ method: "POST" })
   .middleware(adminOnly)
   .inputValidator((data) => bulkModerateInput.parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "products.manage");
     const supabaseAdmin = await adminClient();
     const now = new Date().toISOString();
     const base = {
@@ -1559,7 +1560,7 @@ export const bulkSetProductStatus = createServerFn({ method: "POST" })
   .middleware(adminOnly)
   .inputValidator((data) => bulkStatusInput.parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "products.manage");
     const supabaseAdmin = await adminClient();
     const { data: rows, error } = await supabaseAdmin
       .from("products")
@@ -1589,7 +1590,7 @@ export const getSettlementProofUrl = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .inputValidator((data) => proofUrlInput.parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "settlements.manage");
     const supabaseAdmin = await adminClient();
     const { data: settlement, error } = await supabaseAdmin
       .from("seller_settlements")

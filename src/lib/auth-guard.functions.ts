@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+import { checkRateLimit, clearRateLimitBuckets, getClientIp } from "@/lib/rate-limit";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { SupportedLocale } from "@/lib/i18n";
 
 // ============================================================================
@@ -91,3 +92,25 @@ export function resolveLoginRateLimitMessage(
   if (typeof merged === "string" && merged.trim().length > 0) return merged;
   return LOGIN_RATE_LIMIT_FALLBACK_MESSAGES[locale] ?? LOGIN_RATE_LIMIT_FALLBACK_MESSAGES.en;
 }
+
+/**
+ * clearLoginAttempts — reset the brute-force buckets for the CALLER's own
+ * account after they prove ownership (successful sign-in or completed
+ * password reset). Call best-effort from the client; it never throws for a
+ * legitimately signed-in user.
+ *
+ * Security: the identifier comes from the verified JWT claims, never from
+ * client input, so a caller can only ever clear their OWN buckets — there is
+ * no bypass vector for anyone else's account.
+ */
+export const clearLoginAttempts = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const claims = (context as { claims?: { email?: unknown } }).claims;
+    const email = typeof claims?.email === "string" ? claims.email.trim().toLowerCase() : "";
+    if (email) {
+      clearRateLimitBuckets(`login-guard:short:${email}:`);
+      clearRateLimitBuckets(`login-guard:long:${email}:`);
+    }
+    return { cleared: true as const };
+  });

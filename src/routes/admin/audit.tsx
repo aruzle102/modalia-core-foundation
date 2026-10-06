@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { AdminGate } from "@/components/admin/AdminGate";
+import { SuperAdminGate } from "@/components/admin/SuperAdminGate";
 import { AdminShell } from "@/components/admin/AdminShell";
 import {
   AdminCard,
@@ -33,6 +34,7 @@ function AdminAuditPage() {
   const nav = getTranslations(locale).adminNav.items;
   return (
     <AdminGate>
+      <SuperAdminGate>
       <AdminShell
         title="Audit log"
         subtitle="Read-only record of administrative actions across the platform."
@@ -40,6 +42,7 @@ function AdminAuditPage() {
       >
         <AuditLogViewer />
       </AdminShell>
+      </SuperAdminGate>
     </AdminGate>
   );
 }

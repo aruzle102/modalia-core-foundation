@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Json } from "@/integrations/supabase/types";
 import { assertAdmin } from "@/lib/admin-auth";
+import { assertAdminPermission } from "@/lib/admin-permissions";
 import { storeCollectionSchema } from "@/lib/store-settings";
 
 const adminOnly = [requireSupabaseAuth] as const;
@@ -37,7 +38,7 @@ export const listAllCollections = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .inputValidator((data) => z.object({}).parse(data))
   .handler(async ({ context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
     const supabaseAdmin = await adminClient();
     const { data, error } = await supabaseAdmin
       .from("stores")

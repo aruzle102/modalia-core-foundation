@@ -3,7 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database, Json } from "@/integrations/supabase/types";
 import { emitSellerNotification } from "@/lib/notifications.functions";
-import { assertAdmin } from "@/lib/admin-auth";
+import { assertAdminPermission } from "@/lib/admin-permissions";
 
 type StoreRow = Database["public"]["Tables"]["stores"]["Row"];
 type SellerRow = Database["public"]["Tables"]["sellers"]["Row"];
@@ -37,7 +37,7 @@ export const getStoreProfile = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .inputValidator((data) => z.object({ storeId: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "stores.view");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const storeId = data.storeId;
 
@@ -204,7 +204,7 @@ export const updateStoreStatus = createServerFn({ method: "POST" })
     z.object({ storeId: z.string().uuid(), status: storeStatusSchema }).parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "stores.manage");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: store } = await supabaseAdmin
       .from("stores")

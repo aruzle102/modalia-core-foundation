@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Json } from "@/integrations/supabase/types";
 import { assertAdmin } from "@/lib/admin-auth";
+import { assertAdminPermission } from "@/lib/admin-permissions";
 import { rateLimitEndpoint } from "@/lib/rate-limit";
 
 const adminOnly = [requireSupabaseAuth] as const;
@@ -154,7 +155,7 @@ export const listSiteButtons = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .inputValidator((data) => z.object({ placement: z.enum(PLACEMENTS).optional() }).parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
     const supabaseAdmin = await adminClient();
     let q = supabaseAdmin.from("site_buttons").select("*").order("sort_order").order("created_at");
     if (data.placement) q = q.eq("placement", data.placement);
@@ -167,7 +168,7 @@ export const createSiteButton = createServerFn({ method: "POST" })
   .middleware(adminOnly)
   .inputValidator((data) => buttonInput.parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
     const err = validateDestination(data.action_type, data.destination);
     if (err) throw new Error(err);
     const supabaseAdmin = await adminClient();
@@ -191,7 +192,7 @@ export const updateSiteButton = createServerFn({ method: "POST" })
   .middleware(adminOnly)
   .inputValidator((data) => buttonInput.partial().extend({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
     const { id, ...patch } = data;
     const supabaseAdmin = await adminClient();
     if (patch.action_type || patch.destination) {
@@ -243,7 +244,7 @@ export const deleteSiteButton = createServerFn({ method: "POST" })
   .middleware(adminOnly)
   .inputValidator((data) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
     const supabaseAdmin = await adminClient();
     const { error } = await supabaseAdmin.from("site_buttons").delete().eq("id", data.id);
     if (error) throw new Error(error.message);

@@ -54,6 +54,7 @@ export const en = {
         ai: "AI",
         seo: "SEO",
         media: "Media",
+        team: "Team",
         settings: "Settings",
         security: "Security",
         auditLogs: "Audit Logs",

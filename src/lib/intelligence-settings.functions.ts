@@ -10,7 +10,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database, Json } from "@/integrations/supabase/types";
-import { assertAdmin } from "@/lib/admin-auth";
+import { assertAdminPermission } from "@/lib/admin-permissions";
 
 const adminOnly = [requireSupabaseAuth] as const;
 
@@ -124,7 +124,7 @@ export const getIntelligenceSettings = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .validator((data) => z.object({}).parse(data))
   .handler(async ({ context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "intelligence.manage");
     const sb = await adminClient();
     const { data, error } = await sb.from("intelligence_settings").select("*").eq("id", 1).maybeSingle();
     if (error) throw new Error("Could not load intelligence settings.");
@@ -149,7 +149,7 @@ export const updateIntelligenceSettings = createServerFn({ method: "POST" })
   .middleware(adminOnly)
   .validator((data) => updateInput.parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "intelligence.manage");
     const sb = await adminClient();
 
     const patch: Database["public"]["Tables"]["intelligence_settings"]["Update"] = {

@@ -75,6 +75,18 @@ export function checkRateLimit(key: string, limit: number, windowMs: number): vo
   }
 }
 
+/**
+ * Delete every bucket whose key starts with `prefix`.
+ * Used to reset a login brute-force bucket after the user proves ownership
+ * (successful sign-in or completed password reset) so a legitimate user is
+ * never stuck behind stale failed-attempt counts.
+ */
+export function clearRateLimitBuckets(prefix: string): void {
+  for (const key of buckets.keys()) {
+    if (key.startsWith(prefix)) buckets.delete(key);
+  }
+}
+
 const HOUR_MS = 60 * 60_000;
 
 /**

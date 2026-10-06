@@ -100,6 +100,36 @@ export const ALL_SELLER_PERMISSIONS: SellerPermission[] = [
 
 const DENIED = "Seller access denied.";
 
+/**
+ * Seller staff roles (V8 — user-approved). The owner is structural
+ * (sellers.owner_id): full permissions, immutable, never a staff row.
+ * Staff rows carry one of these roles as a preset over the 17 granular
+ * permissions; the permissions jsonb stays the enforcement source of truth.
+ */
+export type SellerStaffRole = "manager" | "staff" | "viewer";
+
+export const SELLER_STAFF_ROLES: readonly SellerStaffRole[] = ["manager", "staff", "viewer"];
+
+export const SELLER_ROLE_PRESETS: Record<SellerStaffRole, readonly SellerPermission[]> = {
+  // Manager: everything except managing the team itself.
+  manager: ALL_SELLER_PERMISSIONS.filter((p) => p !== "staff.manage"),
+  // Staff: day-to-day operations.
+  staff: [
+    "products.view",
+    "products.edit",
+    "products.publish",
+    "orders.view",
+    "orders.update",
+    "inventory.manage",
+    "customers.view",
+    "reviews.manage",
+    "support.manage",
+    "analytics.view",
+  ],
+  // Viewer: read-only.
+  viewer: ["products.view", "orders.view", "customers.view", "analytics.view", "finance.view"],
+};
+
 type SellerDb = SupabaseClient<Database>;
 
 /** Cookie carrying the raw support bearer token (set by the admin browser). */

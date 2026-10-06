@@ -14,8 +14,9 @@ import { browseCatalog, getStoreDirectory } from "@/lib/catalog.functions";
 import { parseQuery, intentSummary, type CatalogCategoryLike } from "@/lib/ai/query-parse";
 import { getLocale, getTranslations, localeDirections } from "@/lib/i18n";
 import { track } from "@/lib/analytics";
-import { pageHead } from "@/lib/seo";
+import { pageHead, pageHeadCopy, prefetchSeoSettings, seoRobotsFromHeadCtx } from "@/lib/seo";
 import type { SupportedLocale } from "@/config/platform";
+import { motionTw } from "@/lib/motion-tokens";
 
 const SORTS = ["newest", "price_asc", "price_desc"] as const;
 const VIEWS = ["", "categories", "stores"] as const;
@@ -51,6 +52,8 @@ type ShopSearch = {
   stores: string[];
   colors: string[];
   sizes: string[];
+  /** Canonical gender key (men|women|kids|unisex); undefined/"" = no filter. */
+  gender?: string | undefined;
   inStock: boolean;
   onSale: boolean;
 };
@@ -67,6 +70,7 @@ const shopQuery = (input: {
   stores: string[];
   colors: string[];
   sizes: string[];
+  gender?: string | undefined;
   inStock: boolean;
   onSale: boolean;
 }) =>
@@ -125,6 +129,7 @@ export const Route = createFileRoute("/shop")({
     stores: toStringArray(search["stores"]),
     colors: toStringArray(search["colors"]),
     sizes: toStringArray(search["sizes"]),
+    gender: typeof search["gender"] === "string" ? search["gender"] : "",
     inStock: toBoolean(search["inStock"]),
     onSale: toBoolean(search["onSale"]),
   }),
@@ -140,6 +145,7 @@ export const Route = createFileRoute("/shop")({
     stores: search.stores,
     colors: search.colors,
     sizes: search.sizes,
+    gender: search.gender,
     inStock: search.inStock,
     onSale: search.onSale,
   }),
@@ -147,17 +153,22 @@ export const Route = createFileRoute("/shop")({
     Promise.all([
       context.queryClient.ensureQueryData(shopQuery(deps)),
       context.queryClient.ensureQueryData(storeDirectoryQuery(deps.locale)),
+      prefetchSeoSettings(context.queryClient),
     ]),
   pendingComponent: ShopLoading,
   errorComponent: ShopError,
   notFoundComponent: ShopNotFound,
-  head: () =>
-    pageHead({
-      title: "Shop — Modalia",
-      description:
-        "Browse approved products from Modalia’s independent stores. Cash on delivery across Algeria.",
+  head: (context) => {
+    const rawSearch = (context as unknown as { search?: Record<string, unknown> }).search ?? {};
+    const locale = getLocale(typeof rawSearch["locale"] === "string" ? rawSearch["locale"] : undefined);
+    const copy = pageHeadCopy(locale, "shop");
+    return pageHead({
+      title: copy.title,
+      description: copy.description,
       path: "/shop",
-    }),
+      robots: seoRobotsFromHeadCtx(context),
+    });
+  },
   component: ShopPage,
 });
 
@@ -174,19 +185,24 @@ type SmartFilterPatch = {
   minPrice?: number | undefined;
   maxPrice?: number | undefined;
   colors?: string[];
+  sizes?: string[];
+  /** Canonical gender key (men|women|kids|unisex) from the NL parser. */
+  gender?: string;
 };
 
 /**
  * Smart search: interprets a natural-language query (ar/fr/en) with the
  * client-safe parser and offers to apply the detected category / price /
- * color signals as real shop filters. Nothing is ever applied silently —
- * the shopper reviews the "understood" summary and confirms.
+ * color / size / gender signals as real shop filters. Nothing is ever
+ * applied silently — the shopper reviews the "understood" summary and
+ * confirms.
  */
 function SmartSearchBanner({
   q,
   locale,
   categories,
   colors,
+  sizes,
   current,
   onApply,
 }: {
@@ -194,7 +210,15 @@ function SmartSearchBanner({
   locale: SupportedLocale;
   categories: Array<{ slug: string; name: string }>;
   colors: Array<{ slug: string; name: string }>;
-  current: { category: string; minPrice?: number | undefined; maxPrice?: number | undefined; colors: string[] };
+  sizes: Array<{ value: string; label: string }>;
+  current: {
+    category: string;
+    minPrice?: number | undefined;
+    maxPrice?: number | undefined;
+    colors: string[];
+    sizes: string[];
+    gender: string;
+  };
   onApply: (patch: SmartFilterPatch) => void;
 }) {
   const [dismissedFor, setDismissedFor] = useState<string | null>(null);
@@ -209,16 +233,26 @@ function SmartSearchBanner({
     const colorSlugs = intent.colors
       .map((key) => colors.find((c) => c.slug.toLowerCase() === key || c.slug.toLowerCase().includes(key))?.slug)
       .filter((slug): slug is string => slug !== undefined && !current.colors.includes(slug));
+    // Map parsed size words to REAL size values from the catalog facets.
+    const sizeValues = intent.sizes
+      .map((key) => sizes.find((s) => s.value.toLowerCase() === key.toLowerCase())?.value)
+      .filter((value): value is string => value !== undefined && !current.sizes.includes(value));
     const patch: SmartFilterPatch = {};
     if (intent.categorySlug && current.category !== intent.categorySlug) patch.category = intent.categorySlug;
     if (intent.minPrice !== null && current.minPrice !== intent.minPrice) patch.minPrice = intent.minPrice;
     if (intent.maxPrice !== null && current.maxPrice !== intent.maxPrice) patch.maxPrice = intent.maxPrice;
     if (colorSlugs.length) patch.colors = [...current.colors, ...colorSlugs];
+    if (sizeValues.length) patch.sizes = [...current.sizes, ...sizeValues];
+    // Gender reaches the DB as a structured p_gender filter (V8 #228) —
+    // category or ancestor chain carries the gender. Only the first parsed
+    // gender is used, matching the assistant drawer.
+    const parsedGender = intent.genders[0];
+    if (parsedGender && current.gender !== parsedGender) patch.gender = parsedGender;
     if (Object.keys(patch).length === 0) return null;
     const summary = intentSummary(intent, locale);
     if (!summary) return null;
     return { summary, patch };
-  }, [q, dismissedFor, locale, categories, colors, current]);
+  }, [q, dismissedFor, locale, categories, colors, sizes, current]);
 
   if (!suggestion) return null;
   return (
@@ -275,7 +309,7 @@ function CategoryTab({
       ) : null}
       <span
         aria-hidden
-        className={`absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-foreground transition-opacity duration-300 ${
+        className={`absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-foreground ${motionTw.transition.opacity} ${motionTw.duration.feedback} ${
           active ? "opacity-100" : "opacity-0"
         }`}
       />
@@ -294,7 +328,20 @@ function ShopPage() {
   const q = search.q.trim();
 
   useEffect(() => {
-    if (q) track("search", { metadata: { query: q.slice(0, 120) } });
+    if (q) {
+      // Attribute the search to the seller when the shopper filtered to a
+      // single store: the seller-scoped RPC picks these events up by
+      // entity_type='store' + the store's id (no RPC change needed).
+      const onlyStore =
+        search.stores.length === 1
+          ? storeDirectory.find((s) => s.slug === search.stores[0])
+          : undefined;
+      track("search", {
+        ...(onlyStore ? { entityType: "store" as const, entityId: onlyStore.id } : {}),
+        metadata: { query: q.slice(0, 120) },
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q]);
 
   const filterValues: ShopFilterValues = {
@@ -334,6 +381,8 @@ function ShopPage() {
         minPrice: patch.minPrice ?? previous.minPrice,
         maxPrice: patch.maxPrice ?? previous.maxPrice,
         colors: patch.colors ?? previous.colors,
+        sizes: patch.sizes ?? previous.sizes,
+        gender: patch.gender ?? previous.gender,
         page: 1,
       }),
     });
@@ -346,6 +395,16 @@ function ShopPage() {
     data.sizes.find((size) => size.value === value)?.label ?? value;
   const categoryName = (slug: string) =>
     data.categories.find((category) => category.slug === slug)?.name ?? slug;
+  const genderLabel = (gender: string) =>
+    gender === "men"
+      ? t.category.genderMen
+      : gender === "women"
+        ? t.category.genderWomen
+        : gender === "kids"
+          ? t.category.genderKids
+          : gender === "unisex"
+            ? t.category.genderUnisex
+            : gender;
 
   const chips: { key: string; label: string; clear: () => void }[] = [];
   if (q) chips.push({ key: "q", label: `“${q}”`, clear: () => navigate({ search: (p) => ({ ...p, q: "", page: 1 }) }) });
@@ -389,6 +448,12 @@ function ShopPage() {
       clear: () => updateFilters({ ...filterValues, sizes: filterValues.sizes.filter((s) => s !== value) }),
     }),
   );
+  if (search.gender)
+    chips.push({
+      key: "gender",
+      label: genderLabel(search.gender),
+      clear: () => navigate({ search: (p) => ({ ...p, gender: "", page: 1 }) }),
+    });
   if (search.inStock)
     chips.push({
       key: "instock",
@@ -414,6 +479,7 @@ function ShopPage() {
         stores: [],
         colors: [],
         sizes: [],
+        gender: "",
         inStock: false,
         onSale: false,
         page: 1,
@@ -474,11 +540,14 @@ function ShopPage() {
           locale={search.locale}
           categories={data.categories}
           colors={data.colors}
+          sizes={data.sizes}
           current={{
             category: search.category,
             minPrice: search.minPrice,
             maxPrice: search.maxPrice,
             colors: search.colors,
+            sizes: search.sizes,
+            gender: search.gender ?? "",
           }}
           onApply={applySmartFilters}
         />

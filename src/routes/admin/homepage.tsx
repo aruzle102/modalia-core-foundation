@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, Eye, Hammer, LayoutTemplate } from "lucide-react";
 import { AdminGate } from "@/components/admin/AdminGate";
 import { AdminShell } from "@/components/admin/AdminShell";
-import { AdminCard, Stat } from "@/components/admin/ui";
+import { AdminCard, EmptyState, StatRow, StatRows } from "@/components/admin/ui";
 import { Button } from "@/components/ui/button";
 import { getHomepageSections } from "@/lib/admin-homepage.functions";
 import { getLocale, getTranslations } from "@/lib/i18n";
@@ -57,11 +57,11 @@ function HomepageOverviewPage() {
           </>
         }
       >
-        <div className="grid gap-4 sm:grid-cols-3">
-          <Stat label="Sections" value={String(sections.length)} />
-          <Stat label="Enabled" value={String(enabled.length)} />
-          <Stat label="Disabled" value={String(sections.length - enabled.length)} />
-        </div>
+        <StatRows>
+          <StatRow label="Sections" value={String(sections.length)} />
+          <StatRow label="Enabled" value={String(enabled.length)} />
+          <StatRow label="Disabled" value={String(sections.length - enabled.length)} />
+        </StatRows>
 
         <AdminCard className="mt-6">
           <div className="flex items-center gap-3">
@@ -88,6 +88,17 @@ function HomepageOverviewPage() {
             <div className="h-10 animate-pulse rounded bg-muted" />
             <div className="h-10 animate-pulse rounded bg-muted" />
           </div>
+        ) : sectionsQuery.isError ? (
+          <AdminCard className="mt-6">
+            <EmptyState
+              title={t.common.loadError}
+              action={
+                <Button type="button" variant="outline" size="sm" onClick={() => sectionsQuery.refetch()}>
+                  {t.common.retry}
+                </Button>
+              }
+            />
+          </AdminCard>
         ) : sections.length > 0 ? (
           <AdminCard className="mt-6">
             <h2 className="mb-3 font-medium">Live sections</h2>

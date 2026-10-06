@@ -21,7 +21,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database, Json } from "@/integrations/supabase/types";
-import { assertAdmin } from "@/lib/admin-auth";
+import { assertAdminPermission } from "@/lib/admin-permissions";
 import {
   executeProductSave,
   saveProductSchema,
@@ -41,7 +41,7 @@ export const getAdminProductEditor = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .inputValidator((data) => z.object({ productId: uuid }).parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "products.view");
     const supabaseAdmin = await adminClient();
     const { data: product, error } = await supabaseAdmin
       .from("products")
@@ -65,7 +65,7 @@ export const getAdminProductEditor = createServerFn({ method: "GET" })
 export const getAdminEditorLists = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .handler(async ({ context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "products.view");
     const supabaseAdmin = await adminClient();
     const [categories, brands, colors] = await Promise.all([
       supabaseAdmin
@@ -105,7 +105,7 @@ export const saveAdminProduct = createServerFn({ method: "POST" })
   .middleware(adminOnly)
   .inputValidator((data) => adminSaveProductInput.parse(data))
   .handler(async ({ data, context }): Promise<{ productId: string }> => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "products.manage");
     const supabaseAdmin = await adminClient();
     const actorId = (context as { userId?: string } | null | undefined)?.userId ?? null;
 

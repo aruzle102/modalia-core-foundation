@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database, Json } from "@/integrations/supabase/types";
 import { assertAdmin } from "@/lib/admin-auth";
+import { assertAdminPermission } from "@/lib/admin-permissions";
 
 /**
  * Admin operations server functions (Super Admin OS, phase 3/8 — worker 1/5).
@@ -76,7 +77,7 @@ export const listAdminStores = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .inputValidator((data) => listStoresInput.parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "stores.view");
     const supabaseAdmin = await adminClient();
     const q = data.q ? sanitizeSearch(data.q) : "";
 
@@ -135,7 +136,7 @@ export const listAdminCustomers = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .inputValidator((data) => listCustomersInput.parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "customers.view");
     const supabaseAdmin = await adminClient();
     const q = data.q ? sanitizeSearch(data.q) : "";
 
@@ -198,7 +199,7 @@ export const listGuestCustomers = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .inputValidator((data) => z.object({ page: z.number().int().min(1).default(1) }).parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "customers.view");
     const supabaseAdmin = await adminClient();
     // Guest orders carry no customer_id; aggregate by contact details.
     const { data: orders, error } = await supabaseAdmin
@@ -260,7 +261,7 @@ export const listAdminWilayas = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .inputValidator((data) => z.object({}).parse(data))
   .handler(async ({ context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "shipping.manage");
     const supabaseAdmin = await adminClient();
     const [{ data: wilayas, error }, { data: communes }, { data: rules }] = await Promise.all([
       supabaseAdmin.from("wilayas").select("*").order("code"),
@@ -310,7 +311,7 @@ export const listAdminCommunes = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .inputValidator((data) => listCommunesInput.parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "shipping.manage");
     const supabaseAdmin = await adminClient();
     const q = data.q ? sanitizeSearch(data.q) : "";
 

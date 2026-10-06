@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import type { Database, Json } from "@/integrations/supabase/types";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { assertAdmin } from "@/lib/admin-auth";
+import { assertAdminPermission } from "@/lib/admin-permissions";
 
 /**
  * Admin Order Operations Center — server functions (Phase 1/4, Problem 2).
@@ -262,7 +262,7 @@ export const listAdminOrders = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .validator((data) => listAdminOrdersSchema.parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "orders.view");
 
     if (data.minTotal !== undefined && data.maxTotal !== undefined && data.minTotal > data.maxTotal) {
       throw new Error("Minimum total cannot be greater than maximum total.");
@@ -372,7 +372,7 @@ export const getAdminOrder = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .validator((data) => z.object({ orderId: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }): Promise<AdminOrderDetail | null> => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "orders.view");
 
     const orderResult = await context.supabase.from("orders").select("*").eq("id", data.orderId).maybeSingle();
     if (orderResult.error) throw new Error("Order could not be loaded.");
@@ -527,7 +527,7 @@ export const updateOrderStatus = createServerFn({ method: "POST" })
   .middleware(adminOnly)
   .validator((data) => updateOrderStatusSchema.parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "orders.manage");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const userId = actorId(context);
     const now = new Date().toISOString();
@@ -671,7 +671,7 @@ export const addOrderNote = createServerFn({ method: "POST" })
   .middleware(adminOnly)
   .validator((data) => z.object({ sellerOrderId: z.string().uuid(), body: z.string().trim().min(1).max(2000) }).parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "orders.manage");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const userId = actorId(context);
 
@@ -712,7 +712,7 @@ export const processReturn = createServerFn({ method: "POST" })
     z.object({ returnId: z.string().uuid(), decision: z.enum(["approve", "reject"]), note: z.string().trim().max(1000).optional() }).parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "orders.manage");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const userId = actorId(context);
     const now = new Date().toISOString();

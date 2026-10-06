@@ -351,10 +351,14 @@ export type Database = {
           discount_value: number
           ends_at: string | null
           id: string
+          max_discount_amount: number | null
+          min_order_amount: number | null
+          per_customer_limit: number | null
           seller_id: string | null
           starts_at: string | null
           status: string
           updated_at: string
+          usage_count: number
           usage_limit: number | null
         }
         Insert: {
@@ -364,10 +368,14 @@ export type Database = {
           discount_value: number
           ends_at?: string | null
           id?: string
+          max_discount_amount?: number | null
+          min_order_amount?: number | null
+          per_customer_limit?: number | null
           seller_id?: string | null
           starts_at?: string | null
           status?: string
           updated_at?: string
+          usage_count?: number
           usage_limit?: number | null
         }
         Update: {
@@ -377,10 +385,14 @@ export type Database = {
           discount_value?: number
           ends_at?: string | null
           id?: string
+          max_discount_amount?: number | null
+          min_order_amount?: number | null
+          per_customer_limit?: number | null
           seller_id?: string | null
           starts_at?: string | null
           status?: string
           updated_at?: string
+          usage_count?: number
           usage_limit?: number | null
         }
         Relationships: [
@@ -621,30 +633,74 @@ export type Database = {
           body: Json | null
           created_at: string
           id: string
+          is_admin: boolean
+          link: string | null
+          payload: Json
           read_at: string | null
+          seller_id: string | null
           title: Json
           type: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           body?: Json | null
           created_at?: string
           id?: string
+          is_admin?: boolean
+          link?: string | null
+          payload?: Json
           read_at?: string | null
+          seller_id?: string | null
           title: Json
           type: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           body?: Json | null
           created_at?: string
           id?: string
+          is_admin?: boolean
+          link?: string | null
+          payload?: Json
           read_at?: string | null
+          seller_id?: string | null
           title?: Json
           type?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
+      }
+      notification_preferences: {
+        Row: {
+          id: string
+          prefs: Json
+          seller_id: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          id?: string
+          prefs?: Json
+          seller_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          id?: string
+          prefs?: Json
+          seller_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_preferences_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       order_items: {
         Row: {
@@ -2067,6 +2123,7 @@ export type Database = {
           id: string
           last_name: string | null
           legal_name: string
+          must_reset_password: boolean
           owner_id: string
           phone: string | null
           status: Database["public"]["Enums"]["store_status"]
@@ -2082,6 +2139,7 @@ export type Database = {
           id?: string
           last_name?: string | null
           legal_name: string
+          must_reset_password?: boolean
           owner_id: string
           phone?: string | null
           status?: Database["public"]["Enums"]["store_status"]
@@ -2097,6 +2155,7 @@ export type Database = {
           id?: string
           last_name?: string | null
           legal_name?: string
+          must_reset_password?: boolean
           owner_id?: string
           phone?: string | null
           status?: Database["public"]["Enums"]["store_status"]
@@ -2519,6 +2578,9 @@ export type Database = {
         | "flash_sale"
         | "stores"
         | "recommendations"
+        | "editorial"
+        | "blog"
+        | "app_banner"
       order_status:
         | "pending"
         | "confirmed"
@@ -2538,8 +2600,10 @@ export type Database = {
       seller_account_status: "pending" | "active" | "suspended" | "disabled"
       seller_application_status:
         | "pending"
+        | "under_review"
         | "approved"
         | "rejected"
+        | "converted"
         | "suspended"
       seller_order_status:
         | "pending"

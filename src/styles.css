@@ -64,6 +64,8 @@
   --color-ink: var(--ink);
   --color-surface: var(--surface);
   --color-surface-raised: var(--surface-raised);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
 }
 
 :root {
@@ -90,6 +92,9 @@
   --ink: oklch(0.12 0.004 95);
   --surface: oklch(0.975 0.002 95);
   --surface-raised: oklch(1 0 0);
+  /* Brand: refined bronze — warm, premium, used sparingly for accents, sale badges, key highlights. */
+  --brand: oklch(0.52 0.11 78);
+  --brand-foreground: oklch(0.99 0.001 95);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -162,10 +167,10 @@
 
 @utility text-display {
   font-family: var(--font-display);
-  font-size: 2.5rem;
-  line-height: 1.1;
-  font-weight: 600;
-  letter-spacing: 0;
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  line-height: 1.05;
+  font-weight: 650;
+  letter-spacing: -0.02em;
 }
 
 @utility text-h3 {
@@ -173,13 +178,14 @@
   font-size: 1.125rem;
   line-height: 1.35;
   font-weight: 600;
+  letter-spacing: -0.01em;
 }
 @utility text-h2 {
   font-family: var(--font-display);
-  font-size: 1.75rem;
-  line-height: 1.25;
-  font-weight: 600;
-  letter-spacing: 0;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  line-height: 1.2;
+  font-weight: 650;
+  letter-spacing: -0.015em;
 }
 @utility text-body {
   font-size: 1rem;
@@ -366,6 +372,19 @@
 .hero-copy > *:nth-child(4) {
   animation-delay: 0.27s;
 }
+/* Staggered entrance for the rebuilt editorial hero. */
+.hero-line {
+  animation: hero-entrance 0.9s cubic-bezier(0.16, 0.8, 0.24, 1) both;
+}
+/* Quiet textured fallback when WebGL is unavailable: fine grain over ink. */
+.hero-fallback {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(120% 90% at 80% 10%, rgba(255, 255, 255, 0.055), transparent 55%),
+    radial-gradient(100% 80% at 10% 90%, rgba(255, 255, 255, 0.03), transparent 50%),
+    var(--color-ink);
+}
 
 @media (prefers-reduced-motion: reduce) {
   .reveal {
@@ -379,7 +398,8 @@
     pointer-events: auto;
     transition: none;
   }
-  .hero-copy > * {
+  .hero-copy > *,
+  .hero-line {
     animation: none;
   }
 }

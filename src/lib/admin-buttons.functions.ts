@@ -108,25 +108,6 @@ export const listSiteButtons = createServerFn({ method: "GET" })
     return { buttons: (rows ?? []) as SiteButton[] };
   });
 
-/** Public: active buttons for a placement (used by the storefront). */
-export const getActiveButtons = createServerFn({ method: "GET" })
-  .inputValidator((data) =>
-    z.object({ placement: z.enum(PLACEMENTS), locale: z.enum(["ar", "fr", "en"]).optional() }).parse(data),
-  )
-  .handler(async ({ data }) => {
-    const supabaseAdmin = await adminClient();
-    let q = supabaseAdmin
-      .from("site_buttons")
-      .select("id,label,action_type,destination,placement,style,sort_order,locale")
-      .eq("is_active", true)
-      .eq("placement", data.placement)
-      .order("sort_order");
-    if (data.locale) q = q.or(`locale.is.null,locale.eq.${data.locale}`);
-    const { data: rows, error } = await q;
-    if (error) throw new Error(error.message);
-    return { buttons: (rows ?? []) as SiteButton[] };
-  });
-
 export const createSiteButton = createServerFn({ method: "POST" })
   .middleware(adminOnly)
   .inputValidator((data) => buttonInput.parse(data))

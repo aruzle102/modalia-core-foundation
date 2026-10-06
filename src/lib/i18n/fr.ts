@@ -54,6 +54,7 @@ export const fr = {
         ai: "IA",
         seo: "SEO",
         media: "Médias",
+        team: "Équipe",
         settings: "Paramètres",
         security: "Sécurité",
         auditLogs: "Journaux d'audit",

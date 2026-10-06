@@ -61,6 +61,7 @@ export function ProductViewer3D({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const resetRef = useRef<() => void>(() => undefined);
+  const keysRef = useRef<((event: React.KeyboardEvent) => void) | null>(null);
   const [status, setStatus] = useState<ViewerStatus>("loading");
   const [attempt, setAttempt] = useState(0);
   // SSR-safe lazy initializers: `false`/`null` on the server, real values on the client.
@@ -304,8 +305,39 @@ export function ProductViewer3D({
         radius = home.radius;
         markInteraction();
       };
+      // Keyboard orbit: arrow keys rotate when the canvas is focused.
+      keysRef.current = (event: React.KeyboardEvent) => {
+        const step = 0.14;
+        let handled = true;
+        switch (event.key) {
+          case "ArrowLeft":
+            theta += step;
+            break;
+          case "ArrowRight":
+            theta -= step;
+            break;
+          case "ArrowUp":
+            phi = THREE.MathUtils.clamp(phi - step, 0.2, 1.62);
+            break;
+          case "ArrowDown":
+            phi = THREE.MathUtils.clamp(phi + step, 0.2, 1.62);
+            break;
+          case "Home":
+            theta = home.theta;
+            phi = home.phi;
+            radius = home.radius;
+            break;
+          default:
+            handled = false;
+        }
+        if (handled) {
+          event.preventDefault();
+          markInteraction();
+        }
+      };
       cleanupFns.push(() => {
         resetRef.current = () => undefined;
+        keysRef.current = null;
       });
 
       // --- Render loop with idle auto-rotate (never with reduced motion). ---
@@ -379,9 +411,11 @@ export function ProductViewer3D({
     >
       <canvas
         ref={canvasRef}
-        className="absolute inset-0 block h-full w-full touch-none"
+        tabIndex={0}
+        onKeyDown={(event) => keysRef.current?.(event)}
+        className="absolute inset-0 block h-full w-full touch-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-foreground/40"
         style={{ cursor: status === "ready" ? "grab" : "default" }}
-        aria-label="عارض المنتج ثلاثي الأبعاد — اسحب للتدوير"
+        aria-label="عارض المنتج ثلاثي الأبعاد — اسحب للتدوير، أو ركّز ثم استخدم أسهم لوحة المفاتيح"
       />
 
       {status === "loading" && (

@@ -20,6 +20,8 @@ import { DiscoverySkeleton, ProductCard } from "@/components/marketplace/discove
 import { OfficialStoreBadge, VerifiedSellerBadge } from "@/components/marketplace/StoreBadges";
 import { SiteFooter, SiteHeader } from "@/components/layout/site-shell";
 import { useReveal } from "@/hooks/use-reveal";
+import { useParallax } from "@/hooks/use-parallax";
+import { Magnetic, Marquee, TextReveal, ImageReveal } from "@/components/motion";
 import {
   getDiscoveryData,
   type CatalogProduct,
@@ -168,6 +170,11 @@ function Hero({
   // everything else keeps the quiet editorial fallback.
   const showWebGL = (tier === "high" || tier === "mid") && webgl && !reducedMotion;
   const featured = products.find((p) => p.imagePath);
+  // Real product imagery for the 3D showcase: first 4 products with images.
+  const showcaseProducts = products
+    .filter((p) => p.imagePath)
+    .slice(0, 4)
+    .map((p) => ({ imagePath: p.imagePath as string, name: p.name, slug: p.slug }));
   const shopSearch: ShopSearch = { locale, q: "", category: "", sort: "newest", page: 1, focus: "", view: "", brands: [], stores: [], colors: [], sizes: [], inStock: false, onSale: false };
   return (
     <section className="relative overflow-hidden bg-ink text-white">
@@ -177,6 +184,7 @@ function Hero({
             className="absolute inset-0"
             locale={locale}
             quality={tier === "high" ? "full" : "lite"}
+            products={showcaseProducts}
           />
         </Suspense>
       ) : (
@@ -207,16 +215,18 @@ function Hero({
             className="hero-line mt-10 flex flex-wrap items-center gap-x-8 gap-y-4"
             style={{ animationDelay: "0.46s" }}
           >
-            <Button
-              asChild
-              size="lg"
-              className="border-0 bg-white px-8 text-neutral-900 hover:bg-neutral-200"
-            >
-              <Link to="/shop" search={shopSearch}>
-                {t.shell.explore}
-                <ArrowRight className="rtl:rotate-180" />
-              </Link>
-            </Button>
+            <Magnetic strength={0.25}>
+              <Button
+                asChild
+                size="lg"
+                className="border-0 bg-white px-8 text-neutral-900 hover:bg-neutral-200"
+              >
+                <Link to="/shop" search={shopSearch}>
+                  {t.shell.explore}
+                  <ArrowRight className="rtl:rotate-180" />
+                </Link>
+              </Button>
+            </Magnetic>
             <Link
               to="/shop"
               search={{ ...shopSearch, onSale: true }}
@@ -382,6 +392,26 @@ function TrustStrip({ copy }: { copy: HomeCopy }) {
   );
 }
 
+/** Scrolling brand-values ticker: the same real trust facts as the static
+    strip below, in an editorial display treatment. No invented claims. */
+function TrustMarquee({ copy }: { copy: HomeCopy }) {
+  return (
+    <div className="overflow-hidden border-b border-white/10 bg-ink py-5">
+      <Marquee speed="slow">
+        {copy.trust.map((item) => (
+          <span
+            key={item.label}
+            className="mx-7 inline-flex items-center gap-7 whitespace-nowrap font-display text-xl font-semibold tracking-tight text-white/85 sm:text-2xl"
+          >
+            {item.label}
+            <span className="size-1.5 shrink-0 rounded-full bg-brand" aria-hidden />
+          </span>
+        ))}
+      </Marquee>
+    </div>
+  );
+}
+
 /** Editorial category discovery: asymmetric typographic grid, mobile-first. */
 function CategoryGrid({
   categories,
@@ -488,11 +518,11 @@ function EditorialSection({
       <div className="-mx-4 sm:-mx-6 lg:-mx-8">
         {image ? (
           <section className="relative flex min-h-[70svh] items-end overflow-hidden bg-ink">
-            <img
+            <ImageReveal
               src={image}
-              alt={imageAlt || section.title || undefined}
-              loading="lazy"
-              className="absolute inset-0 h-full w-full object-cover"
+              alt={imageAlt || section.title || ""}
+              aspect=""
+              className="absolute inset-0"
             />
             <div
               className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent"
@@ -503,9 +533,11 @@ function EditorialSection({
                 <span className="h-px w-8 bg-white/40" aria-hidden />
                 {copy.editorialEyebrow}
               </p>
-              <h2 className="mt-4 max-w-3xl font-display text-[clamp(2rem,5.5vw,4rem)] font-semibold leading-[1.05] tracking-tight text-white">
-                {section.title}
-              </h2>
+              <TextReveal
+                as="h2"
+                text={section.title || ""}
+                className="mt-4 max-w-3xl font-display text-[clamp(2rem,5.5vw,4rem)] font-semibold leading-[1.05] tracking-tight text-white"
+              />
               {section.subtitle ? (
                 <p className="mt-4 max-w-xl text-body leading-relaxed text-white/75">
                   {section.subtitle}
@@ -523,9 +555,11 @@ function EditorialSection({
         ) : (
           <section className="border-y border-border bg-card px-4 py-16 text-center sm:py-20">
             <p className="text-eyebrow text-muted-foreground">{copy.editorialEyebrow}</p>
-            <h2 className="mx-auto mt-3 max-w-3xl font-display text-[clamp(2rem,5.5vw,4rem)] font-semibold leading-[1.05] tracking-tight text-foreground">
-              {section.title}
-            </h2>
+            <TextReveal
+              as="h2"
+              text={section.title || ""}
+              className="mx-auto mt-3 max-w-3xl font-display text-[clamp(2rem,5.5vw,4rem)] font-semibold leading-[1.05] tracking-tight text-foreground"
+            />
             {section.subtitle ? (
               <p className="mx-auto mt-4 max-w-xl text-body leading-relaxed text-muted-foreground">
                 {section.subtitle}
@@ -798,6 +832,8 @@ function FlashSaleSection({
   const startsAt = contentDate(content["starts_at"]);
   const endsAt = contentDate(content["ends_at"]);
   const [now, setNow] = useState(() => Date.now());
+  // Subtle scroll parallax on the sale band background.
+  const bandRef = useParallax<HTMLElement>(0.15);
 
   useEffect(() => {
     const id = window.setInterval(() => setNow(Date.now()), 1000);
@@ -819,7 +855,7 @@ function FlashSaleSection({
   return (
     <Reveal>
       <div className="-mx-4 sm:-mx-6 lg:-mx-8">
-        <section className="overflow-hidden bg-ink text-primary-foreground">
+        <section ref={bandRef} className="overflow-hidden bg-ink text-primary-foreground">
           <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 lg:grid-cols-[1fr_auto] lg:items-center lg:px-8 lg:py-20">
             <div>
               <p className="flex items-center gap-3 text-eyebrow tracking-[0.18em] text-white/50">
@@ -1414,6 +1450,7 @@ function HomePage() {
       <SiteHeader locale={locale} t={t} />
       <main id="main-content" tabIndex={-1}>
         <Hero locale={locale} hero={hero} copy={copy} products={data.products} />
+        <TrustMarquee copy={copy} />
         <TrustStrip copy={copy} />
 
         <div className="mx-auto max-w-7xl space-y-16 px-4 py-14 sm:space-y-24 sm:px-6 sm:py-20 lg:px-8">

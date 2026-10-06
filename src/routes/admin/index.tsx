@@ -8,6 +8,7 @@ import {
   LayoutGrid,
   Package,
   PackageMinus,
+  Plus,
   RefreshCw,
   ShieldCheck,
   Truck,
@@ -257,13 +258,25 @@ function DashboardContent({ locale }: { locale: Locale }) {
     | { key: string; icon: LucideIcon; label: string; to: "/admin/applications"; search: { q: string; status: string; page: number; application: string } }
     | { key: string; icon: LucideIcon; label: string; to: "/admin/products"; search: { q: string; moderation: string; status: string; sellerId: string; page: number; create: string } }
     | { key: string; icon: LucideIcon; label: string; to: "/admin/settlements"; search: { status: string; sellerId: string; page: number } }
-    | { key: string; icon: LucideIcon; label: string; to: "/admin/homepage"; search: { locale: SupportedLocale; create: string } };
+    | { key: string; icon: LucideIcon; label: string; to: "/admin/homepage/builder"; search: { locale: SupportedLocale; create: string } };
   const quickActions: Array<QuickAction> = [
     { key: "orders", icon: ClipboardList, label: s.reviewOrders, to: "/admin/orders", search: { q: "", status: "", sellerId: "", wilaya: "", paymentMethod: "", minTotal: "", maxTotal: "", from: "", to: "", page: 1 } },
     { key: "applications", icon: Users, label: s.reviewApplications, to: "/admin/applications", search: { q: "", status: "all", page: 1, application: "" } },
     { key: "products", icon: Package, label: s.moderateProducts, to: "/admin/products", search: { q: "", moderation: "pending", status: "all", sellerId: "all", page: 1, create: "" } },
     { key: "settlements", icon: Wallet, label: s.reviewSettlements, to: "/admin/settlements", search: { status: "all", sellerId: "all", page: 1 } },
-    { key: "homepage", icon: LayoutGrid, label: s.homepage, to: "/admin/homepage", search: { locale, create: "" } },
+    { key: "homepage", icon: LayoutGrid, label: s.homepage, to: "/admin/homepage/builder", search: { locale, create: "" } },
+  ];
+
+  type CreateAction =
+    | { key: string; icon: LucideIcon; label: string; to: "/admin/products"; search: { q: string; moderation: string; status: string; sellerId: string; page: number; create: string } }
+    | { key: string; icon: LucideIcon; label: string; to: "/admin/sellers"; search: { q: string; status: string; page: number; create: string } }
+    | { key: string; icon: LucideIcon; label: string; to: "/admin/stores"; search: { q: string; page: number; create: string } }
+    | { key: string; icon: LucideIcon; label: string; to: "/admin/coupons"; search: { q: string; page: number; create: string } };
+  const createActions: Array<CreateAction> = [
+    { key: "create-product", icon: Plus, label: "Create Product", to: "/admin/products", search: { q: "", moderation: "all", status: "all", sellerId: "all", page: 1, create: "product" } },
+    { key: "create-seller", icon: Plus, label: "Create Seller", to: "/admin/sellers", search: { q: "", status: "all", page: 1, create: "seller" } },
+    { key: "create-store", icon: Plus, label: "Create Store", to: "/admin/stores", search: { q: "", page: 1, create: "store" } },
+    { key: "create-coupon", icon: Plus, label: "Create Coupon", to: "/admin/coupons", search: { q: "", page: 1, create: "coupon" } },
   ];
 
   const activityLogs = (activity.data?.logs ?? []).slice(0, 8);
@@ -389,6 +402,18 @@ function DashboardContent({ locale }: { locale: Locale }) {
         <div className="lg:col-span-2">
           <h2 className="mb-4 text-h3">{s.quickActions}</h2>
           <div className="grid gap-3">
+            {createActions.map((action) => (
+              <Link
+                key={action.key}
+                to={action.to}
+                search={action.search}
+                className="flex items-center gap-3 border border-primary/30 bg-primary/5 px-4 py-3 transition-colors hover:border-primary/60 hover:bg-primary/10"
+              >
+                <action.icon className="size-5 shrink-0 text-primary" aria-hidden />
+                <span className="flex-1 text-small font-medium">{action.label}</span>
+                <ChevronRight className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+              </Link>
+            ))}
             {quickActions.map((action) => (
               <Link
                 key={action.key}

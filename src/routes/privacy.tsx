@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Cookie, Eye, Lock, Share2, UserCheck } from "lucide-react";
 import { SiteFooter, SiteHeader } from "@/components/layout/site-shell";
 import { getLocale, getTranslations, localeDirections } from "@/lib/i18n";
-import { canonicalUrl } from "@/lib/seo";
+import { canonicalUrl, prefetchSeoSettings, seoRobotsFromHeadCtx } from "@/lib/seo";
 import type { SupportedLocale } from "@/config/platform";
 
 type PrivacySection = { title: string; paragraphs: string[]; bullets?: string[] };
@@ -207,7 +207,9 @@ export const Route = createFileRoute("/privacy")({
   validateSearch: (search: Record<string, unknown>) => ({
     locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined),
   }),
+  loader: ({ context }) => prefetchSeoSettings(context.queryClient),
   head: (context) => {
+    const robots = seoRobotsFromHeadCtx(context);
     const rawSearch = (context as unknown as { search?: Record<string, unknown> }).search ?? {};
     const locale = getLocale(
       typeof rawSearch["locale"] === "string" ? rawSearch["locale"] : undefined,
@@ -221,6 +223,7 @@ export const Route = createFileRoute("/privacy")({
         { property: "og:description", content: c.metaDescription },
         { property: "og:type", content: "website" },
         { name: "twitter:card", content: "summary_large_image" },
+        ...(robots ? [{ name: "robots", content: robots }] : []),
       ],
       links: [{ rel: "canonical", href: canonicalUrl("/privacy") }],
     };

@@ -75,7 +75,7 @@ function SecurityPage() {
                 <EmptyState title="No super admins found" text="Nobody currently holds the super_admin role." />
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full min-w-[520px] text-left text-small">
+                  <table className="w-full min-w-[520px] text-start text-small">
                     <thead>
                       <tr className="border-b border-border text-caption text-muted-foreground">
                         <th className="px-3 py-2 font-medium">Name</th>
@@ -89,7 +89,7 @@ function SecurityPage() {
                           <td className="px-3 py-3 font-medium">{a.display_name ?? "—"}</td>
                           <td className="px-3 py-3 font-mono text-caption">{a.user_id.slice(0, 8)}…</td>
                           <td className="px-3 py-3 text-caption text-muted-foreground">
-                            {fmtDateTime(a.created_at)}
+                            {fmtDateTime(a.created_at, locale)}
                           </td>
                         </tr>
                       ))}
@@ -115,7 +115,7 @@ function SecurityPage() {
                           <p className="text-caption text-muted-foreground">{e.resource}</p>
                         ) : null}
                       </div>
-                      <p className="text-caption text-muted-foreground">{fmtDateTime(e.created_at)}</p>
+                      <p className="text-caption text-muted-foreground">{fmtDateTime(e.created_at, locale)}</p>
                     </li>
                   ))}
                 </ul>

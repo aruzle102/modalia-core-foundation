@@ -14,6 +14,7 @@
  */
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireSeller, type SellerContext } from "@/lib/seller-auth";
 import { pickLocalizedName } from "@/lib/names";
@@ -72,6 +73,33 @@ async function sellerGuard(context: any): Promise<SellerContext> {
 }
 
 const AGG_LIMIT = 50000;
+
+type RpcResult = { data: unknown; error: { message?: string } | null };
+
+/** Call a Postgres RPC that is not (yet) in the generated Supabase types. */
+async function callRpc(client: SupabaseClient, name: string, args: Record<string, unknown>): Promise<RpcResult> {
+  const rpc = client.rpc as unknown as (n: string, a: Record<string, unknown>) => Promise<RpcResult>;
+  return rpc(name, args);
+}
+
+/**
+ * True when sellers.onboarded_at is set (Worker A migration + types.ts).
+ * A missing column/row reads as null → callers treat it as "not onboarded",
+ * so the onboarding nudge stays visible rather than silently disappearing.
+ */
+async function fetchOnboardedFlag(supabase: SupabaseClient, sellerId: string): Promise<boolean | null> {
+  try {
+    const { data, error } = await supabase
+      .from("sellers")
+      .select("onboarded_at")
+      .eq("id", sellerId)
+      .maybeSingle();
+    if (error || !data) return null;
+    return data.onboarded_at != null;
+  } catch {
+    return null;
+  }
+}
 
 /* --------------------------------- row types -------------------------------- */
 
@@ -169,6 +197,13 @@ export type SellerOverviewResult = {
   kpis: SellerKpis;
   /** Up to 8 lowest-stock variants for this seller, lowest quantity first. */
   lowStockAlerts: SellerLowStockAlert[];
+  /**
+   * True when sellers.onboarded_at is set. Worker A adds the column via
+   * migration + types.ts; until then it is read through a defensive
+   * projection (see fetchOnboardedFlag) and a missing/unknown column reads as
+   * false (not onboarded), so the onboarding nudge stays visible.
+   */
+  onboarded: boolean;
   diagnostics: TableDiagnostic[];
 };
 
@@ -198,7 +233,7 @@ export const getSellerOverview = createServerFn({ method: "GET" })
     const sellerId = seller.sellerId;
     const diagnostics: TableDiagnostic[] = [];
 
-    const [orders, settlements, inventoryRows, productsCount] = await Promise.all([
+    const [orders, settlements, inventoryRows, productsCount, onboardedFlag] = await Promise.all([
       fetchTable<SellerOrderRow>(
         "seller_orders:overview",
         diagnostics,
@@ -231,6 +266,7 @@ export const getSellerOverview = createServerFn({ method: "GET" })
         diagnostics,
         supabase.from("products").select("*", { count: "exact", head: true }).eq("seller_id", sellerId),
       ),
+      fetchOnboardedFlag(supabase, sellerId),
     ]);
 
     let totalDeliveredSales = 0;
@@ -302,6 +338,139 @@ export const getSellerOverview = createServerFn({ method: "GET" })
         settledAmount,
       },
       lowStockAlerts: lowStockAlerts.slice(0, 8),
+      onboarded: onboardedFlag ?? false,
+      diagnostics,
+    };
+  });
+
+/* --------------------------------- today stats ------------------------------- */
+
+/**
+ * "Today" snapshot for the dashboard home (Section 23, V8).
+ *
+ * The day boundary is the UTC calendar day (seller timezone-agnostic by
+ * design — documented here and in the UI subtitle). Every figure is computed
+ * from real rows:
+ * - todaySales / todayDeliveredCount / todayOrdersCount: from seller_orders
+ *   created since today's 00:00 UTC.
+ * - storeViews / productViews: counted from the seller-scoped
+ *   `seller_analytics_events` RPC (same isolation contract as
+ *   getSellerAnalytics in analytics.functions.ts), filtered to the UTC day.
+ *   When the RPC fails or the tracking pipeline records nothing for this
+ *   store, viewsMeasurable is false and the UI renders an honest
+ *   "not tracked yet" empty state instead of inventing numbers.
+ * - conversionRate: distinct non-cancelled seller_orders today ÷ product
+ *   views today × 100. Null (omitted) unless views are measurable and
+ *   productViews > 0.
+ */
+export type SellerTodayStats = {
+  /** UTC calendar date (YYYY-MM-DD) this snapshot covers. */
+  todayIso: string;
+  /** SUM(subtotal + shipping_total) of delivered seller_orders created today (UTC). */
+  todaySales: number;
+  /** Count of delivered seller_orders created today (UTC). */
+  todayDeliveredCount: number;
+  /** Count of non-cancelled seller_orders created today (UTC). */
+  todayOrdersCount: number;
+  /** store_view events today (UTC); null when view tracking isn't measurable. */
+  storeViews: number | null;
+  /** product_view events today (UTC); null when view tracking isn't measurable. */
+  productViews: number | null;
+  /** False when the analytics RPC failed — the UI must not invent numbers. */
+  viewsMeasurable: boolean;
+  /** Non-cancelled orders ÷ product views × 100; null unless measurable and productViews > 0. */
+  conversionRate: number | null;
+  diagnostics: TableDiagnostic[];
+};
+
+type TodayOrderRow = {
+  status: string;
+  subtotal: number | string;
+  shipping_total: number | string;
+  created_at: string;
+};
+
+type AnalyticsEventLite = {
+  event_type: string;
+  anon_id: string;
+  created_at: string;
+};
+
+export const getSellerTodayStats = createServerFn({ method: "GET" })
+  .middleware(sellerOnly)
+  .handler(async ({ context }): Promise<SellerTodayStats> => {
+    const seller = await sellerGuard(context);
+    const supabase = context.supabase as SupabaseClient;
+    const sellerId = seller.sellerId;
+    const diagnostics: TableDiagnostic[] = [];
+
+    const now = new Date();
+    const todayIso = now.toISOString().slice(0, 10);
+    const dayStartIso = `${todayIso}T00:00:00.000Z`;
+
+    const [todayOrders, rpcResult] = await Promise.all([
+      fetchTable<TodayOrderRow>(
+        "seller_orders:today",
+        diagnostics,
+        supabase
+          .from("seller_orders")
+          .select("status,subtotal,shipping_total,created_at")
+          .eq("seller_id", sellerId)
+          .gte("created_at", dayStartIso)
+          .limit(AGG_LIMIT),
+      ),
+      callRpc(supabase, "seller_analytics_events", { p_days: 1 }),
+    ]);
+
+    let todaySales = 0;
+    let todayDeliveredCount = 0;
+    let todayOrdersCount = 0;
+    for (const o of todayOrders) {
+      if (o.status === "cancelled") continue;
+      todayOrdersCount += 1;
+      if (o.status === "delivered") {
+        todaySales += num(o.subtotal) + num(o.shipping_total);
+        todayDeliveredCount += 1;
+      }
+    }
+
+    let storeViews: number | null = null;
+    let productViews: number | null = null;
+    let viewsMeasurable = false;
+    if (!rpcResult.error) {
+      const events = (rpcResult.data ?? []) as AnalyticsEventLite[];
+      let store = 0;
+      let product = 0;
+      for (const e of events) {
+        if ((e.created_at ?? "") < dayStartIso) continue;
+        if (e.event_type === "store_view") store += 1;
+        else if (e.event_type === "product_view") product += 1;
+      }
+      storeViews = store;
+      productViews = product;
+      viewsMeasurable = true;
+    }
+    const rpcDiagnostic: TableDiagnostic = rpcResult.error
+      ? { table: "analytics_events:today", ok: false, message: rpcResult.error.message ?? "View RPC failed" }
+      : { table: "analytics_events:today", ok: true };
+    diagnostics.push(rpcDiagnostic);
+
+    const conversionRate =
+      viewsMeasurable && (productViews ?? 0) > 0
+        ? (todayOrdersCount / (productViews as number)) * 100
+        : null;
+
+    diagnostics.sort((a, b) => a.table.localeCompare(b.table));
+
+    return {
+      todayIso,
+      todaySales,
+      todayDeliveredCount,
+      todayOrdersCount,
+      storeViews,
+      productViews,
+      viewsMeasurable,
+      conversionRate,
       diagnostics,
     };
   });

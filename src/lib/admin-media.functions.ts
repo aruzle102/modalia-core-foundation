@@ -76,9 +76,10 @@ const altTextSchema = z
 
 /** `<sellerId>/products/<productId>/<uuid>.<ext>` — rejects path games. */
 function parseManagedPath(path: string): { sellerId: string; productId: string } | null {
-  const m = /^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\/products\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\/[0-9a-f-]{1,64}\.(jpg|jpeg|png|webp|gif|glb|gltf)$/i.exec(
-    path.trim(),
-  );
+  const m =
+    /^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\/products\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\/[0-9a-f-]{1,64}\.(jpg|jpeg|png|webp|gif|glb|gltf)$/i.exec(
+      path.trim(),
+    );
   if (!m) return null;
   return { sellerId: m[1]!, productId: m[2]! };
 }
@@ -265,51 +266,59 @@ export type AdminProductMedia = {
 export const listProductMedia = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .inputValidator((data) => z.object({ productId: uuid }).parse(data))
-  .handler(async ({ data, context }): Promise<{ product: { id: string; name: Json; slug: string }; media: AdminProductMedia[] }> => {
-    await assertAdmin(context);
-    const supabaseAdmin = await adminClient();
-    const { data: product, error: pError } = await supabaseAdmin
-      .from("products")
-      .select("id, name, slug")
-      .eq("id", data.productId)
-      .maybeSingle();
-    if (pError || !product) throw new Error("Product not found.");
-    const { data: rows, error } = await supabaseAdmin
-      .from("product_images")
-      .select("id, storage_path, alt_text, is_primary, sort_order, media_type")
-      .eq("product_id", data.productId)
-      .order("sort_order", { ascending: true });
-    if (error) throw new Error(error.message);
-    const paths = (rows ?? []).map((r) => r.storage_path);
-    const urls = new Map<string, string>();
-    if (paths.length) {
-      const { data: signed, error: sError } = await supabaseAdmin.storage
-        .from(MEDIA_BUCKET)
-        .createSignedUrls(paths, 3600);
-      if (sError) throw new Error(sError.message);
-      for (const s of signed ?? []) {
-        const url = s.signedUrl ?? s.signedURL;
-        if (s.path && url) urls.set(s.path, url);
+  .handler(
+    async ({
+      data,
+      context,
+    }): Promise<{
+      product: { id: string; name: Json; slug: string };
+      media: AdminProductMedia[];
+    }> => {
+      await assertAdmin(context);
+      const supabaseAdmin = await adminClient();
+      const { data: product, error: pError } = await supabaseAdmin
+        .from("products")
+        .select("id, name, slug")
+        .eq("id", data.productId)
+        .maybeSingle();
+      if (pError || !product) throw new Error("Product not found.");
+      const { data: rows, error } = await supabaseAdmin
+        .from("product_images")
+        .select("id, storage_path, alt_text, is_primary, sort_order, media_type")
+        .eq("product_id", data.productId)
+        .order("sort_order", { ascending: true });
+      if (error) throw new Error(error.message);
+      const paths = (rows ?? []).map((r) => r.storage_path);
+      const urls = new Map<string, string>();
+      if (paths.length) {
+        const { data: signed, error: sError } = await supabaseAdmin.storage
+          .from(MEDIA_BUCKET)
+          .createSignedUrls(paths, 3600);
+        if (sError) throw new Error(sError.message);
+        for (const s of signed ?? []) {
+          const url = s.signedUrl ?? s.signedURL;
+          if (s.path && url) urls.set(s.path, url);
+        }
       }
-    }
-    return {
-      product: { id: product.id, name: product.name, slug: product.slug },
-      media: (rows ?? []).map((r) => ({
-        id: r.id,
-        storagePath: r.storage_path,
-        altText:
-          r.alt_text && typeof r.alt_text === "object" && !Array.isArray(r.alt_text)
-            ? (r.alt_text as Record<string, string>)
-            : {},
-        isPrimary: r.is_primary,
-        sortOrder: r.sort_order,
-        mediaType: r.media_type,
-        previewUrl: urls.get(r.storage_path) ?? null,
-        width: null,
-        height: null,
-      })),
-    };
-  });
+      return {
+        product: { id: product.id, name: product.name, slug: product.slug },
+        media: (rows ?? []).map((r) => ({
+          id: r.id,
+          storagePath: r.storage_path,
+          altText:
+            r.alt_text && typeof r.alt_text === "object" && !Array.isArray(r.alt_text)
+              ? (r.alt_text as Record<string, string>)
+              : {},
+          isPrimary: r.is_primary,
+          sortOrder: r.sort_order,
+          mediaType: r.media_type,
+          previewUrl: urls.get(r.storage_path) ?? null,
+          width: null,
+          height: null,
+        })),
+      };
+    },
+  );
 
 // ---------------------------------------------------------------------------
 // Alt text / primary / reorder / replace / delete
@@ -406,12 +415,14 @@ export const reorderMedia = createServerFn({ method: "POST" })
 export const replaceMedia = createServerFn({ method: "POST" })
   .middleware(adminOnly)
   .inputValidator((data) =>
-    z.object({
-      imageId: uuid,
-      productId: uuid,
-      path: z.string().min(1).max(500),
-      mediaKind: z.enum(["image", "model_3d"]),
-    }).parse(data),
+    z
+      .object({
+        imageId: uuid,
+        productId: uuid,
+        path: z.string().min(1).max(500),
+        mediaKind: z.enum(["image", "model_3d"]),
+      })
+      .parse(data),
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
@@ -497,7 +508,9 @@ export const deleteStorageObject = createServerFn({ method: "POST" })
       .eq("storage_path", path);
     if (refError) throw new Error(refError.message);
     if (count && count > 0) {
-      throw new Error("This file is attached to a product. Delete it from the product's media instead.");
+      throw new Error(
+        "This file is attached to a product. Delete it from the product's media instead.",
+      );
     }
     const { error } = await supabaseAdmin.storage.from(MEDIA_BUCKET).remove([path]);
     if (error) throw new Error(error.message);
@@ -508,3 +521,57 @@ export const deleteStorageObject = createServerFn({ method: "POST" })
 /** Re-exported for the uploader: the kind the server derived at request time. */
 export type { MediaKind };
 export { detectMediaKind };
+
+/* ------------------------------------------------------------------ */
+/* Media library (product-media bucket)                                */
+/* ------------------------------------------------------------------ */
+
+export type MediaEntry = {
+  name: string;
+  path: string;
+  isFolder: boolean;
+  size: number | null;
+  mime: string | null;
+  updatedAt: string | null;
+};
+
+export const listMedia = createServerFn({ method: "GET" })
+  .middleware(adminOnly)
+  .inputValidator((data) => z.object({ prefix: z.string().max(500).default("") }).parse(data))
+  .handler(async ({ data, context }): Promise<{ prefix: string; entries: MediaEntry[] }> => {
+    await assertAdmin(context);
+    const supabaseAdmin = await adminClient();
+    const prefix = data.prefix.replace(/(^\/+|\/+$)/g, "");
+    const { data: objects, error } = await supabaseAdmin.storage
+      .from(MEDIA_BUCKET)
+      .list(prefix || undefined, { limit: 100, sortBy: { column: "updated_at", order: "desc" } });
+    if (error) throw new Error(error.message);
+
+    const entries: MediaEntry[] = (objects ?? [])
+      .filter((o) => o.name !== ".emptyFolderPlaceholder")
+      .map((o) => {
+        const isFolder = o.id == null && (!o.metadata || Object.keys(o.metadata).length === 0);
+        return {
+          name: o.name,
+          path: prefix ? `${prefix}/${o.name}` : o.name,
+          isFolder,
+          size: typeof o.metadata?.size === "number" ? o.metadata.size : null,
+          mime: typeof o.metadata?.mimetype === "string" ? o.metadata.mimetype : null,
+          updatedAt: o.updated_at ?? o.created_at ?? null,
+        };
+      });
+    return { prefix, entries };
+  });
+
+export const getMediaSignedUrl = createServerFn({ method: "GET" })
+  .middleware(adminOnly)
+  .inputValidator((data) => z.object({ path: z.string().min(1).max(1000) }).parse(data))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const supabaseAdmin = await adminClient();
+    const { data: signed, error } = await supabaseAdmin.storage
+      .from(MEDIA_BUCKET)
+      .createSignedUrl(data.path, 3600);
+    if (error || !signed?.signedUrl) throw new Error(error?.message ?? "Could not sign URL.");
+    return { url: signed.signedUrl };
+  });

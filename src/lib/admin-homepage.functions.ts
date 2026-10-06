@@ -184,6 +184,7 @@ const updatePatchSchema = z
     animation: jsonObjectSchema.optional(),
     starts_at: z.string().nullable().optional(),
     ends_at: z.string().nullable().optional(),
+    enabled: z.boolean().optional(),
   })
   .refine((patch) => Object.keys(patch).length > 0, { message: "Nothing to update." });
 
@@ -205,7 +206,7 @@ export const updateHomepageContent = createServerFn({ method: "POST" })
     if (fetchError) throw new Error(fetchError.message);
     if (!existing) throw new Error("Section not found.");
 
-    // Careful merge: enabled and sort_order are never touched here.
+    // Careful merge: sort_order is never touched here (use reorderHomepageSections).
     const update: Database["public"]["Tables"]["homepage_sections"]["Update"] = {
       updated_at: new Date().toISOString(),
     };
@@ -221,6 +222,7 @@ export const updateHomepageContent = createServerFn({ method: "POST" })
     if (startsAt !== undefined) update.starts_at = startsAt;
     const endsAt = toIsoOrNull(data.patch.ends_at);
     if (endsAt !== undefined) update.ends_at = endsAt;
+    if (data.patch.enabled !== undefined) update.enabled = data.patch.enabled;
 
     const { data: updated, error } = await supabaseAdmin
       .from("homepage_sections")

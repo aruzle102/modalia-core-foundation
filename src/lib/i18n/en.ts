@@ -223,7 +223,6 @@ export const en = {
       placeholder: "Ask about a product… e.g.: I want a cheap phone",
       send: "Send",
       rulesBanner: "Rule Assistant — runs only on real store data, no external AI model.",
-      providerBanner: "AI-assisted answers — always grounded in real store data.",
       understood: "Understood",
       supportLabel: "Modalia support",
       viewProduct: "View product",

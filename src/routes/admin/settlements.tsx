@@ -15,6 +15,8 @@ import {
   fmtMoney,
   fmtDateTime,
 } from "@/components/admin/ui";
+import { useAdminLocale } from "@/components/admin/useAdminLocale";
+import { getTranslations } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -62,9 +64,15 @@ type SettlementRow = AdminSettlementListItem;
 const STATUS_FILTERS = ["pending", "approved", "paid", "rejected", "cancelled"] as const;
 
 function AdminSettlementsPage() {
+  const locale = useAdminLocale();
+  const nav = getTranslations(locale).adminNav.items;
   return (
     <AdminGate>
-      <AdminShell title="Settlements" subtitle="Track and pay out seller earnings.">
+      <AdminShell
+        title="Settlements"
+        subtitle="Track and pay out seller earnings."
+        breadcrumbs={[{ label: nav.settlements }]}
+      >
         <SettlementsManager />
       </AdminShell>
     </AdminGate>
@@ -72,6 +80,7 @@ function AdminSettlementsPage() {
 }
 
 function SettlementsManager() {
+  const locale = useAdminLocale();
   const queryClient = useQueryClient();
   const t = useAdminT().settlements;
   const url = useUrlState({ status: "all", sellerId: "all", page: 1 });
@@ -160,7 +169,7 @@ function SettlementsManager() {
           <EmptyState title="No settlements" text="No settlements match these filters." />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[760px] text-left text-small">
+            <table className="w-full min-w-[760px] text-start text-small">
               <thead>
                 <tr className="border-b border-border text-caption text-muted-foreground">
                   <th className="px-3 py-2 font-medium">Seller</th>
@@ -177,7 +186,7 @@ function SettlementsManager() {
                 {settlements.map((s) => (
                   <tr key={s.id} className="align-top">
                     <td className="px-3 py-3 font-medium">{sellerName(s.seller_id)}</td>
-                    <td className="px-3 py-3 whitespace-nowrap font-medium">{fmtMoney(Number(s.amount))}</td>
+                    <td className="px-3 py-3 whitespace-nowrap font-medium">{fmtMoney(Number(s.amount), "DZD", locale)}</td>
                     <td className="px-3 py-3 text-caption">
                       {s.period_start ?? "—"} → {s.period_end ?? "—"}
                     </td>
@@ -185,12 +194,12 @@ function SettlementsManager() {
                     <td className="px-3 py-3 font-mono text-xs">{s.payment_reference ?? "—"}</td>
                     <td className="px-3 py-3 text-caption">
                       {s.payment_proof_path ? (
-                        <span className="font-medium text-emerald-600 dark:text-emerald-400">{t.proofAttached}</span>
+                        <span className="font-medium text-verified">{t.proofAttached}</span>
                       ) : (
                         <span className="text-muted-foreground">{t.noProof}</span>
                       )}
                     </td>
-                    <td className="px-3 py-3 text-caption">{fmtDateTime(s.created_at)}</td>
+                    <td className="px-3 py-3 text-caption">{fmtDateTime(s.created_at, locale)}</td>
                     <td className="px-3 py-3">
                       <div className="flex flex-wrap justify-end gap-1.5">
                         {(s.status === "pending" || s.status === "approved") ? (
@@ -242,6 +251,7 @@ function CreateSettlementDialog({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const locale = useAdminLocale();
   const [selectedSeller, setSelectedSeller] = useState<string>("");
   const [amount, setAmount] = useState("");
   const [periodStart, setPeriodStart] = useState("");
@@ -309,9 +319,9 @@ function CreateSettlementDialog({
               ) : ref ? (
                 <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
                   <Stat label="Fulfilled orders" value={String(ref.orderCount)} />
-                  <Stat label="Earned" value={fmtMoney(ref.earnedTotal)} />
-                  <Stat label="Settled" value={fmtMoney(ref.settledTotal)} />
-                  <Stat label="Available" value={fmtMoney(ref.available)} />
+                  <Stat label="Earned" value={fmtMoney(ref.earnedTotal, "DZD", locale)} />
+                  <Stat label="Settled" value={fmtMoney(ref.settledTotal, "DZD", locale)} />
+                  <Stat label="Available" value={fmtMoney(ref.available, "DZD", locale)} />
                 </div>
               ) : null}
               {ref ? (
@@ -371,6 +381,7 @@ function ManageSettlementDialog({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const locale = useAdminLocale();
   const t = useAdminT().settlements;
   const nextOptions =
     settlement.status === "pending" ? (["approved", "rejected", "cancelled"] as const) : (["paid", "cancelled"] as const);
@@ -451,7 +462,7 @@ function ManageSettlementDialog({
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="font-medium">{sellerName}</p>
-              <p className="text-small text-muted-foreground">{fmtMoney(Number(settlement.amount))} · {fmtDateTime(settlement.created_at)}</p>
+              <p className="text-small text-muted-foreground">{fmtMoney(Number(settlement.amount), "DZD", locale)} · {fmtDateTime(settlement.created_at, locale)}</p>
             </div>
             <StatusPill status={settlement.status} />
           </div>
@@ -476,7 +487,7 @@ function ManageSettlementDialog({
             <div className="flex flex-wrap items-center gap-2">
               {proofPath ? (
                 <>
-                  <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                  <span className="text-sm font-medium text-verified">
                     {t.proofAttached}
                   </span>
                   <Button type="button" size="sm" variant="outline" onClick={viewProof} disabled={openingProof}>

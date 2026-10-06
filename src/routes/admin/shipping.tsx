@@ -45,6 +45,7 @@ import { errMsg, pickName } from "./_shared";
 
 import { strParam, useUrlState } from "@/hooks/use-url-state";
 import { getLocale, getTranslations } from "@/lib/i18n";
+import { useAdminLocale } from "@/components/admin/useAdminLocale";
 
 export const Route = createFileRoute("/admin/shipping")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -58,9 +59,15 @@ export const Route = createFileRoute("/admin/shipping")({
 type RuleRow = AdminShippingRuleListItem;
 
 function AdminShippingPage() {
+  const locale = useAdminLocale();
+  const nav = getTranslations(locale).adminNav.items;
   return (
     <AdminGate>
-      <AdminShell title="Shipping" subtitle="Delivery pricing per wilaya and weight tier, plus wilaya/commune availability.">
+      <AdminShell
+        title="Shipping"
+        subtitle="Delivery pricing per wilaya and weight tier, plus wilaya/commune availability."
+        breadcrumbs={[{ label: nav.shipping }]}
+      >
         <ShippingManager />
       </AdminShell>
     </AdminGate>
@@ -198,7 +205,7 @@ function ShippingManager() {
           />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[620px] text-left text-small">
+            <table className="w-full min-w-[620px] text-start text-small">
               <thead>
                 <tr className="border-b border-border text-caption text-muted-foreground">
                   <th className="px-3 py-2 font-medium">Delivery</th>
@@ -217,7 +224,7 @@ function ShippingManager() {
                     <td className="px-3 py-3 text-caption">
                       {r.commune_id ? (pickName(r.communes?.name) || r.communes?.code || "—") : "All communes"}
                     </td>
-                    <td className="px-3 py-3 font-medium">{fmtMoney(Number(r.price))}</td>
+                    <td className="px-3 py-3 font-medium">{fmtMoney(Number(r.price), "DZD", locale)}</td>
                     <td className="px-3 py-3">
                       <Switch
                         checked={Boolean(r.enabled)}

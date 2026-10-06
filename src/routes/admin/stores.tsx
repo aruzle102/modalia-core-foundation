@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useMatch } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 import { AdminGate } from "@/components/admin/AdminGate";
@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/select";
 import { listAdminStores } from "@/lib/admin-ops.functions";
 import { getLocale, getTranslations } from "@/lib/i18n";
-import { numParam, strParam, useUrlState, useDebouncedUrlParam } from "@/hooks/use-url-state";
+import { numParam, strParam, useUrlState, useDebouncedUrlParam, useBackParam } from "@/hooks/use-url-state";
 
 export const Route = createFileRoute("/admin/stores")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -37,9 +37,19 @@ export const Route = createFileRoute("/admin/stores")({
 });
 
 function StoresPage() {
+  // Child route ($storeId) renders in the Outlet; this route shows the table.
+  // (Same pattern as /admin/products and /admin/sellers.)
+  const child = useMatch({ from: "/admin/stores", strict: true, shouldThrow: false });
+  if (!child) return <Outlet />;
+  return <StoresList />;
+}
+
+function StoresList() {
   const url = useUrlState({ status: "all", page: 1 });
+  const backParam = useBackParam();
   const { locale } = Route.useSearch();
   const t = getTranslations(locale).adminNav.items;
+  const st = getTranslations(locale).admin.stores;
   const page = numParam(url.search["page"], 1);
   const q = strParam(url.search["q"]);
   const statusFilter = strParam(url.search["status"], "all");
@@ -64,21 +74,21 @@ function StoresPage() {
     <AdminGate>
       <AdminShell
         title={t.stores}
-        subtitle="Every storefront on the marketplace, with its seller and catalog size."
+        subtitle={st.subtitle}
         breadcrumbs={[{ label: t.stores }]}
       >
         <AdminCard
           title={t.stores}
-          subtitle={`${total} store(s)`}
+          subtitle={st.storesCount(total)}
           actions={
             <div className="flex flex-wrap items-center gap-2">
               <div className="relative">
-                <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Search className="absolute top-1/2 start-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
-                  placeholder="Search name or slug…"
-                  className="w-52 pl-9"
+                  placeholder={st.searchPlaceholder}
+                  className="w-52 ps-9"
                 />
               </div>
               <Select value={statusFilter} onValueChange={setStatus}>
@@ -86,11 +96,11 @@ function StoresPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All statuses</SelectItem>
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="suspended">Suspended</SelectItem>
-                  <SelectItem value="closed">Closed</SelectItem>
+                  <SelectItem value="all">{st.allStatuses}</SelectItem>
+                  <SelectItem value="draft">{st.statusDraft}</SelectItem>
+                  <SelectItem value="active">{st.statusActive}</SelectItem>
+                  <SelectItem value="suspended">{st.statusSuspended}</SelectItem>
+                  <SelectItem value="closed">{st.statusClosed}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -99,23 +109,20 @@ function StoresPage() {
           {storesQuery.isPending ? (
             <TableSkeleton />
           ) : storesQuery.isError ? (
-            <EmptyState title="Could not load stores" text={errMsg(storesQuery.error)} />
+            <EmptyState title={st.couldNotLoad} text={errMsg(storesQuery.error)} />
           ) : items.length === 0 ? (
-            <EmptyState
-              title="No stores yet"
-              text="Stores are created when a seller application is approved."
-            />
+            <EmptyState title={st.noStores} text={st.noStoresDesc} />
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[720px] text-left text-small">
+              <table className="w-full min-w-[720px] text-start text-small">
                 <thead>
                   <tr className="border-b border-border text-caption text-muted-foreground">
-                    <th className="px-3 py-2 font-medium">Store</th>
-                    <th className="px-3 py-2 font-medium">Seller</th>
-                    <th className="px-3 py-2 font-medium">Status</th>
-                    <th className="px-3 py-2 font-medium">Verification</th>
-                    <th className="px-3 py-2 font-medium">Products</th>
-                    <th className="px-3 py-2 font-medium">Created</th>
+                    <th className="px-3 py-2 font-medium">{st.store}</th>
+                    <th className="px-3 py-2 font-medium">{st.seller}</th>
+                    <th className="px-3 py-2 font-medium">{st.status}</th>
+                    <th className="px-3 py-2 font-medium">{st.verification}</th>
+                    <th className="px-3 py-2 font-medium">{st.products}</th>
+                    <th className="px-3 py-2 font-medium">{st.created}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -123,9 +130,9 @@ function StoresPage() {
                     <tr key={s.id} className="hover:bg-muted/40">
                       <td className="px-3 py-3">
                         <Link
-                          to="/store/$slug"
-                          params={{ slug: s.slug }}
-                          search={{ locale }}
+                          to="/admin/stores/$storeId"
+                          params={{ storeId: s.id }}
+                          search={{ back: backParam, locale, q, status: statusFilter, page }}
                           className="font-medium underline-offset-4 hover:underline"
                         >
                           {s.name}
@@ -141,7 +148,7 @@ function StoresPage() {
                       </td>
                       <td className="px-3 py-3 font-medium">{s.product_count}</td>
                       <td className="px-3 py-3 text-caption text-muted-foreground">
-                        {fmtDateTime(s.created_at)}
+                        {fmtDateTime(s.created_at, locale)}
                       </td>
                     </tr>
                   ))}

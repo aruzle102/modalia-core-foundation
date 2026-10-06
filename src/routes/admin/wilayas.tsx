@@ -63,7 +63,7 @@ function WilayasPage() {
             <EmptyState title="No wilayas" text="The wilayas table has not been seeded yet." />
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[680px] text-left text-small">
+              <table className="w-full min-w-[680px] text-start text-small">
                 <thead>
                   <tr className="border-b border-border text-caption text-muted-foreground">
                     <th className="px-3 py-2 font-medium">Code</th>

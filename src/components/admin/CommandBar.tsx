@@ -15,7 +15,8 @@ import {
   UserPlus,
   Users,
 } from "lucide-react";
-import { adminGlobalSearch, getOfficialStore } from "@/lib/admin-search.functions";
+import { adminGlobalSearch } from "@/lib/admin-search.functions";
+import { getOfficialStore } from "@/lib/admin-official-store.functions";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { getTranslations } from "@/lib/i18n";
@@ -80,7 +81,7 @@ export function CommandBar() {
 
   useEffect(() => {
     if (open) setTimeout(() => inputRef.current?.focus(), 0);
-  }, [open ]);
+  }, [open]);
 
   const search = useQuery({
     queryKey: ["admin-search", debounced],
@@ -109,7 +110,7 @@ export function CommandBar() {
     const groups = t.groups;
     const actions: SearchItem[] = [];
 
-    const official = officialStore.data?.store ?? null;
+    const official = officialStore.data?.official?.store ?? null;
     const officialReady = officialStore.isSuccess;
     actions.push(
       {
@@ -150,7 +151,11 @@ export function CommandBar() {
         run: () => {
           if (official) {
             close();
-            window.open(`/store/${official.slug}?locale=${locale}`, "_blank", "noopener,noreferrer");
+            window.open(
+              `/store/${official.slug}?locale=${locale}`,
+              "_blank",
+              "noopener,noreferrer",
+            );
           }
         },
       },
@@ -211,7 +216,16 @@ export function CommandBar() {
       }
     }
     return { actions, results };
-  }, [search.data, officialStore.data, officialStore.isFetching, officialStore.isSuccess, t, go, locale, close]);
+  }, [
+    search.data,
+    officialStore.data,
+    officialStore.isFetching,
+    officialStore.isSuccess,
+    t,
+    go,
+    locale,
+    close,
+  ]);
 
   const items = useMemo(() => [...actions, ...results], [actions, results]);
 
@@ -228,7 +242,9 @@ export function CommandBar() {
       setActiveIndex((i) => (selectable.length ? (i + 1) % selectable.length : 0));
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      setActiveIndex((i) => (selectable.length ? (i - 1 + selectable.length) % selectable.length : 0));
+      setActiveIndex((i) =>
+        selectable.length ? (i - 1 + selectable.length) % selectable.length : 0,
+      );
     } else if (e.key === "Enter") {
       e.preventDefault();
       const item = selectable[clampedIndex];
@@ -278,7 +294,9 @@ export function CommandBar() {
                 placeholder={t.placeholder}
                 className="h-11 border-0 bg-transparent shadow-none focus-visible:ring-0"
               />
-              {search.isFetching ? <Loader2 className="h-4 w-4 shrink-0 animate-spin text-muted-foreground" /> : null}
+              {search.isFetching ? (
+                <Loader2 className="h-4 w-4 shrink-0 animate-spin text-muted-foreground" />
+              ) : null}
             </div>
             <div className="max-h-80 overflow-y-auto py-1">
               {search.isError ? (
@@ -315,7 +333,9 @@ export function CommandBar() {
                         {item.icon}
                         <span className="min-w-0 flex-1">
                           <span className="block truncate text-sm font-medium">{item.label}</span>
-                          <span className="block truncate text-xs text-muted-foreground">{item.sub}</span>
+                          <span className="block truncate text-xs text-muted-foreground">
+                            {item.sub}
+                          </span>
                         </span>
                         {active && !item.disabled ? (
                           <ExternalLink className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />

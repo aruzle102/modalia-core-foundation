@@ -12,6 +12,7 @@ import {
   ChevronDown,
   Trash2,
   Store,
+  LayoutDashboard,
 } from "lucide-react";
 import { AdminGate } from "@/components/admin/AdminGate";
 import { AdminShell } from "@/components/admin/AdminShell";
@@ -47,7 +48,12 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
-import { getOfficialStore } from "@/lib/admin-official-store.functions";
+import {
+  getOfficialStore,
+  getOfficialStoreLinkStatus,
+  linkOfficialStoreOwner,
+  unlinkOfficialStoreOwner,
+} from "@/lib/admin-official-store.functions";
 import {
   listAdminProducts,
   moderateAdminProduct,
@@ -129,6 +135,30 @@ function OfficialStorePage() {
   });
   const official = storeQuery.data?.official ?? null;
 
+  const linkQuery = useQuery({
+    queryKey: ["admin-official-store-link"],
+    queryFn: () => getOfficialStoreLinkStatus({ data: {} }),
+    retry: false,
+  });
+  const linked = linkQuery.data?.linked === true;
+  const linkMutation = useMutation({
+    mutationFn: () => linkOfficialStoreOwner({ data: {} }),
+    onSuccess: async () => {
+      await linkQuery.refetch();
+      toast.success(t.sellerDashboardLinked);
+      navigate({ to: "/seller", search: { locale } });
+    },
+    onError: (e) => toast.error(errMsg(e)),
+  });
+  const unlinkMutation = useMutation({
+    mutationFn: () => unlinkOfficialStoreOwner({ data: {} }),
+    onSuccess: async () => {
+      await linkQuery.refetch();
+      toast.success(t.sellerDashboardUnlinked);
+    },
+    onError: (e) => toast.error(errMsg(e)),
+  });
+
   const setTab = (next: TabId) => navigate({ search: (prev) => ({ ...prev, tab: next }) });
 
   return (
@@ -139,15 +169,49 @@ function OfficialStorePage() {
         breadcrumbs={[{ label: navTitle }]}
         actions={
           official ? (
-            <Link
-              to="/store/$slug"
-              params={{ slug: official.store.slug }}
-              search={{ locale }}
-              className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm hover:bg-accent"
-            >
-              <Store className="h-4 w-4" />
-              {t.openStorefront}
-            </Link>
+            <div className="flex items-center gap-2">
+              {linked ? (
+                <>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => navigate({ to: "/seller", search: { locale } })}
+                  >
+                    <LayoutDashboard className="h-4 w-4 me-1.5" />
+                    {t.openSellerDashboard}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    disabled={unlinkMutation.isPending}
+                    onClick={() => unlinkMutation.mutate()}
+                    title={t.unlinkSellerDashboardHint}
+                  >
+                    {t.unlinkSellerDashboard}
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={linkMutation.isPending}
+                  onClick={() => linkMutation.mutate()}
+                >
+                  <LayoutDashboard className="h-4 w-4 me-1.5" />
+                  {t.linkSellerDashboard}
+                </Button>
+              )}
+              <Link
+                to="/store/$slug"
+                params={{ slug: official.store.slug }}
+                search={{ locale }}
+                className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm hover:bg-accent"
+              >
+                <Store className="h-4 w-4" />
+                {t.openStorefront}
+              </Link>
+            </div>
           ) : undefined
         }
       >

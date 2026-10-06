@@ -34,7 +34,10 @@ import { Route as AdminAiRouteImport } from './routes/admin/ai'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin/analytics'
 import { Route as AdminApplicationsRouteImport } from './routes/admin/applications'
 import { Route as AdminAuditRouteImport } from './routes/admin/audit'
+import { Route as AdminBannersRouteImport } from './routes/admin/banners'
+import { Route as AdminButtonsRouteImport } from './routes/admin/buttons'
 import { Route as AdminCategoriesRouteImport } from './routes/admin/categories'
+import { Route as AdminCollectionsRouteImport } from './routes/admin/collections'
 import { Route as AdminCommissionsRouteImport } from './routes/admin/commissions'
 import { Route as AdminCommunesRouteImport } from './routes/admin/communes'
 import { Route as AdminCouponsRouteImport } from './routes/admin/coupons'
@@ -82,6 +85,7 @@ import { Route as AuthenticatedSellerShippingRouteImport } from './routes/_authe
 import { Route as AuthenticatedSellerStaffRouteImport } from './routes/_authenticated/seller.staff'
 import { Route as AuthenticatedSellerStoreRouteImport } from './routes/_authenticated/seller.store'
 import { Route as AuthenticatedSellerSupportRouteImport } from './routes/_authenticated/seller.support'
+import { Route as AdminHomepageBuilderRouteImport } from './routes/admin/homepage.builder'
 import { Route as AdminOrdersOrderIdRouteImport } from './routes/admin/orders.$orderId'
 import { Route as AdminSellersSellerIdRouteImport } from './routes/admin/sellers.$sellerId'
 import { Route as AuthenticatedAccountOrdersOrderIdRouteImport } from './routes/_authenticated/account.orders.$orderId'
@@ -215,9 +219,24 @@ const AdminAuditRoute = AdminAuditRouteImport.update({
   path: '/admin/audit',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminBannersRoute = AdminBannersRouteImport.update({
+  id: '/admin/banners',
+  path: '/admin/banners',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminButtonsRoute = AdminButtonsRouteImport.update({
+  id: '/admin/buttons',
+  path: '/admin/buttons',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminCategoriesRoute = AdminCategoriesRouteImport.update({
   id: '/admin/categories',
   path: '/admin/categories',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminCollectionsRoute = AdminCollectionsRouteImport.update({
+  id: '/admin/collections',
+  path: '/admin/collections',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminCommissionsRoute = AdminCommissionsRouteImport.update({
@@ -475,6 +494,11 @@ const AuthenticatedSellerSupportRoute =
     path: '/support',
     getParentRoute: () => AuthenticatedSellerRoute,
   } as any)
+const AdminHomepageBuilderRoute = AdminHomepageBuilderRouteImport.update({
+  id: '/builder',
+  path: '/builder',
+  getParentRoute: () => AdminHomepageRoute,
+} as any)
 const AdminOrdersOrderIdRoute = AdminOrdersOrderIdRouteImport.update({
   id: '/$orderId',
   path: '/$orderId',
@@ -540,12 +564,15 @@ export interface FileRoutesByFullPath {
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/audit': typeof AdminAuditRoute
+  '/admin/banners': typeof AdminBannersRoute
+  '/admin/buttons': typeof AdminButtonsRoute
   '/admin/categories': typeof AdminCategoriesRoute
+  '/admin/collections': typeof AdminCollectionsRoute
   '/admin/commissions': typeof AdminCommissionsRoute
   '/admin/communes': typeof AdminCommunesRoute
   '/admin/coupons': typeof AdminCouponsRoute
   '/admin/customers': typeof AdminCustomersRoute
-  '/admin/homepage': typeof AdminHomepageRoute
+  '/admin/homepage': typeof AdminHomepageRouteWithChildren
   '/admin/media': typeof AdminMediaRoute
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/official-store': typeof AdminOfficialStoreRoute
@@ -589,6 +616,7 @@ export interface FileRoutesByFullPath {
   '/seller/staff': typeof AuthenticatedSellerStaffRoute
   '/seller/store': typeof AuthenticatedSellerStoreRoute
   '/seller/support': typeof AuthenticatedSellerSupportRoute
+  '/admin/homepage/builder': typeof AdminHomepageBuilderRoute
   '/admin/orders/$orderId': typeof AdminOrdersOrderIdRoute
   '/admin/sellers/$sellerId': typeof AdminSellersSellerIdRoute
   '/account/orders/$orderId': typeof AuthenticatedAccountOrdersOrderIdRoute
@@ -621,12 +649,15 @@ export interface FileRoutesByTo {
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/audit': typeof AdminAuditRoute
+  '/admin/banners': typeof AdminBannersRoute
+  '/admin/buttons': typeof AdminButtonsRoute
   '/admin/categories': typeof AdminCategoriesRoute
+  '/admin/collections': typeof AdminCollectionsRoute
   '/admin/commissions': typeof AdminCommissionsRoute
   '/admin/communes': typeof AdminCommunesRoute
   '/admin/coupons': typeof AdminCouponsRoute
   '/admin/customers': typeof AdminCustomersRoute
-  '/admin/homepage': typeof AdminHomepageRoute
+  '/admin/homepage': typeof AdminHomepageRouteWithChildren
   '/admin/media': typeof AdminMediaRoute
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/official-store': typeof AdminOfficialStoreRoute
@@ -670,6 +701,7 @@ export interface FileRoutesByTo {
   '/seller/staff': typeof AuthenticatedSellerStaffRoute
   '/seller/store': typeof AuthenticatedSellerStoreRoute
   '/seller/support': typeof AuthenticatedSellerSupportRoute
+  '/admin/homepage/builder': typeof AdminHomepageBuilderRoute
   '/admin/orders/$orderId': typeof AdminOrdersOrderIdRoute
   '/admin/sellers/$sellerId': typeof AdminSellersSellerIdRoute
   '/account/orders/$orderId': typeof AuthenticatedAccountOrdersOrderIdRoute
@@ -704,12 +736,15 @@ export interface FileRoutesById {
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/audit': typeof AdminAuditRoute
+  '/admin/banners': typeof AdminBannersRoute
+  '/admin/buttons': typeof AdminButtonsRoute
   '/admin/categories': typeof AdminCategoriesRoute
+  '/admin/collections': typeof AdminCollectionsRoute
   '/admin/commissions': typeof AdminCommissionsRoute
   '/admin/communes': typeof AdminCommunesRoute
   '/admin/coupons': typeof AdminCouponsRoute
   '/admin/customers': typeof AdminCustomersRoute
-  '/admin/homepage': typeof AdminHomepageRoute
+  '/admin/homepage': typeof AdminHomepageRouteWithChildren
   '/admin/media': typeof AdminMediaRoute
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/official-store': typeof AdminOfficialStoreRoute
@@ -753,6 +788,7 @@ export interface FileRoutesById {
   '/_authenticated/seller/staff': typeof AuthenticatedSellerStaffRoute
   '/_authenticated/seller/store': typeof AuthenticatedSellerStoreRoute
   '/_authenticated/seller/support': typeof AuthenticatedSellerSupportRoute
+  '/admin/homepage/builder': typeof AdminHomepageBuilderRoute
   '/admin/orders/$orderId': typeof AdminOrdersOrderIdRoute
   '/admin/sellers/$sellerId': typeof AdminSellersSellerIdRoute
   '/_authenticated/account/orders/$orderId': typeof AuthenticatedAccountOrdersOrderIdRoute
@@ -787,7 +823,10 @@ export interface FileRouteTypes {
     | '/admin/analytics'
     | '/admin/applications'
     | '/admin/audit'
+    | '/admin/banners'
+    | '/admin/buttons'
     | '/admin/categories'
+    | '/admin/collections'
     | '/admin/commissions'
     | '/admin/communes'
     | '/admin/coupons'
@@ -836,6 +875,7 @@ export interface FileRouteTypes {
     | '/seller/staff'
     | '/seller/store'
     | '/seller/support'
+    | '/admin/homepage/builder'
     | '/admin/orders/$orderId'
     | '/admin/sellers/$sellerId'
     | '/account/orders/$orderId'
@@ -868,7 +908,10 @@ export interface FileRouteTypes {
     | '/admin/analytics'
     | '/admin/applications'
     | '/admin/audit'
+    | '/admin/banners'
+    | '/admin/buttons'
     | '/admin/categories'
+    | '/admin/collections'
     | '/admin/commissions'
     | '/admin/communes'
     | '/admin/coupons'
@@ -917,6 +960,7 @@ export interface FileRouteTypes {
     | '/seller/staff'
     | '/seller/store'
     | '/seller/support'
+    | '/admin/homepage/builder'
     | '/admin/orders/$orderId'
     | '/admin/sellers/$sellerId'
     | '/account/orders/$orderId'
@@ -950,7 +994,10 @@ export interface FileRouteTypes {
     | '/admin/analytics'
     | '/admin/applications'
     | '/admin/audit'
+    | '/admin/banners'
+    | '/admin/buttons'
     | '/admin/categories'
+    | '/admin/collections'
     | '/admin/commissions'
     | '/admin/communes'
     | '/admin/coupons'
@@ -999,6 +1046,7 @@ export interface FileRouteTypes {
     | '/_authenticated/seller/staff'
     | '/_authenticated/seller/store'
     | '/_authenticated/seller/support'
+    | '/admin/homepage/builder'
     | '/admin/orders/$orderId'
     | '/admin/sellers/$sellerId'
     | '/_authenticated/account/orders/$orderId'
@@ -1031,12 +1079,15 @@ export interface RootRouteChildren {
   AdminAnalyticsRoute: typeof AdminAnalyticsRoute
   AdminApplicationsRoute: typeof AdminApplicationsRoute
   AdminAuditRoute: typeof AdminAuditRoute
+  AdminBannersRoute: typeof AdminBannersRoute
+  AdminButtonsRoute: typeof AdminButtonsRoute
   AdminCategoriesRoute: typeof AdminCategoriesRoute
+  AdminCollectionsRoute: typeof AdminCollectionsRoute
   AdminCommissionsRoute: typeof AdminCommissionsRoute
   AdminCommunesRoute: typeof AdminCommunesRoute
   AdminCouponsRoute: typeof AdminCouponsRoute
   AdminCustomersRoute: typeof AdminCustomersRoute
-  AdminHomepageRoute: typeof AdminHomepageRoute
+  AdminHomepageRoute: typeof AdminHomepageRouteWithChildren
   AdminMediaRoute: typeof AdminMediaRoute
   AdminNotificationsRoute: typeof AdminNotificationsRoute
   AdminOfficialStoreRoute: typeof AdminOfficialStoreRoute
@@ -1238,11 +1289,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAuditRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/banners': {
+      id: '/admin/banners'
+      path: '/admin/banners'
+      fullPath: '/admin/banners'
+      preLoaderRoute: typeof AdminBannersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/buttons': {
+      id: '/admin/buttons'
+      path: '/admin/buttons'
+      fullPath: '/admin/buttons'
+      preLoaderRoute: typeof AdminButtonsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/categories': {
       id: '/admin/categories'
       path: '/admin/categories'
       fullPath: '/admin/categories'
       preLoaderRoute: typeof AdminCategoriesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/collections': {
+      id: '/admin/collections'
+      path: '/admin/collections'
+      fullPath: '/admin/collections'
+      preLoaderRoute: typeof AdminCollectionsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/commissions': {
@@ -1574,6 +1646,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSellerSupportRouteImport
       parentRoute: typeof AuthenticatedSellerRoute
     }
+    '/admin/homepage/builder': {
+      id: '/admin/homepage/builder'
+      path: '/builder'
+      fullPath: '/admin/homepage/builder'
+      preLoaderRoute: typeof AdminHomepageBuilderRouteImport
+      parentRoute: typeof AdminHomepageRoute
+    }
     '/admin/orders/$orderId': {
       id: '/admin/orders/$orderId'
       path: '/$orderId'
@@ -1767,6 +1846,18 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface AdminHomepageRouteChildren {
+  AdminHomepageBuilderRoute: typeof AdminHomepageBuilderRoute
+}
+
+const AdminHomepageRouteChildren: AdminHomepageRouteChildren = {
+  AdminHomepageBuilderRoute: AdminHomepageBuilderRoute,
+}
+
+const AdminHomepageRouteWithChildren = AdminHomepageRoute._addFileChildren(
+  AdminHomepageRouteChildren,
+)
+
 interface AdminOrdersRouteChildren {
   AdminOrdersOrderIdRoute: typeof AdminOrdersOrderIdRoute
 }
@@ -1814,12 +1905,15 @@ const rootRouteChildren: RootRouteChildren = {
   AdminAnalyticsRoute: AdminAnalyticsRoute,
   AdminApplicationsRoute: AdminApplicationsRoute,
   AdminAuditRoute: AdminAuditRoute,
+  AdminBannersRoute: AdminBannersRoute,
+  AdminButtonsRoute: AdminButtonsRoute,
   AdminCategoriesRoute: AdminCategoriesRoute,
+  AdminCollectionsRoute: AdminCollectionsRoute,
   AdminCommissionsRoute: AdminCommissionsRoute,
   AdminCommunesRoute: AdminCommunesRoute,
   AdminCouponsRoute: AdminCouponsRoute,
   AdminCustomersRoute: AdminCustomersRoute,
-  AdminHomepageRoute: AdminHomepageRoute,
+  AdminHomepageRoute: AdminHomepageRouteWithChildren,
   AdminMediaRoute: AdminMediaRoute,
   AdminNotificationsRoute: AdminNotificationsRoute,
   AdminOfficialStoreRoute: AdminOfficialStoreRoute,

@@ -35,6 +35,7 @@ import {
 } from "@/components/admin/ui";
 import {
   getSellerProfile,
+  getSellerMonthlyProfit,
   updateSellerStatus,
   updateStoreVerification,
   updateCommissionRate,
@@ -92,6 +93,14 @@ function SellerProfilePage() {
   const profileQuery = useQuery({
     queryKey: ["admin-seller-profile", sellerId],
     queryFn: () => getSellerProfile({ data: { sellerId } }),
+  });
+
+  const now = new Date();
+  const [profitYear, setProfitYear] = useState(now.getFullYear());
+  const [profitMonth, setProfitMonth] = useState(now.getMonth() + 1);
+  const profitQuery = useQuery({
+    queryKey: ["admin-seller-monthly-profit", sellerId, profitYear, profitMonth],
+    queryFn: () => getSellerMonthlyProfit({ data: { sellerId, year: profitYear, month: profitMonth } }),
   });
 
   const refresh = () => {
@@ -364,6 +373,67 @@ function SellerProfilePage() {
                 hint={p.commissionPayableHint}
               />
             </div>
+
+            {/* Monthly profit — revenue / cost / seller profit / platform commission */}
+            <AdminCard
+              title={p.monthlyProfit}
+              subtitle={p.monthlyProfitHint}
+              actions={
+                <div className="flex items-center gap-2">
+                  <select
+                    aria-label={p.month}
+                    className="rounded-md border bg-background px-2 py-1.5 text-sm"
+                    value={profitMonth}
+                    onChange={(e) => setProfitMonth(Number(e.target.value))}
+                  >
+                    {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+                      <option key={m} value={m}>
+                        {new Date(2000, m - 1, 1).toLocaleString(locale, { month: "long" })}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    aria-label={p.year}
+                    className="rounded-md border bg-background px-2 py-1.5 text-sm"
+                    value={profitYear}
+                    onChange={(e) => setProfitYear(Number(e.target.value))}
+                  >
+                    {Array.from({ length: 5 }, (_, i) => now.getFullYear() - i).map((y) => (
+                      <option key={y} value={y}>
+                        {y}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              }
+            >
+              {profitQuery.isPending ? (
+                <p className="text-sm text-muted-foreground">{common.loading}</p>
+              ) : profitQuery.isError ? (
+                <EmptyState
+                  title={common.loadError}
+                  action={
+                    <Button variant="outline" size="sm" onClick={() => profitQuery.refetch()}>
+                      {common.retry}
+                    </Button>
+                  }
+                />
+              ) : (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+                    <Stat label={p.revenue} value={fmtMoney(profitQuery.data.revenue, "DZD", locale)} hint={p.revenueHint} />
+                    <Stat label={p.costTotal} value={fmtMoney(profitQuery.data.costTotal, "DZD", locale)} hint={p.costTotalHint} />
+                    <Stat label={p.sellerProfit} value={fmtMoney(profitQuery.data.sellerProfit, "DZD", locale)} hint={p.sellerProfitHint} />
+                    <Stat label={p.platformProfit} value={fmtMoney(profitQuery.data.platformProfit, "DZD", locale)} hint={p.platformProfitHint} />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {p.ordersCount}: <span className="font-semibold tabular-nums">{profitQuery.data.orderCount}</span>
+                    {" — "}
+                    {p.costEstimatedNote}
+                  </p>
+                </div>
+              )}
+            </AdminCard>
 
             {/* Orders by status */}
             <AdminCard title={p.ordersByStatus} subtitle={p.ordersByStatusHint}>

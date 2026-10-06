@@ -350,11 +350,21 @@ const personSchema = z.object({
   email: z.string().trim().email().max(255),
 });
 
+/**
+ * Owner provisioning — quick-create mode (user-requested flow):
+ * the admin only supplies the login email + commission rate. Name/phone and
+ * the store profile are OPTIONAL: the seller completes them himself in the
+ * seller onboarding wizard after first login with the temporary credentials.
+ * When an application is attached, its data still pre-fills everything.
+ */
 const ownerProvisionInput = z.object({
   mode: z.literal("owner"),
   applicationId: z.string().uuid().optional(),
-  ...personSchema.shape,
-  storeName: z.string().trim().min(2).max(160),
+  email: z.string().trim().email().max(255),
+  firstName: z.string().trim().max(100).optional(),
+  lastName: z.string().trim().max(100).optional(),
+  phone: z.string().trim().max(60).optional(),
+  storeName: z.string().trim().min(2).max(160).optional(),
   storeSlug: z
     .string()
     .trim()
@@ -435,7 +445,6 @@ export const provisionSeller = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const tempPassword = (crypto.randomUUID() + crypto.randomUUID()).slice(0, 20);
-    const displayName = `${data.firstName} ${data.lastName}`.trim();
     const now = new Date().toISOString();
 
     /* ------------------------------- STAFF mode ------------------------------- */
@@ -458,7 +467,7 @@ export const provisionSeller = createServerFn({ method: "POST" })
           password: tempPassword,
           email_confirm: true,
           user_metadata: {
-            display_name: displayName,
+            display_name: `${data.firstName} ${data.lastName}`.trim() || data.email.split("@")[0],
             force_password_reset: true,
             provisioned_by: "modalia-admin",
           },
@@ -533,6 +542,12 @@ export const provisionSeller = createServerFn({ method: "POST" })
     }
 
     /* ------------------------------- OWNER mode ------------------------------- */
+    // Quick-create defaults (data is narrowed to the owner variant here): the
+    // seller fills the real profile/store data in onboarding — the admin only
+    // guarantees a usable login + store row.
+    const emailLocal = data.email.split("@")[0] || "seller";
+    const displayName = `${data.firstName?.trim() ?? ""} ${data.lastName?.trim() ?? ""}`.trim() || emailLocal;
+    const storeName = data.storeName?.trim() || displayName;
     let application: { id: string; status: string; seller_id: string | null } | null = null;
     if (data.applicationId) {
       const { data: appRow, error: appError } = await supabaseAdmin
@@ -581,10 +596,10 @@ export const provisionSeller = createServerFn({ method: "POST" })
         .from("sellers")
         .insert({
           owner_id: authUserId,
-          legal_name: data.storeName,
-          first_name: data.firstName,
-          last_name: data.lastName,
-          phone: data.phone,
+          legal_name: storeName,
+          first_name: data.firstName?.trim() || null,
+          last_name: data.lastName?.trim() || null,
+          phone: data.phone?.trim() || null,
           email: data.email,
           status: "active",
           account_status: "active",
@@ -598,7 +613,7 @@ export const provisionSeller = createServerFn({ method: "POST" })
       sellerId = seller.id;
 
       // Unique store slug.
-      const base = data.storeSlug ?? slugifyServer(data.storeName);
+      const base = data.storeSlug ?? slugifyServer(storeName);
       let slug = base;
       let attempt = 1;
       for (;;) {
@@ -616,7 +631,7 @@ export const provisionSeller = createServerFn({ method: "POST" })
         .from("stores")
         .insert({
           seller_id: seller.id,
-          name: data.storeName,
+          name: storeName,
           slug,
           status: "active",
           verification_status: "unverified",
@@ -874,6 +889,98 @@ export const getSellerProfile = createServerFn({ method: "GET" })
       auditLogs: auditRes.data ?? [],
       reviews,
       orderStatusCounts,
+    };
+  });
+
+/* ------------------------------------------------------------------ */
+/* Monthly profit                                                       */
+/* ------------------------------------------------------------------ */
+
+const monthlyProfitInput = z.object({
+  sellerId: z.string().uuid(),
+  year: z.number().int().min(2020).max(2100),
+  month: z.number().int().min(1).max(12),
+});
+
+export type SellerMonthlyProfit = {
+  year: number;
+  month: number;
+  orderCount: number;
+  revenue: number;
+  costTotal: number;
+  commissionTotal: number;
+  sellerProfit: number;
+  platformProfit: number;
+  costEstimated: boolean;
+};
+
+/**
+ * Monthly per-store profit breakdown for the admin (user-requested):
+ * when inspecting a store, the admin sees for a given month how much was
+ * sold (revenue), the seller's profit and the platform's profit.
+ *
+ * - revenue: sum of seller_orders.subtotal (delivered + fulfilled only)
+ * - platformProfit: sum of seller_orders.commission_total (server-authoritative)
+ * - costTotal: sum over order items of qty * products.cost_price
+ * - sellerProfit: revenue - costTotal - commissionTotal
+ *
+ * NOTE (honest): costTotal uses the product's CURRENT cost_price, because
+ * order_items do not snapshot the cost at sale time. If the seller later
+ * edits a cost price, past months are recomputed with the new value — the
+ * `costEstimated` flag surfaces this. Commission is server-authoritative and
+ * never estimated.
+ */
+export const getSellerMonthlyProfit = createServerFn({ method: "GET" })
+  .middleware(adminOnly)
+  .inputValidator((data) => monthlyProfitInput.parse(data))
+  .handler(async ({ data, context }): Promise<SellerMonthlyProfit> => {
+    await assertAdminPermission(context, "sellers.view");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const start = new Date(Date.UTC(data.year, data.month - 1, 1)).toISOString();
+    const end = new Date(Date.UTC(data.year, data.month, 1)).toISOString();
+
+    const { data: orders, error: ordersError } = await supabaseAdmin
+      .from("seller_orders")
+      .select("id, subtotal, commission_total, status")
+      .eq("seller_id", data.sellerId)
+      .gte("created_at", start)
+      .lt("created_at", end)
+      .in("status", ["delivered", "fulfilled"])
+      .limit(5000);
+    if (ordersError) throw new Error(ordersError.message);
+
+    const orderIds = (orders ?? []).map((o) => o.id);
+    let costTotal = 0;
+    if (orderIds.length > 0) {
+      const { data: items, error: itemsError } = await supabaseAdmin
+        .from("order_items")
+        .select("quantity, product_id, products(cost_price)")
+        .in("seller_order_id", orderIds)
+        .limit(20000);
+      if (itemsError) throw new Error(itemsError.message);
+      for (const it of items ?? []) {
+        const qty = Number(it.quantity ?? 0);
+        const prod = it.products as unknown as { cost_price?: number | null } | null;
+        const cost = Number(prod?.cost_price ?? 0);
+        if (Number.isFinite(qty) && Number.isFinite(cost)) costTotal += qty * cost;
+      }
+    }
+
+    const revenue = (orders ?? []).reduce((s, o) => s + Number(o.subtotal ?? 0), 0);
+    const commissionTotal = (orders ?? []).reduce((s, o) => s + Number(o.commission_total ?? 0), 0);
+    const sellerProfit = revenue - costTotal - commissionTotal;
+
+    return {
+      year: data.year,
+      month: data.month,
+      orderCount: (orders ?? []).length,
+      revenue,
+      costTotal,
+      commissionTotal,
+      sellerProfit,
+      platformProfit: commissionTotal,
+      costEstimated: true,
     };
   });
 

@@ -300,8 +300,12 @@ export function SellerOnboardingWizard({ open, onOpenChange, application, onCrea
         data: {
           mode: "owner",
           applicationId: application?.id,
-          ...person,
-          storeName: storeName.trim(),
+          email: person.email,
+          // Optional in quick-create — the seller completes them in onboarding.
+          firstName: firstName.trim() || undefined,
+          lastName: lastName.trim() || undefined,
+          phone: phone.trim() || undefined,
+          storeName: storeName.trim() || undefined,
           storeSlug: slug || undefined,
           storeDescription: storeDescription.trim() || undefined,
           storeLogoUrl: storeLogoUrl.trim() || undefined,
@@ -316,7 +320,7 @@ export function SellerOnboardingWizard({ open, onOpenChange, application, onCrea
       setResult(res);
       setResultMeta({
         email: email.trim(),
-        storeName: storeName.trim(),
+        storeName: storeName.trim() || res.storeSlug || "",
         sellerName: pickedSeller?.legal_name ?? "",
       });
       setShowPassword(false);
@@ -331,15 +335,19 @@ export function SellerOnboardingWizard({ open, onOpenChange, application, onCrea
       case "mode":
         return mode ? null : t.modeRequired;
       case "identity":
-        if (firstName.trim().length < 2) return t.errors.firstName;
-        if (lastName.trim().length < 2) return t.errors.lastName;
-        if (!PHONE_RE.test(phone.trim())) return t.errors.phone;
+        // Quick-create: only the login email is mandatory. Name/phone are
+        // optional — the seller completes his profile in onboarding.
         if (!EMAIL_RE.test(email.trim())) return t.errors.email;
+        if (firstName.trim() && firstName.trim().length < 2) return t.errors.firstName;
+        if (lastName.trim() && lastName.trim().length < 2) return t.errors.lastName;
+        if (phone.trim() && !PHONE_RE.test(phone.trim())) return t.errors.phone;
         return null;
       case "account":
         return null;
       case "store": {
-        if (storeName.trim().length < 2) return t.errors.storeName;
+        // Store profile is optional at creation — the seller fills it in
+        // onboarding. Slug always has a valid fallback.
+        if (storeName.trim() && storeName.trim().length < 2) return t.errors.storeName;
         if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) return t.errors.slug;
         if (storeContactEmail.trim() && !CONTACT_EMAIL_RE.test(storeContactEmail.trim()))
           return t.errors.contactEmail;
@@ -540,13 +548,13 @@ export function SellerOnboardingWizard({ open, onOpenChange, application, onCrea
 
   const renderIdentityStep = () => (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-      <Field label={t.firstName}>
+      <Field label={t.firstName} hint={t.optionalField}>
         <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} autoComplete="off" />
       </Field>
-      <Field label={t.lastName}>
+      <Field label={t.lastName} hint={t.optionalField}>
         <Input value={lastName} onChange={(e) => setLastName(e.target.value)} autoComplete="off" />
       </Field>
-      <Field label={t.phone} hint={t.phoneHint}>
+      <Field label={t.phone} hint={t.optionalField}>
         <Input
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
@@ -598,7 +606,7 @@ export function SellerOnboardingWizard({ open, onOpenChange, application, onCrea
 
   const renderStoreStep = () => (
     <div className="space-y-4">
-      <Field label={t.storeName}>
+      <Field label={t.storeName} hint={t.optionalField}>
         <Input value={storeName} onChange={(e) => setStoreName(e.target.value)} />
       </Field>
       <Field

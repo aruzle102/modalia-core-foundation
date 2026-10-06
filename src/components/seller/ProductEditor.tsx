@@ -145,6 +145,7 @@ interface EditorSnapshot {
   weightGrams: string;
   basePrice: string;
   compareAtPrice: string;
+  costPrice: string;
   tags: string[];
   seoTitle: string;
   seoDescription: string;
@@ -224,6 +225,7 @@ function emptySnapshot(): EditorSnapshot {
     weightGrams: "",
     basePrice: "",
     compareAtPrice: "",
+    costPrice: "",
     tags: [],
     seoTitle: "",
     seoDescription: "",
@@ -407,6 +409,7 @@ export function ProductEditor({
       weightGrams: p.weight_grams != null ? String(p.weight_grams) : "",
       basePrice: p.base_price != null ? String(p.base_price) : "",
       compareAtPrice: p.compare_at_price != null ? String(p.compare_at_price) : "",
+      costPrice: (p as { cost_price?: number | null }).cost_price != null ? String((p as { cost_price?: number | null }).cost_price) : "",
       tags: (p.product_tag_assignments ?? [])
         .map((a: any) => a.product_tags)
         .filter(Boolean)
@@ -920,6 +923,22 @@ export function ProductEditor({
                   value={snap.compareAtPrice}
                   onChange={(e) => patch((s) => ({ ...s, compareAtPrice: e.target.value }))}
                 />
+              </div>
+              <div>
+                <Label htmlFor="cost-price">Cost price (DZD) *</Label>
+                <Input
+                  id="cost-price"
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  required
+                  className="mt-1.5"
+                  value={snap.costPrice}
+                  onChange={(e) => patch((s) => ({ ...s, costPrice: e.target.value }))}
+                />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Your acquisition cost — mandatory. Visible only to you and the Modalia admin, never to customers.
+                </p>
               </div>
             </div>
           </AdminCard>
@@ -1468,6 +1487,9 @@ function buildPayload(snap: EditorSnapshot, id?: string) {
   if (!Object.keys(name).length) throw new Error("Product name is required in at least one language.");
   const basePrice = Number(snap.basePrice);
   if (!Number.isFinite(basePrice) || basePrice < 0) throw new Error("Base price must be 0 or more.");
+  const costPrice = Number(snap.costPrice);
+  if (snap.costPrice.trim() === "" || !Number.isFinite(costPrice) || costPrice < 0)
+    throw new Error("Cost price is mandatory — enter your acquisition cost (0 or more).");
 
   const variants =
     snap.variants.length > 0
@@ -1497,6 +1519,7 @@ function buildPayload(snap: EditorSnapshot, id?: string) {
     barcode: snap.barcode.trim() || undefined,
     weightGrams: snap.weightGrams === "" ? undefined : Number(snap.weightGrams),
     basePrice,
+    costPrice,
     compareAtPrice:
       snap.compareAtPrice === "" ? undefined : Number(snap.compareAtPrice),
     tags: snap.tags,

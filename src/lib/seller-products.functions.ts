@@ -166,6 +166,10 @@ const saveProductSchema = z.object({
   weightGrams: z.number().int().min(0).optional(),
   basePrice: z.number().min(0).max(100_000_000),
   compareAtPrice: z.number().min(0).max(100_000_000).optional(),
+  // Mandatory: the seller's acquisition cost. Visible to the seller and the
+  // admin ONLY — never selected by public catalog queries — so the platform
+  // can compute the seller's real profit and its commission per store/month.
+  costPrice: z.number().min(0).max(100_000_000),
   tags: z.array(z.string().min(1).max(60)).max(20).default([]),
   seoTitle: z.string().max(120).optional(),
   seoDescription: z.string().max(320).optional(),
@@ -361,6 +365,7 @@ export async function executeProductSave(
         weight_grams: data.weightGrams ?? null,
         base_price: data.basePrice,
         compare_at_price: data.compareAtPrice ?? null,
+        cost_price: data.costPrice,
         metadata: {
           seo_title: data.seoTitle ?? null,
           seo_description: data.seoDescription ?? null,
@@ -396,6 +401,7 @@ export async function executeProductSave(
         weight_grams: data.weightGrams ?? null,
         base_price: data.basePrice,
         compare_at_price: data.compareAtPrice ?? null,
+        cost_price: data.costPrice,
         status: "draft",
         moderation_status: "pending",
         publication_status: "pending_review",

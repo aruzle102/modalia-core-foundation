@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Users } from "lucide-react";
 import { AdminCard, EmptyState, Stat, TableSkeleton, fmtDateTime, fmtMoney } from "@/components/admin/ui";
 import { getSellerCustomers } from "@/lib/seller-orders.functions";
-import { getLocale } from "@/lib/i18n";
+import { getLocale, getTranslations } from "@/lib/i18n";
 import { SellerShell } from "@/components/seller/SellerShell";
 import { errMsg } from "../admin/_shared";
 
@@ -15,6 +15,7 @@ export const Route = createFileRoute("/_authenticated/seller/customers")({
 
 function SellerCustomersPage() {
   const { locale } = Route.useSearch();
+  const t = getTranslations(locale).seller.customers;
   const customersQuery = useQuery({
     queryKey: ["seller-customers"],
     queryFn: () => getSellerCustomers({ data: {} }),
@@ -25,15 +26,12 @@ function SellerCustomersPage() {
   const totalRevenue = customers.reduce((sum, c) => sum + c.totalSpent, 0);
 
   return (
-    <SellerShell
-      eyebrow="Seller workspace"
-      title="Customers"
-    >
-      <p className="text-body text-muted-foreground">"Derived from your own orders — read-only. Customers are matched by phone number when available."</p>
+    <SellerShell eyebrow={t.eyebrow} title={t.title}>
+      <p className="text-body text-muted-foreground">{t.description}</p>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <Stat label="Customers" value={customersQuery.isLoading ? "…" : String(customers.length)} />
-        <Stat label="Orders" value={customersQuery.isLoading ? "…" : String(customers.reduce((s, c) => s + c.orderCount, 0))} />
-        <Stat label="Revenue from these orders" value={customersQuery.isLoading ? "…" : fmtMoney(totalRevenue)} />
+        <Stat label={t.statCustomers} value={customersQuery.isLoading ? "…" : String(customers.length)} />
+        <Stat label={t.statOrders} value={customersQuery.isLoading ? "…" : String(customers.reduce((s, c) => s + c.orderCount, 0))} />
+        <Stat label={t.statRevenue} value={customersQuery.isLoading ? "…" : fmtMoney(totalRevenue, "DZD", locale)} />
       </div>
 
       <div className="mt-6">
@@ -41,26 +39,23 @@ function SellerCustomersPage() {
           <TableSkeleton rows={6} />
         ) : customersQuery.isError ? (
           <AdminCard>
-            <EmptyState title="Customers could not be loaded" text={errMsg(customersQuery.error)} />
+            <EmptyState title={t.errorTitle} text={errMsg(customersQuery.error)} />
           </AdminCard>
         ) : customers.length === 0 ? (
           <AdminCard>
-            <EmptyState
-              title="No customers yet"
-              text="Customers who order from your store will appear here automatically."
-            />
+            <EmptyState title={t.emptyTitle} text={t.emptyText} />
           </AdminCard>
         ) : (
           <AdminCard className="overflow-x-auto">
             <table className="w-full min-w-[680px] text-sm">
               <thead>
                 <tr className="border-b border-border text-start text-xs uppercase tracking-wide text-muted-foreground">
-                  <th className="py-3 pe-4 text-start font-medium">Customer</th>
-                  <th className="py-3 pe-4 text-start font-medium">Phone</th>
-                  <th className="py-3 pe-4 text-start font-medium">Wilaya</th>
-                  <th className="py-3 pe-4 text-start font-medium">Orders</th>
-                  <th className="py-3 pe-4 text-start font-medium">Total spent</th>
-                  <th className="py-3 text-start font-medium">Last order</th>
+                  <th className="py-3 pe-4 text-start font-medium">{t.colCustomer}</th>
+                  <th className="py-3 pe-4 text-start font-medium">{t.colPhone}</th>
+                  <th className="py-3 pe-4 text-start font-medium">{t.colWilaya}</th>
+                  <th className="py-3 pe-4 text-start font-medium">{t.colOrders}</th>
+                  <th className="py-3 pe-4 text-start font-medium">{t.colTotalSpent}</th>
+                  <th className="py-3 text-start font-medium">{t.colLastOrder}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -77,8 +72,8 @@ function SellerCustomersPage() {
                     <td className="py-3 pe-4 text-xs text-muted-foreground" dir="ltr">{customer.phone}</td>
                     <td className="py-3 pe-4">{customer.wilaya || "—"}</td>
                     <td className="py-3 pe-4 tabular-nums">{customer.orderCount}</td>
-                    <td className="py-3 pe-4 tabular-nums font-medium">{fmtMoney(customer.totalSpent)}</td>
-                    <td className="py-3 text-xs text-muted-foreground">{fmtDateTime(customer.lastOrderAt)}</td>
+                    <td className="py-3 pe-4 tabular-nums font-medium">{fmtMoney(customer.totalSpent, "DZD", locale)}</td>
+                    <td className="py-3 text-xs text-muted-foreground">{fmtDateTime(customer.lastOrderAt, locale)}</td>
                   </tr>
                 ))}
               </tbody>

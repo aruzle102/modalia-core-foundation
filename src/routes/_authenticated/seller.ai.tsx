@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Copy, Info, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -214,6 +214,7 @@ function SellerAiPage() {
  * edits the description text; the product's publication status is untouched.
  */
 function AiDraftStudio({ productId, productName }: { productId: string; productName: string }) {
+  const queryClient = useQueryClient();
   const [draft, setDraft] = useState<string>("");
   const [edited, setEdited] = useState<string>("");
   const [source, setSource] = useState<"rules" | null>(null);
@@ -242,7 +243,12 @@ function AiDraftStudio({ productId, productName }: { productId: string; productN
 
   const apply = useMutation({
     mutationFn: () => aiApplySellerDraft({ data: { productId, locale: "en", description: edited } }),
-    onSuccess: () => setApplied(true),
+    onSuccess: () => {
+      setApplied(true);
+      // The applied description is now the product's description — drop the
+      // stale catalog cache so the UI shows the new copy immediately.
+      queryClient.invalidateQueries({ queryKey: ["seller-ai-catalog"] });
+    },
   });
 
   const resetFor = () => {

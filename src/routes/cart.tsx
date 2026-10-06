@@ -11,8 +11,14 @@ import { useEffect } from "react";
 export const Route = createFileRoute("/cart")({
   head: () => ({ meta: [{ title: "Cart — Modalia" }, { name: "description", content: "Review items from multiple Modalia stores before checkout." }, { property: "og:title", content: "Cart — Modalia" }, { property: "og:description", content: "Review items from multiple Modalia stores before checkout." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
   validateSearch: (search: Record<string, unknown>) => ({ locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined) }),
+  errorComponent: CartError,
   component: CartPage,
 });
+
+function CartError() {
+  const { locale } = Route.useSearch();
+  return <div role="alert" className="px-6 py-24 text-center text-muted-foreground">{getTranslations(locale).common.loadError}</div>;
+}
 
 function CartPage() {
   const { locale } = Route.useSearch();

@@ -29,7 +29,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireSeller } from "@/lib/seller-auth";
-import { assertAdmin } from "@/lib/admin-auth";
+import { assertAdminPermission } from "@/lib/admin-permissions";
 import type { CatalogProduct } from "@/lib/catalog.functions";
 import { pickLocalizedName } from "@/lib/names";
 
@@ -321,7 +321,7 @@ export const getAdminAnalytics = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .inputValidator((data) => daysInput.parse(data))
   .handler(async ({ data, context }): Promise<AdminAnalytics> => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "analytics.view");
     const diagnostics: TableDiagnostic[] = [];
     const { data: rows, error } = await callRpc(context.supabase as SupabaseClient, "admin_analytics_events", {
       p_days: data.days,

@@ -12,7 +12,7 @@ import { z } from "zod";
 import type { Database, Json } from "@/integrations/supabase/types";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireSeller, type SellerContext, type SellerPermission } from "@/lib/seller-auth";
-import { assertAdmin } from "@/lib/admin-auth";
+import { assertAdminPermission } from "@/lib/admin-permissions";
 import { rateLimitEndpoint } from "@/lib/rate-limit";
 import { getAiMode } from "./ai/provider";
 import {
@@ -777,7 +777,7 @@ export const aiAdminModerationBrief = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .validator((data) => z.object({ locale: localeSchema }).parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "intelligence.manage");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const [appsResult, productsResult, ticketsResult] = await Promise.all([

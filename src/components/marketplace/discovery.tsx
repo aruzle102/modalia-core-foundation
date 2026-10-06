@@ -1,15 +1,16 @@
 import { useState, type MouseEvent } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Check, Heart, ShoppingBag } from "lucide-react";
+import { ArrowRight, Heart, ShoppingBag, Zap } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatPrice } from "@/lib/i18n/format";
 import { getTranslations } from "@/lib/i18n";
-import { useCart } from "@/lib/cart-store";
 import { isWishlisted, toggleWishlist } from "@/lib/wishlist-store";
 import { microAnimationClass, replayAnimation } from "@/lib/motion";
+import { startBuyNow } from "@/components/marketplace/buy-now";
 import type { CatalogCategory, CatalogProduct, CatalogStore } from "@/lib/catalog.functions";
 import { OfficialStoreBadge, VerifiedSellerBadge } from "@/components/marketplace/StoreBadges";
 import type { SupportedLocale } from "@/config/platform";
+import { motionTw } from "@/lib/motion-tokens";
 
 const NEW_BADGE_DAYS = 14;
 const LOW_STOCK_THRESHOLD = 5;
@@ -35,9 +36,7 @@ export function ProductCard({
   /** Rendered on a dark surface: info text switches to light tones. */
   dark?: boolean;
 }) {
-  const { addItem } = useCart();
   const [wishlisted, setWishlisted] = useState(() => isWishlisted(product.id));
-  const [justAdded, setJustAdded] = useState(false);
   const t = getTranslations(locale).card;
 
   // Badges come from real data only: discount from compareAtPrice,
@@ -63,23 +62,37 @@ export function ProductCard({
     if (added) replayAnimation(event.currentTarget, microAnimationClass.wishlistPop);
   };
 
+  const buyNowProduct = {
+    productId: product.id,
+    slug: product.slug,
+    name: product.name,
+    image: product.imagePath,
+    storeName: product.storeName,
+  };
+
+  /**
+   * Explicit BUY NOW: never touches the cart. The BuyNowHost opens the
+   * variant sheet when the product has required options, or creates the
+   * direct isolated intent otherwise.
+   */
+  const handleBuyNow = (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    if (soldOut) return;
+    startBuyNow(locale, buyNowProduct, { mode: "buy", quantity: 1 });
+  };
+
+  /**
+   * Quick add goes through the same intent system. CatalogProduct carries no
+   * variant/option data, so every quick-add is resolved server-side: the
+   * host adds the CORRECT default variant directly when no choice is
+   * required, and opens the variant sheet when options are required —
+   * instead of adding `variantId: product.id`, which is wrong for products
+   * with variants. The host confirms with a toast on success.
+   */
   const handleQuickAdd = (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     if (soldOut) return;
-    addItem({
-      productId: product.id,
-      variantId: product.id,
-      slug: product.slug,
-      name: product.name,
-      price: product.price,
-      quantity: 1,
-      image: product.imagePath,
-      storeName: product.storeName,
-    });
-    setJustAdded(true);
-    // Commerce micro-feedback: nudge confirms the item landed in the cart.
-    replayAnimation(event.currentTarget, microAnimationClass.cartNudge);
-    window.setTimeout(() => setJustAdded(false), 1500);
+    startBuyNow(locale, buyNowProduct, { mode: "add", quantity: 1 });
   };
 
   return (
@@ -100,15 +113,15 @@ export function ProductCard({
               src={product.imagePath}
               alt={product.imageAlt || product.name}
               loading="lazy"
-              sizes="(min-width: 1024px) 25vw, 50vw"
-              className={`size-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.05] motion-reduce:transition-none motion-reduce:group-hover:scale-100 ${soldOut ? "opacity-75" : ""}`}
+
+              className={`size-full object-cover ${motionTw.transition.transform} ${motionTw.duration.cinematic} ${motionTw.ease.out} group-hover:scale-[1.05] motion-reduce:transition-none motion-reduce:group-hover:scale-100 ${soldOut ? "opacity-75" : ""}`}
             />
           ) : product.secondImagePath ? (
             <img
               src={product.secondImagePath}
               alt={product.secondImageAlt || product.name}
               loading="lazy"
-              sizes="(min-width: 1024px) 25vw, 50vw"
+
               className="size-full object-cover"
             />
           ) : (
@@ -124,8 +137,8 @@ export function ProductCard({
               alt=""
               aria-hidden
               loading="lazy"
-              sizes="(min-width: 1024px) 25vw, 50vw"
-              className="absolute inset-0 size-full object-cover opacity-0 transition-opacity duration-500 group-hover:opacity-100 motion-reduce:transition-none motion-reduce:group-hover:opacity-0"
+
+              className={`absolute inset-0 size-full object-cover opacity-0 ${motionTw.transition.opacity} ${motionTw.duration.crossfade} group-hover:opacity-100 motion-reduce:transition-none motion-reduce:group-hover:opacity-0`}
             />
           ) : null}
         </Link>
@@ -157,29 +170,36 @@ export function ProductCard({
           />
         </button>
 
-        {/* Quick add — full-bleed bar fading in on hover/focus, always on touch. */}
-        <div className="absolute inset-x-0 bottom-0 z-10">
-          <button
-            type="button"
-            onClick={handleQuickAdd}
-            disabled={soldOut}
-            aria-live="polite"
-            className="card-action flex h-11 w-full items-center justify-center gap-2 bg-background/95 text-sm font-medium text-foreground backdrop-blur-sm transition-colors hover:bg-background disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            {soldOut ? (
-              t.soldOut
-            ) : justAdded ? (
-              <>
-                <Check className="size-4" aria-hidden="true" />
-                {t.added}
-              </>
-            ) : (
-              <>
-                <ShoppingBag className="size-4" aria-hidden="true" />
-                {t.quickAdd}
-              </>
-            )}
-          </button>
+        {/* Commerce actions — full-bleed split bar fading in on hover/focus,
+            always on touch. BUY NOW is primary; Add to bag secondary.
+            Sibling buttons, never nested in the image link. */}
+        <div className="card-action absolute inset-x-0 bottom-0 z-10">
+          {soldOut ? (
+            <div className="flex h-11 w-full items-center justify-center bg-background/95 text-sm font-medium text-muted-foreground backdrop-blur-sm">
+              {t.soldOut}
+            </div>
+          ) : (
+            <div className="flex divide-x divide-border">
+              <button
+                type="button"
+                onClick={handleBuyNow}
+                aria-label={`${t.buyNow} — ${product.name}`}
+                className="flex h-11 min-w-0 flex-1 items-center justify-center gap-2 bg-primary px-2 text-sm font-semibold text-primary-foreground backdrop-blur-sm transition-colors hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              >
+                <Zap className="size-4 shrink-0" aria-hidden="true" />
+                <span className="truncate">{t.buyNow}</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleQuickAdd}
+                aria-label={`${t.addToBag} — ${product.name}`}
+                className="flex h-11 min-w-0 flex-1 items-center justify-center gap-2 bg-background/95 px-2 text-sm font-medium text-foreground backdrop-blur-sm transition-colors hover:bg-background focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              >
+                <ShoppingBag className="size-4 shrink-0" aria-hidden="true" />
+                <span className="truncate">{t.addToBag}</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -252,7 +272,7 @@ export function CategoryRail({
             className={
               featured
                 ? "group relative flex min-h-72 w-64 shrink-0 flex-col justify-end overflow-hidden rounded-xl bg-ink p-6 text-primary-foreground sm:w-72 lg:col-span-2 lg:row-span-2 lg:w-auto"
-                : "group flex min-h-40 w-40 shrink-0 flex-col justify-between rounded-xl border border-border bg-card p-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-foreground/25 hover:shadow-[0_18px_40px_-20px_rgba(0,0,0,0.3)] motion-reduce:transition-none motion-reduce:hover:translate-y-0 lg:w-auto lg:min-w-0"
+                : `group flex min-h-40 w-40 shrink-0 flex-col justify-between rounded-xl border border-border bg-card p-5 ${motionTw.transition.interactive} ${motionTw.duration.feedback} hover:-translate-y-0.5 hover:border-foreground/25 hover:shadow-[0_18px_40px_-20px_rgba(0,0,0,0.3)] motion-reduce:transition-none motion-reduce:hover:translate-y-0 lg:w-auto lg:min-w-0`
             }
           >
             {featured ? (
@@ -288,7 +308,7 @@ export function CategoryRail({
                 {t.productsCount(category.productCount)}
               </p>
               <ArrowRight
-                className={`${featured ? "text-primary-foreground/70" : "text-muted-foreground"} mt-5 size-4 transition-transform duration-300 group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1 motion-reduce:transition-none`}
+                className={`${featured ? "text-primary-foreground/70" : "text-muted-foreground"} mt-5 size-4 ${motionTw.transition.transform} ${motionTw.duration.feedback} group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1 motion-reduce:transition-none`}
               />
             </div>
           </Link>
@@ -326,8 +346,8 @@ export function StoreRail({ stores, locale }: { stores: CatalogStore[]; locale: 
                   alt=""
                   aria-hidden
                   loading="lazy"
-                  sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-                  className="size-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+
+                  className={`size-full object-cover ${motionTw.transition.transform} ${motionTw.duration.cinematic} ${motionTw.ease.out} group-hover:scale-[1.03] motion-reduce:transition-none motion-reduce:group-hover:scale-100`}
                 />
               ) : (
                 <div
@@ -340,7 +360,7 @@ export function StoreRail({ stores, locale }: { stores: CatalogStore[]; locale: 
                 </div>
               )}
             </div>
-            <div className="absolute bottom-0 left-6 translate-y-1/2">
+            <div className="absolute bottom-0 start-6 translate-y-1/2">
               {store.logoPath ? (
                 <img
                   src={store.logoPath}

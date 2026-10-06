@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, Box, Heart, Minus, Plus, ShieldCheck, ShoppingBag, Star, Store, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,10 +13,13 @@ import { getTranslations } from "@/lib/i18n";
 import { useCart } from "@/lib/cart-store";
 import { useDeviceTier } from "@/hooks/use-device-tier";
 import { microAnimationClass, replayAnimation } from "@/lib/motion";
+import { motionTw } from "@/lib/motion-tokens";
 import { isWishlisted, toggleWishlist } from "@/lib/wishlist-store";
 import { toast } from "sonner";
 import { getRelatedProducts } from "@/lib/analytics.functions";
 import { recordRecentlyViewed, track } from "@/lib/analytics";
+import { startBuyNow } from "@/components/marketplace/buy-now";
+import { SiteButtons } from "@/components/layout/site-buttons";
 import type { SupportedLocale } from "@/config/platform";
 import type { ProductDetail } from "@/lib/product.functions";
 
@@ -40,6 +43,7 @@ function canMagnify(): boolean {
 export function ProductDetailView({ product, locale }: { product: ProductDetail; locale: SupportedLocale }) {
   const t = getTranslations(locale).product;
   const verifiedLabel = getTranslations(locale).store.verifiedStore;
+  const officialLabel = getTranslations(locale).store.officialStore;
   const [selected, setSelected] = useState<Record<string, string>>({});
   const [quantity, setQuantity] = useState(1);
   const [activeMedia, setActiveMedia] = useState(0);
@@ -54,7 +58,6 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
     window.matchMedia("(pointer: fine)").matches &&
     !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const cart = useCart();
-  const navigate = useNavigate();
   const ctaRef = useRef<HTMLDivElement>(null);
   const [ctaVisible, setCtaVisible] = useState(true);
 
@@ -182,6 +185,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
       quantity,
       image: currentImage?.url ?? null,
       storeName: product.store?.name ?? null,
+      storeSlug: product.store?.slug ?? null,
       options: Object.fromEntries(
         product.options.map((option) => [
           option.code,
@@ -201,19 +205,21 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
   };
 
   const handleBuyNow = () => {
-    addToCart(true);
-    track("add_to_cart", {
-      entityType: "product",
-      entityId: product.id,
-      metadata: {
-        quantity,
-        ...(effectiveVariant ? { variant_id: effectiveVariant.id } : {}),
-        buy_now: true,
+    // Real Buy Now: isolated single-use intent → /checkout?intent=<id>.
+    // Never touches the cart. The BuyNowHost opens the variant sheet when
+    // options are incomplete, or creates the direct intent immediately.
+    startBuyNow(
+      locale,
+      {
+        productId: product.id,
+        slug: product.slug,
+        name: product.name,
+        image: currentImage?.url ?? null,
+        storeName: product.store?.name ?? null,
+        storeSlug: product.store?.slug ?? null,
       },
-    });
-    // SPA navigation keeps the local cart state intact and scrolls to top;
-    // the item is already in the cart store (persisted to localStorage).
-    navigate({ to: "/checkout", search: { locale } });
+      { mode: "buy", preselected: selected, quantity },
+    );
   };
 
   const actionLabel = product.options.length && !complete ? t.selectOptions : t.addToBag;
@@ -280,7 +286,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
                 alt={currentImage.alt || product.name}
                 sizes="(min-width: 1024px) 55vw, 100vw"
                 style={{ transformOrigin: zoomOrigin }}
-                className={`gallery-parallax size-full object-cover transition-transform duration-300 ease-out motion-reduce:transition-none ${
+                className={`gallery-parallax size-full object-cover ${motionTw.transition.transform} ${motionTw.duration.feedback} ${motionTw.ease.out} motion-reduce:transition-none ${
                   zoomed ? "scale-[1.9]" : "scale-100"
                 }`}
               />
@@ -382,7 +388,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
               <span className="inline-flex items-center gap-1 font-medium text-foreground">
                 {product.store.name}
                 {product.store.slug === "modalia" ? (
-                <OfficialStoreBadge label={verifiedLabel} />
+                <OfficialStoreBadge label={officialLabel} />
               ) : (
                 <VerifiedSellerBadge verified={product.store.verified} label={verifiedLabel} />
               )}
@@ -451,7 +457,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
                             aria-label={value.label}
                             title={value.label}
                             style={{ backgroundColor: value.hex }}
-                            className={`size-9 rounded-full border border-border transition-all disabled:cursor-not-allowed disabled:opacity-30 motion-reduce:transition-none ${
+                            className={`size-9 rounded-full border border-border ${motionTw.transition.interactive} disabled:cursor-not-allowed disabled:opacity-30 motion-reduce:transition-none ${
                               selected[option.id] === value.id
                                 ? "ring-2 ring-foreground ring-offset-2 ring-offset-background"
                                 : "hover:scale-110"
@@ -543,6 +549,9 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
               {t.buyNow}
             </Button>
           </div>
+          <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2">
+            <SiteButtons placement="product_cta" locale={locale} variant="link" itemClassName="text-small text-muted-foreground underline underline-offset-4 hover:text-foreground" />
+          </div>
 
           <div className="mt-6 grid grid-cols-2 gap-3 text-caption text-muted-foreground">
             <p className="inline-flex items-center gap-2">
@@ -624,7 +633,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
                     <span className="flex items-center gap-1.5 text-small font-medium text-foreground">
                       {product.store.name}
                       {product.store.slug === "modalia" ? (
-                <OfficialStoreBadge label={verifiedLabel} />
+                <OfficialStoreBadge label={officialLabel} />
               ) : (
                 <VerifiedSellerBadge verified={product.store.verified} label={verifiedLabel} />
               )}
@@ -700,7 +709,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
               {product.reviews.map((review) => (
                 <article key={review.id} className="border-t border-border py-6">
                   <div className="flex items-center justify-between gap-4">
-                    <p className="text-nav text-foreground">{review.firstName ?? "Modalia"}</p>
+                    <p className="text-nav text-foreground">{review.firstName ?? t.anonymousReviewer}</p>
                     <span className="inline-flex" aria-label={`${review.rating} / 5`}>
                       {[1, 2, 3, 4, 5].map((star) => (
                         <Star
@@ -765,11 +774,16 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
       {/* ——— Viewed together (real co-view events; hidden until data exists) ——— */}
       <ViewedTogether productId={product.id} locale={locale} copy={t} />
 
-      {/* ——— Sticky mobile purchase bar: appears once the main CTAs scroll out of view ——— */}
+      {/* ——— Sticky mobile purchase bar: appears once the main CTAs scroll out of view.
+          Sec 43 (#100): while slid off-screen (`ctaVisible`) the bar is `inert`
+          as well as `aria-hidden`, so its Buy Now button can never receive
+          keyboard focus off-screen. `inert` flips synchronously with the
+          tokenized slide transition (`motionTw.duration.base`). ——— */}
       {canPurchase ? (
         <div
           aria-hidden={ctaVisible}
-          className={`fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 backdrop-blur transition-transform duration-200 motion-reduce:transition-none md:hidden ${
+          inert={ctaVisible}
+          className={`fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 backdrop-blur ${motionTw.transition.transform} ${motionTw.duration.base} motion-reduce:transition-none md:hidden ${
             ctaVisible ? "translate-y-full" : "translate-y-0"
           }`}
         >

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { AdminGate } from "@/components/admin/AdminGate";
+import { SuperAdminGate } from "@/components/admin/SuperAdminGate";
 import { AdminShell } from "@/components/admin/AdminShell";
 import {
   AdminCard,
@@ -94,6 +95,7 @@ function SettingsPage() {
 
   return (
     <AdminGate>
+      <SuperAdminGate>
       <AdminShell
         title={t.settings}
         subtitle="Platform contact details and social links, editable here and shown across the storefront."
@@ -155,6 +157,7 @@ function SettingsPage() {
           <CommissionRateCard />
         </div>
       </AdminShell>
+      </SuperAdminGate>
     </AdminGate>
   );
 }

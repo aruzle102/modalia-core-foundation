@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SiteFooter, SiteHeader } from "@/components/layout/site-shell";
 import { supabase } from "@/integrations/supabase/client";
+import { clearLoginAttempts } from "@/lib/auth-guard.functions";
 import { getLocale, getTranslations, localeDirections } from "@/lib/i18n";
 import { pageHead } from "@/lib/seo";
 
@@ -97,6 +98,9 @@ function CustomerResetPasswordPage() {
     try {
       const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
+      // Ownership proven via the recovery session: reset the brute-force
+      // bucket so the new password works immediately on next sign-in.
+      void clearLoginAttempts().catch(() => {});
       setPhase("done");
       setMessageTone("info");
       setMessage(ta.passwordUpdated);

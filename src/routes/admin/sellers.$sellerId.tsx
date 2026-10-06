@@ -712,6 +712,7 @@ function SellerProfilePage() {
                                       ? m.permissions.filter((x): x is string => typeof x === "string")
                                       : [],
                                     active: m.active !== false,
+                                    staffRole: typeof m.staff_role === "string" ? m.staff_role : null,
                                   })
                                 }
                               >

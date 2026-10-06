@@ -5,6 +5,7 @@ import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AdminGate } from "@/components/admin/AdminGate";
+import { SuperAdminGate } from "@/components/admin/SuperAdminGate";
 import { AdminShell } from "@/components/admin/AdminShell";
 import {
   AdminCard,
@@ -66,6 +67,7 @@ function CommissionsPage() {
 
   return (
     <AdminGate>
+      <SuperAdminGate>
       <AdminShell
         title={t.title}
         subtitle={t.subtitle}
@@ -221,6 +223,7 @@ function CommissionsPage() {
           )}
         </AdminCard>
       </AdminShell>
+      </SuperAdminGate>
     </AdminGate>
   );
 }

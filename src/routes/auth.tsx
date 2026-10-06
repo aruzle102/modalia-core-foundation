@@ -6,6 +6,7 @@ import { SiteFooter, SiteHeader } from "@/components/layout/site-shell";
 import { supabase } from "@/integrations/supabase/client";
 import {
   checkLoginAllowed,
+  clearLoginAttempts,
   isLoginRateLimitedError,
   resolveLoginRateLimitMessage,
 } from "@/lib/auth-guard.functions";
@@ -63,6 +64,10 @@ function AuthPage() {
         await checkLoginAllowed({ data: { identifier: email } });
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        // Ownership proven: reset the brute-force bucket so stale failed
+        // attempts (e.g. from before a password change) never lock out a
+        // legitimate user. Best-effort — login already succeeded.
+        void clearLoginAttempts().catch(() => {});
         if (target) {
           await nav({ href: target, replace: true });
         } else {

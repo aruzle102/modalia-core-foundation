@@ -172,6 +172,7 @@ export interface RecentProduct {
   name: string;
   image: string | null;
   price: number;
+  categorySlug?: string | undefined;
 }
 
 /** Record a product view locally for the "Recently viewed" rail. No network. */

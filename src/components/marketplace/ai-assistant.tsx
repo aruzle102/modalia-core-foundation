@@ -1,9 +1,8 @@
 /**
- * AI Shopping Assistant — storefront chat drawer.
+ * Modalia Intelligence — storefront chat drawer.
  *
- * Answers come ONLY from `aiChat` (real catalog data). The drawer always
- * labels who answered: the Rule Assistant (مساعد القواعد) or an external
- * AI provider — never pretending one is the other.
+ * Answers come ONLY from `aiChat` (deterministic, database-powered rules).
+ * No external AI provider is ever called in production.
  */
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
@@ -20,7 +19,7 @@ import {
 } from "@/components/ui/sheet";
 import { localeDirections, type SupportedLocale, type Translation } from "@/lib/i18n";
 import { formatPrice } from "@/lib/i18n/format";
-import { aiChat, getAiStatus, type AiChatProduct } from "@/lib/ai.functions";
+import { aiChat, type AiChatProduct } from "@/lib/ai.functions";
 import { getPublicIntelligenceConfig } from "@/lib/intelligence-settings.functions";
 import { answerSupportQuestion } from "@/lib/support-knowledge";
 import { cn } from "@/lib/utils";
@@ -30,7 +29,7 @@ type ChatMessage = {
   role: "user" | "assistant";
   text: string;
   products: AiChatProduct[];
-  source: "provider" | "rules";
+  source: "rules";
   intentSummary: string | null;
 };
 
@@ -158,13 +157,6 @@ export function AiAssistantDrawer({
   const bottomRef = useRef<HTMLDivElement>(null);
   const dir = localeDirections[locale];
 
-  const statusQuery = useQuery({
-    queryKey: ["ai-status"],
-    queryFn: () => getAiStatus({ data: {} }),
-    staleTime: 60_000,
-    retry: false,
-  });
-
   // Modalia Intelligence control plane: support toggle + trilingual copy.
   const intelQuery = useQuery({
     queryKey: ["intelligence-config", locale],
@@ -252,7 +244,6 @@ export function AiAssistantDrawer({
     chat.mutate(message);
   };
 
-  const source = statusQuery.data?.source ?? "rules";
   const isRtl = dir === "rtl";
 
   return (
@@ -268,17 +259,10 @@ export function AiAssistantDrawer({
           <SheetDescription>{t.assistant.subtitle}</SheetDescription>
         </SheetHeader>
 
-        {/* Honesty banner: always names who is answering */}
-        <div
-          className={cn(
-            "mx-5 mt-4 flex items-start gap-2 rounded-xl border px-3 py-2.5 text-xs leading-5",
-            source === "rules"
-              ? "border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-300"
-              : "border-sky-500/30 bg-sky-500/10 text-sky-800 dark:text-sky-300",
-          )}
-        >
+        {/* Honesty banner: Modalia Intelligence is deterministic and database-powered. */}
+        <div className="mx-5 mt-4 flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2.5 text-xs leading-5 text-amber-800 dark:text-amber-300">
           <Bot className="mt-0.5 size-4 shrink-0" />
-          <p>{source === "rules" ? t.assistant.rulesBanner : t.assistant.providerBanner}</p>
+          <p>{t.assistant.rulesBanner}</p>
         </div>
 
         <div className="flex-1 overflow-y-auto px-5 py-4" role="log" aria-live="polite">

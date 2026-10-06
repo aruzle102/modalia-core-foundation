@@ -1516,6 +1516,7 @@ export type Database = {
           name: Json
           publication_status: string
           published_at: string | null
+          search_vector: string | null
           seller_id: string
           short_description: Json | null
           sku: string | null
@@ -1546,6 +1547,7 @@ export type Database = {
           name: Json
           publication_status?: string
           published_at?: string | null
+          search_vector?: string | null
           seller_id: string
           short_description?: Json | null
           sku?: string | null
@@ -1576,6 +1578,7 @@ export type Database = {
           name?: Json
           publication_status?: string
           published_at?: string | null
+          search_vector?: string | null
           seller_id?: string
           short_description?: Json | null
           sku?: string | null
@@ -2628,6 +2631,24 @@ export type Database = {
         Returns: boolean
       }
       is_super_admin: { Args: never; Returns: boolean }
+      search_products_fts: {
+        Args: {
+          p_query: string
+          p_category_slug?: string | null
+          p_brand_slugs?: string[] | null
+          p_store_slugs?: string[] | null
+          p_min_price?: number | null
+          p_max_price?: number | null
+          p_color_slugs?: string[] | null
+          p_size_values?: string[] | null
+          p_in_stock?: boolean
+          p_on_sale?: boolean
+          p_sort?: string
+          p_limit?: number
+          p_offset?: number
+        }
+        Returns: Json
+      }
       media_seller_id: { Args: { object_name: string }; Returns: string }
       seller_can: {
         Args: { _permission: string; _seller_id: string }

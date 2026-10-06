@@ -455,10 +455,21 @@ export const browseCatalog = createServerFn({ method: "GET" })
       if (data.minPrice !== undefined) query = query.gte("base_price", data.minPrice);
       if (data.maxPrice !== undefined) query = query.lte("base_price", data.maxPrice);
 
-      // Server-side search across localized names (PostgREST ->> JSON operator).
+      // Server-side search: prefer database-native full-text search
+      // (tsvector + ts_rank with trigram fallback). If the FTS migration has
+      // not been applied, fall back to the legacy ilike path below.
       const rawQuery = data.q?.trim() ?? "";
       const safeQuery = rawQuery.replace(/[%*,()\\]/g, "").slice(0, 80);
       if (safeQuery) {
+        try {
+          return await runFtsSearch(client, data, locale, categories);
+        } catch (err) {
+          if (!(err instanceof FtsUnavailableError)) throw err;
+          console.warn(
+            "FTS search unavailable, falling back to ilike search:",
+            err.message,
+          );
+        }
         query = query.or(
           `name->>ar.ilike.%${safeQuery}%,name->>fr.ilike.%${safeQuery}%,name->>en.ilike.%${safeQuery}%`,
         );
@@ -682,6 +693,176 @@ export const browseCatalog = createServerFn({ method: "GET" })
       total,
     };
   });
+
+/**
+ * Thrown when the database-native FTS path cannot be used (RPC missing,
+ * migration not applied, or query error). Callers fall back to ilike search.
+ */
+export class FtsUnavailableError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "FtsUnavailableError";
+  }
+}
+
+type FtsFacetBrand = { id: string; slug: string; name: string; count: number };
+type FtsFacetStore = {
+  id: string;
+  slug: string;
+  name: string;
+  verified: boolean;
+  count: number;
+};
+type FtsFacetColor = {
+  id: string;
+  slug: string;
+  name: LocalizedText;
+  hex: string | null;
+  count: number;
+};
+type FtsFacetSize = {
+  id: string;
+  value: string;
+  label: LocalizedText;
+  count: number;
+};
+
+type FtsPayload = {
+  total: number;
+  ids: string[];
+  facets: {
+    brands: FtsFacetBrand[];
+    stores: FtsFacetStore[];
+    colors: FtsFacetColor[];
+    sizes: FtsFacetSize[];
+    price_bounds: { min: number; max: number } | null;
+  };
+};
+
+/**
+ * Database-native full-text search via the `search_products_fts` RPC.
+ * All filtering, ranking (ts_rank + trigram fallback), and pagination happen
+ * in PostgreSQL — no multi-thousand-row fetch with JS post-filtering.
+ * Throws FtsUnavailableError when the RPC is unavailable so callers can
+ * fall back to the legacy ilike path.
+ */
+async function runFtsSearch(
+  client: PublicClient,
+  data: z.infer<typeof browseInput>,
+  locale: string,
+  categories: CatalogCategory[],
+): Promise<BrowseResult> {
+  const page = data.page ?? 1;
+  const pageSize = data.pageSize ?? DEFAULT_PAGE_SIZE;
+  const sort =
+    data.sort === "price_asc" || data.sort === "price_desc"
+      ? data.sort
+      : data.sort === "newest"
+        ? "newest"
+        : "relevance";
+
+  const rawQuery = data.q?.trim() ?? "";
+  const safeQuery = rawQuery.replace(/[%*,()\\]/g, "").slice(0, 80);
+  if (!safeQuery) throw new FtsUnavailableError("empty query");
+
+  const { data: payload, error } = await client.rpc("search_products_fts", {
+    p_query: safeQuery,
+    p_category_slug: data.category?.trim() || null,
+    p_brand_slugs: data.brands?.length ? data.brands : null,
+    p_store_slugs: data.stores?.length ? data.stores : null,
+    p_min_price: data.minPrice ?? null,
+    p_max_price: data.maxPrice ?? null,
+    p_color_slugs: data.colors?.length ? data.colors : null,
+    p_size_values: data.sizes?.length ? data.sizes : null,
+    p_in_stock: data.inStock ?? false,
+    p_on_sale: data.onSale ?? false,
+    p_sort: sort,
+    p_limit: pageSize,
+    p_offset: (page - 1) * pageSize,
+  });
+  if (error) throw new FtsUnavailableError(error.message);
+
+  const result = payload as unknown as FtsPayload;
+  const ids: string[] = Array.isArray(result?.ids) ? result.ids : [];
+  const total = Number(result?.total ?? 0);
+
+  // Fetch card rows for this page, preserving the RPC's rank order.
+  let rows: BrowseRow[] = [];
+  if (ids.length) {
+    const rowResult = await client
+      .from("products")
+      .select(
+        "id,slug,name,base_price,compare_at_price,created_at,published_at,brand_id,store_id,category_id",
+      )
+      .in("id", ids);
+    if (rowResult.error) throw new FtsUnavailableError(rowResult.error.message);
+    const byId = new Map(
+      ((rowResult.data ?? []) as unknown as BrowseRow[]).map((row) => [row.id, row] as const),
+    );
+    rows = ids
+      .map((id) => byId.get(id))
+      .filter((row): row is BrowseRow => row !== undefined);
+  }
+
+  const products = await hydrateCards(client, locale, rows);
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const facets = result?.facets;
+
+  return {
+    products,
+    categories,
+    brands: (facets?.brands ?? []).map((brand) => ({
+      id: brand.id,
+      slug: brand.slug,
+      name: brand.name,
+      productCount: brand.count,
+    })),
+    stores: (facets?.stores ?? []).map((store) => ({
+      id: store.id,
+      slug: store.slug,
+      name: store.name,
+      description: null,
+      logoPath: null,
+      bannerPath: null,
+      productCount: store.count,
+      verified: store.verified,
+    })),
+    colors: (facets?.colors ?? []).map((color) => ({
+      id: color.id,
+      slug: color.slug,
+      name: localized(color.name, locale, color.slug),
+      hex: color.hex,
+      productCount: color.count,
+    })),
+    sizes: (facets?.sizes ?? []).map((size) => ({
+      id: size.id,
+      value: size.value,
+      label: localized(size.label, locale, size.value),
+      productCount: size.count,
+    })),
+    priceBounds: facets?.price_bounds ?? { min: 0, max: 0 },
+    page: safePage,
+    pageSize,
+    total,
+  };
+}
+
+/**
+ * Public full-text product search. Uses database-native FTS
+ * (`search_products_fts` RPC: tsvector + ts_rank with trigram fallback,
+ * DB-level filters, DB-level pagination). Throws FtsUnavailableError when
+ * the FTS migration has not been applied.
+ */
+export const searchProductsFTS = createServerFn({ method: "GET" })
+  .validator((data) => browseInput.parse(data))
+  .handler(async ({ data }): Promise<BrowseResult> => {
+    const locale = data.locale ?? "fr";
+    const client = createPublicClient();
+    const categories = await fetchTopCategories(client, locale);
+    return runFtsSearch(client, data, locale, categories);
+  });
+
 /** Public store directory: active stores with real published-product counts and verification flags. */
 export const getStoreDirectory = createServerFn({ method: "GET" })
   .validator((data) => z.object({ locale: z.string().optional() }).parse(data))

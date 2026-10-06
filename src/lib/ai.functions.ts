@@ -14,7 +14,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireSeller, type SellerContext, type SellerPermission } from "@/lib/seller-auth";
 import { assertAdmin } from "@/lib/admin-auth";
 import { rateLimitEndpoint } from "@/lib/rate-limit";
-import { getAiMode, resolveProvider, buildCatalogSystemPrompt, type AiProvider } from "./ai/provider";
+import { getAiMode } from "./ai/provider";
 import {
   parseQuery,
   intentSummary,
@@ -25,7 +25,6 @@ import {
 } from "./ai/query-parse";
 import {
   answerWithRules,
-  similarProducts,
   RULE_ASSISTANT_NAME,
   type AiCatalogItem,
   type RuleCategory,
@@ -264,45 +263,14 @@ function findSimilarTarget(message: string, catalog: AiCatalogItem[]): AiCatalog
 export const getAiStatus = createServerFn({ method: "GET" })
   .validator((data) => z.object({}).parse(data))
   .handler(async () => {
+    // Production: Modalia Intelligence is deterministic and database-powered.
+    // External AI providers were removed from the execution path (Version 7).
+    // getAiMode() always reports rules mode; no env vars are consulted.
     const mode = getAiMode();
     return {
-      source: mode.mode as "provider" | "rules",
+      source: "rules" as const,
       providerLabel: mode.providerLabel,
       ruleAssistantName: RULE_ASSISTANT_NAME,
-    };
-  });
-
-// ---------------------------------------------------------------------------
-// 2. aiSearchCatalog — natural-language search over the REAL catalog
-// ---------------------------------------------------------------------------
-
-const searchInput = z.object({ q: z.string().trim().min(1).max(200), locale: localeSchema });
-
-export const aiSearchCatalog = createServerFn({ method: "GET" })
-  .validator((data) => searchInput.parse(data))
-  .handler(async ({ data }) => {
-    // Public and expensive (full catalog fetch per query) — throttle per IP.
-    rateLimitEndpoint("aiSearchCatalog", 60);
-    const supabase = createPublicClient();
-    const [categories, catalog] = await Promise.all([
-      fetchCategories(supabase),
-      fetchAiCatalog(supabase, data.locale),
-    ]);
-    const intent = parseQuery(data.q, toCategoryLikes(categories, data.locale));
-    const products = filterAndRank(catalog, intent);
-    return {
-      intent: {
-        keywords: intent.keywords,
-        colors: intent.colors,
-        categorySlug: intent.categorySlug,
-        categoryName: intent.categoryName,
-        minPrice: intent.minPrice,
-        maxPrice: intent.maxPrice,
-        priceHint: intent.priceHint,
-        summary: intentSummary(intent, data.locale),
-      },
-      total: products.length,
-      products: products.map(toChatProduct),
     };
   });
 
@@ -322,7 +290,8 @@ const chatInput = z.object({
 export const aiChat = createServerFn({ method: "POST" })
   .validator((data) => chatInput.parse(data))
   .handler(async ({ data }) => {
-    // Public chat can invoke a paid external LLM provider — throttle per IP.
+    // Public chat — throttle per IP. Modalia Intelligence is deterministic
+    // and database-powered; no external AI provider is ever called.
     rateLimitEndpoint("aiChat", 60);
     const supabase = createPublicClient();
     const [categories, catalog] = await Promise.all([
@@ -331,20 +300,25 @@ export const aiChat = createServerFn({ method: "POST" })
     ]);
     const intent = parseQuery(data.message, toCategoryLikes(categories, data.locale));
     const matches = filterAndRank(catalog, intent);
-    const provider: AiProvider | null = resolveProvider();
 
     // "Similar to X" requests: resolve X to a real product, then recommend
-    // from the same category / seller / price band (real data only).
+    // using the deterministic DB-backed engine (category/brand/store/
+    // price/color/trending/recency — real data only).
     const similarTarget = findSimilarTarget(data.message, catalog);
     if (similarTarget) {
-      const similar = similarProducts(similarTarget, catalog, 8);
+      const { getSimilarProductIds } = await import("./recommendations");
+      const similarIds = await getSimilarProductIds(supabase, similarTarget.id, 8);
+      const byId = new Map(catalog.map((p) => [p.id, p]));
+      const similar = similarIds
+        .map((id) => byId.get(id))
+        .filter((p): p is (typeof catalog)[number] => !!p);
       const targetLink = `[${similarTarget.name}](/product/${similarTarget.slug}?locale=${data.locale})`;
       const intro =
         data.locale === "ar"
-          ? `منتجات مشابهة لـ ${targetLink} (نفس الفئة/المتجر/نطاق السعر):\n`
+          ? `منتجات مشابهة لـ ${targetLink} (نفس الفئة/العلامة/المتجر/نطاق السعر/اللون):\n`
           : data.locale === "fr"
-            ? `Produits similaires à ${targetLink} (même catégorie / boutique / gamme de prix) :\n`
-            : `Products similar to ${targetLink} (same category / store / price band):\n`;
+            ? `Produits similaires à ${targetLink} (même catégorie / marque / boutique / gamme de prix / couleur) :\n`
+            : `Products similar to ${targetLink} (same category / brand / store / price band / color):\n`;
       const lines = similar
         .slice(0, 6)
         .map(
@@ -367,32 +341,8 @@ export const aiChat = createServerFn({ method: "POST" })
       };
     }
 
-    if (provider) {
-      const catalogContext = matches
-        .slice(0, 12)
-        .map(
-          (p) =>
-            `- ${p.name} | price: ${p.price} DZD${p.compareAtPrice && p.compareAtPrice > p.price ? ` (was ${p.compareAtPrice})` : ""} | store: ${p.storeName} | category: ${p.categoryName ?? "?"} | slug: ${p.slug}`,
-        )
-        .join("\n");
-      const history = (data.history ?? []).slice(-6).map((h) => ({ role: h.role as "user" | "assistant", content: h.content }));
-      const text = await provider.generateText(
-        [
-          { role: "system", content: buildCatalogSystemPrompt(data.locale, catalogContext) },
-          ...history,
-          { role: "user", content: data.message },
-        ],
-        { maxTokens: 500, temperature: 0.3 },
-      );
-      return {
-        source: "provider" as const,
-        text,
-        products: matches.slice(0, 6).map(toChatProduct),
-        intentSummary: intentSummary(intent, data.locale),
-      };
-    }
-
     // Rule-based mode: fully local, catalog-grounded, honestly labeled.
+    // This is the ONLY answer path — external providers were removed (V7).
     const answer = answerWithRules({
       raw: data.message,
       intent,
@@ -405,36 +355,6 @@ export const aiChat = createServerFn({ method: "POST" })
       text: answer.text,
       products: answer.products.map(toChatProduct),
       intentSummary: intentSummary(intent, data.locale),
-    };
-  });
-
-// ---------------------------------------------------------------------------
-// 4. aiSimilarProducts — recommendations from real data
-// ---------------------------------------------------------------------------
-
-const similarInput = z.object({
-  slug: z.string().min(1).max(160),
-  locale: localeSchema,
-  limit: z.number().int().min(1).max(12).default(8),
-});
-
-export const aiSimilarProducts = createServerFn({ method: "GET" })
-  .validator((data) => similarInput.parse(data))
-  .handler(async ({ data }) => {
-    rateLimitEndpoint("aiSimilarProducts", 60);
-    const supabase = createPublicClient();
-    const catalog = await fetchAiCatalog(supabase, data.locale);
-    const target = catalog.find((p) => p.slug === data.slug);
-    if (!target) return { products: [], reason: "not_found" as const };
-    const items = similarProducts(target, catalog, data.limit);
-    return {
-      products: items.map(toChatProduct),
-      reason: "same_category_seller_price" as const,
-      basis: {
-        category: target.categoryName,
-        store: target.storeName,
-        price: target.price,
-      },
     };
   });
 
@@ -590,18 +510,7 @@ export const aiSellerDraft = createServerFn({ method: "POST" })
     const facts = await getSellerProductFacts(context, seller.sellerId, data.productId);
     if (!facts) throw new Error("Product not found.");
 
-    const provider: AiProvider | null = resolveProvider();
-
     if (data.kind === "tags") {
-      if (provider) {
-        const tags = await provider.suggestTags({
-          name: facts.name,
-          category: facts.category || null,
-          description: facts.description || null,
-          locale: data.locale,
-        });
-        return { kind: "tags" as const, source: "provider" as const, tags, categories: [] as string[] };
-      }
       return { kind: "tags" as const, source: "rules" as const, tags: ruleTags(facts), categories: [] as string[] };
     }
 
@@ -634,25 +543,7 @@ export const aiSellerDraft = createServerFn({ method: "POST" })
       };
     }
 
-    // description
-    if (provider) {
-      const draft = await provider.generateDescription({
-        name: facts.name,
-        category: facts.category || null,
-        attributes: facts.attributes,
-        price: facts.basePrice,
-        currency: "DZD",
-        locale: data.locale,
-      });
-      return {
-        kind: "description" as const,
-        source: "provider" as const,
-        draft,
-        tags: [] as string[],
-        categories: [] as string[],
-        needsHumanApproval: true,
-      };
-    }
+    // description — rules-based only (external providers removed in V7).
     return {
       kind: "description" as const,
       source: "rules" as const,

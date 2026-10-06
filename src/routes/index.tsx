@@ -31,6 +31,7 @@ import {
 import { pageHead, siteMeta, organizationJsonLd, websiteJsonLd } from "@/lib/seo";
 import { subscribeNewsletter } from "@/lib/engagement.functions";
 import { getBestsellers, getTrendingProducts } from "@/lib/analytics.functions";
+import { getRecommendations } from "@/lib/recommendations";
 import { getFeaturedReviews, type FeaturedReview } from "@/lib/reviews.functions";
 import { getRecentlyViewed, track } from "@/lib/analytics";
 import { getLocale, getTranslations, localeDirections, type Translation } from "@/lib/i18n";
@@ -1068,6 +1069,75 @@ function ReviewCard({ review, locale }: { review: FeaturedReview; locale: Suppor
 }
 
 /**
+ * Personalized recommendations: deterministic DB-backed ranking using
+ * category affinity from the visitor's recently viewed products (localStorage),
+ * trending signals, and recency. Hidden when no signals or no candidates exist
+ * — never fabricated, never a blind products.slice().
+ */
+function RecommendationsSection({
+  locale,
+  section,
+  copy,
+  viewAll,
+  shopSearch,
+}: {
+  locale: SupportedLocale;
+  section: HomepageSection;
+  copy: HomeCopy;
+  viewAll: string;
+  shopSearch: ShopSearch;
+}) {
+  const [categorySlugs, setCategorySlugs] = useState<string[]>([]);
+  const [excludeIds, setExcludeIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    try {
+      const recent = getRecentlyViewed();
+      setCategorySlugs(
+        [...new Set(recent.map((p) => p.categorySlug).filter((s): s is string => !!s))].slice(0, 10),
+      );
+      setExcludeIds(recent.map((p) => p.id).slice(0, 20));
+    } catch {
+      // localStorage unavailable — fall back to non-personalized ranking.
+    }
+  }, []);
+
+  const { data } = useQuery({
+    queryKey: ["recommendations", locale, categorySlugs.join(","), excludeIds.join(",")],
+    queryFn: () =>
+      getRecommendations({
+        data: {
+          locale,
+          limit: 8,
+          sessionSignals: { categorySlugs, excludeIds },
+        },
+      }),
+    staleTime: 5 * 60_000,
+    retry: false,
+  });
+
+  if (!data?.hasData || data.products.length === 0) return null;
+
+  return (
+    <Reveal>
+      <SectionHeading
+        eyebrow={copy.recsEyebrow}
+        title={section.title || copy.recsTitle}
+        href="/shop"
+        search={shopSearch}
+        viewAll={viewAll}
+      />
+      {/* Editorial grid — not another rail. */}
+      <div className="grid grid-cols-2 gap-x-4 gap-y-10 sm:gap-x-5 lg:grid-cols-4">
+        {data.products.map((product) => (
+          <ProductCard key={product.id} product={product} locale={locale} />
+        ))}
+      </div>
+    </Reveal>
+  );
+}
+
+/**
  * Customer reviews: latest admin-approved reviews with written bodies.
  * Hidden until real approved reviews exist — never invented quotes.
  */
@@ -1516,22 +1586,14 @@ function HomePage() {
             shopSearch={shopSearch}
           />
 
-          {recommendations && data.products.length > 8 ? (
-            <Reveal>
-              <SectionHeading
-                eyebrow={copy.recsEyebrow}
-                title={recommendations.title || copy.recsTitle}
-                href="/shop"
-                search={shopSearch}
-                viewAll={t.common.viewAll}
-              />
-              {/* Editorial grid — not another rail. */}
-              <div className="grid grid-cols-2 gap-x-4 gap-y-10 sm:gap-x-5 lg:grid-cols-4">
-                {data.products.slice(8, 16).map((product) => (
-                  <ProductCard key={product.id} product={product} locale={locale} />
-                ))}
-              </div>
-            </Reveal>
+          {recommendations ? (
+            <RecommendationsSection
+              locale={locale}
+              section={recommendations}
+              copy={copy}
+              viewAll={t.common.viewAll}
+              shopSearch={shopSearch}
+            />
           ) : null}
 
           {data.stores.length ? (

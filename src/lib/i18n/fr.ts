@@ -224,7 +224,6 @@ export const fr = {
       placeholder: "Posez une question… ex. : je veux un téléphone pas cher",
       send: "Envoyer",
       rulesBanner: "Assistant de règles — fonctionne uniquement sur les données réelles de la boutique, sans modèle d'IA externe.",
-      providerBanner: "Réponses assistées par un modèle d'IA — toujours à partir des données réelles de la boutique.",
       understood: "Compris",
       supportLabel: "Support Modalia",
       viewProduct: "Voir le produit",

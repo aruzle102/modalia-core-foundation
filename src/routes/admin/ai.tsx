@@ -43,7 +43,7 @@ const TOOLS: { name: string; description: string; to: NonNullable<LinkProps["to"
   {
     name: "Shopping assistant",
     description:
-      "Answers shopper questions strictly from the real catalog. Rules mode is rule-based; provider mode uses the configured model — both are pinned to real product data only.",
+      "Answers shopper questions strictly from the real catalog using the deterministic rule-based engine. No external AI model is called.",
     to: "/",
   },
   {
@@ -182,28 +182,17 @@ function IntelligencePage() {
         breadcrumbs={[{ label: t.ai }]}
       >
         <div className="space-y-6">
-          <AdminCard title="AI mode" subtitle="Resolved from server environment only.">
+          <AdminCard title="AI mode" subtitle="Modalia Intelligence is deterministic and database-powered.">
             {statusQuery.isPending ? (
               <TableSkeleton rows={3} />
             ) : statusQuery.isError ? (
               <EmptyState title="Could not load AI status" text={errMsg(statusQuery.error)} />
             ) : status ? (
-              <div className="grid gap-4 sm:grid-cols-3">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <Stat
                   label="Mode"
-                  value={
-                    <StatusPill status={status.source === "provider" ? "provider" : "rules"} />
-                  }
-                  hint={
-                    status.source === "provider"
-                      ? "External model answers, pinned to real catalog data."
-                      : "Honest rule-based engine on real store data only."
-                  }
-                />
-                <Stat
-                  label="Provider"
-                  value={status.providerLabel ?? "—"}
-                  hint={status.source === "provider" ? "Configured provider" : "No provider configured"}
+                  value={<StatusPill status="rules" />}
+                  hint="Honest rule-based engine on real store data only. No external AI provider is called in production."
                 />
                 <Stat
                   label="Assistant names"

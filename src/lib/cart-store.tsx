@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { track } from "@/lib/analytics";
 
 export type CartLine = {
   productId: string;
@@ -11,6 +12,8 @@ export type CartLine = {
   image?: string | null;
   storeId?: string | null;
   storeName?: string | null;
+  /** Store slug for linking to `/store/{slug}`. Null/absent = unknown (old lines, quick-add from cards). */
+  storeSlug?: string | null;
   sellerId?: string | null;
   options?: Record<string, string>;
   weightGrams?: number | undefined;
@@ -48,8 +51,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
     if (existing) return current.map((line) => line.variantId === item.variantId ? { ...line, quantity: line.quantity + item.quantity } : line);
     return [...current, item];
   }), []);
-  const removeItem = useCallback((variantId: string) => setItems((current) => current.filter((line) => line.variantId !== variantId)), []);
-  const setQuantity = useCallback((variantId: string, quantity: number) => setItems((current) => quantity <= 0 ? current.filter((line) => line.variantId !== variantId) : current.map((line) => line.variantId === variantId ? { ...line, quantity } : line)), []);
+  const removeItem = useCallback((variantId: string) => setItems((current) => {
+    const line = current.find((l) => l.variantId === variantId);
+    // track() dedupes per minute-bucket, so a StrictMode double-invoke of the
+    // updater cannot double-count the removal.
+    if (line) track("cart_remove", { entityType: "product", entityId: line.productId, metadata: { variant_id: variantId, quantity: line.quantity } });
+    return current.filter((l) => l.variantId !== variantId);
+  }), []);
+  const setQuantity = useCallback((variantId: string, quantity: number) => {
+    // Setting quantity to 0 is a removal — route through removeItem so the
+    // cart_remove event fires on every removal path.
+    if (quantity <= 0) { removeItem(variantId); return; }
+    setItems((current) => current.map((line) => line.variantId === variantId ? { ...line, quantity } : line));
+  }, [removeItem]);
   const clear = useCallback(() => setItems([]), []);
   const value = useMemo(() => ({ items, addItem, removeItem, setQuantity, clear, count: items.reduce((sum, item) => sum + item.quantity, 0), subtotal: items.reduce((sum, item) => sum + item.price * item.quantity, 0) }), [items, addItem, removeItem, setQuantity, clear]);
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

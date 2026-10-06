@@ -14,7 +14,7 @@ import {
 } from "@/components/admin/ui";
 import { Input } from "@/components/ui/input";
 import { listAdminCustomers, listGuestCustomers } from "@/lib/admin-ops.functions";
-import { getLocale, getTranslations } from "@/lib/i18n";
+import { getLocale, getTranslations, type SupportedLocale } from "@/lib/i18n";
 import { numParam, strParam, useUrlState, useDebouncedUrlParam } from "@/hooks/use-url-state";
 
 export const Route = createFileRoute("/admin/customers")({
@@ -93,12 +93,12 @@ function CustomersPage() {
           actions={
             tab === "registered" ? (
               <div className="relative">
-                <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Search className="absolute top-1/2 start-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
                   placeholder="Search name or phone…"
-                  className="w-52 pl-9"
+                  className="w-52 ps-9"
                 />
               </div>
             ) : undefined
@@ -113,6 +113,7 @@ function CustomersPage() {
               <EmptyState title="No customers yet" text="Customer profiles appear after shoppers sign up." />
             ) : (
               <CustomerTable
+                locale={locale}
                 rows={(registeredQuery.data?.items ?? []).map((c) => ({
                   key: c.id,
                   name: c.display_name ?? "—",
@@ -127,6 +128,7 @@ function CustomersPage() {
             <EmptyState title="No guest orders" text="Guest buyers appear after a checkout without an account." />
           ) : (
             <CustomerTable
+              locale={locale}
               rows={(guestQuery.data?.items ?? []).map((g) => ({
                 key: g.key,
                 name: g.email ?? "Guest",
@@ -148,12 +150,14 @@ function CustomersPage() {
 
 function CustomerTable({
   rows,
+  locale,
 }: {
   rows: { key: string; name: string; contact: string; orders: number; total: number; last: string | null }[];
+  locale: SupportedLocale;
 }) {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[680px] text-left text-small">
+      <table className="w-full min-w-[680px] text-start text-small">
         <thead>
           <tr className="border-b border-border text-caption text-muted-foreground">
             <th className="px-3 py-2 font-medium">Customer</th>
@@ -169,9 +173,9 @@ function CustomerTable({
               <td className="px-3 py-3 font-medium">{r.name}</td>
               <td className="px-3 py-3 text-caption" dir="ltr">{r.contact}</td>
               <td className="px-3 py-3">{r.orders}</td>
-              <td className="px-3 py-3 font-medium">{fmtMoney(r.total)}</td>
+              <td className="px-3 py-3 font-medium">{fmtMoney(r.total, "DZD", locale)}</td>
               <td className="px-3 py-3 text-caption text-muted-foreground">
-                {r.last ? fmtDateTime(r.last) : "—"}
+                {r.last ? fmtDateTime(r.last, locale) : "—"}
               </td>
             </tr>
           ))}

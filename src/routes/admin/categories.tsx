@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { AdminGate } from "@/components/admin/AdminGate";
 import { AdminShell } from "@/components/admin/AdminShell";
+import { useAdminLocale } from "@/components/admin/useAdminLocale";
+import { getTranslations } from "@/lib/i18n";
 import {
   AdminCard,
   StatusPill,
@@ -16,6 +18,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -52,9 +56,15 @@ export const Route = createFileRoute("/admin/categories")({
 type FlatCategory = CategoryRow;
 
 function AdminCategoriesPage() {
+  const locale = useAdminLocale();
+  const nav = getTranslations(locale).adminNav.items;
   return (
     <AdminGate>
-      <AdminShell title="Categories" subtitle="Manage the catalog taxonomy: tree, slugs and display order.">
+      <AdminShell
+        title="Categories"
+        subtitle="Manage the catalog taxonomy: tree, slugs and display order."
+        breadcrumbs={[{ label: nav.categories }]}
+      >
         <CategoriesManager />
       </AdminShell>
     </AdminGate>
@@ -142,7 +152,7 @@ function CategoriesManager() {
           <EmptyState title="No categories" text="Create the first category to organize the catalog." />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[640px] text-left text-small">
+            <table className="w-full min-w-[640px] text-start text-small">
               <thead>
                 <tr className="border-b border-border text-caption text-muted-foreground">
                   <th className="px-3 py-2 font-medium">Category</th>
@@ -279,6 +289,12 @@ function CategoryDialog({
   const [parentId, setParentId] = useState<string>(category?.parent_id ?? "none");
   const [status, setStatus] = useState<string>(category?.status ?? "active");
   const [sortOrder, setSortOrder] = useState(String(category?.sort_order ?? 0));
+  // V8 taxonomy (#166): merchandising + SEO fields.
+  const [imageUrl, setImageUrl] = useState(category?.image_url ?? "");
+  const [gender, setGender] = useState<string>(category?.gender ?? "none");
+  const [featured, setFeatured] = useState(category?.featured === true);
+  const [seoTitle, setSeoTitle] = useState(category?.seo_title ?? "");
+  const [seoDescription, setSeoDescription] = useState(category?.seo_description ?? "");
   const [serverError, setServerError] = useState<string | null>(null);
 
   const eligibleParents = flat.filter((c) => !category || c.id !== category.id);
@@ -296,6 +312,11 @@ function CategoryDialog({
           name: { fr: nameFr.trim(), en: nameEn.trim(), ar: nameAr.trim() },
           status: status as "active" | "inactive",
           sort_order: Number(sortOrder) || 0,
+          image_url: imageUrl.trim() ? imageUrl.trim() : null,
+          gender: (gender === "none" ? null : gender) as "men" | "women" | "kids" | "unisex" | null,
+          featured,
+          seo_title: seoTitle.trim() ? seoTitle.trim() : null,
+          seo_description: seoDescription.trim() ? seoDescription.trim() : null,
         },
       }),
     onSuccess: () => {
@@ -353,6 +374,44 @@ function CategoryDialog({
               <Input type="number" min={0} value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} />
             </Field>
           </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label>Gender (merchandising)</Label>
+              <Select value={gender} onValueChange={setGender}>
+                <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  <SelectItem value="men">Men</SelectItem>
+                  <SelectItem value="women">Women</SelectItem>
+                  <SelectItem value="kids">Kids</SelectItem>
+                  <SelectItem value="unisex">Unisex</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Featured</Label>
+              <div className="flex h-10 items-center gap-2">
+                <Switch checked={featured} onCheckedChange={setFeatured} aria-label="Featured category" />
+                <span className="text-small text-muted-foreground">
+                  {featured ? "Shown in featured rails" : "Not featured"}
+                </span>
+              </div>
+            </div>
+          </div>
+          <Field label="Image URL" hint="Category card image. Leave empty to clear.">
+            <Input dir="ltr" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://…" />
+          </Field>
+          {imageUrl.trim() ? (
+            <div className="overflow-hidden rounded-md border border-border">
+              <img src={imageUrl.trim()} alt="" className="h-32 w-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+            </div>
+          ) : null}
+          <Field label="SEO title" hint="Optional — overrides the default category page title.">
+            <Input dir="ltr" value={seoTitle} maxLength={120} onChange={(e) => setSeoTitle(e.target.value)} placeholder="Shop electronics — Modalia" />
+          </Field>
+          <Field label="SEO description" hint="Optional — overrides the default category page description.">
+            <Textarea value={seoDescription} maxLength={300} onChange={(e) => setSeoDescription(e.target.value)} placeholder="…" rows={3} />
+          </Field>
           {serverError ? (
             <p role="alert" className="text-small text-destructive">{serverError}</p>
           ) : null}

@@ -16,6 +16,7 @@ function AdminNotificationsPage() {
       <AdminShell
         title={t.notifications.title}
         subtitle="Seller applications, moderation and operational alerts."
+        breadcrumbs={[{ label: t.adminNav.items.notifications }]}
       >
         <NotificationList scope="admin" locale="en" t={t.notifications} />
       </AdminShell>

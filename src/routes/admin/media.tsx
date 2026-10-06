@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useRef, useState } from "react";
+import { Suspense, lazy, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -9,6 +9,7 @@ import {
   ChevronRight,
   Eye,
   FileImage,
+  FileVideo,
   Folder,
   Image as ImageIcon,
   Pencil,
@@ -27,6 +28,7 @@ import {
   TableSkeleton,
   fmtDateTime,
 } from "@/components/admin/ui";
+import { useAdminLocale } from "@/components/admin/useAdminLocale";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -56,7 +58,11 @@ import {
   type UploaderLabels,
   type UploadedMedia,
 } from "@/components/media/MediaUploader";
-import { ProductViewer3D } from "@/components/commerce/ProductViewer3D";
+// Lazy chunk: `three` is heavy and must never be in the admin main bundle.
+// The storefront route loads ProductViewer3D the same way. Registry #123.
+const ProductViewer3D = lazy(() =>
+  import("@/components/commerce/ProductViewer3D").then((mod) => ({ default: mod.ProductViewer3D })),
+);
 import { getLocale, getTranslations } from "@/lib/i18n";
 import { pickLocalizedName } from "@/lib/names";
 import { strParam, useUrlState } from "@/hooks/use-url-state";
@@ -339,7 +345,8 @@ function ProductMediaManager({
     const target = replacing;
     setReplacing(null);
     if (!file || !target) return;
-    const kind: MediaKind = target.mediaType === "model_3d" ? "model_3d" : "image";
+    const kind: MediaKind =
+      target.mediaType === "model_3d" ? "model_3d" : target.mediaType === "video" ? "video" : "image";
     try {
       const req = await requestMediaUpload({
         data: {
@@ -409,6 +416,11 @@ function ProductMediaManager({
                         <Box className="h-10 w-10" />
                         <span className="text-xs font-medium">{t.kindModel}</span>
                       </span>
+                    ) : m.mediaType === "video" ? (
+                      <span className="flex h-full w-full flex-col items-center justify-center gap-1 text-muted-foreground">
+                        <FileVideo className="h-10 w-10" />
+                        <span className="text-xs font-medium">{t.kindVideo}</span>
+                      </span>
                     ) : m.previewUrl ? (
                       <img
                         src={m.previewUrl}
@@ -433,7 +445,7 @@ function ProductMediaManager({
                       </span>
                     )}
                     <span className="absolute end-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-xs text-white">
-                      {m.mediaType === "model_3d" ? t.kindModel : t.kindImage}
+                      {m.mediaType === "model_3d" ? t.kindModel : m.mediaType === "video" ? t.kindVideo : t.kindImage}
                     </span>
                   </button>
                   <div className="flex items-center gap-0.5 border-t border-border p-1.5">
@@ -534,11 +546,33 @@ function ProductMediaManager({
             <div className="flex min-h-64 items-center justify-center rounded-md bg-muted/50">
               {preview.mediaType === "model_3d" ? (
                 preview.previewUrl ? (
-                  <ProductViewer3D
-                    modelUrl={preview.previewUrl}
-                    locale={locale}
-                    className="h-96 w-full"
-                  />
+                  <Suspense
+                    fallback={
+                      <div className="flex h-96 w-full items-center justify-center text-sm text-muted-foreground" role="status">
+                        {getTranslations(locale).common.loading}
+                      </div>
+                    }
+                  >
+                    <ProductViewer3D
+                      modelUrl={preview.previewUrl}
+                      locale={locale}
+                      className="h-96 w-full"
+                    />
+                  </Suspense>
+                ) : (
+                  <p className="text-sm text-muted-foreground">{t.errUploadFailed}</p>
+                )
+              ) : preview.mediaType === "video" ? (
+                preview.previewUrl ? (
+                  <video
+                    src={preview.previewUrl}
+                    controls
+                    playsInline
+                    preload="metadata"
+                    className="max-h-96 w-full rounded object-contain"
+                  >
+                    {t.videoNotSupported}
+                  </video>
                 ) : (
                   <p className="text-sm text-muted-foreground">{t.errUploadFailed}</p>
                 )
@@ -660,6 +694,7 @@ function StorageTab({
   prefix: string;
   onNavigate: (prefix: string) => void;
 }) {
+  const locale = useAdminLocale();
   const queryClient = useQueryClient();
   const [preview, setPreview] = useState<MediaEntry | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<MediaEntry | null>(null);
@@ -758,7 +793,7 @@ function StorageTab({
                     <span className="block truncate text-sm font-medium">{f.name}</span>
                     <span className="block text-xs text-muted-foreground">
                       {fmtBytes(f.size)}
-                      {f.updatedAt ? ` · ${fmtDateTime(f.updatedAt)}` : ""}
+                      {f.updatedAt ? ` · ${fmtDateTime(f.updatedAt, locale)}` : ""}
                     </span>
                   </span>
                 </button>

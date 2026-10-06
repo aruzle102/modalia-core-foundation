@@ -373,6 +373,14 @@ export const getDiscoveryData = createServerFn({ method: "GET" })
   .validator((data) => discoveryInput.parse(data))
   .handler(async ({ data }) => fetchDiscoveryData(data.locale));
 
+/** Lightweight top-level categories for the site header dropdown (no product data). */
+export const getHeaderCategories = createServerFn({ method: "GET" })
+  .validator((data) => z.object({ locale: z.enum(["ar", "fr", "en"]).default("fr") }).parse(data))
+  .handler(async ({ data }) => {
+    const client = createPublicClient();
+    return { categories: await fetchTopCategories(client, data.locale) };
+  });
+
 export const browseCatalog = createServerFn({ method: "GET" })
   .validator((data) => browseInput.parse(data))
   .handler(async ({ data }): Promise<BrowseResult> => {

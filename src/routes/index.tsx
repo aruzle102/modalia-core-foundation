@@ -32,6 +32,7 @@ import { getBestsellers, getTrendingProducts } from "@/lib/analytics.functions";
 import { getFeaturedReviews, type FeaturedReview } from "@/lib/reviews.functions";
 import { getRecentlyViewed, track } from "@/lib/analytics";
 import { getLocale, getTranslations, localeDirections, type Translation } from "@/lib/i18n";
+import { formatPrice } from "@/lib/i18n/format";
 import type { SupportedLocale } from "@/config/platform";
 
 const HeroScene = lazy(() =>
@@ -146,40 +147,30 @@ function BrandEntrance() {
   );
 }
 
-/** Cinematic hero: huge clamp typography over the existing 2.5D scene. */
+/** Cinematic hero: editorial split — massive staggered typography beside a real
+    featured product. WebGL scene on capable devices; quiet textured fallback otherwise. */
 function Hero({
   locale,
   hero,
   copy,
+  products,
 }: {
   locale: SupportedLocale;
   hero: HomepageSection | undefined;
   copy: HomeCopy;
+  products: CatalogProduct[];
 }) {
   const t = getTranslations(locale);
   const title = hero?.title || copy.heroFallbackTitle;
   const subtitle = hero?.subtitle || copy.heroFallbackSubtitle;
   const { tier, webgl, reducedMotion } = useDeviceTier();
-  // Tier-adaptive hero: high gets full WebGL, mid gets the lite scene
-  // (fewer particles, capped pixel ratio), everything else keeps the
-  // elegant static 2.5D CSS fallback.
+  // Tier-adaptive hero: high gets full WebGL, mid gets the lite scene,
+  // everything else keeps the quiet editorial fallback.
   const showWebGL = (tier === "high" || tier === "mid") && webgl && !reducedMotion;
+  const featured = products.find((p) => p.imagePath);
   const shopSearch: ShopSearch = { locale, q: "", category: "", sort: "newest", page: 1, focus: "", view: "", brands: [], stores: [], colors: [], sizes: [], inStock: false, onSale: false };
   return (
-    <section className="hero-scene overflow-hidden border-b border-border bg-ink text-primary-foreground">
-      <div className="hero-grid" />
-      <div className="hero-orb hero-orb-a" />
-      <div className="hero-orb hero-orb-b" />
-      <div className="hero-ring hero-ring-a" />
-      <div className="hero-ring hero-ring-b" />
-      <div className="hero-product hero-product-a" aria-hidden>
-        <span className="hero-product-inner">M</span>
-      </div>
-      <div className="hero-product hero-product-b" aria-hidden>
-        <span className="hero-product-inner text-3xl">M</span>
-      </div>
-      {/* Real interactive WebGL scene (high = full, mid = lite); the 2.5D CSS
-          scene above remains as the guaranteed fallback for all other devices. */}
+    <section className="relative overflow-hidden bg-ink text-white">
       {showWebGL ? (
         <Suspense fallback={null}>
           <HeroScene
@@ -188,30 +179,87 @@ function Hero({
             quality={tier === "high" ? "full" : "lite"}
           />
         </Suspense>
-      ) : null}
-      <div className="relative z-10 mx-auto grid min-h-[calc(100svh-4rem)] max-w-7xl items-end px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-        <div className="hero-copy max-w-4xl pb-5">
-          <p className="flex items-center gap-3 text-eyebrow tracking-[0.18em] text-white/50">
-            <span className="h-px w-8 bg-white/40" aria-hidden />
+      ) : (
+        <div className="hero-fallback" aria-hidden />
+      )}
+      <div className="relative z-10 mx-auto grid min-h-[calc(100svh-4rem)] max-w-7xl items-center gap-12 px-4 py-16 sm:px-6 lg:grid-cols-12 lg:gap-8 lg:px-8 lg:py-20">
+        <div className="lg:col-span-7">
+          <p
+            className="hero-line flex items-center gap-3 text-[11px] font-medium uppercase tracking-[0.22em] text-white/55"
+            style={{ animationDelay: "0.05s" }}
+          >
+            <span className="h-px w-10 bg-brand" aria-hidden />
             {copy.heroEyebrow}
           </p>
-          <h1 className="mt-5 font-display text-[clamp(2.75rem,8vw,6.5rem)] font-semibold leading-[1.02] tracking-tight text-white">
+          <h1
+            className="hero-line mt-6 font-display text-[clamp(2.9rem,7.5vw,6rem)] font-semibold leading-[1.02] tracking-[-0.02em] text-white"
+            style={{ animationDelay: "0.18s" }}
+          >
             {title}
           </h1>
-          <p className="mt-6 max-w-xl text-lg leading-relaxed text-white/75">{subtitle}</p>
-          <div className="mt-9 flex flex-wrap gap-3">
+          <p
+            className="hero-line mt-6 max-w-xl text-lg leading-relaxed text-white/70"
+            style={{ animationDelay: "0.32s" }}
+          >
+            {subtitle}
+          </p>
+          <div
+            className="hero-line mt-10 flex flex-wrap items-center gap-x-8 gap-y-4"
+            style={{ animationDelay: "0.46s" }}
+          >
             <Button
               asChild
               size="lg"
-              className="border-0 bg-white text-neutral-900 shadow-xl hover:bg-neutral-200"
+              className="border-0 bg-white px-8 text-neutral-900 hover:bg-neutral-200"
             >
               <Link to="/shop" search={shopSearch}>
                 {t.shell.explore}
                 <ArrowRight className="rtl:rotate-180" />
               </Link>
             </Button>
+            <Link
+              to="/shop"
+              search={{ ...shopSearch, onSale: true }}
+              className="group inline-flex items-center gap-2 text-[15px] font-medium text-white/85 transition-colors hover:text-white"
+            >
+              {copy.offersTitle}
+              <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1 motion-reduce:transition-none" />
+            </Link>
           </div>
         </div>
+        {featured?.imagePath ? (
+          <div className="hero-line lg:col-span-5" style={{ animationDelay: "0.6s" }}>
+            <Link
+              to="/product/$slug"
+              params={{ slug: featured.slug }}
+              search={{ locale }}
+              className="group mx-auto block max-w-sm lg:ms-auto lg:max-w-none"
+              aria-label={featured.name}
+            >
+              <div className="relative aspect-[3/4] overflow-hidden rounded-sm bg-white/5">
+                <img
+                  src={featured.imagePath}
+                  alt={featured.name}
+                  loading="eager"
+                  className="size-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-[1.04] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+                />
+              </div>
+              <div className="mt-4 flex items-baseline justify-between gap-4">
+                <p className="truncate font-display text-lg font-medium text-white">
+                  {featured.name}
+                </p>
+                <p className="shrink-0 text-[15px] font-medium tabular-nums text-white/75">
+                  {formatPrice(featured.price, locale)}
+                </p>
+              </div>
+              {featured.storeName ? (
+                <p className="mt-1 text-[13px] uppercase tracking-[0.12em] text-white/45">
+                  {featured.storeName}
+                </p>
+              ) : null}
+            </Link>
+          </div>
+        ) : null}
       </div>
     </section>
   );
@@ -233,37 +281,71 @@ type ShopSearch = {
   onSale: boolean;
 };
 
-/** Editorial section heading: numbered index, eyebrow, large display title, view-all. */
+/** Editorial section heading: eyebrow, large display title, view-all.
+    Tones vary the rhythm so repeated rails never read as copies. */
 function SectionHeading({
-  index,
   eyebrow,
   title,
   href,
   search,
   viewAll,
+  tone = "default",
 }: {
-  index: string;
   eyebrow: string;
   title: string;
   href: "/shop";
   search: ShopSearch;
   viewAll: string;
+  tone?: "default" | "rule" | "minimal";
 }) {
+  if (tone === "rule") {
+    return (
+      <div className="mb-7 sm:mb-9">
+        <div className="flex items-baseline justify-between gap-4">
+          <p className="text-eyebrow text-muted-foreground">{eyebrow}</p>
+          <Link
+            to={href}
+            search={search}
+            className="group inline-flex shrink-0 items-center gap-2 text-small font-medium text-foreground"
+          >
+            {viewAll}
+            <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5 motion-reduce:transition-none" />
+          </Link>
+        </div>
+        <h2 className="mt-3 max-w-2xl font-display text-[clamp(1.9rem,4.5vw,3rem)] font-semibold leading-[1.06] tracking-tight text-foreground">
+          {title}
+        </h2>
+        <div className="mt-5 h-px bg-border" aria-hidden />
+      </div>
+    );
+  }
+  if (tone === "minimal") {
+    return (
+      <div className="mb-6 flex items-baseline justify-between gap-4">
+        <h2 className="font-display text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+          <span className="me-3 text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+            {eyebrow}
+          </span>
+          {title}
+        </h2>
+        <Link
+          to={href}
+          search={search}
+          className="group inline-flex shrink-0 items-center gap-1.5 text-small font-medium text-muted-foreground transition-colors hover:text-foreground"
+        >
+          {viewAll}
+          <ArrowRight className="size-3.5 transition-transform duration-300 group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5 motion-reduce:transition-none" />
+        </Link>
+      </div>
+    );
+  }
   return (
     <div className="mb-7 flex items-end justify-between gap-4 sm:mb-9">
-      <div className="flex items-start gap-4">
-        <span
-          aria-hidden
-          className="mt-1 hidden font-display text-sm font-semibold tabular-nums text-muted-foreground/70 sm:block"
-        >
-          {index}
-        </span>
-        <div>
-          <p className="text-eyebrow text-muted-foreground">{eyebrow}</p>
-          <h2 className="mt-2 font-display text-[clamp(1.6rem,4vw,2.5rem)] font-semibold leading-[1.08] tracking-tight text-foreground">
-            {title}
-          </h2>
-        </div>
+      <div>
+        <p className="text-eyebrow text-muted-foreground">{eyebrow}</p>
+        <h2 className="mt-2 font-display text-[clamp(1.6rem,4vw,2.5rem)] font-semibold leading-[1.08] tracking-tight text-foreground">
+          {title}
+        </h2>
       </div>
       <Link
         to={href}
@@ -317,17 +399,16 @@ function CategoryGrid({
   const t = getTranslations(locale).card;
   const tileClass = (index: number): string => {
     const base =
-      "group relative flex min-h-44 flex-col justify-between overflow-hidden rounded-2xl border p-5 transition-all duration-300 hover:-translate-y-1 motion-reduce:transition-none motion-reduce:hover:translate-y-0 sm:p-6";
+      "group relative flex min-h-44 flex-col justify-between overflow-hidden border p-5 transition-colors duration-300 motion-reduce:transition-none sm:p-6";
     if (index === 0)
       return `${base} col-span-2 min-h-64 border-transparent bg-ink text-white sm:min-h-80 lg:col-span-7 lg:row-span-2 lg:min-h-[30rem]`;
-    if (index === 1 || index === 2) return `${base} border-border bg-card lg:col-span-5 lg:min-h-60`;
-    if (index >= 3 && index <= 5) return `${base} border-border bg-card lg:col-span-4 lg:min-h-56`;
-    return `${base} border-border bg-card lg:col-span-6 lg:min-h-52`;
+    if (index === 1 || index === 2) return `${base} border-border bg-card hover:bg-secondary/60 lg:col-span-5 lg:min-h-60`;
+    if (index >= 3 && index <= 5) return `${base} border-border bg-card hover:bg-secondary/60 lg:col-span-4 lg:min-h-56`;
+    return `${base} border-border bg-card hover:bg-secondary/60 lg:col-span-6 lg:min-h-52`;
   };
   return (
     <Reveal>
       <SectionHeading
-        index="01"
         eyebrow={copy.exploreEyebrow}
         title={copy.browseCategories}
         href="/shop"
@@ -483,7 +564,6 @@ function TrendingSection({
   return (
     <Reveal>
       <SectionHeading
-        index="02"
         eyebrow={copy.trendingEyebrow}
         title={section.title || copy.trendingTitle}
         href="/shop"
@@ -526,12 +606,12 @@ function BestsellersSection({
   return (
     <Reveal>
       <SectionHeading
-        index="03"
         eyebrow={copy.bestsellersEyebrow}
         title={copy.bestsellersTitle}
         href="/shop"
         search={shopSearch}
         viewAll={viewAll}
+        tone="rule"
       />
       <div className="flex snap-x snap-mandatory gap-5 overflow-x-auto pb-2 lg:pb-0">
         {data.products.map((product, index) => (
@@ -575,12 +655,12 @@ function PopularNow({
   return (
     <Reveal>
       <SectionHeading
-        index="04"
         eyebrow={copy.popularEyebrow}
         title={copy.popularTitle}
         href="/shop"
         search={shopSearch}
         viewAll={viewAll}
+        tone="minimal"
       />
       <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 lg:pb-0">
         {data.products.map((product) => (
@@ -616,12 +696,12 @@ function NewArrivalsSection({
   return (
     <Reveal>
       <SectionHeading
-        index="05"
         eyebrow={copy.freshEyebrow}
         title={title}
         href="/shop"
         search={shopSearch}
         viewAll={viewAll}
+        tone="rule"
       />
       <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 lg:pb-0">
         {newest.map((product, index) => (
@@ -637,7 +717,8 @@ function NewArrivalsSection({
   );
 }
 
-/** Offers: products with a real compare-at discount only. Hidden when none. */
+/** Offers: real compare-at discounts only, in a dark sale band that breaks the
+    page rhythm. Hidden when none. */
 function OffersSection({
   locale,
   products,
@@ -661,20 +742,37 @@ function OffersSection({
   if (!offers.length) return null;
   return (
     <Reveal>
-      <SectionHeading
-        index="06"
-        eyebrow={copy.offersEyebrow}
-        title={copy.offersTitle}
-        href="/shop"
-        search={shopSearch}
-        viewAll={viewAll}
-      />
-      <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 lg:pb-0">
-        {offers.map((product) => (
-          <div key={product.id} className="w-52 shrink-0 snap-start sm:w-60">
-            <ProductCard product={product} locale={locale} />
+      <div className="-mx-4 sm:-mx-6 lg:-mx-8">
+        <section className="bg-ink text-white">
+          <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+            <div className="mb-8 flex items-end justify-between gap-4 sm:mb-10">
+              <div>
+                <p className="flex items-center gap-3 text-[11px] font-medium uppercase tracking-[0.2em] text-white/50">
+                  <span className="h-px w-8 bg-brand" aria-hidden />
+                  {copy.offersEyebrow}
+                </p>
+                <h2 className="mt-3 font-display text-[clamp(1.9rem,4.5vw,3rem)] font-semibold leading-[1.06] tracking-tight text-white">
+                  {copy.offersTitle}
+                </h2>
+              </div>
+              <Link
+                to="/shop"
+                search={{ ...shopSearch, onSale: true }}
+                className="group inline-flex shrink-0 items-center gap-2 text-small font-medium text-white/85 transition-colors hover:text-white"
+              >
+                {viewAll}
+                <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5 motion-reduce:transition-none" />
+              </Link>
+            </div>
+            <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 lg:pb-0">
+              {offers.map((product) => (
+                <div key={product.id} className="w-52 shrink-0 snap-start sm:w-60">
+                  <ProductCard product={product} locale={locale} dark />
+                </div>
+              ))}
+            </div>
           </div>
-        ))}
+        </section>
       </div>
     </Reveal>
   );
@@ -742,7 +840,7 @@ function FlashSaleSection({
                   {units.map((unit) => (
                     <div
                       key={unit.label}
-                      className="grid min-w-14 place-items-center rounded-xl bg-white/8 px-2 py-2.5 backdrop-blur-sm sm:min-w-16 sm:px-3"
+                      className="grid min-w-14 place-items-center bg-white/8 px-2 py-2.5 backdrop-blur-sm sm:min-w-16 sm:px-3"
                     >
                       <span className="font-display text-2xl font-semibold tabular-nums text-white">
                         {String(unit.value).padStart(2, "0")}
@@ -799,104 +897,91 @@ function BrandStores({
   shopSearch: ShopSearch;
 }) {
   const storeT = getTranslations(locale).store;
-  const visitStore = getTranslations(locale).product.visitStore;
+  const cardT = getTranslations(locale).card;
   return (
     <Reveal>
       <SectionHeading
-        index="07"
         eyebrow={copy.independentEyebrow}
         title={title}
         href="/shop"
         search={shopSearch}
         viewAll={viewAll}
       />
-      <div className="grid gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
+      <div className="grid gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
         {stores.slice(0, 6).map((store) => {
-          const preview = products
-            .filter((p) => p.storeName === store.name && p.imagePath)
-            .slice(0, 3);
+          const featured = products.find((p) => p.storeName === store.name && p.imagePath);
           return (
             <Link
               key={store.id}
               to="/store/$slug"
               params={{ slug: store.slug }}
               search={{ locale }}
-              className="group overflow-hidden rounded-2xl border border-border bg-card transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_48px_-24px_rgba(0,0,0,0.3)] motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+              className="group block min-w-0"
+              aria-label={store.name}
             >
-              {store.bannerPath ? (
-                <div className="relative aspect-[16/9] overflow-hidden bg-muted">
-                  <img
-                    src={store.bannerPath}
-                    alt=""
-                    loading="lazy"
-                    className="size-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
-                  />
-                </div>
-              ) : (
-                <div
-                  className="relative grid aspect-[16/9] place-items-center overflow-hidden bg-ink"
-                  aria-hidden
-                >
-                  <div className="hero-orb hero-orb-a pointer-events-none" />
-                  <span className="relative font-display text-3xl font-semibold tracking-[0.25em] text-white">
-                    {store.name.slice(0, 1)}
-                  </span>
-                </div>
-              )}
-              <div className="p-5 sm:p-6">
-                <div className="flex items-center gap-3">
+              <div className="relative">
+                {store.bannerPath ? (
+                  <div className="aspect-[21/9] overflow-hidden bg-muted">
+                    <img
+                      src={store.bannerPath}
+                      alt=""
+                      loading="lazy"
+                      className="size-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+                    />
+                  </div>
+                ) : (
+                  <div
+                    className="flex aspect-[21/9] items-center justify-center bg-muted"
+                    aria-hidden
+                  >
+                    <span className="font-display text-5xl font-semibold tracking-tight text-foreground/10">
+                      {store.name.slice(0, 1)}
+                    </span>
+                  </div>
+                )}
+                <div className="absolute bottom-0 left-6 translate-y-1/2">
                   {store.logoPath ? (
                     <img
                       src={store.logoPath}
                       alt=""
                       loading="lazy"
-                      className="-mt-11 size-14 shrink-0 rounded-2xl border-2 border-card bg-background object-cover shadow-sm"
+                      className="size-16 shrink-0 rounded-full bg-background object-cover ring-2 ring-background"
                     />
                   ) : (
                     <div
-                      className="-mt-11 grid size-14 shrink-0 place-items-center rounded-2xl border-2 border-card bg-secondary text-h3 font-semibold shadow-sm"
+                      className="grid size-16 shrink-0 place-items-center rounded-full bg-secondary font-display text-xl font-semibold text-foreground ring-2 ring-background"
                       aria-hidden
                     >
                       {store.name.slice(0, 1)}
                     </div>
                   )}
-                  <div className="min-w-0 pt-0.5">
-                    <h3 className="flex items-center gap-1.5 text-h3 text-foreground">
-                      <span className="truncate">{store.name}</span>
-                      {store.slug === "modalia" ? (
-                        <OfficialStoreBadge label={storeT.officialStore} />
-                      ) : (
-                        <VerifiedSellerBadge verified={store.verified} label={storeT.verifiedStore} />
-                      )}
-                    </h3>
-                  </div>
                 </div>
-                {store.description ? (
-                  <p className="mt-3 line-clamp-2 text-small leading-relaxed text-muted-foreground">
-                    {store.description}
+              </div>
+              <div className="mt-10 flex items-start justify-between gap-4 px-1">
+                <div className="min-w-0">
+                  <h3 className="flex items-center gap-2 font-display text-xl font-semibold leading-snug text-foreground">
+                    <span className="truncate transition-colors group-hover:text-foreground/70">
+                      {store.name}
+                    </span>
+                    {store.slug === "modalia" ? (
+                      <OfficialStoreBadge label={storeT.officialStore} />
+                    ) : (
+                      <VerifiedSellerBadge verified={store.verified} label={storeT.verifiedStore} />
+                    )}
+                  </h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {cardT.productsCount(store.productCount)}
                   </p>
+                </div>
+                {featured?.imagePath ? (
+                  <img
+                    src={featured.imagePath as string}
+                    alt=""
+                    aria-hidden
+                    loading="lazy"
+                    className="size-16 shrink-0 rounded-lg bg-muted object-cover"
+                  />
                 ) : null}
-                {preview.length ? (
-                  <div className="mt-4 grid grid-cols-3 gap-2">
-                    {preview.map((product) => (
-                      <div
-                        key={product.id}
-                        className="aspect-square overflow-hidden rounded-lg bg-muted"
-                      >
-                        <img
-                          src={product.imagePath as string}
-                          alt=""
-                          loading="lazy"
-                          className="size-full object-cover"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                ) : null}
-                <p className="mt-4 inline-flex items-center gap-2 text-small font-medium text-foreground">
-                  {visitStore}
-                  <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5 motion-reduce:transition-none" />
-                </p>
               </div>
             </Link>
           );
@@ -922,31 +1007,25 @@ function Stars({ rating }: { rating: number }) {
 
 function ReviewCard({ review, locale }: { review: FeaturedReview; locale: SupportedLocale }) {
   return (
-    <figure className="flex w-72 shrink-0 snap-start flex-col justify-between rounded-2xl border border-border bg-card p-6 sm:w-80">
-      <div>
-        <Stars rating={review.rating} />
-        <blockquote className="mt-4 line-clamp-5 text-body leading-relaxed text-foreground">
-          &ldquo;{review.body}&rdquo;
-        </blockquote>
-      </div>
-      <figcaption className="mt-6">
-        <p className="flex items-center gap-1.5 text-small font-semibold text-foreground">
-          {review.reviewerName}
-          {review.verifiedPurchase ? (
-            <BadgeCheck className="size-4 text-emerald-600" aria-hidden />
-          ) : null}
-        </p>
-        <p className="mt-1 text-caption text-muted-foreground">
-          <Link
-            to="/product/$slug"
-            params={{ slug: review.productSlug }}
-            search={{ locale }}
-            className="transition-colors hover:text-foreground"
-          >
-            {review.productName}
-          </Link>
-          {review.storeName ? ` · ${review.storeName}` : null}
-        </p>
+    <figure className="w-80 shrink-0 snap-start sm:w-[26rem]">
+      <Stars rating={review.rating} />
+      <blockquote className="mt-5 font-display text-[clamp(1.25rem,2.5vw,1.75rem)] font-medium leading-[1.3] tracking-tight text-foreground">
+        &ldquo;{review.body}&rdquo;
+      </blockquote>
+      <figcaption className="mt-6 flex items-center gap-2 text-small text-muted-foreground">
+        <span className="font-semibold text-foreground">{review.reviewerName}</span>
+        {review.verifiedPurchase ? (
+          <BadgeCheck className="size-4 text-emerald-600" aria-hidden />
+        ) : null}
+        <span aria-hidden>·</span>
+        <Link
+          to="/product/$slug"
+          params={{ slug: review.productSlug }}
+          search={{ locale }}
+          className="truncate transition-colors hover:text-foreground"
+        >
+          {review.productName}
+        </Link>
       </figcaption>
     </figure>
   );
@@ -972,21 +1051,13 @@ function TestimonialsSection({
   if (!data?.hasData || data.reviews.length === 0) return null;
   return (
     <Reveal>
-      <div className="mb-7 flex items-start gap-4 sm:mb-9">
-        <span
-          aria-hidden
-          className="mt-1 hidden font-display text-sm font-semibold tabular-nums text-muted-foreground/70 sm:block"
-        >
-          08
-        </span>
-        <div>
-          <p className="text-eyebrow text-muted-foreground">{copy.reviewsEyebrow}</p>
-          <h2 className="mt-2 font-display text-[clamp(1.6rem,4vw,2.5rem)] font-semibold leading-[1.08] tracking-tight text-foreground">
-            {copy.reviewsTitle}
-          </h2>
-        </div>
+      <div className="mb-8 sm:mb-10">
+        <p className="text-eyebrow text-muted-foreground">{copy.reviewsEyebrow}</p>
+        <h2 className="mt-2 max-w-2xl font-display text-[clamp(1.9rem,4.5vw,3rem)] font-semibold leading-[1.06] tracking-tight text-foreground">
+          {copy.reviewsTitle}
+        </h2>
       </div>
-      <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 lg:pb-0">
+      <div className="flex snap-x snap-mandatory gap-10 overflow-x-auto pb-2 sm:gap-16 lg:pb-0">
         {data.reviews.map((review) => (
           <ReviewCard key={review.id} review={review} locale={locale} />
         ))}
@@ -1029,12 +1100,12 @@ function RecentlyViewed({
   return (
     <Reveal>
       <SectionHeading
-        index="09"
         eyebrow={copy.recentEyebrow}
         title={copy.recentTitle}
         href="/shop"
         search={shopSearch}
         viewAll={viewAll}
+        tone="minimal"
       />
       <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 lg:pb-0">
         {items.map((product) => (
@@ -1088,19 +1159,11 @@ function BlogSection({
   const rest = posts.slice(1);
   return (
     <Reveal>
-      <div className="mb-7 flex items-start gap-4 sm:mb-9">
-        <span
-          aria-hidden
-          className="mt-1 hidden font-display text-sm font-semibold tabular-nums text-muted-foreground/70 sm:block"
-        >
-          10
-        </span>
-        <div>
-          <p className="text-eyebrow text-muted-foreground">{copy.blogEyebrow}</p>
-          <h2 className="mt-2 font-display text-[clamp(1.6rem,4vw,2.5rem)] font-semibold leading-[1.08] tracking-tight text-foreground">
-            {section.title || copy.blogTitle}
-          </h2>
-        </div>
+      <div className="mb-7 sm:mb-9">
+        <p className="text-eyebrow text-muted-foreground">{copy.blogEyebrow}</p>
+        <h2 className="mt-2 font-display text-[clamp(1.6rem,4vw,2.5rem)] font-semibold leading-[1.08] tracking-tight text-foreground">
+          {section.title || copy.blogTitle}
+        </h2>
       </div>
       <div className="grid gap-4 sm:gap-5 lg:grid-cols-3">
         <PostCard post={first} featured />
@@ -1117,7 +1180,7 @@ function PostCard({ post, featured }: { post: BlogPost; featured?: boolean }) {
     <>
       {post.image ? (
         <div
-          className={`relative overflow-hidden rounded-2xl bg-muted ${featured ? "aspect-[16/10]" : "aspect-[16/9]"}`}
+          className={`relative overflow-hidden bg-muted ${featured ? "aspect-[16/10]" : "aspect-[16/9]"}`}
         >
           <img
             src={post.image}
@@ -1256,7 +1319,6 @@ function NewsletterBand({ locale, copy }: { locale: SupportedLocale; copy: HomeC
   return (
     <Reveal>
       <section className="border-y border-border px-4 py-16 text-center sm:py-20">
-        <p className="text-eyebrow text-muted-foreground">11</p>
         <h2 className="mx-auto mt-3 max-w-xl font-display text-[clamp(1.6rem,4vw,2.5rem)] font-semibold tracking-tight text-foreground">
           {copy.newsletterTitle}
         </h2>
@@ -1351,7 +1413,7 @@ function HomePage() {
       <BrandEntrance />
       <SiteHeader locale={locale} t={t} />
       <main id="main-content" tabIndex={-1}>
-        <Hero locale={locale} hero={hero} copy={copy} />
+        <Hero locale={locale} hero={hero} copy={copy} products={data.products} />
         <TrustStrip copy={copy} />
 
         <div className="mx-auto max-w-7xl space-y-16 px-4 py-14 sm:space-y-24 sm:px-6 sm:py-20 lg:px-8">
@@ -1420,18 +1482,16 @@ function HomePage() {
           {recommendations && data.products.length > 8 ? (
             <Reveal>
               <SectionHeading
-                index="—"
                 eyebrow={copy.recsEyebrow}
                 title={recommendations.title || copy.recsTitle}
                 href="/shop"
                 search={shopSearch}
                 viewAll={t.common.viewAll}
               />
-              <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 lg:pb-0">
+              {/* Editorial grid — not another rail. */}
+              <div className="grid grid-cols-2 gap-x-4 gap-y-10 sm:gap-x-5 lg:grid-cols-4">
                 {data.products.slice(8, 16).map((product) => (
-                  <div key={product.id} className="w-52 shrink-0 snap-start sm:w-60">
-                    <ProductCard product={product} locale={locale} />
-                  </div>
+                  <ProductCard key={product.id} product={product} locale={locale} />
                 ))}
               </div>
             </Reveal>

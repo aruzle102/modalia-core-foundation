@@ -26,6 +26,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database, Json } from "@/integrations/supabase/types";
 import { assertAdmin } from "@/lib/admin-auth";
+import { assertAdminPermission } from "@/lib/admin-permissions";
 import {
   detectMediaKind,
   validateMediaBytes,
@@ -185,7 +186,7 @@ export const requestMediaUpload = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
     const { kind, extension } = validateMediaMeta({
       filename: data.filename,
       mimeType: data.mimeType,
@@ -235,7 +236,7 @@ export const finalizeMediaUpload = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
     const supabaseAdmin = await adminClient();
     if (data.sellerId) {
       // Staging mode (admin editor "new product"): validate content, keep the
@@ -326,7 +327,7 @@ export const listProductMedia = createServerFn({ method: "GET" })
       product: { id: string; name: Json; slug: string };
       media: AdminProductMedia[];
     }> => {
-      await assertAdmin(context);
+      await assertAdminPermission(context, "content.manage");
       const supabaseAdmin = await adminClient();
       const { data: product, error: pError } = await supabaseAdmin
         .from("products")
@@ -394,7 +395,7 @@ export const updateMediaAlt = createServerFn({ method: "POST" })
     z.object({ imageId: uuid, productId: uuid, altText: altTextSchema }).parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
     await imageBelongsToProduct(data.imageId, data.productId);
     const supabaseAdmin = await adminClient();
     const { error } = await supabaseAdmin
@@ -412,7 +413,7 @@ export const setPrimaryMedia = createServerFn({ method: "POST" })
   .middleware(adminOnly)
   .inputValidator((data) => z.object({ imageId: uuid, productId: uuid }).parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
     await imageBelongsToProduct(data.imageId, data.productId);
     const supabaseAdmin = await adminClient();
     const { error: clearError } = await supabaseAdmin
@@ -437,7 +438,7 @@ export const reorderMedia = createServerFn({ method: "POST" })
     z.object({ productId: uuid, orderedIds: z.array(uuid).min(1).max(50) }).parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
     const supabaseAdmin = await adminClient();
     const { data: rows, error } = await supabaseAdmin
       .from("product_images")
@@ -477,7 +478,7 @@ export const replaceMedia = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
     const existing = await imageBelongsToProduct(data.imageId, data.productId);
     const parsed = parseManagedPath(data.path);
     const sellerId = await getProductSeller(data.productId);
@@ -511,7 +512,7 @@ export const deleteMedia = createServerFn({ method: "POST" })
   .middleware(adminOnly)
   .inputValidator((data) => z.object({ imageId: uuid, productId: uuid }).parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
     const existing = await imageBelongsToProduct(data.imageId, data.productId);
     const supabaseAdmin = await adminClient();
     // Clear variant image pins first (FK is nullable; keep variants intact).
@@ -550,7 +551,7 @@ export const deleteStorageObject = createServerFn({ method: "POST" })
   .middleware(adminOnly)
   .inputValidator((data) => z.object({ path: z.string().min(1).max(1000) }).parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
     const path = data.path.trim();
     if (path.includes("..")) throw new Error("Invalid path.");
     const supabaseAdmin = await adminClient();
@@ -591,7 +592,7 @@ export const listMedia = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .inputValidator((data) => z.object({ prefix: z.string().max(500).default("") }).parse(data))
   .handler(async ({ data, context }): Promise<{ prefix: string; entries: MediaEntry[] }> => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
     const supabaseAdmin = await adminClient();
     const prefix = data.prefix.replace(/(^\/+|\/+$)/g, "");
     const { data: objects, error } = await supabaseAdmin.storage
@@ -619,7 +620,7 @@ export const getMediaSignedUrl = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .inputValidator((data) => z.object({ path: z.string().min(1).max(1000) }).parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
     const supabaseAdmin = await adminClient();
     const { data: signed, error } = await supabaseAdmin.storage
       .from(MEDIA_BUCKET)

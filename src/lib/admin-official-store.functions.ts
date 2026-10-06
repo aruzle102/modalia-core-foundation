@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database, Json } from "@/integrations/supabase/types";
-import { assertAdmin } from "@/lib/admin-auth";
+import { assertAdminPermission } from "@/lib/admin-permissions";
 import {
   normalizeStoreSettings,
   STORE_ACCENT_IDS,
@@ -101,7 +101,7 @@ export const listOfficialStoreProductsLite = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .inputValidator((data) => z.object({}).parse(data))
   .handler(async ({ context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
     const sb = await adminClient();
     const ref = await officialStoreRef(sb);
     const { data: rows, error } = await sb
@@ -132,7 +132,7 @@ export const getOfficialStoreStats = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .inputValidator((data) => z.object({}).parse(data))
   .handler(async ({ context }): Promise<{ stats: OfficialStoreStats }> => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
     const sb = await adminClient();
     const ref = await officialStoreRef(sb);
 
@@ -250,7 +250,7 @@ export const listOfficialStoreInventory = createServerFn({ method: "GET" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
     const sb = await adminClient();
     const ref = await officialStoreRef(sb);
 
@@ -345,7 +345,7 @@ export const adjustOfficialStoreInventory = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
     const sb = await adminClient();
     const ref = await officialStoreRef(sb);
 
@@ -415,7 +415,7 @@ export const listOfficialStoreReviews = createServerFn({ method: "GET" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
     const sb = await adminClient();
     const ref = await officialStoreRef(sb);
     const from = (data.page - 1) * PAGE_SIZE;
@@ -447,7 +447,7 @@ export const listOfficialStoreCoupons = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .inputValidator((data) => pageInput.parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
     const sb = await adminClient();
     const ref = await officialStoreRef(sb);
     const from = (data.page - 1) * PAGE_SIZE;
@@ -476,7 +476,7 @@ export const listOfficialStoreCategories = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .inputValidator((data) => z.object({}).parse(data))
   .handler(async ({ context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
     const sb = await adminClient();
     const ref = await officialStoreRef(sb);
     const [{ data: categories, error: catErr }, { data: products, error: prodErr }] =
@@ -534,7 +534,7 @@ export const getOfficialStoreAppearance = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .inputValidator((data) => z.object({}).parse(data))
   .handler(async ({ context }): Promise<{ appearance: OfficialStoreAppearance }> => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
     const sb = await adminClient();
     const ref = await officialStoreRef(sb);
     const { data: store, error } = await sb
@@ -588,7 +588,7 @@ export const updateOfficialStoreAppearance = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
     const sb = await adminClient();
     const ref = await officialStoreRef(sb);
     await writeStoreSettings(
@@ -621,7 +621,7 @@ export const updateOfficialStoreSections = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
     const sb = await adminClient();
     const ref = await officialStoreRef(sb);
 
@@ -681,7 +681,7 @@ export const upsertOfficialCollection = createServerFn({ method: "POST" })
   .middleware(adminOnly)
   .inputValidator((data) => collectionInput.parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
     const sb = await adminClient();
     const ref = await officialStoreRef(sb);
 
@@ -733,7 +733,7 @@ export const deleteOfficialCollection = createServerFn({ method: "POST" })
   .middleware(adminOnly)
   .inputValidator((data) => z.object({ id: z.string().max(64) }).parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
     const sb = await adminClient();
     const ref = await officialStoreRef(sb);
     const { data: store, error: readError } = await sb
@@ -782,7 +782,7 @@ export const getOfficialStore = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .inputValidator((data) => z.object({}).parse(data))
   .handler(async ({ context }): Promise<{ official: OfficialStoreOverview }> => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
     const supabaseAdmin = await adminClient();
     const { data: store, error } = await supabaseAdmin
       .from("stores")

@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { assertAdmin } from "@/lib/admin-auth";
+import { assertAdminPermission } from "@/lib/admin-permissions";
 
 const adminOnly = [requireSupabaseAuth] as const;
 
@@ -118,7 +118,7 @@ const WINDOW_DAYS = 30;
 const AGG_LIMIT = 50000;
 
 export const getAdminMetrics = createServerFn({ method: "GET" }).middleware(adminOnly).handler(async ({ context }): Promise<AdminMetricsResult> => {
-  await assertAdmin(context);
+  await assertAdminPermission(context, "dashboard.view");
   const supabase = context.supabase;
   const diagnostics: TableDiagnostic[] = [];
 

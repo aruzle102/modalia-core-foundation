@@ -67,9 +67,11 @@ export type AdminStoreListItem = StoreRow & {
   product_count: number;
 };
 
+const emptyToUndefined = (v: unknown) => (v === "" ? undefined : v);
+
 const listStoresInput = z.object({
   q: z.string().max(100).optional(),
-  status: z.enum(["draft", "active", "suspended", "closed"]).optional(),
+  status: z.preprocess(emptyToUndefined, z.enum(["draft", "active", "suspended", "closed"]).optional()),
   page: z.number().int().min(1).default(1),
 });
 

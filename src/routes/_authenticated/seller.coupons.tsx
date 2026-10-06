@@ -40,7 +40,7 @@ import {
   updateCoupon,
   type SellerCouponRow,
 } from "@/lib/seller-marketing.functions";
-import { getLocale, localeDirections } from "@/lib/i18n";
+import { getLocale, localeDirections, type SupportedLocale } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/seller/coupons")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -82,10 +82,10 @@ function toLocalInput(iso: string | null): string {
   return Number.isNaN(d.getTime()) ? "" : d.toISOString().slice(0, 16);
 }
 
-function valueLabel(row: SellerCouponRow): string {
+function valueLabel(row: SellerCouponRow, locale: SupportedLocale): string {
   return row.discount_type === "percentage"
     ? `${row.discount_value}%`
-    : fmtMoney(row.discount_value);
+    : fmtMoney(row.discount_value, "DZD", locale);
 }
 
 function CouponsPage() {
@@ -221,15 +221,15 @@ function CouponsPage() {
                       {coupons.map((c) => (
                         <TableRow key={c.id}>
                           <TableCell className="font-mono font-semibold">{c.code}</TableCell>
-                          <TableCell>{valueLabel(c)}</TableCell>
-                          <TableCell>{c.min_order_amount != null ? fmtMoney(c.min_order_amount) : "—"}</TableCell>
-                          <TableCell>{c.max_discount_amount != null ? fmtMoney(c.max_discount_amount) : "—"}</TableCell>
+                          <TableCell>{valueLabel(c, locale)}</TableCell>
+                          <TableCell>{c.min_order_amount != null ? fmtMoney(c.min_order_amount, "DZD", locale) : "—"}</TableCell>
+                          <TableCell>{c.max_discount_amount != null ? fmtMoney(c.max_discount_amount, "DZD", locale) : "—"}</TableCell>
                           <TableCell className="tabular-nums">
                             {c.usage_count ?? 0}
                             {c.usage_limit ? ` / ${c.usage_limit}` : ""}
                           </TableCell>
                           <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
-                            {c.starts_at ? fmtDate(c.starts_at) : "—"} → {c.ends_at ? fmtDate(c.ends_at) : "—"}
+                            {c.starts_at ? fmtDate(c.starts_at, locale) : "—"} → {c.ends_at ? fmtDate(c.ends_at, locale) : "—"}
                           </TableCell>
                           <TableCell>
                             <StatusPill status={c.status} />

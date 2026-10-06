@@ -31,6 +31,13 @@ type ChatMessage = {
   products: AiChatProduct[];
   source: "rules";
   intentSummary: string | null;
+  /**
+   * Honest provenance for support answers: the 8 intent answers come from the
+   * static confirmed knowledge base (`src/lib/support-knowledge.ts`), not
+   * from a database table. The intelligence_settings control plane (toggle,
+   * welcome/fallback copy, suggested questions) IS database-backed.
+   */
+  sourceDetail?: "support-static" | undefined;
 };
 
 
@@ -186,6 +193,7 @@ export function AiAssistantDrawer({
           products: result.products,
           source: result.source,
           intentSummary: result.intentSummary,
+          sourceDetail: undefined,
         },
       ]);
     },
@@ -199,6 +207,7 @@ export function AiAssistantDrawer({
           products: [],
           source: "rules",
           intentSummary: null,
+          sourceDetail: undefined,
         },
       ]);
     },
@@ -213,7 +222,7 @@ export function AiAssistantDrawer({
     if (!message || chat.isPending) return;
     setMessages((prev) => [
       ...prev,
-      { id: idRef.current++, role: "user", text: message, products: [], source: "rules", intentSummary: null },
+      { id: idRef.current++, role: "user", text: message, products: [], source: "rules", intentSummary: null, sourceDetail: undefined },
     ]);
     setInput("");
 
@@ -235,6 +244,8 @@ export function AiAssistantDrawer({
             products: [],
             source: "rules",
             intentSummary: t.assistant.supportLabel ?? null,
+            // Honest label: static confirmed knowledge, not a DB row.
+            sourceDetail: "support-static",
           },
         ]);
         return;
@@ -307,6 +318,11 @@ export function AiAssistantDrawer({
                       {message.intentSummary ? (
                         <p className="mb-2 inline-block rounded-full bg-muted px-2.5 py-0.5 text-[11px] text-muted-foreground">
                           {t.assistant.understood}: {message.intentSummary}
+                        </p>
+                      ) : null}
+                      {message.sourceDetail === "support-static" ? (
+                        <p className="mb-2 text-[11px] italic text-muted-foreground">
+                          {t.assistant.supportStaticNote}
                         </p>
                       ) : null}
                       {renderRichText(message.text, locale)}

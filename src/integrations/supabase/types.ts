@@ -234,9 +234,14 @@ export type Database = {
       categories: {
         Row: {
           created_at: string
+          featured: boolean
+          gender: string | null
           id: string
+          image_url: string | null
           name: Json
           parent_id: string | null
+          seo_description: string | null
+          seo_title: string | null
           slug: string
           sort_order: number
           status: string
@@ -244,9 +249,14 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          featured?: boolean
+          gender?: string | null
           id?: string
+          image_url?: string | null
           name: Json
           parent_id?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
           slug: string
           sort_order?: number
           status?: string
@@ -254,9 +264,14 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          featured?: boolean
+          gender?: string | null
           id?: string
+          image_url?: string | null
           name?: Json
           parent_id?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
           slug?: string
           sort_order?: number
           status?: string
@@ -401,6 +416,55 @@ export type Database = {
             columns: ["seller_id"]
             isOneToOne: false
             referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coupon_usages: {
+        Row: {
+          coupon_id: string
+          customer_id: string | null
+          guest_phone: string | null
+          id: string
+          order_id: string
+          used_at: string
+        }
+        Insert: {
+          coupon_id: string
+          customer_id?: string | null
+          guest_phone?: string | null
+          id?: string
+          order_id: string
+          used_at?: string
+        }
+        Update: {
+          coupon_id?: string
+          customer_id?: string | null
+          guest_phone?: string | null
+          id?: string
+          order_id?: string
+          used_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coupon_usages_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coupon_usages_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coupon_usages_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
             referencedColumns: ["id"]
           },
         ]
@@ -926,6 +990,8 @@ export type Database = {
           cancelled_by: string | null
           checkout_idempotency_key: string | null
           created_at: string
+          coupon_code: string | null
+          coupon_id: string | null
           currency: string
           customer_id: string | null
           customer_note: string | null
@@ -960,6 +1026,8 @@ export type Database = {
           cancelled_by?: string | null
           checkout_idempotency_key?: string | null
           created_at?: string
+          coupon_code?: string | null
+          coupon_id?: string | null
           currency?: string
           customer_id?: string | null
           customer_note?: string | null
@@ -994,6 +1062,8 @@ export type Database = {
           cancelled_by?: string | null
           checkout_idempotency_key?: string | null
           created_at?: string
+          coupon_code?: string | null
+          coupon_id?: string | null
           currency?: string
           customer_id?: string | null
           customer_note?: string | null
@@ -1026,6 +1096,13 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons"
             referencedColumns: ["id"]
           },
         ]
@@ -1897,6 +1974,7 @@ export type Database = {
           commission_total: number
           created_at: string
           delivery_method: string | null
+          discount_total: number
           id: string
           order_id: string
           seller_id: string
@@ -1912,6 +1990,7 @@ export type Database = {
           commission_total?: number
           created_at?: string
           delivery_method?: string | null
+          discount_total?: number
           id?: string
           order_id: string
           seller_id: string
@@ -1927,6 +2006,7 @@ export type Database = {
           commission_total?: number
           created_at?: string
           delivery_method?: string | null
+          discount_total?: number
           id?: string
           order_id?: string
           seller_id?: string
@@ -2068,6 +2148,47 @@ export type Database = {
           },
         ]
       }
+      seller_support_grants: {
+        Row: {
+          admin_id: string
+          created_at: string
+          expires_at: string
+          id: string
+          last_used_at: string | null
+          revoked_at: string | null
+          seller_id: string
+          token_hash: string
+        }
+        Insert: {
+          admin_id: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          last_used_at?: string | null
+          revoked_at?: string | null
+          seller_id: string
+          token_hash: string
+        }
+        Update: {
+          admin_id?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          last_used_at?: string | null
+          revoked_at?: string | null
+          seller_id?: string
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seller_support_grants_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       seller_support_requests: {
         Row: {
           admin_response: string | null
@@ -2127,6 +2248,7 @@ export type Database = {
           last_name: string | null
           legal_name: string
           must_reset_password: boolean
+          onboarded_at: string | null
           owner_id: string
           phone: string | null
           status: Database["public"]["Enums"]["store_status"]
@@ -2143,6 +2265,7 @@ export type Database = {
           last_name?: string | null
           legal_name: string
           must_reset_password?: boolean
+          onboarded_at?: string | null
           owner_id: string
           phone?: string | null
           status?: Database["public"]["Enums"]["store_status"]
@@ -2159,6 +2282,7 @@ export type Database = {
           last_name?: string | null
           legal_name?: string
           must_reset_password?: boolean
+          onboarded_at?: string | null
           owner_id?: string
           phone?: string | null
           status?: Database["public"]["Enums"]["store_status"]
@@ -2610,14 +2734,18 @@ export type Database = {
             Args: {
               p_address_line: string
               p_cart_id: string
-              p_commune_id: string
+              p_commune_id?: string
+              p_commune_name?: string
+              p_coupon_code?: string
               p_customer_id?: string
               p_customer_note?: string
               p_delivery_method: string
               p_first_name: string
               p_idempotency_key?: string
               p_last_name: string
+              p_office_ids?: Json
               p_phone: string
+              p_seller_methods?: Json
               p_session_token: string
               p_wilaya_id: string
             }
@@ -2683,6 +2811,13 @@ export type Database = {
         | "editorial"
         | "blog"
         | "app_banner"
+        | "collections"
+        | "customer_reviews"
+        | "fashion_edit"
+        | "limited_drops"
+        | "newsletter"
+        | "showcase"
+        | "sport_edit"
       order_status:
         | "pending"
         | "confirmed"

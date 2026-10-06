@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Json } from "@/integrations/supabase/types";
 import { assertAdmin } from "@/lib/admin-auth";
+import { rateLimitEndpoint } from "@/lib/rate-limit";
 
 const adminOnly = [requireSupabaseAuth] as const;
 
@@ -94,6 +95,60 @@ export type SiteButton = {
   sort_order: number;
   locale: string | null;
 };
+
+export type PublicSiteButton = {
+  label: string;
+  action_type: (typeof ACTION_TYPES)[number];
+  destination: string;
+  placement: (typeof PLACEMENTS)[number];
+  style: (typeof BUTTON_STYLES)[number];
+  locale: string | null;
+};
+
+/**
+ * Public read of ACTIVE site buttons for one placement (Section 60).
+ * No auth — the storefront renders these. Reads via the service-role client
+ * because RLS is admin-only, but selects ONLY the public columns (no ids,
+ * no timestamps). Destinations are re-validated at render time.
+ */
+export const getPublicSiteButtons = createServerFn({ method: "GET" })
+  .inputValidator((data) => z.object({ placement: z.enum(PLACEMENTS) }).parse(data))
+  .handler(async ({ data }) => {
+    rateLimitEndpoint("getPublicSiteButtons", 120);
+    const supabaseAdmin = await adminClient();
+    const { data: rows, error } = await supabaseAdmin
+      .from("site_buttons")
+      .select("label,action_type,destination,placement,style,sort_order,locale,created_at")
+      .eq("is_active", true)
+      .eq("placement", data.placement)
+      .order("sort_order")
+      .order("created_at");
+    if (error) throw new Error("Buttons are temporarily unavailable.");
+    return {
+      buttons: ((rows ?? []) as Array<Record<string, unknown>>)
+        .filter(
+          (row) =>
+            typeof row["label"] === "string" &&
+            typeof row["destination"] === "string" &&
+            (ACTION_TYPES as readonly string[]).includes(row["action_type"] as string),
+        )
+        .map(
+          (row): PublicSiteButton => ({
+            label: row["label"] as string,
+            action_type: row["action_type"] as PublicSiteButton["action_type"],
+            destination: row["destination"] as string,
+            placement: row["placement"] as PublicSiteButton["placement"],
+            style: (BUTTON_STYLES as readonly string[]).includes(row["style"] as string)
+              ? (row["style"] as PublicSiteButton["style"])
+              : "primary",
+            locale:
+              row["locale"] === "ar" || row["locale"] === "fr" || row["locale"] === "en"
+                ? (row["locale"] as string)
+                : null,
+          }),
+        ),
+    };
+  });
 
 export const listSiteButtons = createServerFn({ method: "GET" })
   .middleware(adminOnly)

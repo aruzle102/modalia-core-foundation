@@ -11,15 +11,20 @@ import {
   GripVertical,
   Image as ImageIcon,
   LayoutGrid,
+  Layers,
+  Mail,
   Megaphone,
   Newspaper,
   Pencil,
   Plus,
   RefreshCw,
+  Shirt,
   Smartphone,
   Sparkles,
+  Star,
   Store,
   ThumbsUp,
+  Timer,
   Trash2,
   TrendingUp,
   Zap,
@@ -34,6 +39,7 @@ import {
   TableSkeleton,
   fmtDateTime,
 } from "@/components/admin/ui";
+import { useAdminLocale } from "@/components/admin/useAdminLocale";
 import { errMsg, pickName } from "./_shared";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,7 +68,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { getLocale } from "@/lib/i18n";
+import { getLocale, getTranslations } from "@/lib/i18n";
 import { strParam, useUrlState } from "@/hooks/use-url-state";
 import {
   HOMEPAGE_KINDS,
@@ -108,6 +114,13 @@ const KIND_META: Record<HomepageKind, { label: string; icon: ReactNode }> = {
   editorial: { label: "Editorial campaign", icon: <Megaphone className="size-4" /> },
   blog: { label: "Blog / journal", icon: <Newspaper className="size-4" /> },
   app_banner: { label: "App banner", icon: <Smartphone className="size-4" /> },
+  collections: { label: "Collections", icon: <Layers className="size-4" /> },
+  customer_reviews: { label: "Customer reviews", icon: <Star className="size-4" /> },
+  fashion_edit: { label: "Fashion edit", icon: <Shirt className="size-4" /> },
+  limited_drops: { label: "Limited drops", icon: <Timer className="size-4" /> },
+  newsletter: { label: "Newsletter band", icon: <Mail className="size-4" /> },
+  showcase: { label: "Product showcase", icon: <Sparkles className="size-4" /> },
+  sport_edit: { label: "Sport edit", icon: <Zap className="size-4" /> },
 };
 
 const RAIL_KINDS: readonly HomepageKind[] = [
@@ -196,11 +209,14 @@ const SECTION_KEY_RE = /^[a-z0-9]+(?:[-_][a-z0-9]+)*$/;
 /* --------------------------------- page --------------------------------- */
 
 function HomepageBuilderPage() {
+  const locale = useAdminLocale();
+  const nav = getTranslations(locale).adminNav.items;
   return (
     <AdminGate>
       <AdminShell
         title="Homepage builder"
         subtitle="Reorder, toggle and edit the sections of the storefront homepage. Changes go live as soon as they are saved."
+        breadcrumbs={[{ label: nav.homepageBuilder }]}
       >
         <BuilderManager />
       </AdminShell>
@@ -473,6 +489,7 @@ function SectionCard({
   duplicatePending: boolean;
   onDelete: () => void;
 }) {
+  const locale = useAdminLocale();
   const meta = KIND_META[section.kind];
   const title = pickName(section.title) || section.section_key;
   const now = Date.now();
@@ -527,8 +544,8 @@ function SectionCard({
 
           {(section.starts_at || section.ends_at) && (
             <p className="mt-2 text-caption text-muted-foreground">
-              {section.starts_at ? `From ${fmtDateTime(section.starts_at)}` : "Always on"}
-              {section.ends_at ? ` · until ${fmtDateTime(section.ends_at)}` : ""}
+              {section.starts_at ? `From ${fmtDateTime(section.starts_at, locale)}` : "Always on"}
+              {section.ends_at ? ` · until ${fmtDateTime(section.ends_at, locale)}` : ""}
             </p>
           )}
         </div>

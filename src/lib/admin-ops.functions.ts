@@ -435,6 +435,12 @@ export const SITE_SETTING_KEYS = [
   "seo_description",
   "seo_keywords",
   "seo_robots_index",
+  // Platform product-moderation mode: `require_approval` (default) or
+  // `auto_publish`. Read server-side by the seller publish actions.
+  "product_moderation_mode",
+  // Platform default commission rate (percent, 0–100) pre-filled in the
+  // seller-creation wizard. Read by `getDefaultCommissionRate`.
+  "default_commission_rate",
 ] as const;
 
 export const getSiteSettings = createServerFn({ method: "GET" })
@@ -464,12 +470,38 @@ export const updateSiteSettings = createServerFn({ method: "POST" })
     const allowed = new Set<string>(SITE_SETTING_KEYS as readonly string[]);
     const rows = Object.entries(data.values)
       .filter(([key]) => allowed.has(key))
-      .map(([key, value]) => ({
-        key,
-        value: value as Json,
-        updated_by: actorId,
-        updated_at: new Date().toISOString(),
-      }));
+      .map(([key, value]) => {
+        // The moderation mode is a strict enum — never persist garbage that
+        // the seller publish path would silently fall back from.
+        if (key === "product_moderation_mode") {
+          if (value !== "require_approval" && value !== "auto_publish") {
+            throw new Error("Invalid moderation mode.");
+          }
+        }
+        // The default commission rate is a percent — never persist garbage
+        // the seller wizard would silently fall back from.
+        if (key === "default_commission_rate") {
+          const n =
+            typeof value === "number"
+              ? value
+              : Number(String(value ?? "").trim().replace(",", "."));
+          if (!Number.isFinite(n) || n < 0 || n > 100) {
+            throw new Error("Invalid default commission rate (0–100).");
+          }
+          return {
+            key,
+            value: Math.round(n * 100) / 100,
+            updated_by: actorId,
+            updated_at: new Date().toISOString(),
+          };
+        }
+        return {
+          key,
+          value: value as Json,
+          updated_by: actorId,
+          updated_at: new Date().toISOString(),
+        };
+      });
     if (rows.length === 0) throw new Error("No valid settings to save.");
 
     const { error } = await supabaseAdmin.from("site_settings").upsert(rows, { onConflict: "key" });
@@ -479,4 +511,31 @@ export const updateSiteSettings = createServerFn({ method: "POST" })
       keys: rows.map((r) => r.key),
     });
     return { ok: true, saved: rows.length };
+  });
+
+/** Hard fallback when the platform setting was never configured. */
+export const DEFAULT_COMMISSION_RATE = 10;
+
+/**
+ * Admin read of the platform default commission rate (percent, 0–100).
+ * The seller-creation wizard pre-fills its commission step from this —
+ * changing it in Admin > Settings actually changes new-seller behavior.
+ */
+export const getDefaultCommissionRate = createServerFn({ method: "GET" })
+  .middleware(adminOnly)
+  .inputValidator((data) => z.object({}).parse(data))
+  .handler(async ({ context }) => {
+    await assertAdmin(context);
+    const supabaseAdmin = await adminClient();
+    const { data, error } = await supabaseAdmin
+      .from("site_settings")
+      .select("value")
+      .eq("key", "default_commission_rate")
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    const raw = data?.value as Json;
+    const n =
+      typeof raw === "number" ? raw : Number(String(raw ?? "").trim().replace(",", "."));
+    const rate = Number.isFinite(n) ? Math.min(100, Math.max(0, n)) : DEFAULT_COMMISSION_RATE;
+    return { rate };
   });

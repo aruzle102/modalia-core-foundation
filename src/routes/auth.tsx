@@ -4,6 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SiteFooter, SiteHeader } from "@/components/layout/site-shell";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  checkLoginAllowed,
+  isLoginRateLimitedError,
+  resolveLoginRateLimitMessage,
+} from "@/lib/auth-guard.functions";
 import { getLocale, getTranslations, localeDirections } from "@/lib/i18n";
 import { pageHead } from "@/lib/seo";
 
@@ -53,6 +58,9 @@ function AuthPage() {
         if (error) throw error;
         setMessage(ta.resetLinkSent);
       } else if (mode === "signin") {
+        // V8 Sec 57 #151: server-side brute-force gate BEFORE the password
+        // check. Denied attempts get one generic, non-enumerating message.
+        await checkLoginAllowed({ data: { identifier: email } });
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         if (target) {
@@ -75,9 +83,15 @@ function AuthPage() {
         setMessage(ta.accountCreatedMsg);
       }
     } catch (err) {
-      setMessage(
-        err instanceof Error ? err.message : mode === "forgot" ? ta.resetFailed : ta.authFailed,
-      );
+      // V8 Sec 57 #151: the brute-force gate throws one generic code — map
+      // it to the non-enumerating "too many attempts" message.
+      if (isLoginRateLimitedError(err)) {
+        setMessage(resolveLoginRateLimitMessage(locale, ta as unknown as Record<string, unknown>));
+      } else {
+        setMessage(
+          err instanceof Error ? err.message : mode === "forgot" ? ta.resetFailed : ta.authFailed,
+        );
+      }
     } finally {
       setLoading(false);
     }

@@ -359,7 +359,7 @@ function OverviewTab({
           <EmptyState title={t.overview.noProducts} text={t.overview.noProductsText} />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[560px] text-left text-small">
+            <table className="w-full min-w-[560px] text-start text-small">
               <thead>
                 <tr className="border-b border-border text-caption text-muted-foreground">
                   <th className="px-3 py-2 font-medium">{t.products.name}</th>
@@ -382,7 +382,7 @@ function OverviewTab({
                           p.slug}
                       </Link>
                     </td>
-                    <td className="px-3 py-3 font-medium">{fmtMoney(p.base_price)}</td>
+                    <td className="px-3 py-3 font-medium">{fmtMoney(p.base_price, "DZD", locale)}</td>
                     <td className="px-3 py-3">
                       <StatusPill status={p.status} />
                     </td>
@@ -697,7 +697,7 @@ function ProductsTab({
             <EmptyState title={t.products.empty} text={t.products.emptyText} />
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[760px] text-left text-small">
+              <table className="w-full min-w-[760px] text-start text-small">
                 <thead>
                   <tr className="border-b border-border text-caption text-muted-foreground">
                     <th className="w-10 px-3 py-2">
@@ -728,14 +728,14 @@ function ProductsTab({
                       <td className="px-3 py-3">
                         <p className="font-medium">{pickName(p.name) || p.slug}</p>
                         <p className="text-caption text-muted-foreground">
-                          {p.slug} · {fmtDateTime(p.created_at)}
+                          {p.slug} · {fmtDateTime(p.created_at, locale)}
                         </p>
                       </td>
                       <td className="px-3 py-3 whitespace-nowrap">
-                        {fmtMoney(Number(p.base_price))}
+                        {fmtMoney(Number(p.base_price), "DZD", locale)}
                         {p.compare_at_price ? (
                           <span className="ms-2 text-caption text-muted-foreground line-through">
-                            {fmtMoney(Number(p.compare_at_price))}
+                            {fmtMoney(Number(p.compare_at_price), "DZD", locale)}
                           </span>
                         ) : null}
                       </td>
@@ -753,7 +753,7 @@ function ProductsTab({
                           className="text-muted-foreground hover:text-foreground"
                         >
                           {p.featured ? (
-                            <Star className="size-4 fill-amber-400 text-amber-400" />
+                            <Star className="size-4 fill-brand text-brand" />
                           ) : (
                             <StarOff className="size-4" />
                           )}
@@ -1225,7 +1225,7 @@ function InventoryTab({
           <EmptyState title={t.inventory.empty} text={t.inventory.emptyText} />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px] text-left text-small">
+            <table className="w-full min-w-[720px] text-start text-small">
               <thead>
                 <tr className="border-b border-border text-caption text-muted-foreground">
                   <th className="px-3 py-2 font-medium">{t.inventory.product}</th>
@@ -1477,7 +1477,7 @@ function CategoriesTab({
           <EmptyState title={t.categories.empty} text={t.categories.emptyText} />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[560px] text-left text-small">
+            <table className="w-full min-w-[560px] text-start text-small">
               <thead>
                 <tr className="border-b border-border text-caption text-muted-foreground">
                   <th className="px-3 py-2 font-medium">{t.categories.category}</th>
@@ -1887,7 +1887,7 @@ function OffersTab({
           <EmptyState title={t.offers.empty} text={t.offers.emptyText} />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px] text-left text-small">
+            <table className="w-full min-w-[720px] text-start text-small">
               <thead>
                 <tr className="border-b border-border text-caption text-muted-foreground">
                   <th className="px-3 py-2 font-medium">{t.offers.code}</th>
@@ -1906,9 +1906,9 @@ function OffersTab({
                         {c.code}
                       </p>
                       <p className="text-caption text-muted-foreground">
-                        {c.starts_at ? fmtDateTime(c.starts_at) : "—"}
+                        {c.starts_at ? fmtDateTime(c.starts_at, locale) : "—"}
                         {" → "}
-                        {c.ends_at ? fmtDateTime(c.ends_at) : "—"}
+                        {c.ends_at ? fmtDateTime(c.ends_at, locale) : "—"}
                       </p>
                     </td>
                     <td className="px-3 py-3 text-caption">
@@ -1917,7 +1917,7 @@ function OffersTab({
                     <td className="px-3 py-3 text-end font-medium">
                       {c.discount_type === "percentage"
                         ? `${c.discount_value}%`
-                        : fmtMoney(Number(c.discount_value))}
+                        : fmtMoney(Number(c.discount_value), "DZD", locale)}
                     </td>
                     <td className="px-3 py-3 text-end text-muted-foreground">
                       {c.usage_count ?? 0}
@@ -2284,7 +2284,7 @@ function ReviewsTab({
           <EmptyState title={t.reviews.empty} text={t.reviews.emptyText} />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[680px] text-left text-small">
+            <table className="w-full min-w-[680px] text-start text-small">
               <thead>
                 <tr className="border-b border-border text-caption text-muted-foreground">
                   <th className="px-3 py-2 font-medium">{t.reviews.queues.pending}</th>
@@ -2308,12 +2308,12 @@ function ReviewsTab({
                       <td className="px-3 py-3">
                         <p className="max-w-md whitespace-pre-wrap">{r.body ?? "—"}</p>
                         <p className="mt-1 text-caption text-muted-foreground">
-                          {reviewer} · {fmtDateTime(r.created_at)}
+                          {reviewer} · {fmtDateTime(r.created_at, locale)}
                           {r.verified_purchase ? ` · ${t.reviews.verified}` : ""}
                           {r.flagged_at ? ` · ${t.reviews.flagged}` : ""}
                         </p>
                         {r.moderation_reason ? (
-                          <p className="mt-1 text-caption text-amber-600 dark:text-amber-400">
+                          <p className="mt-1 text-caption text-brand">
                             {t.reviews.reason}: {r.moderation_reason}
                           </p>
                         ) : null}

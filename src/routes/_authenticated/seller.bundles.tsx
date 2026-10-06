@@ -203,7 +203,7 @@ function BundlesPage() {
                             <p className="truncate text-sm font-medium">{item.name}</p>
                             <p className="text-xs text-muted-foreground">
                               {item.variant_id ? `Variant ${item.variant_id.slice(0, 8)} · ` : ""}
-                              Qty per bundle: {item.qty} · {fmtMoney(item.unit_price)} each
+                              Qty per bundle: {item.qty} · {fmtMoney(item.unit_price, "DZD", locale)} each
                             </p>
                           </div>
                           <p className={`text-sm tabular-nums ${item.available >= item.qty ? "text-green-700 dark:text-green-400" : "text-destructive"}`}>

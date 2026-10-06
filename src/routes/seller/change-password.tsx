@@ -107,7 +107,14 @@ function SellerChangePasswordPage() {
       setMessage(t.passwordChanged);
       // Drop the stale seller context (which still has mustResetPassword=true).
       await queryClient.invalidateQueries({ queryKey: ["seller-context"] });
-      await nav({ to: "/seller", search: { locale }, replace: true });
+      // Fresh server check: a first-time owner who has not onboarded yet goes
+      // to the guided setup; everyone else lands on the dashboard.
+      const status = await getSellerAccessStatus().catch(() => null);
+      if (status && status.isOwner && status.access === "active" && !status.onboarded) {
+        await nav({ to: "/seller/onboarding", search: { locale }, replace: true });
+      } else {
+        await nav({ to: "/seller", search: { locale }, replace: true });
+      }
     } catch (err) {
       setMessageTone("error");
       setMessage(errorMessage(err instanceof Error ? err.message : ""));

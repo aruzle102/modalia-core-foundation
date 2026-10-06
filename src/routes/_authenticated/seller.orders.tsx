@@ -166,9 +166,9 @@ function SellerOrdersPage() {
                         <p className="text-xs text-muted-foreground" dir="ltr">{order.phone ?? "—"}</p>
                       </td>
                       <td className="py-3 pe-4 tabular-nums">{order.itemCount}</td>
-                      <td className="py-3 pe-4 tabular-nums">{fmtMoney(order.subtotal + order.shippingTotal)}</td>
+                      <td className="py-3 pe-4 tabular-nums">{fmtMoney(order.subtotal + order.shippingTotal, "DZD", locale)}</td>
                       <td className="py-3 pe-4"><StatusPill status={order.status} /></td>
-                      <td className="py-3 text-xs text-muted-foreground">{fmtDateTime(order.createdAt)}</td>
+                      <td className="py-3 text-xs text-muted-foreground">{fmtDateTime(order.createdAt, locale)}</td>
                     </tr>
                   ))}
                 </tbody>

@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useMatch } from "@tanstack/react-router";
 import { useUrlState, useDebouncedUrlParam, useBackParam, numParam, strParam } from "@/hooks/use-url-state";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -26,6 +26,8 @@ import {
   fmtDateTime,
   timeAgo,
 } from "@/components/admin/ui";
+import { useAdminLocale } from "@/components/admin/useAdminLocale";
+import { getTranslations } from "@/lib/i18n";
 import { listSellers, updateSellerStatus } from "@/lib/admin-sellers.functions";
 import { SellerOnboardingWizard } from "@/components/admin/SellerOnboardingWizard";
 import { EditSellerDialog } from "@/components/admin/EditSellerDialog";
@@ -55,7 +57,16 @@ const ACCOUNT_STATUS_OPTIONS = [
 type StatusAction = "active" | "suspended" | "disabled";
 
 function SellersPage() {
+  // Child route ($sellerId) renders in the Outlet; this route shows the table.
+  const child = useMatch({ from: "/admin/sellers", strict: true, shouldThrow: false });
+  if (!child) return <Outlet />;
+  return <SellersList />;
+}
+
+function SellersList() {
+  const locale = useAdminLocale();
   const t = useAdminT().sellers;
+  const nav = getTranslations(locale).adminNav.items;
   const url = useUrlState({ status: "all", page: 1 });
   const backParam = useBackParam();
   const queryClient = useQueryClient();
@@ -123,6 +134,7 @@ function SellersPage() {
       <AdminShell
         title="Sellers"
         subtitle="Manage seller accounts, stores, verification, and commissions."
+        breadcrumbs={[{ label: nav.sellers }]}
       >
         <AdminCard
           title="Sellers"
@@ -173,21 +185,21 @@ function SellersPage() {
               }
             />
           ) : items.length === 0 ? (
-            <EmptyState title="No sellers found" text="Try adjusting the search or filter." />
+            <EmptyState title={t.noSellers} text={t.adjustFilters} />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[1100px] text-sm">
                 <thead>
                   <tr className="border-b text-xs uppercase tracking-wide text-muted-foreground">
-                    <th className="py-2 pe-4 text-start font-medium">Name</th>
-                    <th className="py-2 pe-4 text-start font-medium">Store</th>
-                    <th className="py-2 pe-4 text-start font-medium">Status</th>
+                    <th className="py-2 pe-4 text-start font-medium">{t.colName}</th>
+                    <th className="py-2 pe-4 text-start font-medium">{t.colStore}</th>
+                    <th className="py-2 pe-4 text-start font-medium">{t.colStatus}</th>
                     <th className="py-2 pe-4 text-end font-medium">{t.products}</th>
                     <th className="py-2 pe-4 text-end font-medium">{t.orders}</th>
                     <th className="py-2 pe-4 text-end font-medium">{t.sales}</th>
-                    <th className="py-2 pe-4 text-end font-medium">Commission</th>
-                    <th className="py-2 pe-4 text-start font-medium">Created</th>
-                    <th className="py-2 text-end font-medium">Actions</th>
+                    <th className="py-2 pe-4 text-end font-medium">{t.colCommission}</th>
+                    <th className="py-2 pe-4 text-start font-medium">{t.colCreated}</th>
+                    <th className="py-2 text-end font-medium">{t.colActions}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -216,6 +228,9 @@ function SellersPage() {
                               <p className="text-xs text-muted-foreground" dir="ltr">
                                 /{store.slug}
                               </p>
+                              <p className="mt-1">
+                                <StatusPill status={store.verification_status} />
+                              </p>
                             </>
                           ) : (
                             <span className="text-muted-foreground">—</span>
@@ -227,16 +242,16 @@ function SellersPage() {
                         <td className="py-3 pe-4 text-end tabular-nums">{s.productCount}</td>
                         <td className="py-3 pe-4 text-end tabular-nums">{s.orderCount}</td>
                         <td className="py-3 pe-4 text-end tabular-nums whitespace-nowrap">
-                          {fmtMoney(s.salesTotal)}
+                          {fmtMoney(s.salesTotal, "DZD", locale)}
                         </td>
                         <td className="py-3 pe-4 text-end tabular-nums whitespace-nowrap">
                           {(Number(seller.commission_rate) * 100).toFixed(1)}%
                         </td>
                         <td
                           className="py-3 pe-4 whitespace-nowrap text-muted-foreground"
-                          title={fmtDateTime(seller.created_at)}
+                          title={fmtDateTime(seller.created_at, locale)}
                         >
-                          {timeAgo(seller.created_at)}
+                          {timeAgo(seller.created_at, locale)}
                         </td>
                         <td className="py-3">
                           <div className="flex flex-wrap justify-end gap-1.5">
@@ -326,7 +341,7 @@ function SellersPage() {
           onOpenChange={(open) => { if (!open) setConfirmAction(null); }}
           title={confirmMeta?.title ?? ""}
           description={confirmMeta?.description ?? ""}
-          confirmLabel={confirmMeta?.label ?? "Confirm"}
+          confirmLabel={confirmMeta?.label}
           danger={confirmMeta?.danger}
           onConfirm={() => {
             if (confirmAction) statusMutation.mutate(confirmAction);

@@ -4,6 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database, Json } from "@/integrations/supabase/types";
 import { emitSellerNotification } from "@/lib/notifications.functions";
 import { assertAdmin } from "@/lib/admin-auth";
+import { scanProductForModerationFlags, type ModerationFlag } from "@/lib/moderation-rules";
 
 type ProductUpdate = Database["public"]["Tables"]["products"]["Update"];
 type ProductInsert = Database["public"]["Tables"]["products"]["Insert"];
@@ -105,7 +106,7 @@ export const listAdminProducts = createServerFn({ method: "GET" })
     let query = context.supabase
       .from("products")
       .select(
-        "id, slug, name, base_price, compare_at_price, status, moderation_status, publication_status, visibility, featured, seller_id, category_id, weight_grams, moderation_reason, created_at",
+        "id, slug, name, description, base_price, compare_at_price, status, moderation_status, publication_status, visibility, featured, seller_id, category_id, weight_grams, moderation_reason, created_at",
         { count: "exact" },
       )
       .order("created_at", { ascending: false })
@@ -125,13 +126,41 @@ export const listAdminProducts = createServerFn({ method: "GET" })
 
     const { data: rows, error, count } = await query;
     if (error) throw new Error(error.message);
+    // Rule-based moderation ASSISTANCE: deterministic keyword/regex scan of
+    // name + description for products awaiting review. Flags are informational
+    // only — they never approve, reject or hide anything.
+    const products = (rows ?? []).map((row) => {
+      let flags: ModerationFlag[] = [];
+      if (row.moderation_status === "pending") {
+        flags = scanProductForModerationFlags(
+          localeTextOf(row.name),
+          localeTextOf(row.description),
+        );
+      }
+      return { ...row, flags };
+    });
     return {
-      products: rows ?? [],
+      products,
       total: count ?? 0,
       page: data.page,
       pageSize: PAGE_SIZE,
     };
   });
+
+/** Flatten a trilingual {fr,en,ar} jsonb value into searchable plain text. */
+function localeTextOf(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return (["fr", "en", "ar"] as const)
+      .map((k) => {
+        const v = (value as Record<string, unknown>)[k];
+        return typeof v === "string" ? v : "";
+      })
+      .filter(Boolean)
+      .join("\n");
+  }
+  return "";
+}
 
 export const moderateAdminProduct = createServerFn({ method: "POST" })
   .middleware(adminOnly)
@@ -428,7 +457,7 @@ export const listAdminCategories = createServerFn({ method: "GET" })
     await assertAdmin(context);
     const { data, error } = await context.supabase
       .from("categories")
-      .select("id, parent_id, slug, name, status, sort_order")
+      .select("id, parent_id, slug, name, status, sort_order, image_url, gender, featured, seo_title, seo_description")
       .order("sort_order", { ascending: true });
     if (error) throw new Error(error.message);
     const rows = (data ?? []) as CategoryRow[];
@@ -464,6 +493,12 @@ export const upsertCategory = createServerFn({ method: "POST" })
         }),
         status: z.enum(["active", "inactive"]).default("active"),
         sort_order: z.number().int().min(0).max(10_000).default(0),
+        // V8 taxonomy (#166): merchandising + SEO fields, all optional.
+        image_url: z.string().trim().max(500).nullable().optional(),
+        gender: z.enum(["men", "women", "kids", "unisex"]).nullable().optional(),
+        featured: z.boolean().default(false),
+        seo_title: z.string().trim().max(120).nullable().optional(),
+        seo_description: z.string().trim().max(300).nullable().optional(),
       })
       .parse(data),
   )
@@ -493,6 +528,12 @@ export const upsertCategory = createServerFn({ method: "POST" })
       name: { fr: data.name.fr ?? "", en: data.name.en ?? "", ar: data.name.ar ?? "" },
       status: data.status,
       sort_order: data.sort_order,
+      // V8 taxonomy (#166): empty strings clear the field (stored as NULL).
+      image_url: data.image_url?.trim() ? data.image_url.trim() : null,
+      gender: data.gender ?? null,
+      featured: data.featured,
+      seo_title: data.seo_title?.trim() ? data.seo_title.trim() : null,
+      seo_description: data.seo_description?.trim() ? data.seo_description.trim() : null,
       updated_at: new Date().toISOString(),
     };
     if (data.id) {
@@ -568,6 +609,26 @@ export const reorderCategories = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const supabaseAdmin = await adminClient();
+    // V8 #36: reject unknown parent_ids BEFORE writing — a typo'd UUID would
+    // otherwise silently orphan the category under a non-existent parent.
+    const parentIds = [
+      ...new Set(
+        data.orders.map((o) => o.parent_id).filter((p): p is string => p !== null),
+      ),
+    ];
+    if (parentIds.length) {
+      const { data: parents, error: parentError } = await supabaseAdmin
+        .from("categories")
+        .select("id")
+        .in("id", parentIds);
+      if (parentError) throw new Error(parentError.message);
+      const known = new Set((parents ?? []).map((p) => p.id));
+      for (const order of data.orders) {
+        if (order.parent_id !== null && !known.has(order.parent_id)) {
+          throw new Error(`Unknown parent category: ${order.parent_id}.`);
+        }
+      }
+    }
     for (const order of data.orders) {
       if (order.parent_id === order.id) throw new Error("A category cannot be its own parent.");
       const { error } = await supabaseAdmin

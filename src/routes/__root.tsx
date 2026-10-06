@@ -116,8 +116,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 function RootShell({ children }: { children: ReactNode }) {
   const locale = resolveLocale();
   const t = getTranslations(locale);
+  // Document-level locale plumbing: screen readers, crawlers, and components
+  // that read document.documentElement.dir (ProductRail, ChipGroup RTL logic)
+  // all follow the active locale — never hardcoded "en"/unset.
   return (
-    <html lang="en">
+    <html lang={locale} dir={locale === "ar" ? "rtl" : "ltr"}>
       <head>
         <HeadContent />
       </head>

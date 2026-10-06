@@ -1,15 +1,20 @@
 /**
  * Modalia motion system — the single source of truth for UI animation.
  *
+ * Canonical timing lives in `./motion-tokens` (Sec 43); this module owns the
+ * React utilities and re-exports the canonical token names.
+ *
  * Every animation here exists to support shopping: scroll reveals draw the
  * eye down product grids, page fades orient the shopper after navigation,
  * overlay transitions keep focus inside drawers/modals, and micro-feedback
  * (wishlist pop, cart nudge) confirms the action just taken. No decoration
  * without a commerce purpose.
  *
- * Timing tokens: 150ms (micro feedback), 250ms (standard UI), 400ms
- * (emphasis), 700ms (cinematic, hero-scale only). Everything resolves to
- * instant under `prefers-reduced-motion` via the global stylesheet guard.
+ * Duration tokens: instant (0ms, commerce-critical), subtle (150ms, micro
+ * feedback), base (200ms, standard UI), overlay (250ms), feedback (300ms),
+ * emphasis (350ms), slow (400ms), cinematic (700ms, hero-scale only).
+ * Everything resolves to instant under `prefers-reduced-motion` via the
+ * global stylesheet guard, and through `useMotionPolicy` for device tiers.
  */
 import {
   createElement,
@@ -20,28 +25,16 @@ import {
 } from "react";
 import { useEffect, useState } from "react";
 import { useReveal } from "@/hooks/use-reveal";
+import {
+  motionDuration,
+  motionEasing,
+  motionStagger,
+  motionTw,
+} from "./motion-tokens";
 
-/** Motion duration tokens (ms). */
-export const motionDuration = {
-  /** Micro feedback: wishlist pop, cart nudge, checkbox toggles. */
-  fast: 150,
-  /** Standard UI: page fades, drawer/modal panels, hover lifts. */
-  base: 250,
-  /** Emphasis: image zooms, gallery cross-fades. */
-  slow: 400,
-  /** Cinematic: hero-scale entrances only. */
-  cinematic: 700,
-} as const;
-
-/** Motion easing tokens. */
-export const motionEasing = {
-  /** Snappy ease-out for entrances and reveals. */
-  outExpo: "cubic-bezier(0.16, 0.8, 0.24, 1)",
-  /** Soft ease for feedback pops and nudges. */
-  outSoft: "cubic-bezier(0.2, 0.8, 0.2, 1)",
-  /** Material-standard curve for overlays. */
-  standard: "cubic-bezier(0.4, 0, 0.2, 1)",
-} as const;
+/** Canonical duration tokens — re-exported from `./motion-tokens`. */
+export { motionDuration, motionEasing, motionStagger, motionTw };
+export type { MotionPresetName, MotionSpring } from "./motion-tokens";
 
 /** React to the user's reduced-motion preference (live updates). */
 export function usePrefersReducedMotion(): boolean {
@@ -63,7 +56,11 @@ export function usePrefersReducedMotion(): boolean {
  * Builds a `--reveal-delay` style for staggered scroll reveals.
  * Delay is capped so long grids never feel sluggish.
  */
-export function staggerStyle(index: number, stepMs = 60, maxMs = 480): CSSProperties {
+export function staggerStyle(
+  index: number,
+  stepMs: number = motionStagger.grid.step,
+  maxMs: number = motionStagger.grid.max,
+): CSSProperties {
   return { "--reveal-delay": `${Math.min(index * stepMs, maxMs)}ms` } as CSSProperties;
 }
 
@@ -118,10 +115,8 @@ export function PageFade({
 export const overlayMotion = {
   backdrop:
     "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0",
-  dialogPanel:
-    "duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95",
-  sheetPanel:
-    "transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500 data-[state=open]:animate-in data-[state=closed]:animate-out",
+  dialogPanel: `${motionTw.duration.base} data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95`,
+  sheetPanel: `${motionTw.transition.interactive} ${motionTw.ease.standard} ${motionTw.stateDuration.closed} ${motionTw.stateDuration.open} data-[state=open]:animate-in data-[state=closed]:animate-out`,
 } as const;
 
 /** One-shot micro-animation classes (keyframes live in styles.css). */

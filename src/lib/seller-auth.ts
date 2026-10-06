@@ -38,9 +38,47 @@ export interface SellerContext {
    * gate so first-time sellers are routed to the password-change page.
    */
   mustResetPassword: boolean;
+  /**
+   * True once the owner has completed (or explicitly skipped) the guided
+   * onboarding wizard (Section 21). Read from `sellers.onboarded_at`.
+   * Drives the post-login / post-password-change redirect chain.
+   */
+  onboarded: boolean;
+  /**
+   * V8 Section 47 — admin support mode. True only when this context was
+   * resolved from a validated support grant (see resolveSupportSeller):
+   * the caller is a super_admin viewing the workspace read-only, never the
+   * seller. Permissions are limited to SUPPORT_READ_PERMISSIONS.
+   */
+  supportMode?: boolean;
+  /** The super_admin who opened the support session (creator binding). */
+  supportAdminId?: string;
+  /** ISO expiry of the underlying support grant. */
+  supportExpiresAt?: string;
 }
 
-const ALL_SELLER_PERMISSIONS: SellerPermission[] = [
+/**
+ * V8 Section 47 — the narrow read-only scope for admin support mode.
+ * A support context carries ONLY these permissions: every seller server
+ * function that requires any other permission denies by default. This is
+ * the explicitly-scoped exception to read-only; everything else stays
+ * denied.
+ */
+export const SUPPORT_READ_PERMISSIONS: SellerPermission[] = [
+  "products.view",
+  "orders.view",
+  "analytics.view",
+  "finance.view",
+  "customers.view",
+];
+
+/**
+ * The complete, authoritative list of seller permission keys. The admin
+ * onboarding wizard binds its permission list to this array (imported from
+ * `@/lib/seller-auth`) so wizard checkboxes can never drift from the real
+ * union the Seller OS enforces.
+ */
+export const ALL_SELLER_PERMISSIONS: SellerPermission[] = [
   "products.view",
   "products.edit",
   "products.publish",
@@ -64,6 +102,114 @@ const DENIED = "Seller access denied.";
 
 type SellerDb = SupabaseClient<Database>;
 
+/** Cookie carrying the raw support bearer token (set by the admin browser). */
+const SUPPORT_COOKIE_NAME = "modalia_support";
+
+async function sha256Hex(value: string): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
+  return Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+/** Read the support bearer token from the current request's cookies, if any. */
+async function readSupportToken(): Promise<string | null> {
+  try {
+    // Dynamic import: "@tanstack/react-start/server" is denied in the client
+    // bundle by the import-protection plugin, so it must never be a static
+    // import in this module (imported by client route files). This function
+    // only ever runs inside server-fn handlers.
+    const { getRequest } = await import("@tanstack/react-start/server");
+    const req = getRequest();
+    const header = req?.headers?.get("cookie");
+    if (!header) return null;
+    const part = header
+      .split(";")
+      .map((s) => s.trim())
+      .find((s) => s.startsWith(`${SUPPORT_COOKIE_NAME}=`));
+    if (!part) return null;
+    const token = decodeURIComponent(part.slice(SUPPORT_COOKIE_NAME.length + 1));
+    return /^[0-9a-f]{64}$/.test(token) ? token : null;
+  } catch {
+    // Outside a request context (or any parsing failure): no support mode.
+    return null;
+  }
+}
+
+/**
+ * V8 Section 47 — support-mode identity fallback for resolveSeller.
+ *
+ * Runs ONLY when the session resolves to no seller identity at all (no owned
+ * seller row, no staff row), so it can never override or weaken a real
+ * seller/staff resolution. Every check is server-side:
+ *  1. bearer token from the request cookie (opaque 64-hex),
+ *  2. grant row: token hash matches, not revoked, not expired,
+ *  3. creator binding: grant.admin_id === calling user,
+ *  4. defense in depth: the caller must STILL be a super_admin right now
+ *     (a demoted admin's grant dies immediately),
+ *  5. target seller still exists.
+ *
+ * Returns a scoped SellerContext with SUPPORT_READ_PERMISSIONS only —
+ * isOwner false, supportMode true — and NEVER any credentials. Returns null
+ * when there is no valid grant, and the caller keeps the normal DENIED path.
+ */
+async function resolveSupportSeller(ctx: {
+  supabase: SellerDb;
+  userId: string;
+}): Promise<SellerContext | null> {
+  const token = await readSupportToken();
+  if (!token) return null;
+
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const nowIso = new Date().toISOString();
+  const { data: grant } = await supabaseAdmin
+    .from("seller_support_grants")
+    .select("id,admin_id,seller_id,expires_at")
+    .eq("token_hash", await sha256Hex(token))
+    .is("revoked_at", null)
+    .gt("expires_at", nowIso)
+    .maybeSingle();
+  if (!grant || grant.admin_id !== ctx.userId) return null;
+
+  // The grant was created by a super_admin; re-check on every use so a
+  // demoted admin loses support access immediately.
+  const { data: stillAdmin } = await ctx.supabase.rpc("is_super_admin");
+  if (stillAdmin !== true) return null;
+
+  const { data: seller } = await supabaseAdmin
+    .from("sellers")
+    .select("id,legal_name,onboarded_at")
+    .eq("id", grant.seller_id)
+    .maybeSingle();
+  if (!seller) return null;
+
+  const { data: store } = await supabaseAdmin
+    .from("stores")
+    .select("id,slug")
+    .eq("seller_id", seller.id)
+    .maybeSingle();
+
+  // Best-effort touch; never blocks the resolution.
+  void supabaseAdmin
+    .from("seller_support_grants")
+    .update({ last_used_at: nowIso })
+    .eq("id", grant.id);
+
+  return {
+    sellerId: seller.id,
+    storeId: store?.id ?? null,
+    storeSlug: store?.slug ?? null,
+    isOwner: false,
+    permissions: [...SUPPORT_READ_PERMISSIONS],
+    legalName: seller.legal_name,
+    mustResetPassword: false,
+    onboarded: seller.onboarded_at != null,
+    supportMode: true,
+    supportAdminId: grant.admin_id,
+    supportExpiresAt: grant.expires_at,
+  };
+}
+
 /**
  * THE security contract for the Seller OS. Resolves the seller from the
  * SESSION ONLY (context.userId) — never accepts a seller_id from the client.
@@ -73,9 +219,15 @@ type SellerDb = SupabaseClient<Database>;
  *   permissions stored in that row's jsonb array.
  * - Rejects when neither row exists, when the seller's account_status is not
  *   'active', or when a staff member lacks any of the required permissions.
+ * - Unless `opts.allowMustReset` is set, an owner whose
+ *   `must_reset_password` flag is set is rejected with
+ *   `Error("MUST_RESET_PASSWORD")`. This makes every existing seller server
+ *   function deny flagged owners server-side — the enforcement is not just
+ *   the client redirect in SellerShell (which stays as a fast-path).
  */
-export async function requireSeller(
+async function resolveSeller(
   ctx: { supabase: SellerDb; userId: string },
+  opts: { allowMustReset?: boolean },
   ...permissions: SellerPermission[]
 ): Promise<SellerContext> {
   const { supabase, userId } = ctx;
@@ -84,11 +236,12 @@ export async function requireSeller(
   let legalName: string;
   let isOwner = false;
   let mustResetPassword = false;
+  let onboarded = false;
   let perms: SellerPermission[];
 
   const { data: owned, error: ownerError } = await supabase
     .from("sellers")
-    .select("id,legal_name,account_status,must_reset_password")
+    .select("id,legal_name,account_status,must_reset_password,onboarded_at")
     .eq("owner_id", userId)
     .maybeSingle();
   if (ownerError) throw new Error(DENIED);
@@ -99,24 +252,37 @@ export async function requireSeller(
     legalName = owned.legal_name;
     isOwner = true;
     mustResetPassword = owned.must_reset_password ?? false;
+    onboarded = owned.onboarded_at != null;
     perms = [...ALL_SELLER_PERMISSIONS];
+    // Server-side first-login enforcement: a flagged owner may not touch
+    // ANY seller server function until the password is rotated. The
+    // password-change flow itself uses requireSellerAllowMustReset.
+    if (mustResetPassword && !opts.allowMustReset) throw new Error("MUST_RESET_PASSWORD");
   } else {
     const { data: staff, error: staffError } = await supabase
       .from("seller_staff")
       .select("seller_id,permissions,active")
       .eq("user_id", userId)
       .maybeSingle();
-    if (staffError || !staff) throw new Error(DENIED);
+    if (staffError || !staff) {
+      // No seller identity from the session: check for a validated admin
+      // support grant (Section 47). A valid grant returns a scoped,
+      // read-only support context; otherwise the normal DENIED path stands.
+      const support = await resolveSupportSeller({ supabase, userId });
+      if (support) return support;
+      throw new Error(DENIED);
+    }
     // Deactivated staff lose access immediately (fail closed).
     if (staff.active === false) throw new Error(DENIED);
     const { data: sellerRow, error: sellerError } = await supabase
       .from("sellers")
-      .select("id,legal_name,account_status")
+      .select("id,legal_name,account_status,onboarded_at")
       .eq("id", staff.seller_id)
       .maybeSingle();
     if (sellerError || !sellerRow || sellerRow.account_status !== "active") throw new Error(DENIED);
     sellerId = sellerRow.id;
     legalName = sellerRow.legal_name;
+    onboarded = sellerRow.onboarded_at != null;
     // The forced-rotation flag belongs to the owner account (provisioned by
     // the admin); staff are invited with their own credentials and never
     // inherit it.
@@ -145,13 +311,45 @@ export async function requireSeller(
     permissions: perms,
     legalName,
     mustResetPassword,
+    onboarded,
   };
+}
+
+/**
+ * Session-only seller resolution that DENIES flagged owners server-side.
+ * This is the default gate for every seller server function: an owner with
+ * `must_reset_password = true` gets `Error("MUST_RESET_PASSWORD")` instead
+ * of a context, so no seller data or mutation is reachable before the
+ * forced password rotation.
+ */
+export async function requireSeller(
+  ctx: { supabase: SellerDb; userId: string },
+  ...permissions: SellerPermission[]
+): Promise<SellerContext> {
+  return resolveSeller(ctx, {}, ...permissions);
+}
+
+/**
+ * Session-only seller resolution that ALLOWS flagged owners through.
+ * Used ONLY by the password-change flow (the one operation a flagged owner
+ * must be able to perform). Every other seller server function goes through
+ * requireSeller and stays denied until the flag is cleared.
+ */
+export async function requireSellerAllowMustReset(
+  ctx: { supabase: SellerDb; userId: string },
+  ...permissions: SellerPermission[]
+): Promise<SellerContext> {
+  return resolveSeller(ctx, { allowMustReset: true }, ...permissions);
 }
 
 /**
  * Server-side UI gate for the Seller OS. Returns { seller: SellerContext | null }.
  * Signed-out users never reach the handler (requireSupabaseAuth throws first);
  * signed-in non-sellers resolve to null instead of an error.
+ *
+ * A flagged owner (MUST_RESET_PASSWORD) still resolves — with the
+ * allow-variant — so the shell client-redirects to the change-password page
+ * instead of showing a confusing "not-seller" state.
  */
 export const getSellerContext = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -162,7 +360,18 @@ export const getSellerContext = createServerFn({ method: "GET" })
         userId: context.userId,
       });
       return { seller };
-    } catch {
+    } catch (err) {
+      if (err instanceof Error && err.message === "MUST_RESET_PASSWORD") {
+        try {
+          const seller = await requireSellerAllowMustReset({
+            supabase: context.supabase as SellerDb,
+            userId: context.userId,
+          });
+          return { seller };
+        } catch {
+          return { seller: null };
+        }
+      }
       return { seller: null };
     }
   });
@@ -185,13 +394,13 @@ export type SellerAccessState =
  */
 export const getSellerAccessStatus = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<{ access: SellerAccessState; mustResetPassword: boolean }> => {
+  .handler(async ({ context }): Promise<{ access: SellerAccessState; mustResetPassword: boolean; onboarded: boolean; isOwner: boolean }> => {
     const supabase = context.supabase as SellerDb;
     const userId = context.userId;
 
     const { data: owned, error: ownerError } = await supabase
       .from("sellers")
-      .select("id,account_status,must_reset_password")
+      .select("id,account_status,must_reset_password,onboarded_at")
       .eq("owner_id", userId)
       .maybeSingle();
     if (!ownerError && owned) {
@@ -199,6 +408,8 @@ export const getSellerAccessStatus = createServerFn({ method: "GET" })
       return {
         access: status === "active" ? "active" : status,
         mustResetPassword: owned.must_reset_password ?? false,
+        onboarded: owned.onboarded_at != null,
+        isOwner: true,
       };
     }
 
@@ -209,23 +420,25 @@ export const getSellerAccessStatus = createServerFn({ method: "GET" })
       .maybeSingle();
     if (!staffError && staff) {
       // Deactivated staff lose access immediately (fail closed).
-      if (staff.active === false) return { access: "staff-deactivated", mustResetPassword: false };
+      if (staff.active === false) return { access: "staff-deactivated", mustResetPassword: false, onboarded: false, isOwner: false };
       const { data: sellerRow, error: sellerError } = await supabase
         .from("sellers")
-        .select("account_status")
+        .select("account_status,onboarded_at")
         .eq("id", staff.seller_id)
         .maybeSingle();
-      if (sellerError || !sellerRow) return { access: "no-account", mustResetPassword: false };
+      if (sellerError || !sellerRow) return { access: "no-account", mustResetPassword: false, onboarded: false, isOwner: false };
       const status = sellerRow.account_status;
       // Forced rotation is owner-only: staff are invited with their own
       // credentials via Supabase invite emails.
       return {
         access: status === "active" ? "active" : status,
         mustResetPassword: false,
+        onboarded: sellerRow.onboarded_at != null,
+        isOwner: false,
       };
     }
 
-    return { access: "no-account", mustResetPassword: false };
+    return { access: "no-account", mustResetPassword: false, onboarded: false, isOwner: false };
   });
 
 /**
@@ -269,11 +482,15 @@ export const changeSellerPassword = createServerFn({ method: "POST" })
     const supabase = context.supabase as SellerDb;
     const userId = context.userId;
 
-    // Only the seller owner rotates the seller's credentials — staff never do.
+    // The allow-variant: this is the one operation a flagged owner must be
+    // able to perform while MUST_RESET_PASSWORD is set (requireSeller would
+    // throw here). Staff never rotate the seller's credentials — fail closed.
+    const access = await requireSellerAllowMustReset({ supabase, userId });
+    if (!access.isOwner) throw new Error("NOT_SELLER_OWNER");
     const { data: seller, error: sellerError } = await supabase
       .from("sellers")
       .select("id,email")
-      .eq("owner_id", userId)
+      .eq("id", access.sellerId)
       .maybeSingle();
     if (sellerError || !seller) throw new Error("NOT_SELLER_OWNER");
     if (data.newPassword === data.currentPassword) throw new Error("PASSWORD_SAME_AS_CURRENT");

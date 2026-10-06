@@ -4,6 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database, Json } from "@/integrations/supabase/types";
 import { emitSellerNotification } from "@/lib/notifications.functions";
 import { assertAdmin } from "@/lib/admin-auth";
+import { ALL_SELLER_PERMISSIONS, type SellerPermission } from "@/lib/seller-auth";
 
 type SellerRow = Database["public"]["Tables"]["sellers"]["Row"];
 type StoreRow = Database["public"]["Tables"]["stores"]["Row"];
@@ -280,76 +281,149 @@ export const checkStoreSlug = createServerFn({ method: "GET" })
     return { slug: normalized, available: !clash, suggestion };
   });
 
-/** Permission keys the wizard may grant to a staff account (subset of the permissions table). */
-export const WIZARD_STAFF_PERMISSIONS = [
-  { key: "products.view", label: "View products" },
-  { key: "products.create", label: "Create products" },
-  { key: "products.edit", label: "Edit products" },
-  { key: "products.delete", label: "Delete products" },
-  { key: "inventory.view", label: "View inventory" },
-  { key: "inventory.edit", label: "Edit inventory" },
-  { key: "orders.view", label: "View orders" },
-  { key: "orders.update", label: "Update orders" },
-  { key: "analytics.view", label: "View analytics" },
-  { key: "store.edit", label: "Edit store settings" },
-  { key: "discounts.manage", label: "Manage discounts" },
-  { key: "staff.manage", label: "Manage staff" },
-  { key: "settings.manage", label: "Manage settings" },
-] as const;
+/** Permission keys the wizard may grant to a staff account — bound to the REAL
+ * SellerPermission union (src/lib/seller-auth.ts), grouped by area for the UI.
+ * Labels and group names live in the admin i18n dictionary
+ * (`admin.sellers.sellerWizard.permissionLabels` / `.permissionGroups`).
+ * Registry #4 fixed-inline: no bogus keys, no silently-dropped checkboxes.
+ */
+export type WizardPermissionGroup =
+  | "products"
+  | "orders"
+  | "marketing"
+  | "customers"
+  | "store"
+  | "team"
+  | "reports"
+  | "support";
 
-const wizardPermissionKeys: Set<string> = new Set(WIZARD_STAFF_PERMISSIONS.map((p) => p.key));
+export const WIZARD_STAFF_PERMISSIONS: readonly {
+  key: SellerPermission;
+  group: WizardPermissionGroup;
+}[] = [
+  { key: "products.view", group: "products" },
+  { key: "products.edit", group: "products" },
+  { key: "products.publish", group: "products" },
+  { key: "inventory.manage", group: "products" },
+  { key: "orders.view", group: "orders" },
+  { key: "orders.update", group: "orders" },
+  { key: "coupons.manage", group: "marketing" },
+  { key: "promotions.manage", group: "marketing" },
+  { key: "bundles.manage", group: "marketing" },
+  { key: "customers.view", group: "customers" },
+  { key: "reviews.manage", group: "customers" },
+  { key: "store.manage", group: "store" },
+  { key: "settings.manage", group: "store" },
+  { key: "staff.manage", group: "team" },
+  { key: "analytics.view", group: "reports" },
+  { key: "finance.view", group: "reports" },
+  { key: "support.manage", group: "support" },
+];
 
-const provisionSellerInput = z
-  .object({
-    applicationId: z.string().uuid().optional(),
-    firstName: z.string().trim().min(2).max(100),
-    lastName: z.string().trim().min(2).max(100),
-    phone: z
-      .string()
-      .trim()
-      .regex(/^\+213[5-7][0-9]{8}$/, "Use an Algerian mobile number, for example +213551234567."),
-    email: z.string().trim().email().max(255),
-    storeName: z.string().trim().min(2).max(160),
-    storeSlug: z
-      .string()
-      .trim()
-      .min(2)
-      .max(80)
-      .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug may only contain lowercase letters, numbers and dashes.")
-      .optional(),
-    storeDescription: z.string().trim().max(2000).optional(),
-    storeLogoUrl: z.string().trim().max(500).optional(),
-    storeBannerUrl: z.string().trim().max(500).optional(),
-    commissionRate: z.number().min(0).max(100),
-    role: z.enum(["seller_owner", "seller_staff"]),
-    staffTitle: z.string().trim().max(120).optional(),
-    staffPermissions: z.array(z.string().min(1).max(60)).max(30).default([]),
-  })
-  .refine((d) => d.role !== "seller_staff" || d.staffPermissions.length > 0, {
-    message: "Choose at least one permission for a staff account.",
-    path: ["staffPermissions"],
-  })
-  .refine((d) => d.staffPermissions.every((k) => wizardPermissionKeys.has(k)), {
-    message: "One or more permission keys are not recognized.",
-    path: ["staffPermissions"],
-  });
+// Fail fast (and loudly) on module load if the wizard list ever drifts from
+// the union — a silent mismatch is what made bogus keys possible before.
+{
+  const listed = WIZARD_STAFF_PERMISSIONS.map((p) => p.key);
+  if (new Set(listed).size !== ALL_SELLER_PERMISSIONS.length || listed.length !== ALL_SELLER_PERMISSIONS.length) {
+    throw new Error("WIZARD_STAFF_PERMISSIONS is out of sync with the SellerPermission union.");
+  }
+}
+
+/** Every staff permission key validated against the real union. */
+const permissionKeySchema = z.enum(
+  ALL_SELLER_PERMISSIONS as unknown as [SellerPermission, ...SellerPermission[]],
+);
+
+const ALREADY_REGISTERED_MESSAGE =
+  "A login with this email already exists. Ask the account owner to sign in with their existing login, or use a different email.";
+
+const PHONE_SCHEMA = z
+  .string()
+  .trim()
+  .regex(/^\+213[5-7][0-9]{8}$/, "Use an Algerian mobile number, for example +213551234567.");
+
+const personSchema = z.object({
+  firstName: z.string().trim().min(2).max(100),
+  lastName: z.string().trim().min(2).max(100),
+  phone: PHONE_SCHEMA,
+  email: z.string().trim().email().max(255),
+});
+
+const ownerProvisionInput = z.object({
+  mode: z.literal("owner"),
+  applicationId: z.string().uuid().optional(),
+  ...personSchema.shape,
+  storeName: z.string().trim().min(2).max(160),
+  storeSlug: z
+    .string()
+    .trim()
+    .min(2)
+    .max(80)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug may only contain lowercase letters, numbers and dashes.")
+    .optional(),
+  storeDescription: z.string().trim().max(2000).optional(),
+  storeLogoUrl: z.string().trim().max(500).optional(),
+  storeBannerUrl: z.string().trim().max(500).optional(),
+  storeContactEmail: z.string().trim().email().max(255).optional(),
+  storeContactPhone: z.string().trim().max(60).optional(),
+  commissionRate: z.number().min(0).max(100),
+});
+
+const staffProvisionInput = z.object({
+  mode: z.literal("staff"),
+  /** Must reference an existing, active seller — verified in the handler. */
+  sellerId: z.string().uuid(),
+  ...personSchema.shape,
+  staffTitle: z.string().trim().max(120).optional(),
+  staffPermissions: z
+    .array(permissionKeySchema)
+    .min(1, "Choose at least one permission for a staff account.")
+    .max(ALL_SELLER_PERMISSIONS.length),
+});
+
+const provisionSellerInput = z.discriminatedUnion("mode", [ownerProvisionInput, staffProvisionInput]);
 
 export type ProvisionSellerResult = {
   tempPassword: string;
   userId: string;
   sellerId: string;
-  storeId: string;
-  storeSlug: string;
-  linkedExistingUser: boolean;
+  storeId: string | null;
+  storeSlug: string | null;
+  mode: "owner" | "staff";
 };
 
+/** Server-side slugify shared with the wizard's client-side suggestion. */
+function slugifyServer(value: string): string {
+  return (
+    value
+      .toLowerCase()
+      .normalize("NFKD")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-+|-+$)/g, "") || "store"
+  );
+}
+
 /**
- * Full seller+store provisioning for the admin onboarding wizard.
- * Creates REAL records: auth user (Supabase Auth Admin API, service_role never
- * leaves the server), sellers row, stores row with a unique slug, user_roles
- * row (+ seller_staff row for staff roles), commission history row, audit log.
- * The temporary password is returned once to the admin and never logged,
- * never put in a URL, and never stored.
+ * Seller+store provisioning for the admin onboarding wizard (Section 18 rebuild).
+ *
+ * OWNER mode: full provisioning — auth user, sellers row with
+ * `must_reset_password: true` (registry #2 fixed-inline), stores row with a
+ * unique slug, user_roles (seller_owner), commission history, application →
+ * converted (owner mode only), audit log.
+ *
+ * STAFF mode: creates NO sellers row and NO store — auth user + user_roles
+ * (seller_staff) + a seller_staff row against an existing, active seller
+ * (registry #4 fixed-inline). Every permission key is validated against the
+ * real SellerPermission union, so none are silently dropped.
+ *
+ * An already-registered email is REJECTED with a clear message — the old
+ * silent-password-reset branch is deleted entirely (registry #3
+ * fixed-inline). Compensation on ANY failure: delete the seller_staff row
+ * (staff mode) / sellers row (owner mode), delete the user's user_roles
+ * residue, delete the auth user. No partial state is ever left behind.
+ *
+ * The temporary password is generated server-side, returned ONCE in the
+ * result, never logged, never put in a URL, never stored.
  */
 export const provisionSeller = createServerFn({ method: "POST" })
   .middleware(adminOnly)
@@ -358,6 +432,104 @@ export const provisionSeller = createServerFn({ method: "POST" })
     await assertAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
+    const tempPassword = (crypto.randomUUID() + crypto.randomUUID()).slice(0, 20);
+    const displayName = `${data.firstName} ${data.lastName}`.trim();
+    const now = new Date().toISOString();
+
+    /* ------------------------------- STAFF mode ------------------------------- */
+    if (data.mode === "staff") {
+      // The seller must exist and be active — staff are attached to it, never
+      // given their own sellers row (registry #4 fixed-inline).
+      const { data: seller, error: sellerLookupError } = await supabaseAdmin
+        .from("sellers")
+        .select("id,legal_name,account_status")
+        .eq("id", data.sellerId)
+        .single();
+      if (sellerLookupError || !seller) throw new Error("Seller not found.");
+      if (seller.account_status !== "active") {
+        throw new Error("Staff accounts can only be added to an active seller.");
+      }
+
+      const { data: created, error: createError } =
+        await supabaseAdmin.auth.admin.createUser({
+          email: data.email,
+          password: tempPassword,
+          email_confirm: true,
+          user_metadata: {
+            display_name: displayName,
+            force_password_reset: true,
+            provisioned_by: "modalia-admin",
+          },
+        });
+      if (createError) {
+        // An already-registered email is REJECTED — never silently
+        // password-reset an existing login (registry #3 fixed-inline).
+        if (/already been registered|already exists|duplicate/i.test(createError.message ?? "")) {
+          throw new Error(ALREADY_REGISTERED_MESSAGE);
+        }
+        throw new Error(`Could not create login: ${createError.message}`);
+      }
+      const authUserId = created?.user?.id;
+      if (!authUserId) throw new Error("Could not create login.");
+
+      let staffRowId: string | null = null;
+      try {
+        const { error: roleError } = await supabaseAdmin
+          .from("user_roles")
+          .upsert({ user_id: authUserId, role: "seller_staff" }, { onConflict: "user_id,role" });
+        if (roleError) throw new Error(roleError.message);
+
+        const { data: staffRow, error: staffError } = await supabaseAdmin
+          .from("seller_staff")
+          .upsert(
+            {
+              seller_id: seller.id,
+              user_id: authUserId,
+              role: "seller_staff",
+              title: data.staffTitle?.trim() || "Staff",
+              permissions: data.staffPermissions,
+              active: true,
+            },
+            { onConflict: "seller_id,user_id" },
+          )
+          .select("id")
+          .single();
+        if (staffError || !staffRow) {
+          throw new Error(staffError?.message ?? "Could not create staff record.");
+        }
+        staffRowId = staffRow.id;
+
+        await supabaseAdmin.from("audit_logs").insert({
+          actor_id: context.userId,
+          action: "seller_staff_provisioned",
+          resource: "seller",
+          resource_id: seller.id,
+          metadata: {
+            user_id: authUserId,
+            email: data.email,
+            title: data.staffTitle?.trim() || "Staff",
+            permissions: data.staffPermissions,
+          },
+        });
+
+        return {
+          tempPassword,
+          userId: authUserId,
+          sellerId: seller.id,
+          storeId: null,
+          storeSlug: null,
+          mode: "staff",
+        };
+      } catch (err) {
+        // Best-effort compensation: never leave partial state behind.
+        if (staffRowId) await supabaseAdmin.from("seller_staff").delete().eq("id", staffRowId);
+        await supabaseAdmin.from("user_roles").delete().eq("user_id", authUserId);
+        await supabaseAdmin.auth.admin.deleteUser(authUserId);
+        throw err;
+      }
+    }
+
+    /* ------------------------------- OWNER mode ------------------------------- */
     let application: { id: string; status: string; seller_id: string | null } | null = null;
     if (data.applicationId) {
       const { data: appRow, error: appError } = await supabaseAdmin
@@ -375,39 +547,9 @@ export const provisionSeller = createServerFn({ method: "POST" })
       application = appRow;
     }
 
-    const commissionFraction = data.commissionRate / 100;
-    const tempPassword = (crypto.randomUUID() + crypto.randomUUID()).slice(0, 20);
-    const displayName = `${data.firstName} ${data.lastName}`.trim();
-
-    let authUserId: string;
-    let createdNewUser = false;
-    let linkedExistingUser = false;
-
-    const { data: created, error: createError } = await supabaseAdmin.auth.admin.createUser({
-      email: data.email,
-      password: tempPassword,
-      email_confirm: true,
-      user_metadata: {
-        display_name: displayName,
-        force_password_reset: true,
-        provisioned_by: "modalia-admin",
-      },
-    });
-
-    if (createError) {
-      const alreadyExists = /already been registered|already exists|duplicate/i.test(
-        createError.message ?? "",
-      );
-      if (!alreadyExists) throw new Error(`Could not create login: ${createError.message}`);
-      const { data: listed, error: listError } = await supabaseAdmin.auth.admin.listUsers({
-        perPage: 200,
-      });
-      if (listError) throw new Error("A login with this email already exists.");
-      const existing = (listed?.users ?? []).find(
-        (u) => u.email?.toLowerCase() === data.email.toLowerCase(),
-      );
-      if (!existing) throw new Error("A login with this email already exists.");
-      const { error: passwordError } = await supabaseAdmin.auth.admin.updateUserById(existing.id, {
+    const { data: created, error: createError } =
+      await supabaseAdmin.auth.admin.createUser({
+        email: data.email,
         password: tempPassword,
         email_confirm: true,
         user_metadata: {
@@ -416,20 +558,22 @@ export const provisionSeller = createServerFn({ method: "POST" })
           provisioned_by: "modalia-admin",
         },
       });
-      if (passwordError) throw new Error(`Could not reset login password: ${passwordError.message}`);
-      authUserId = existing.id;
-      linkedExistingUser = true;
-    } else if (!created?.user) {
-      throw new Error("Could not create login.");
-    } else {
-      authUserId = created.user.id;
-      createdNewUser = true;
+    if (createError) {
+      // An already-registered email is REJECTED — never silently
+      // password-reset an existing login (registry #3 fixed-inline).
+      if (/already been registered|already exists|duplicate/i.test(createError.message ?? "")) {
+        throw new Error(ALREADY_REGISTERED_MESSAGE);
+      }
+      throw new Error(`Could not create login: ${createError.message}`);
     }
+    const authUserId = created?.user?.id;
+    if (!authUserId) throw new Error("Could not create login.");
 
-    const now = new Date().toISOString();
+    const commissionFraction = data.commissionRate / 100;
     let sellerId: string | null = null;
-    let storeId: string | null = null;
     try {
+      // must_reset_password: true forces the first-login password change
+      // (registry #2 fixed-inline; enforcement lands in Sections 20-28).
       const { data: seller, error: sellerError } = await supabaseAdmin
         .from("sellers")
         .insert({
@@ -443,6 +587,7 @@ export const provisionSeller = createServerFn({ method: "POST" })
           account_status: "active",
           commission_rate: commissionFraction,
           approved_at: now,
+          must_reset_password: true,
         })
         .select("id")
         .single();
@@ -450,13 +595,7 @@ export const provisionSeller = createServerFn({ method: "POST" })
       sellerId = seller.id;
 
       // Unique store slug.
-      const base =
-        data.storeSlug ??
-        (data.storeName
-          .toLowerCase()
-          .normalize("NFKD")
-          .replace(/[^a-z0-9]+/g, "-")
-          .replace(/(^-+|-+$)/g, "") || "store");
+      const base = data.storeSlug ?? slugifyServer(data.storeName);
       let slug = base;
       let attempt = 1;
       for (;;) {
@@ -481,31 +620,17 @@ export const provisionSeller = createServerFn({ method: "POST" })
           description: data.storeDescription || null,
           logo_path: data.storeLogoUrl || null,
           banner_path: data.storeBannerUrl || null,
+          contact_email: data.storeContactEmail || null,
+          contact_phone: data.storeContactPhone || null,
         })
         .select("id")
         .single();
       if (storeError || !store) throw new Error(storeError?.message ?? "Could not create store.");
-      storeId = store.id;
 
       const { error: roleError } = await supabaseAdmin
         .from("user_roles")
-        .upsert({ user_id: authUserId, role: data.role }, { onConflict: "user_id,role" });
+        .upsert({ user_id: authUserId, role: "seller_owner" }, { onConflict: "user_id,role" });
       if (roleError) throw new Error(roleError.message);
-
-      if (data.role === "seller_staff") {
-        const { error: staffError } = await supabaseAdmin.from("seller_staff").upsert(
-          {
-            seller_id: seller.id,
-            user_id: authUserId,
-            role: "seller_staff",
-            title: data.staffTitle?.trim() || "Staff",
-            permissions: data.staffPermissions,
-            active: true,
-          },
-          { onConflict: "seller_id,user_id" },
-        );
-        if (staffError) throw new Error(staffError.message);
-      }
 
       const { error: historyError } = await supabaseAdmin
         .from("seller_commission_history")
@@ -536,9 +661,9 @@ export const provisionSeller = createServerFn({ method: "POST" })
           store_slug: slug,
           user_id: authUserId,
           email: data.email,
-          role: data.role,
+          role: "seller_owner",
           commission_rate: commissionFraction,
-          linked_existing_user: linkedExistingUser,
+          must_reset_password: true,
         },
       });
 
@@ -548,12 +673,14 @@ export const provisionSeller = createServerFn({ method: "POST" })
         sellerId: seller.id,
         storeId: store.id,
         storeSlug: slug,
-        linkedExistingUser,
+        mode: "owner",
       };
     } catch (err) {
-      // Best-effort compensation: never leave a half-provisioned account behind.
+      // Best-effort compensation: clean the user_roles residue, the sellers
+      // row, then the auth user — never leave a half-provisioned account.
       if (sellerId) await supabaseAdmin.from("sellers").delete().eq("id", sellerId);
-      if (createdNewUser) await supabaseAdmin.auth.admin.deleteUser(authUserId);
+      await supabaseAdmin.from("user_roles").delete().eq("user_id", authUserId);
+      await supabaseAdmin.auth.admin.deleteUser(authUserId);
       throw err;
     }
   });
@@ -688,6 +815,21 @@ export const getSellerProfile = createServerFn({ method: "GET" })
       .select("subtotal,commission_total,status")
       .eq("seller_id", sellerId)
       .in("status", ["delivered", "fulfilled"]);
+
+    // Orders by status for the profile analytics card (real seller_orders rows).
+    const { data: allSellerOrders } = await supabaseAdmin
+      .from("seller_orders")
+      .select("status")
+      .eq("seller_id", sellerId)
+      .limit(5000);
+    const orderStatusCountsMap = new Map<string, number>();
+    for (const o of allSellerOrders ?? []) {
+      orderStatusCountsMap.set(o.status, (orderStatusCountsMap.get(o.status) ?? 0) + 1);
+    }
+    const orderStatusCounts = [...orderStatusCountsMap.entries()].map(([status, count]) => ({
+      status,
+      count,
+    }));
     const salesTotal = (payableOrders ?? [])
       .filter((o) => o.status === "delivered")
       .reduce((sum, o) => sum + (o.subtotal ?? 0), 0);
@@ -728,6 +870,7 @@ export const getSellerProfile = createServerFn({ method: "GET" })
       application: applicationRes.data ?? null,
       auditLogs: auditRes.data ?? [],
       reviews,
+      orderStatusCounts,
     };
   });
 
@@ -776,6 +919,54 @@ export const updateSellerStatus = createServerFn({ method: "POST" })
     }
 
     return { ok: true as const, accountStatus: data.accountStatus };
+  });
+
+/**
+ * Update a staff member's permissions and active flag (admin-only).
+ * Registry #230: permissions were selectable only at provisioning; this makes
+ * them manageable afterwards. Keys validated against the real SellerPermission
+ * union; every change is audit-logged.
+ */
+export const updateStaffPermissions = createServerFn({ method: "POST" })
+  .middleware(adminOnly)
+  .inputValidator((data) =>
+    z
+      .object({
+        staffId: z.string().uuid(),
+        permissions: z
+          .array(permissionKeySchema)
+          .min(1, "Choose at least one permission for a staff account.")
+          .max(ALL_SELLER_PERMISSIONS.length),
+        active: z.boolean(),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: staff } = await supabaseAdmin
+      .from("seller_staff")
+      .select("id,seller_id,permissions,active")
+      .eq("id", data.staffId)
+      .single();
+    if (!staff) throw new Error("Staff member not found.");
+    const { error } = await supabaseAdmin
+      .from("seller_staff")
+      .update({ permissions: data.permissions, active: data.active })
+      .eq("id", data.staffId);
+    if (error) throw new Error(error.message);
+    await supabaseAdmin.from("audit_logs").insert({
+      actor_id: context.userId,
+      action: "seller_staff_permissions_updated",
+      resource: "seller_staff",
+      resource_id: data.staffId,
+      metadata: {
+        seller_id: staff.seller_id,
+        active: data.active,
+        permissionCount: data.permissions.length,
+      },
+    });
+    return { ok: true as const };
   });
 
 export const updateStoreVerification = createServerFn({ method: "POST" })

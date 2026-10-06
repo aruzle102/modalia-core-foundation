@@ -118,8 +118,8 @@ function SellerReviewsPage() {
                         Verified purchase
                       </span>
                     ) : null}
-                    <span>{fmtDateTime(review.createdAt)}</span>
-                    {review.flaggedAt ? <span>Flagged by you · {fmtDateTime(review.flaggedAt)}</span> : null}
+                    <span>{fmtDateTime(review.createdAt, locale)}</span>
+                    {review.flaggedAt ? <span>Flagged by you · {fmtDateTime(review.flaggedAt, locale)}</span> : null}
                   </div>
                   {review.moderationStatus !== "pending" ? (
                     <div className="mt-3">

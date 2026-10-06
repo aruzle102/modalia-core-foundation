@@ -90,6 +90,11 @@ export const siteSettingKeys = [
   "facebook_url",
   "tiktok_url",
   "whatsapp_number",
+  // Admin > SEO defaults, publicly readable so the storefront head can use them.
+  "seo_title",
+  "seo_description",
+  "seo_keywords",
+  "seo_robots_index",
 ] as const;
 
 export type SiteSettingKey = (typeof siteSettingKeys)[number];
@@ -107,9 +112,52 @@ export const getSiteSettings = createServerFn({ method: "GET" }).handler(async (
   ) as Record<SiteSettingKey, string>;
   for (const row of data ?? []) {
     if (siteSettingKeys.includes(row.key as SiteSettingKey))
-      settings[row.key as SiteSettingKey] = row.value ?? "";
+      settings[row.key as SiteSettingKey] = typeof row.value === "string" ? row.value : "";
   }
   return { settings };
+});
+
+/** SEO setting keys readable by the public storefront head. */
+export const publicSeoSettingKeys = [
+  "seo_title",
+  "seo_description",
+  "seo_keywords",
+  "seo_robots_index",
+] as const;
+
+/**
+ * Public read of the admin-configured SEO defaults (Admin > SEO).
+ * Empty strings = not configured; callers fall back to locale defaults
+ * (see `defaultSeoForLocale` in `@/lib/seo`).
+ */
+export const getPublicSeoSettings = createServerFn({ method: "GET" }).handler(async () => {
+  rateLimitEndpoint("getPublicSeoSettings", 120);
+  const supabase = publicClient();
+  const { data, error } = await supabase
+    .from("site_settings")
+    .select("key, value")
+    .in("key", [...publicSeoSettingKeys]);
+  if (error) throw new Error("Settings are temporarily unavailable.");
+  const values: Record<(typeof publicSeoSettingKeys)[number], string> = {
+    seo_title: "",
+    seo_description: "",
+    seo_keywords: "",
+    seo_robots_index: "",
+  };
+  for (const row of data ?? []) {
+    if (
+      (publicSeoSettingKeys as readonly string[]).includes(row.key) &&
+      typeof row.value === "string"
+    ) {
+      values[row.key as (typeof publicSeoSettingKeys)[number]] = row.value;
+    }
+  }
+  return {
+    title: values.seo_title,
+    description: values.seo_description,
+    keywords: values.seo_keywords,
+    robots: values.seo_robots_index,
+  };
 });
 
 const settingsInput = z.object({

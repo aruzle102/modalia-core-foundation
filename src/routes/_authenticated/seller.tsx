@@ -3,18 +3,23 @@ import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { AlertTriangle, ArrowRight, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SellerShell } from "@/components/seller/SellerShell";
-import { getLocale } from "@/lib/i18n";
+import { getLocale, getTranslations } from "@/lib/i18n";
+import { localeTag } from "@/lib/i18n/format";
 import { AdminCard, EmptyState, Stat, StatusPill, fmtDate, fmtMoney } from "@/components/admin/ui";
+import { CountUp } from "@/components/motion";
 import { Donut, SalesLine, TopList } from "@/components/seller/SellerCharts";
+import { OnboardingNudge } from "@/components/seller/OnboardingNudge";
 import {
   getSellerOrderStatusBreakdown,
   getSellerOverview,
   getSellerRecentOrders,
   getSellerSalesSeries,
+  getSellerTodayStats,
   getSellerTopProducts,
 } from "@/lib/seller-dashboard.functions";
 
 const overviewQuery = queryOptions({ queryKey: ["seller-overview"], queryFn: () => getSellerOverview() });
+const todayQuery = queryOptions({ queryKey: ["seller-today-stats"], queryFn: () => getSellerTodayStats() });
 const seriesQuery = queryOptions({ queryKey: ["seller-series", 30], queryFn: () => getSellerSalesSeries({ data: { days: 30 } }) });
 const topProductsQuery = queryOptions({
   queryKey: ["seller-top-products", 5],
@@ -31,6 +36,7 @@ export const Route = createFileRoute("/_authenticated/seller")({
   loader: ({ context }) =>
     Promise.all([
       context.queryClient.ensureQueryData(overviewQuery),
+      context.queryClient.ensureQueryData(todayQuery),
       context.queryClient.ensureQueryData(seriesQuery),
       context.queryClient.ensureQueryData(topProductsQuery),
       context.queryClient.ensureQueryData(breakdownQuery),
@@ -60,10 +66,14 @@ export const Route = createFileRoute("/_authenticated/seller")({
 function SellerOverviewPage() {
   const { locale } = Route.useSearch();
   const { data: overview } = useSuspenseQuery(overviewQuery);
+  const { data: today } = useSuspenseQuery(todayQuery);
   const { data: series } = useSuspenseQuery(seriesQuery);
   const { data: topProducts } = useSuspenseQuery(topProductsQuery);
   const { data: breakdown } = useSuspenseQuery(breakdownQuery);
   const { data: recent } = useSuspenseQuery(recentQuery);
+
+  const t = getTranslations(locale).sellerDashboardV8;
+  const tag = localeTag(locale);
 
   const { kpis, currency, lowStockAlerts } = overview;
   const stockIssues = kpis.lowStockCount + kpis.outOfStockCount;
@@ -86,12 +96,19 @@ function SellerOverviewPage() {
         </>
       }
     >
+      {/* Onboarding nudge (Worker A) — only until the seller is onboarded */}
+      {!overview.onboarded ? (
+        <div className="mb-6">
+          <OnboardingNudge locale={locale} />
+        </div>
+      ) : null}
+
       {/* KPI grid — every figure computed from real rows, see seller-dashboard.functions.ts */}
       <section aria-label="Key metrics" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Stat label="Net earnings" value={fmtMoney(kpis.netEarnings, currency)} hint="Delivered sales minus commission payable" />
+        <Stat label="Net earnings" value={fmtMoney(kpis.netEarnings, currency, locale)} hint="Delivered sales minus commission payable" />
         <Stat
           label="Delivered sales"
-          value={fmtMoney(kpis.totalDeliveredSales, currency)}
+          value={fmtMoney(kpis.totalDeliveredSales, currency, locale)}
           hint={`${kpis.deliveredCount} delivered ${kpis.deliveredCount === 1 ? "order" : "orders"}`}
         />
         <Stat
@@ -99,11 +116,11 @@ function SellerOverviewPage() {
           value={String(kpis.ordersCount)}
           hint={kpis.pendingOrdersCount > 0 ? `${kpis.pendingOrdersCount} awaiting fulfilment` : "All orders fulfilled"}
         />
-        <Stat label="Avg. order value" value={fmtMoney(kpis.averageOrderValue, currency)} hint="Across delivered orders" />
-        <Stat label="Commission payable" value={fmtMoney(kpis.commissionPayable, currency)} hint="Owed on delivered sales" />
+        <Stat label="Avg. order value" value={fmtMoney(kpis.averageOrderValue, currency, locale)} hint="Across delivered orders" />
+        <Stat label="Commission payable" value={fmtMoney(kpis.commissionPayable, currency, locale)} hint="Owed on delivered sales" />
         <Stat
           label="Pending settlement"
-          value={fmtMoney(kpis.pendingSettlementAmount, currency)}
+          value={fmtMoney(kpis.pendingSettlementAmount, currency, locale)}
           hint={kpis.pendingSettlementAmount > 0 ? "Queued for payout" : "Nothing queued"}
         />
         <Stat
@@ -111,8 +128,66 @@ function SellerOverviewPage() {
           value={String(kpis.productsCount)}
           hint={stockIssues > 0 ? `${kpis.lowStockCount} low · ${kpis.outOfStockCount} out of stock` : "Stock levels healthy"}
         />
-        <Stat label="Settled to date" value={fmtMoney(kpis.settledAmount, currency)} hint="Approved / paid settlements" />
+        <Stat label="Settled to date" value={fmtMoney(kpis.settledAmount, currency, locale)} hint="Approved / paid settlements" />
       </section>
+
+      {/* Today — real rows only. View cards show an honest "not tracked yet"
+          state when the analytics pipeline has nothing for this store;
+          conversion is omitted unless views are measurable. */}
+      <AdminCard title={t.today.title} subtitle={t.today.subtitle} className="mt-6">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
+          <Stat
+            label={t.today.sales}
+            value={
+              <>
+                <CountUp value={today.todaySales} locale={tag} formatOptions={{ maximumFractionDigits: 2 }} />{" "}
+                {currency}
+              </>
+            }
+            hint={t.today.salesHint}
+          />
+          <Stat
+            label={t.today.orders}
+            value={<CountUp value={today.todayOrdersCount} locale={tag} />}
+            hint={t.today.ordersHint}
+          />
+          <Stat
+            label={t.today.storeViews}
+            value={
+              today.viewsMeasurable && today.storeViews != null ? (
+                <CountUp value={today.storeViews} locale={tag} />
+              ) : (
+                t.today.viewsNotTracked
+              )
+            }
+            hint={today.viewsMeasurable ? undefined : t.today.viewsNotTrackedHint}
+          />
+          <Stat
+            label={t.today.productViews}
+            value={
+              today.viewsMeasurable && today.productViews != null ? (
+                <CountUp value={today.productViews} locale={tag} />
+              ) : (
+                t.today.viewsNotTracked
+              )
+            }
+            hint={today.viewsMeasurable ? undefined : t.today.viewsNotTrackedHint}
+          />
+          {today.conversionRate != null ? (
+            <Stat
+              label={t.today.conversion}
+              value={
+                <CountUp
+                  value={today.conversionRate / 100}
+                  locale={tag}
+                  formatOptions={{ style: "percent", maximumFractionDigits: 1 }}
+                />
+              }
+              hint={t.today.conversionHint}
+            />
+          ) : null}
+        </div>
+      </AdminCard>
 
       {/* Settlement nudge */}
       {kpis.pendingSettlementAmount > 0 ? (
@@ -121,7 +196,7 @@ function SellerOverviewPage() {
             <Wallet className="h-5 w-5" aria-hidden="true" />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-small font-semibold">{fmtMoney(kpis.pendingSettlementAmount, currency)} is queued for payout</p>
+            <p className="text-small font-semibold">{fmtMoney(kpis.pendingSettlementAmount, currency, locale)} is queued for payout</p>
             <p className="mt-0.5 text-small text-white/55">
               Settlements are processed by the platform team. Track payout history in Analytics.
             </p>
@@ -160,7 +235,7 @@ function SellerOverviewPage() {
           <TopList
             rows={topProducts.map((p) => ({
               label: p.name,
-              value: fmtMoney(p.revenue, currency),
+              value: fmtMoney(p.revenue, currency, locale),
               hint: `${p.units} ${p.units === 1 ? "unit" : "units"} sold`,
             }))}
           />
@@ -230,8 +305,8 @@ function SellerOverviewPage() {
                     <td className="py-3 pe-4">
                       <StatusPill status={o.status} />
                     </td>
-                    <td className="py-3 pe-4 text-muted-foreground">{fmtDate(o.createdAt)}</td>
-                    <td className="py-3 text-end font-medium tabular-nums">{fmtMoney(o.total, currency)}</td>
+                    <td className="py-3 pe-4 text-muted-foreground">{fmtDate(o.createdAt, locale)}</td>
+                    <td className="py-3 text-end font-medium tabular-nums">{fmtMoney(o.total, currency, locale)}</td>
                   </tr>
                 ))}
               </tbody>

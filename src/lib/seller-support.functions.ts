@@ -71,7 +71,7 @@ export const getSellerProfile = createServerFn({ method: "GET" })
     const seller = await requireSeller({ supabase: context.supabase, userId: context.userId });
     const { data, error } = await context.supabase
       .from("sellers")
-      .select("id,legal_name,phone,email,account_status,commission_rate")
+      .select("id,legal_name,first_name,last_name,phone,email,account_status,commission_rate")
       .eq("id", seller.sellerId)
       .single();
     if (error || !data) throw new Error(error?.message ?? "Seller profile unavailable.");
@@ -80,6 +80,8 @@ export const getSellerProfile = createServerFn({ method: "GET" })
       profile: {
         id: data.id as string,
         legalName: data.legal_name as string,
+        firstName: (data.first_name as string | null) ?? "",
+        lastName: (data.last_name as string | null) ?? "",
         phone: (data.phone as string | null) ?? "",
         email: (data.email as string | null) ?? "",
         accountStatus: data.account_status as string,
@@ -94,6 +96,10 @@ export const updateSellerProfile = createServerFn({ method: "POST" })
     z
       .object({
         legalName: z.string().min(2).max(160),
+        // Optional identity fields for the guided onboarding wizard
+        // (Section 21); omitted fields are left untouched.
+        firstName: z.string().trim().min(1).max(100).optional(),
+        lastName: z.string().trim().min(1).max(100).optional(),
         phone: z.string().max(30).optional(),
         email: z.string().email().max(160).optional(),
       })
@@ -106,10 +112,17 @@ export const updateSellerProfile = createServerFn({ method: "POST" })
     const phone = data.phone?.trim() || null;
     if (phone && !phonePattern().test(phone)) throw new Error("Phone number is not valid.");
 
-    const { error } = await context.supabase
-      .from("sellers")
-      .update({ legal_name: data.legalName, phone, email: data.email ?? null })
-      .eq("id", seller.sellerId);
+    const patch: {
+      legal_name: string;
+      phone: string | null;
+      email: string | null;
+      first_name?: string;
+      last_name?: string;
+    } = { legal_name: data.legalName, phone, email: data.email ?? null };
+    if (data.firstName !== undefined) patch.first_name = data.firstName;
+    if (data.lastName !== undefined) patch.last_name = data.lastName;
+
+    const { error } = await context.supabase.from("sellers").update(patch).eq("id", seller.sellerId);
     if (error) throw new Error(error.message);
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -122,4 +135,45 @@ export const updateSellerProfile = createServerFn({ method: "POST" })
     });
 
     return { ok: true };
+  });
+
+/* ----------------------------- Onboarding ------------------------------- */
+
+/**
+ * Marks the guided seller onboarding wizard (Section 21) complete.
+ *
+ * Owner-only: staff members never run the wizard, so a staff call is
+ * rejected. Sets `sellers.onboarded_at = now()` only where it is still
+ * NULL, making repeated calls a harmless no-op (idempotent). The `skipped`
+ * flag records the explicit "Skip for now" path; both paths stop the
+ * post-login redirect to /seller/onboarding.
+ *
+ * RLS: the "seller_owner_or_admin" policy (FOR ALL, owner_id = auth.uid())
+ * permits the owner to update their own sellers row, so the regular
+ * authenticated client is used — no service-role bypass.
+ */
+export const markOnboardingComplete = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) => z.object({ skipped: z.boolean().default(false) }).parse(data))
+  .handler(async ({ data, context }) => {
+    const seller = await requireSeller({ supabase: context.supabase, userId: context.userId });
+    if (!seller.isOwner) throw new Error("Only the store owner can complete onboarding.");
+
+    const { error } = await context.supabase
+      .from("sellers")
+      .update({ onboarded_at: new Date().toISOString() })
+      .eq("id", seller.sellerId)
+      .is("onboarded_at", null);
+    if (error) throw new Error(error.message);
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("audit_logs").insert({
+      actor_id: context.userId,
+      action: data.skipped ? "seller_onboarding.skipped" : "seller_onboarding.completed",
+      resource: "sellers",
+      resource_id: seller.sellerId,
+      metadata: {},
+    });
+
+    return { ok: true as const, skipped: data.skipped };
   });

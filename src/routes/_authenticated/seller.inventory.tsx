@@ -213,7 +213,7 @@ function InventoryPage() {
                               <button
                                 type="button"
                                 aria-label={t.common.decrease}
-                                className="rounded border p-1 hover:bg-muted"
+                                className="grid size-10 place-items-center rounded border hover:bg-muted"
                                 onClick={() => setQtyInput(String(Math.max(0, Number(qtyInput || 0) - 1)))}
                               >
                                 <Minus className="h-3.5 w-3.5" />
@@ -228,7 +228,7 @@ function InventoryPage() {
                               <button
                                 type="button"
                                 aria-label={t.common.increase}
-                                className="rounded border p-1 hover:bg-muted"
+                                className="grid size-10 place-items-center rounded border hover:bg-muted"
                                 onClick={() => setQtyInput(String(Number(qtyInput || 0) + 1))}
                               >
                                 <Plus className="h-3.5 w-3.5" />

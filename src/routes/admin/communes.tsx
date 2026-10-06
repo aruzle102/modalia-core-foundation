@@ -105,12 +105,12 @@ function CommunesPage() {
                 </Select>
               </div>
               <div className="relative">
-                <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Search className="absolute top-1/2 start-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
                   placeholder="Search code…"
-                  className="w-44 pl-9"
+                  className="w-44 ps-9"
                 />
               </div>
             </div>
@@ -124,7 +124,7 @@ function CommunesPage() {
             <EmptyState title="No communes" text="No communes match this filter." />
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[620px] text-left text-small">
+              <table className="w-full min-w-[620px] text-start text-small">
                 <thead>
                   <tr className="border-b border-border text-caption text-muted-foreground">
                     <th className="px-3 py-2 font-medium">Code</th>

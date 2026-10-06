@@ -5,7 +5,6 @@ import {
   LayoutTemplate,
   Package,
   Plus,
-  Store,
   Ticket,
   UserPlus,
 } from "lucide-react";
@@ -41,20 +40,13 @@ export function QuickCreate() {
       label: t.product,
       hint: null as string | null,
       icon: <Package className="h-4 w-4 text-muted-foreground" />,
-      run: () => go("/admin/products", { create: "product" }),
+      run: () => go("/admin/products/new", {}),
     },
     {
       key: "seller",
       label: t.seller,
-      hint: null,
-      icon: <UserPlus className="h-4 w-4 text-muted-foreground" />,
-      run: () => go("/admin/sellers", { create: "seller" }),
-    },
-    {
-      key: "store",
-      label: t.store,
       hint: t.storeHint,
-      icon: <Store className="h-4 w-4 text-muted-foreground" />,
+      icon: <UserPlus className="h-4 w-4 text-muted-foreground" />,
       run: () => go("/admin/sellers", { create: "seller" }),
     },
     {

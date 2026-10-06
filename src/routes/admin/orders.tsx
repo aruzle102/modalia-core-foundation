@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useMatch } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Search, SlidersHorizontal, X } from "lucide-react";
@@ -82,6 +82,13 @@ function statusLabel(status: string): string {
 }
 
 function OrdersPage() {
+  // Child route ($orderId) renders in the Outlet; this route shows the table.
+  const child = useMatch({ from: "/admin/orders", strict: true, shouldThrow: false });
+  if (!child) return <Outlet />;
+  return <OrdersList />;
+}
+
+function OrdersList() {
   const { locale } = Route.useSearch();
   const t = getTranslations(locale);
   const url = useUrlState({ page: 1 });
@@ -172,12 +179,13 @@ function OrdersPage() {
       <AdminShell
         title="Orders"
         subtitle="Search, filter and manage every customer order on the marketplace."
+        breadcrumbs={[{ label: t.adminNav.items.orders }]}
       >
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Stat label="Matching orders" value={ordersQuery.isLoading ? "…" : String(total)} />
           <Stat
             label="Revenue on this page"
-            value={ordersQuery.isLoading ? "…" : fmtMoney(pageRevenue)}
+            value={ordersQuery.isLoading ? "…" : fmtMoney(pageRevenue, "DZD", locale)}
           />
         </div>
 
@@ -392,7 +400,7 @@ function OrdersPage() {
                           </Link>
                         </td>
                         <td className="whitespace-nowrap px-3 py-2.5 text-muted-foreground">
-                          {fmtDateTime(order.createdAt)}
+                          {fmtDateTime(order.createdAt, locale)}
                         </td>
                         <td className="px-3 py-2.5">
                           {[order.firstName, order.lastName].filter(Boolean).join(" ") || "—"}
@@ -412,7 +420,7 @@ function OrdersPage() {
                         </td>
                         <td className="px-3 py-2.5 text-end tabular-nums">{order.itemCount}</td>
                         <td className="whitespace-nowrap px-3 py-2.5 text-end font-medium tabular-nums">
-                          {fmtMoney(order.grandTotal)}
+                          {fmtMoney(order.grandTotal, "DZD", locale)}
                         </td>
                         <td className="px-3 py-2.5 capitalize text-muted-foreground">
                           {order.paymentMethod === "cod" ? "Cash on delivery" : order.paymentMethod}

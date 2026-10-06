@@ -314,7 +314,7 @@ function IntelligencePage() {
                   </div>
                 </Field>
                 {saveState === "saved" ? (
-                  <p className="flex items-center gap-1.5 text-sm text-emerald-600">
+                  <p className="flex items-center gap-1.5 text-sm text-verified">
                     <Check className="size-4" /> Saved.
                   </p>
                 ) : saveState === "error" ? (
@@ -386,7 +386,7 @@ function IntelligencePage() {
               <div className="grid gap-4 sm:grid-cols-3">
                 <Stat label="Source of truth" value="PostgreSQL" hint="Products, categories, stores, shipping, policies" />
                 <Stat label="Index mode" value="Live" hint="New catalog content becomes searchable immediately" />
-                <Stat label="Last settings update" value={fmtDateTime(draft.updated_at)} hint="From the audit log for change history" />
+                <Stat label="Last settings update" value={fmtDateTime(draft.updated_at, locale)} hint="From the audit log for change history" />
               </div>
             )}
           </AdminCard>

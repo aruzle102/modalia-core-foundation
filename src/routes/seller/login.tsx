@@ -4,7 +4,12 @@ import { LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
-import { getSellerAccessStatus, type SellerAccessState } from "@/lib/seller-auth";
+import { getSellerAccessStatus } from "@/lib/seller-auth";
+import {
+  checkLoginAllowed,
+  isLoginRateLimitedError,
+  resolveLoginRateLimitMessage,
+} from "@/lib/auth-guard.functions";
 import { getLocale, getTranslations, localeDirections } from "@/lib/i18n";
 import { pageHead } from "@/lib/seo";
 
@@ -34,21 +39,14 @@ function sanitizeRedirect(value: string | undefined): string {
   return value;
 }
 
-function blockedMessage(access: SellerAccessState, t: ReturnType<typeof getTranslations>["sellerAuth"]): string {
-  switch (access) {
-    case "suspended":
-      return t.blockedSuspended;
-    case "disabled":
-      return t.blockedDisabled;
-    case "pending":
-      return t.blockedPending;
-    case "staff-deactivated":
-      return t.blockedStaff;
-    case "no-account":
-      return t.blockedNoAccount;
-    default:
-      return t.signInFailed;
-  }
+/**
+ * V8 Sec 48 — every blocked state (suspended / disabled / pending seller,
+ * deactivated staff, no seller account) is denied fail-closed with ONE
+ * generic message. The sign-in page must never distinguish the states, so a
+ * failed sign-in reveals nothing about the account behind the email.
+ */
+function blockedMessage(t: ReturnType<typeof getTranslations>["sellerAuth"]): string {
+  return t.blockedGeneric;
 }
 
 function SellerLoginPage() {
@@ -74,19 +72,22 @@ function SellerLoginPage() {
       try {
         const { data } = await supabase.auth.getSession();
         if (cancelled || !data.session) return;
-        const { access, mustResetPassword } = await getSellerAccessStatus();
+        const { access, mustResetPassword, onboarded, isOwner } = await getSellerAccessStatus();
         if (cancelled) return;
         if (access === "active") {
           // First-time seller (temporary password): force rotation before work.
           if (mustResetPassword) {
             await nav({ href: `/seller/change-password?locale=${locale}`, replace: true });
+          } else if (isOwner && !onboarded) {
+            // New owner, password already rotated: guided setup first.
+            await nav({ href: `/seller/onboarding?locale=${locale}`, replace: true });
           } else {
             await nav({ href: target, replace: true });
           }
         } else {
           await supabase.auth.signOut();
           setMessageTone("error");
-          setMessage(blockedMessage(access, t));
+          setMessage(blockedMessage(t));
         }
       } catch {
         // Stay on the login page on unexpected errors.
@@ -105,26 +106,36 @@ function SellerLoginPage() {
     setLoading(true);
     setMessage("");
     try {
+      // V8 Sec 57 #151: server-side brute-force gate BEFORE the password
+      // check. Denied attempts get one generic, non-enumerating message.
+      await checkLoginAllowed({ data: { identifier: email } });
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       // Server-side status check: suspended / disabled / pending sellers and
       // deactivated staff must not enter, with a clear reason.
-      const { access, mustResetPassword } = await getSellerAccessStatus();
+      const { access, mustResetPassword, onboarded, isOwner } = await getSellerAccessStatus();
       if (access !== "active") {
         await supabase.auth.signOut();
         setMessageTone("error");
-        setMessage(blockedMessage(access, t));
+        setMessage(blockedMessage(t));
         return;
       }
       // First-time seller (temporary password): force rotation before work.
       if (mustResetPassword) {
         await nav({ href: `/seller/change-password?locale=${locale}`, replace: true });
+      } else if (isOwner && !onboarded) {
+        // New owner, password already rotated: guided setup first.
+        await nav({ href: `/seller/onboarding?locale=${locale}`, replace: true });
       } else {
         await nav({ href: target, replace: true });
       }
-    } catch {
+    } catch (err) {
       setMessageTone("error");
-      setMessage(t.signInFailed);
+      setMessage(
+        isLoginRateLimitedError(err)
+          ? resolveLoginRateLimitMessage(locale, t as unknown as Record<string, unknown>)
+          : t.signInFailed,
+      );
     } finally {
       setLoading(false);
     }

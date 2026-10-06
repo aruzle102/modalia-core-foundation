@@ -141,7 +141,7 @@ function SellerOrderDetailPage() {
         </Button>
       }
     >
-      <p className="text-body text-muted-foreground">{`Placed ${fmtDateTime(data.createdAt)} · Marketplace status: ${data.parentStatus.replace(/_/g, " ")}`}</p>
+      <p className="text-body text-muted-foreground">{`Placed ${fmtDateTime(data.createdAt, locale)} · Marketplace status: ${data.parentStatus.replace(/_/g, " ")}`}</p>
       {/* Status + allowed transitions */}
       <AdminCard title="Fulfilment status" actions={<StatusPill status={data.status} />}>
         {data.allowedTransitions.length === 0 ? (
@@ -261,21 +261,21 @@ function SellerOrderDetailPage() {
           <dl className="space-y-2.5 text-sm">
             <div className="flex justify-between">
               <dt className="text-muted-foreground">Items subtotal</dt>
-              <dd className="tabular-nums">{fmtMoney(data.subtotal, data.currency)}</dd>
+              <dd className="tabular-nums">{fmtMoney(data.subtotal, data.currency, locale)}</dd>
             </div>
             <div className="flex justify-between">
               <dt className="text-muted-foreground">Shipping</dt>
-              <dd className="tabular-nums">{fmtMoney(data.shippingTotal, data.currency)}</dd>
+              <dd className="tabular-nums">{fmtMoney(data.shippingTotal, data.currency, locale)}</dd>
             </div>
             <div className="flex justify-between">
               <dt className="text-muted-foreground">Platform commission</dt>
               <dd className="tabular-nums text-destructive">
-                −{fmtMoney(data.commissionTotal, data.currency)}
+                −{fmtMoney(data.commissionTotal, data.currency, locale)}
               </dd>
             </div>
             <div className="flex justify-between border-t border-border pt-2.5 font-semibold">
               <dt>Your estimated payout</dt>
-              <dd className="tabular-nums">{fmtMoney(data.estimatedPayout, data.currency)}</dd>
+              <dd className="tabular-nums">{fmtMoney(data.estimatedPayout, data.currency, locale)}</dd>
             </div>
           </dl>
           <div className="mt-4 space-y-1.5 text-xs text-muted-foreground">
@@ -331,10 +331,10 @@ function SellerOrderDetailPage() {
                   </td>
                   <td className="py-3 pe-4 tabular-nums">{item.quantity}</td>
                   <td className="py-3 pe-4 tabular-nums">
-                    {fmtMoney(item.unitPrice, data.currency)}
+                    {fmtMoney(item.unitPrice, data.currency, locale)}
                   </td>
                   <td className="py-3 tabular-nums font-medium">
-                    {fmtMoney(item.total, data.currency)}
+                    {fmtMoney(item.total, data.currency, locale)}
                   </td>
                 </tr>
               ))}
@@ -357,7 +357,7 @@ function SellerOrderDetailPage() {
                     <StatusPill status={entry.newStatus} />
                     <span className="text-xs text-muted-foreground">
                       {entry.actorType === "seller" ? "You" : entry.actorType} ·{" "}
-                      {fmtDateTime(entry.createdAt)}
+                      {fmtDateTime(entry.createdAt, locale)}
                     </span>
                   </div>
                   {entry.previousStatus ? (
@@ -402,7 +402,7 @@ function SellerOrderDetailPage() {
                 <div key={note.id} className="rounded-xl border border-border p-3">
                   <p className="text-sm">{note.body}</p>
                   <p className="mt-1.5 text-xs text-muted-foreground">
-                    {fmtDateTime(note.createdAt)}
+                    {fmtDateTime(note.createdAt, locale)}
                   </p>
                 </div>
               ))

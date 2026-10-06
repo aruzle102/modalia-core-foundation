@@ -16,6 +16,7 @@ import {
   type HTMLAttributes,
   type ReactNode,
 } from "react";import { useReveal } from "@/hooks/use-reveal";
+import { motionStagger } from "@/lib/motion-tokens";
 
 export interface TextRevealProps extends HTMLAttributes<HTMLElement> {
   text: string;
@@ -31,7 +32,7 @@ export function TextReveal({
   text,
   as: Tag = "p",
   delay = 0,
-  step = 55,
+  step = motionStagger.word.step,
   className = "",
   ...rest
 }: TextRevealProps) {

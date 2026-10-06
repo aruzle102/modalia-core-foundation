@@ -9,6 +9,8 @@ import {
   TableSkeleton,
   fmtDateTime,
 } from "@/components/admin/ui";
+import { useAdminLocale } from "@/components/admin/useAdminLocale";
+import { getTranslations } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,9 +29,15 @@ export const Route = createFileRoute("/admin/audit")({
 });
 
 function AdminAuditPage() {
+  const locale = useAdminLocale();
+  const nav = getTranslations(locale).adminNav.items;
   return (
     <AdminGate>
-      <AdminShell title="Audit log" subtitle="Read-only record of administrative actions across the platform.">
+      <AdminShell
+        title="Audit log"
+        subtitle="Read-only record of administrative actions across the platform."
+        breadcrumbs={[{ label: nav.auditLogs }]}
+      >
         <AuditLogViewer />
       </AdminShell>
     </AdminGate>
@@ -37,6 +45,7 @@ function AdminAuditPage() {
 }
 
 function AuditLogViewer() {
+  const locale = useAdminLocale();
   // Filters are draft inputs; Apply commits them to the URL (shareable, Back-friendly).
   const url = useUrlState({ page: 1 });
   const appliedAction = strParam(url.search["action"]);
@@ -114,7 +123,7 @@ function AuditLogViewer() {
           <EmptyState title="No audit entries" text="Nothing matches these filters yet." />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px] text-left text-small">
+            <table className="w-full min-w-[720px] text-start text-small">
               <thead>
                 <tr className="border-b border-border text-caption text-muted-foreground">
                   <th className="px-3 py-2 font-medium">Time</th>
@@ -133,7 +142,7 @@ function AuditLogViewer() {
                     metadata && typeof metadata === "object" && Object.keys(metadata).length > 0;
                   return (
                     <tr key={log["id"]} className="align-top">
-                      <td className="px-3 py-3 whitespace-nowrap text-caption">{fmtDateTime(log.created_at)}</td>
+                      <td className="px-3 py-3 whitespace-nowrap text-caption">{fmtDateTime(log.created_at, locale)}</td>
                       <td className="px-3 py-3 font-mono text-xs">
                         {log.actor_id ? log.actor_id.slice(0, 8) : "system"}
                       </td>

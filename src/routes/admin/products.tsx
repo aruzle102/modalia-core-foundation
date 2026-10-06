@@ -1,8 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useMatch, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Pencil, Star, StarOff } from "lucide-react";
+import { Flag, Pencil, Star, StarOff } from "lucide-react";
 import { AdminGate } from "@/components/admin/AdminGate";
 import { AdminShell } from "@/components/admin/AdminShell";
 import {
@@ -11,14 +11,13 @@ import {
   EmptyState,
   TableSkeleton,
   ConfirmDialog,
-  Field,
   fmtMoney,
   fmtDateTime,
 } from "@/components/admin/ui";
+import { useAdminLocale } from "@/components/admin/useAdminLocale";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -27,29 +26,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
   listAdminProducts,
   moderateAdminProduct,
   updateAdminProduct,
   setProductStatus,
-  createAdminProduct,
   bulkModerateAdminProducts,
   bulkSetProductStatus,
   listAdminSellersLite,
-  listAdminCategories,
-  type AdminProductListItem,
 } from "@/lib/admin-catalog.functions";
+import type { ModerationFlag } from "@/lib/moderation-rules";
 import { errMsg, pickName, Pager } from "./_shared";
-import { numParam, strParam, useDebouncedUrlParam, useUrlState } from "@/hooks/use-url-state";
-import { getTranslations } from "@/lib/i18n";
-import { useAdminLocale } from "@/components/admin/useAdminLocale";
+import { numParam, strParam, useBackParam, useDebouncedUrlParam, useUrlState } from "@/hooks/use-url-state";
 import { useAdminT } from "@/components/admin/use-admin-t";
+import { getTranslations } from "@/lib/i18n";
 import { Checkbox } from "@/components/ui/checkbox";
 
 export const Route = createFileRoute("/admin/products")({
@@ -65,15 +54,24 @@ export const Route = createFileRoute("/admin/products")({
   component: AdminProductsPage,
 });
 
-type ProductRow = AdminProductListItem;
-
 const MODERATION_FILTERS = ["pending", "approved", "rejected"] as const;
 const STATUS_FILTERS = ["draft", "active", "archived"] as const;
 
 function AdminProductsPage() {
+  // Child routes (new / $productId) render in the Outlet; this route shows
+  // the table. (Same pattern as the seller products route.)
+  const child = useMatch({ from: "/admin/products", strict: true, shouldThrow: false });
+  const locale = useAdminLocale();
+  const t = useAdminT().products;
+  const nav = getTranslations(locale).adminNav.items;
+  if (!child) return <Outlet />;
   return (
     <AdminGate>
-      <AdminShell title="Products" subtitle="Moderate the catalog, edit prices and control publication.">
+      <AdminShell
+        title={t.title}
+        subtitle={t.subtitle}
+        breadcrumbs={[{ label: nav.products }]}
+      >
         <ProductsManager />
       </AdminShell>
     </AdminGate>
@@ -81,7 +79,10 @@ function AdminProductsPage() {
 }
 
 function ProductsManager() {
+  const locale = useAdminLocale();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const backParam = useBackParam();
   const url = useUrlState({ moderation: "all", status: "all", sellerId: "all", page: 1 });
   const page = numParam(url.search["page"], 1);
   const q = strParam(url.search["q"]);
@@ -93,22 +94,22 @@ function ProductsManager() {
   });
   const setPage = (next: number) => url.set({ page: next }, { push: true });
   const setFilter = (patch: Record<string, string | undefined>) => url.set({ ...patch, page: 1 });
-  const [editing, setEditing] = useState<ProductRow | null>(null);
   const [confirm, setConfirm] = useState<{ id: string; title: string; description: string; run: () => void } | null>(null);
-  const [creating, setCreating] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
-  const adminLocale = useAdminLocale();
   const t = useAdminT().products;
+  const common = getTranslations(locale).common;
 
-  // Deep link: /admin/products?create=product opens the new-product dialog.
+  // Deep link: /admin/products?create=product opens the full new-product editor.
   useEffect(() => {
-    if (strParam(url.search["create"]) === "product") setCreating(true);
+    if (strParam(url.search["create"]) === "product") {
+      url.set({ create: undefined });
+      void navigate({
+        to: "/admin/products/new",
+        search: { q, moderation, status, sellerId, page, create: "", back: backParam },
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [url.search["create"]]);
-
-  const closeCreate = () => {
-    setCreating(false);
-    url.set({ create: undefined });
-  };
 
   const filters = {
     q: q.trim() || undefined,
@@ -141,7 +142,7 @@ function ProductsManager() {
         loading: `${label}…`,
         success: () => {
           invalidate();
-          return "Done.";
+          return t.done;
         },
         error: (e) => errMsg(e),
       });
@@ -208,26 +209,26 @@ function ProductsManager() {
 
   return (
     <div className="space-y-6">
-      <AdminCard title="Filters">
+      <AdminCard title={t.filtersTitle}>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-1.5">
-            <Label htmlFor="product-search">Search</Label>
+            <Label htmlFor="product-search">{t.searchLabel}</Label>
             <Input
               id="product-search"
-              placeholder="Name or slug…"
+              placeholder={t.searchPlaceholder}
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
             />
           </div>
           <div className="space-y-1.5">
-            <Label>Moderation</Label>
+            <Label>{t.moderationLabel}</Label>
             <Select
               value={moderation}
               onValueChange={(v) => setFilter({ moderation: v })}
             >
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All</SelectItem>
+                <SelectItem value="all">{t.all}</SelectItem>
                 {MODERATION_FILTERS.map((m) => (
                   <SelectItem key={m} value={m}>{m}</SelectItem>
                 ))}
@@ -235,14 +236,14 @@ function ProductsManager() {
             </Select>
           </div>
           <div className="space-y-1.5">
-            <Label>Status</Label>
+            <Label>{t.statusLabel}</Label>
             <Select
               value={status}
               onValueChange={(v) => setFilter({ status: v })}
             >
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All</SelectItem>
+                <SelectItem value="all">{t.all}</SelectItem>
                 {STATUS_FILTERS.map((s) => (
                   <SelectItem key={s} value={s}>{s}</SelectItem>
                 ))}
@@ -250,14 +251,14 @@ function ProductsManager() {
             </Select>
           </div>
           <div className="space-y-1.5">
-            <Label>Seller</Label>
+            <Label>{t.sellerLabel}</Label>
             <Select
               value={sellerId}
               onValueChange={(v) => setFilter({ sellerId: v })}
             >
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All sellers</SelectItem>
+                <SelectItem value="all">{t.allSellers}</SelectItem>
                 {(sellersQuery.data?.sellers ?? []).map((s) => (
                   <SelectItem key={s.id} value={s.id}>{s.legal_name}</SelectItem>
                 ))}
@@ -267,7 +268,7 @@ function ProductsManager() {
         </div>
       </AdminCard>
 
-      <AdminCard title="Products" subtitle={`${total} product(s) match.`}>
+      <AdminCard title={t.title} subtitle={t.matchCount(total)}>
         {selected.length > 0 ? (
           <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2.5">
             <span className="text-sm font-medium">{t.selected(selected.length)}</span>
@@ -288,7 +289,7 @@ function ProductsManager() {
                 variant="outline"
                 onClick={() =>
                   bulkMutate(t.bulkReject, () =>
-                    bulkModerateAdminProducts({ data: { ids: selected, decision: "reject", reason: "Rejected by admin (bulk)" } }),
+                    bulkModerateAdminProducts({ data: { ids: selected, decision: "reject", reason: t.rejectReasonBulk } }),
                   )
                 }
               >
@@ -327,7 +328,7 @@ function ProductsManager() {
               >
                 {t.bulkArchive}
               </Button>
-              <Button size="sm" variant="ghost" onClick={() => setSelected([])}>
+              <Button size="sm" variant="ghost" onClick={() => setSelected([])} aria-label={t.clearSelection}>
                 ×
               </Button>
             </div>
@@ -337,36 +338,36 @@ function ProductsManager() {
           <TableSkeleton />
         ) : productsQuery.isError ? (
           <EmptyState
-            title="Could not load products"
+            title={t.productsLoadError}
             text={errMsg(productsQuery.error)}
             action={
               <Button type="button" variant="outline" size="sm" onClick={() => productsQuery.refetch()}>
-                Try again
+                {common.retry}
               </Button>
             }
           />
         ) : products.length === 0 ? (
-          <EmptyState title="No products" text="No products match these filters." />
+          <EmptyState title={t.noProducts} text={t.noProductsText} />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[760px] text-left text-small">
+            <table className="w-full min-w-[760px] text-start text-small">
               <thead>
                 <tr className="border-b border-border text-caption text-muted-foreground">
                   <th className="w-10 px-3 py-2">
                     <Checkbox
                       checked={products.length > 0 && selected.length === products.length}
                       onCheckedChange={toggleSelectAll}
-                      aria-label="Select all products on this page"
+                      aria-label={t.selectAll}
                     />
                   </th>
-                  <th className="px-3 py-2 font-medium">Product</th>
-                  <th className="px-3 py-2 font-medium">Seller</th>
-                  <th className="px-3 py-2 font-medium">Price</th>
-                  <th className="px-3 py-2 font-medium">Moderation</th>
-                  <th className="px-3 py-2 font-medium">Status</th>
-                  <th className="px-3 py-2 font-medium">Visibility</th>
-                  <th className="px-3 py-2 font-medium">Featured</th>
-                  <th className="px-3 py-2 font-medium text-end">Actions</th>
+                  <th className="px-3 py-2 font-medium">{t.colProduct}</th>
+                  <th className="px-3 py-2 font-medium">{t.colSeller}</th>
+                  <th className="px-3 py-2 font-medium">{t.colPrice}</th>
+                  <th className="px-3 py-2 font-medium">{t.colModeration}</th>
+                  <th className="px-3 py-2 font-medium">{t.colStatus}</th>
+                  <th className="px-3 py-2 font-medium">{t.colVisibility}</th>
+                  <th className="px-3 py-2 font-medium">{t.colFeatured}</th>
+                  <th className="px-3 py-2 font-medium text-end">{t.colActions}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -376,19 +377,34 @@ function ProductsManager() {
                       <Checkbox
                         checked={selected.includes(p.id as string)}
                         onCheckedChange={() => toggleSelect(p.id as string)}
-                        aria-label={`Select ${pickName(p.name) || p.slug}`}
+                        aria-label={t.selectRow(pickName(p.name) || p.slug)}
                       />
                     </td>
                     <td className="px-3 py-3">
                       <p className="font-medium">{pickName(p.name) || p.slug}</p>
-                      <p className="text-caption text-muted-foreground">{p.slug} · {fmtDateTime(p.created_at)}</p>
+                      <p className="text-caption text-muted-foreground">{p.slug} · {fmtDateTime(p.created_at, locale)}</p>
+                      {p.flags.length > 0 ? (
+                        <div className="mt-1.5 flex flex-wrap items-center gap-1" title={t.flagsNote}>
+                          <Flag className="size-3 text-brand" aria-hidden />
+                          <span className="text-caption text-muted-foreground">{t.flagsTitle}:</span>
+                          {p.flags.map((f: ModerationFlag) => (
+                            <span
+                              key={f.code}
+                              title={`${t.flagLabels[f.code]} — “${f.match}”`}
+                              className="rounded-sm bg-brand/15 px-1.5 py-0.5 text-caption font-medium text-brand"
+                            >
+                              {t.flagLabels[f.code]}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
                     </td>
                     <td className="px-3 py-3 text-caption">{sellerName(p.seller_id)}</td>
                     <td className="px-3 py-3 whitespace-nowrap">
-                      {fmtMoney(Number(p.base_price))}
+                      {fmtMoney(Number(p.base_price), "DZD", locale)}
                       {p.compare_at_price ? (
                         <span className="ms-2 text-caption text-muted-foreground line-through">
-                          {fmtMoney(Number(p.compare_at_price))}
+                          {fmtMoney(Number(p.compare_at_price), "DZD", locale)}
                         </span>
                       ) : null}
                     </td>
@@ -399,25 +415,31 @@ function ProductsManager() {
                       <button
                         type="button"
                         onClick={() => feature.mutate({ id: p.id, featured: !p.featured })}
-                        aria-label={p.featured ? "Unfeature product" : "Feature product"}
+                        aria-label={p.featured ? t.unfeatureProduct : t.featureProduct}
                         className="text-muted-foreground hover:text-foreground"
                       >
-                        {p.featured ? <Star className="size-4 fill-amber-400 text-amber-400" /> : <StarOff className="size-4" />}
+                        {p.featured ? <Star className="size-4 fill-brand text-brand" /> : <StarOff className="size-4" />}
                       </button>
                     </td>
                     <td className="px-3 py-3">
                       <div className="flex flex-wrap justify-end gap-1.5">
-                        <Button size="sm" variant="ghost" onClick={() => setEditing(p)}>
-                          <Pencil className="size-3.5" /> Edit
+                        <Button size="sm" variant="ghost" asChild>
+                          <Link
+                            to="/admin/products/$productId"
+                            params={{ productId: p.id as string }}
+                            search={{ q, moderation, status, sellerId, page, create: "", back: backParam }}
+                          >
+                            <Pencil className="size-3.5" /> {t.edit}
+                          </Link>
                         </Button>
                         {p.moderation_status !== "approved" ? (
                           <Button size="sm" variant="outline" onClick={() => moderate.mutate({ id: p.id, decision: "approve" })} disabled={moderate.isPending}>
-                            Approve
+                            {t.approve}
                           </Button>
                         ) : null}
                         {p.moderation_status === "approved" ? (
                           <Button size="sm" variant="outline" onClick={() => moderate.mutate({ id: p.id, decision: "hide" })} disabled={moderate.isPending}>
-                            Hide
+                            {t.hide}
                           </Button>
                         ) : null}
                         {p.moderation_status === "pending" ? (
@@ -425,17 +447,17 @@ function ProductsManager() {
                             size="sm"
                             variant="outline"
                             onClick={() =>
-                              mutate("reject-product", () => moderateAdminProduct({ data: { id: p.id, decision: "reject", reason: "Rejected by admin" } }), {
-                                confirm: { title: "Reject product?", description: "This hides the product from the storefront until it is resubmitted." },
+                              mutate("reject-product", () => moderateAdminProduct({ data: { id: p.id, decision: "reject", reason: t.rejectReason } }), {
+                                confirm: { title: t.rejectTitle, description: t.rejectDesc },
                               })
                             }
                           >
-                            Reject
+                            {t.reject}
                           </Button>
                         ) : null}
                         {p.status !== "active" ? (
                           <Button size="sm" variant="ghost" onClick={() => setStatusMut.mutate({ id: p.id, status: "active" })} disabled={setStatusMut.isPending}>
-                            Publish
+                            {t.publish}
                           </Button>
                         ) : (
                           <Button
@@ -443,11 +465,11 @@ function ProductsManager() {
                             variant="ghost"
                             onClick={() =>
                               mutate("archive-product", () => setProductStatus({ data: { id: p.id, status: "archived" } }), {
-                                confirm: { title: "Archive product?", description: "The product will be hidden from the storefront." },
+                                confirm: { title: t.archiveTitle, description: t.archiveDesc },
                               })
                             }
                           >
-                            Archive
+                            {t.archive}
                           </Button>
                         )}
                       </div>
@@ -463,18 +485,6 @@ function ProductsManager() {
         </div>
       </AdminCard>
 
-      {editing ? <EditProductDialog product={editing} onClose={() => setEditing(null)} onSaved={invalidate} /> : null}
-      {creating ? (
-        <NewProductDialog
-          locale={adminLocale}
-          onClose={closeCreate}
-          onSaved={() => {
-            invalidate();
-            closeCreate();
-          }}
-        />
-      ) : null}
-
       <ConfirmDialog
         open={confirm !== null}
         onOpenChange={(open) => {
@@ -482,7 +492,6 @@ function ProductsManager() {
         }}
         title={confirm?.title ?? ""}
         description={confirm?.description ?? ""}
-        confirmLabel="Confirm"
         danger
         onConfirm={() => {
           confirm?.run();
@@ -493,254 +502,3 @@ function ProductsManager() {
   );
 }
 
-function EditProductDialog({
-  product,
-  onClose,
-  onSaved,
-}: {
-  product: ProductRow;
-  onClose: () => void;
-  onSaved: () => void;
-}) {
-  const [basePrice, setBasePrice] = useState(String(product.base_price ?? ""));
-  const [compareAt, setCompareAt] = useState(product.compare_at_price != null ? String(product.compare_at_price) : "");
-  const [weight, setWeight] = useState(product.weight_grams != null ? String(product.weight_grams) : "");
-  const [categoryId, setCategoryId] = useState<string>(product.category_id ?? "none");
-  const [featured, setFeatured] = useState(Boolean(product.featured));
-  const [serverError, setServerError] = useState<string | null>(null);
-
-  const categoriesQuery = useQuery({
-    queryKey: ["admin-categories-flat"],
-    queryFn: () => listAdminCategories(),
-    retry: false,
-  });
-  const flat = categoriesQuery.data?.flat ?? [];
-
-  const save = useMutation({
-    mutationFn: () =>
-      updateAdminProduct({
-        data: {
-          id: product.id as string,
-          patch: {
-            base_price: basePrice.trim() === "" ? undefined : Number(basePrice),
-            compare_at_price: compareAt.trim() === "" ? null : Number(compareAt),
-            weight_grams: weight.trim() === "" ? null : Number(weight),
-            featured,
-            category_id: categoryId === "none" ? null : categoryId,
-          },
-        },
-      }),
-    onSuccess: () => {
-      toast.success("Product updated.");
-      onSaved();
-      onClose();
-    },
-    onError: (e) => setServerError(errMsg(e)),
-  });
-
-  const priceError =
-    basePrice.trim() !== "" && !(Number(basePrice) > 0) ? "Price must be a positive number." : null;
-  const compareError =
-    compareAt.trim() !== "" && !(Number(compareAt) > 0) ? "Compare-at must be a positive number." : null;
-  const weightError =
-    weight.trim() !== "" && !(Number.isInteger(Number(weight)) && Number(weight) > 0)
-      ? "Weight must be a positive whole number of grams."
-      : null;
-
-  return (
-    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Edit product</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
-          <p className="text-small text-muted-foreground">{pickName(product.name) || product.slug}</p>
-          <Field label="Selling price (DZD)" error={priceError ?? undefined}>
-            <Input
-              inputMode="decimal"
-              value={basePrice}
-              onChange={(e) => setBasePrice(e.target.value)}
-              placeholder="e.g. 4990"
-            />
-          </Field>
-          <Field label="Compare-at price (DZD, optional)" error={compareError ?? undefined} hint="Must be higher than the selling price. Leave empty to clear.">
-            <Input
-              inputMode="decimal"
-              value={compareAt}
-              onChange={(e) => setCompareAt(e.target.value)}
-              placeholder="Empty = no compare-at price"
-            />
-          </Field>
-          <Field label="Weight (grams, optional)" error={weightError ?? undefined}>
-            <Input
-              inputMode="numeric"
-              value={weight}
-              onChange={(e) => setWeight(e.target.value)}
-              placeholder="Empty = unknown"
-            />
-          </Field>
-          <Field label="Category">
-            <Select value={categoryId} onValueChange={setCategoryId}>
-              <SelectTrigger><SelectValue placeholder="Select a category" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">No category</SelectItem>
-                {flat.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.parent_id ? "— " : ""}{pickName(c.name) || c.slug}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
-          <div className="flex items-center justify-between gap-3">
-            <Label htmlFor="product-featured">Featured</Label>
-            <Switch id="product-featured" checked={featured} onCheckedChange={setFeatured} />
-          </div>
-          {serverError ? (
-            <p role="alert" className="text-small text-destructive">{serverError}</p>
-          ) : null}
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button
-            onClick={() => {
-              setServerError(null);
-              if (priceError || compareError || weightError) return;
-              save.mutate();
-            }}
-            disabled={save.isPending}
-          >
-            {save.isPending ? "Saving…" : "Save changes"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function NewProductDialog({
-  locale,
-  onClose,
-  onSaved,
-}: {
-  locale: "ar" | "fr" | "en";
-  onClose: () => void;
-  onSaved: () => void;
-}) {
-  const t = getTranslations(locale).newProduct;
-  const [sellerId, setSellerId] = useState("");
-  const [name, setName] = useState("");
-  const [price, setPrice] = useState("");
-  const [categoryId, setCategoryId] = useState("none");
-  const [tried, setTried] = useState(false);
-  const [serverError, setServerError] = useState<string | null>(null);
-
-  const sellersQuery = useQuery({
-    queryKey: ["admin-sellers-lite"],
-    queryFn: () => listAdminSellersLite(),
-    retry: false,
-  });
-  const categoriesQuery = useQuery({
-    queryKey: ["admin-categories-flat"],
-    queryFn: () => listAdminCategories(),
-    retry: false,
-  });
-  const sellers = sellersQuery.data?.sellers ?? [];
-  const flat = categoriesQuery.data?.flat ?? [];
-
-  const nameError = name.trim().length < 2 ? t.nameTooShort : null;
-  const priceValue = Number(price);
-  const priceError = price.trim() === "" || !(priceValue > 0) ? t.priceInvalid : null;
-  const sellerError = sellerId === "" ? t.sellerRequired : null;
-
-  const create = useMutation({
-    mutationFn: () =>
-      createAdminProduct({
-        data: {
-          seller_id: sellerId,
-          name: name.trim(),
-          name_locale: locale,
-          base_price: priceValue,
-          category_id: categoryId === "none" ? null : categoryId,
-        },
-      }),
-    onSuccess: () => {
-      toast.success(t.created);
-      onSaved();
-    },
-    onError: (e) => setServerError(errMsg(e)),
-  });
-
-  return (
-    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle>{t.title}</DialogTitle>
-          <p className="text-sm text-muted-foreground">{t.subtitle}</p>
-        </DialogHeader>
-        <div className="space-y-4">
-          <Field label={t.seller} error={tried && sellerError ? sellerError : undefined}>
-            <Select value={sellerId} onValueChange={setSellerId}>
-              <SelectTrigger>
-                <SelectValue placeholder={t.sellerPlaceholder} />
-              </SelectTrigger>
-              <SelectContent>
-                {sellers.map((s) => (
-                  <SelectItem key={s.id} value={s.id}>
-                    {s.legal_name} · {s.account_status}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
-          <Field label={t.name} error={tried && nameError ? nameError : undefined}>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t.namePlaceholder} />
-          </Field>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label={t.price} error={tried && priceError ? priceError : undefined}>
-              <Input
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                inputMode="decimal"
-                dir="ltr"
-                placeholder="0"
-              />
-            </Field>
-            <Field label={t.category}>
-              <Select value={categoryId} onValueChange={setCategoryId}>
-                <SelectTrigger>
-                  <SelectValue placeholder={t.categoryPlaceholder} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">{t.categoryPlaceholder}</SelectItem>
-                  {flat.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {pickName(c.name) || c.slug}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Field>
-          </div>
-          {serverError ? (
-            <p role="alert" className="text-small text-destructive">{serverError}</p>
-          ) : null}
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>{t.cancel}</Button>
-          <Button
-            onClick={() => {
-              setServerError(null);
-              setTried(true);
-              if (sellerError || nameError || priceError) return;
-              create.mutate();
-            }}
-            disabled={create.isPending}
-          >
-            {create.isPending ? t.creating : t.create}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}

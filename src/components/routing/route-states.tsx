@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { getTranslations, resolveLocale } from "@/lib/i18n";
 
 /**
  * Shared loading / error states for route `pendingComponent` / `errorComponent`.
@@ -26,7 +27,7 @@ export function RouteError({
       <p className="text-muted-foreground">{message}</p>
       {reset ? (
         <Button type="button" variant="outline" size="sm" className="mt-4" onClick={reset}>
-          Try again
+          {getTranslations(resolveLocale()).common.retry}
         </Button>
       ) : null}
     </div>

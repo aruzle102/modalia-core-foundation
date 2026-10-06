@@ -9,6 +9,7 @@ import { getLocale, getTranslations, localeDirections } from "@/lib/i18n";
 import { readWishlist, toggleWishlist, type WishlistItem } from "@/lib/wishlist-store";
 import { getWishlistLivePrices, type WishlistLivePrice } from "@/lib/product.functions";
 import { pageHead } from "@/lib/seo";
+import { motionTw } from "@/lib/motion-tokens";
 
 export const Route = createFileRoute("/wishlist")({
   head: () =>
@@ -105,7 +106,7 @@ function WishlistPage() {
                           src={item.image}
                           alt={item.name}
                           loading="lazy"
-                          className="size-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+                          className={`size-full object-cover ${motionTw.transition.transform} ${motionTw.duration.cinematic} group-hover:scale-[1.03]`}
                         />
                       ) : null}
                       {sale != null ? (

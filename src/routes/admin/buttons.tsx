@@ -37,13 +37,13 @@ export const Route = createFileRoute("/admin/buttons")({
 });
 
 const PLACEMENT_LABELS: Record<string, string> = {
-  hero_primary: "Hero — primary",
-  hero_secondary: "Hero — secondary",
-  header: "Header",
-  footer: "Footer",
-  category_cta: "Category CTA",
-  product_cta: "Product CTA",
-  banner_cta: "Banner CTA",
+  hero_primary: "Hero — primary CTA (wired)",
+  hero_secondary: "Hero — secondary CTA (wired)",
+  header: "Header — quick links (wired)",
+  footer: "Footer — quick links (wired)",
+  category_cta: "Category page CTA (wired)",
+  product_cta: "Product page CTA (wired)",
+  banner_cta: "Banner — announcement bar (wired)",
 };
 
 function ButtonsPage() {
@@ -81,7 +81,7 @@ function ButtonsPage() {
     <AdminGate>
       <AdminShell
         title="Button Control"
-        subtitle="Centralized control over site buttons and CTAs. Safe predefined actions only."
+        subtitle="Centralized control over site buttons and CTAs. Active buttons render automatically in their wired storefront slots (hero, header, banner, footer). Safe predefined actions only."
         breadcrumbs={[{ label: "Button Control" }]}
         actions={
           <Button size="sm" onClick={() => { setEditing(null); setShowForm(true); }}>

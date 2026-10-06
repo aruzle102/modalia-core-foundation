@@ -33,6 +33,7 @@ import {
   fmtDateTime,
   timeAgo,
 } from "@/components/admin/ui";
+import { useAdminLocale } from "@/components/admin/useAdminLocale";
 import {
   addOrderNote,
   getAdminOrder,
@@ -148,7 +149,7 @@ function OrderDetailPage() {
         title="Order details"
         subtitle="Inspect, advance and audit every part of an order."
         breadcrumbs={[
-          { label: "Orders", to: "/admin/orders" },
+          { label: "Orders", to: "/admin/orders", back },
           { label: order?.orderNumber ? `#${order.orderNumber}` : "Order details" },
         ]}
       >
@@ -268,6 +269,7 @@ function OrderDetailSkeleton() {
 }
 
 function OrderHeaderCard({ order }: { order: AdminOrderDetail }) {
+  const locale = useAdminLocale();
   return (
     <AdminCard
       title={order.orderNumber}
@@ -276,25 +278,25 @@ function OrderHeaderCard({ order }: { order: AdminOrderDetail }) {
       <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <div>
           <dt className="text-xs uppercase tracking-wide text-muted-foreground">Placed</dt>
-          <dd className="mt-1 text-sm" title={fmtDateTime(order.createdAt)}>{timeAgo(order.createdAt)}</dd>
+          <dd className="mt-1 text-sm" title={fmtDateTime(order.createdAt, locale)}>{timeAgo(order.createdAt, locale)}</dd>
         </div>
         <div>
           <dt className="text-xs uppercase tracking-wide text-muted-foreground">Subtotal</dt>
-          <dd className="mt-1 text-sm tabular-nums">{fmtMoney(order.subtotal)}</dd>
+          <dd className="mt-1 text-sm tabular-nums">{fmtMoney(order.subtotal, "DZD", locale)}</dd>
         </div>
         <div>
           <dt className="text-xs uppercase tracking-wide text-muted-foreground">Shipping</dt>
-          <dd className="mt-1 text-sm tabular-nums">{fmtMoney(order.shippingTotal)}</dd>
+          <dd className="mt-1 text-sm tabular-nums">{fmtMoney(order.shippingTotal, "DZD", locale)}</dd>
         </div>
         {order.discountTotal > 0 ? (
           <div>
             <dt className="text-xs uppercase tracking-wide text-muted-foreground">Discount</dt>
-            <dd className="mt-1 text-sm tabular-nums">−{fmtMoney(order.discountTotal)}</dd>
+            <dd className="mt-1 text-sm tabular-nums">−{fmtMoney(order.discountTotal, "DZD", locale)}</dd>
           </div>
         ) : null}
         <div>
           <dt className="text-xs uppercase tracking-wide text-muted-foreground">Grand total</dt>
-          <dd className="mt-1 text-base font-semibold tabular-nums">{fmtMoney(order.grandTotal)}</dd>
+          <dd className="mt-1 text-base font-semibold tabular-nums">{fmtMoney(order.grandTotal, "DZD", locale)}</dd>
         </div>
       </dl>
       <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
@@ -313,12 +315,12 @@ function OrderHeaderCard({ order }: { order: AdminOrderDetail }) {
       </div>
       {order.cancelledAt ? (
         <p className="mt-3 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          Cancelled {timeAgo(order.cancelledAt)}{order.cancellationReason ? ` — ${order.cancellationReason}` : ""}
+          Cancelled {timeAgo(order.cancelledAt, locale)}{order.cancellationReason ? ` — ${order.cancellationReason}` : ""}
         </p>
       ) : null}
       {order.failedDeliveryAt ? (
-        <p className="mt-3 rounded-lg bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-400">
-          Failed delivery {timeAgo(order.failedDeliveryAt)}{order.failedDeliveryReason ? ` — ${order.failedDeliveryReason}` : ""}
+        <p className="mt-3 rounded-lg bg-brand/10 px-3 py-2 text-sm text-brand">
+          Failed delivery {timeAgo(order.failedDeliveryAt, locale)}{order.failedDeliveryReason ? ` — ${order.failedDeliveryReason}` : ""}
         </p>
       ) : null}
     </AdminCard>
@@ -413,6 +415,7 @@ function ParentStatusCard({
   onTransition: (newStatus: string) => void;
   pending: boolean;
 }) {
+  const locale = useAdminLocale();
   const parentHistory = order.history.filter((entry) => entry.sellerOrderId === null);
   return (
     <AdminCard title="Order status" actions={<StatusPill status={order.status} />}>
@@ -443,8 +446,8 @@ function ParentStatusCard({
                 </span>
               </p>
               {entry.note ? <p className="mt-0.5 text-muted-foreground">{entry.note}</p> : null}
-              <p className="mt-0.5 text-xs text-muted-foreground" title={fmtDateTime(entry.createdAt)}>
-                {timeAgo(entry.createdAt)}
+              <p className="mt-0.5 text-xs text-muted-foreground" title={fmtDateTime(entry.createdAt, locale)}>
+                {timeAgo(entry.createdAt, locale)}
               </p>
             </li>
           ))}
@@ -485,6 +488,7 @@ function SellerOrderCard({
   onRejectReturn: (returnId: string, note: string) => void;
   returnPending: boolean;
 }) {
+  const locale = useAdminLocale();
   const notes = order.notes.filter((entry) => entry.sellerOrderId === sellerOrder.id);
   const returns = order.returns.filter((entry) => entry.sellerOrderId === sellerOrder.id);
   const history = order.history.filter((entry) => entry.sellerOrderId === sellerOrder.id);
@@ -494,7 +498,7 @@ function SellerOrderCard({
   const shippingWeightKg = Number(shippingWeight);
   const shippingWeightLabel = shippingWeight && Number.isFinite(shippingWeightKg) ? `${(shippingWeightKg / 1000).toFixed(2)} kg` : null;
   const shippingPriceNum = Number(shippingPrice);
-  const shippingPriceLabel = shippingPrice && Number.isFinite(shippingPriceNum) ? fmtMoney(shippingPriceNum) : null;
+  const shippingPriceLabel = shippingPrice && Number.isFinite(shippingPriceNum) ? fmtMoney(shippingPriceNum, "DZD", locale) : null;
   const itemsMismatch = Math.abs(sellerOrder.itemsTotal - sellerOrder.subtotal) > 0.01;
   const [returnNote, setReturnNote] = useState("");
 
@@ -505,7 +509,7 @@ function SellerOrderCard({
     >
       <p className="text-sm text-muted-foreground">
         Seller: <span className="font-medium text-foreground">{sellerOrder.sellerName}</span>
-        {" · "}Placed {timeAgo(sellerOrder.createdAt)}
+        {" · "}Placed {timeAgo(sellerOrder.createdAt, locale)}
       </p>
 
       <div className="mt-4 overflow-x-auto">
@@ -528,8 +532,8 @@ function SellerOrderCard({
                 </td>
                 <td className="px-2 py-2.5 text-muted-foreground">{optionsText(item.options) || "—"}</td>
                 <td className="px-2 py-2.5 text-end tabular-nums">{item.quantity}</td>
-                <td className="whitespace-nowrap px-2 py-2.5 text-end tabular-nums">{fmtMoney(item.unitPrice)}</td>
-                <td className="whitespace-nowrap px-2 py-2.5 text-end font-medium tabular-nums">{fmtMoney(item.total)}</td>
+                <td className="whitespace-nowrap px-2 py-2.5 text-end tabular-nums">{fmtMoney(item.unitPrice, "DZD", locale)}</td>
+                <td className="whitespace-nowrap px-2 py-2.5 text-end font-medium tabular-nums">{fmtMoney(item.total, "DZD", locale)}</td>
               </tr>
             ))}
           </tbody>
@@ -539,15 +543,15 @@ function SellerOrderCard({
       <dl className="mt-4 grid gap-3 rounded-lg bg-muted/40 p-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
         <div>
           <dt className="text-xs uppercase tracking-wide text-muted-foreground">Items subtotal</dt>
-          <dd className="mt-1 font-medium tabular-nums">{fmtMoney(sellerOrder.subtotal)}</dd>
+          <dd className="mt-1 font-medium tabular-nums">{fmtMoney(sellerOrder.subtotal, "DZD", locale)}</dd>
         </div>
         <div>
           <dt className="text-xs uppercase tracking-wide text-muted-foreground">Shipping</dt>
-          <dd className="mt-1 font-medium tabular-nums">{fmtMoney(sellerOrder.shippingTotal)}</dd>
+          <dd className="mt-1 font-medium tabular-nums">{fmtMoney(sellerOrder.shippingTotal, "DZD", locale)}</dd>
         </div>
         <div>
           <dt className="text-xs uppercase tracking-wide text-muted-foreground">Commission (snapshot at order time)</dt>
-          <dd className="mt-1 font-medium tabular-nums">{fmtMoney(sellerOrder.commissionTotal)}</dd>
+          <dd className="mt-1 font-medium tabular-nums">{fmtMoney(sellerOrder.commissionTotal, "DZD", locale)}</dd>
         </div>
         <div>
           <dt className="text-xs uppercase tracking-wide text-muted-foreground">Shipping detail</dt>
@@ -559,8 +563,8 @@ function SellerOrderCard({
         </div>
       </dl>
       {itemsMismatch ? (
-        <p className="mt-2 text-xs text-amber-700 dark:text-amber-400">
-          Items sum ({fmtMoney(sellerOrder.itemsTotal)}) differs from the stored subtotal — review before acting.
+        <p className="mt-2 text-xs text-brand">
+          Items sum ({fmtMoney(sellerOrder.itemsTotal, "DZD", locale)}) differs from the stored subtotal — review before acting.
         </p>
       ) : null}
 
@@ -593,7 +597,7 @@ function SellerOrderCard({
                   <span className="text-muted-foreground"> from {prettyStatus(entry.previousStatus)}</span>
                 ) : null}
                 <span className="ms-2 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">{entry.actorType}</span>
-                <span className="ms-2 text-xs text-muted-foreground" title={fmtDateTime(entry.createdAt)}>{timeAgo(entry.createdAt)}</span>
+                <span className="ms-2 text-xs text-muted-foreground" title={fmtDateTime(entry.createdAt, locale)}>{timeAgo(entry.createdAt, locale)}</span>
                 {entry.note ? <p className="text-muted-foreground">{entry.note}</p> : null}
               </li>
             ))}
@@ -610,8 +614,8 @@ function SellerOrderCard({
             {notes.map((entry) => (
               <li key={entry.id} className="rounded-lg bg-muted/40 px-3 py-2 text-sm">
                 <p className="whitespace-pre-wrap">{entry.body}</p>
-                <p className="mt-1 text-xs text-muted-foreground" title={fmtDateTime(entry.createdAt)}>
-                  Internal · {timeAgo(entry.createdAt)}
+                <p className="mt-1 text-xs text-muted-foreground" title={fmtDateTime(entry.createdAt, locale)}>
+                  Internal · {timeAgo(entry.createdAt, locale)}
                 </p>
               </li>
             ))}
@@ -651,15 +655,15 @@ function SellerOrderCard({
               <li key={entry.id} className="rounded-lg border border-border p-3 text-sm">
                 <div className="flex flex-wrap items-center gap-2">
                   <StatusPill status={entry.status} />
-                  <span className="text-xs text-muted-foreground" title={fmtDateTime(entry.requestedAt)}>
-                    Requested {timeAgo(entry.requestedAt)}
+                  <span className="text-xs text-muted-foreground" title={fmtDateTime(entry.requestedAt, locale)}>
+                    Requested {timeAgo(entry.requestedAt, locale)}
                   </span>
                 </div>
                 <p className="mt-2"><span className="text-muted-foreground">Reason: </span>{entry.reason}</p>
                 {entry.notes ? <p className="mt-1 text-muted-foreground">Admin note: {entry.notes}</p> : null}
                 {entry.processedAt ? (
-                  <p className="mt-1 text-xs text-muted-foreground" title={fmtDateTime(entry.processedAt)}>
-                    Processed {timeAgo(entry.processedAt)}
+                  <p className="mt-1 text-xs text-muted-foreground" title={fmtDateTime(entry.processedAt, locale)}>
+                    Processed {timeAgo(entry.processedAt, locale)}
                   </p>
                 ) : null}
                 {entry.status === "requested" ? (
@@ -702,6 +706,7 @@ function SellerOrderCard({
 
 
 function HistoryCard({ order }: { order: AdminOrderDetail }) {
+  const locale = useAdminLocale();
   const storeNameById = new Map(order.sellerOrders.map((so) => [so.id, so.storeName]));
   return (
     <AdminCard title="Full status timeline">
@@ -725,8 +730,8 @@ function HistoryCard({ order }: { order: AdminOrderDetail }) {
                   </span>
                 </p>
                 {entry.note ? <p className="mt-0.5 text-muted-foreground">{entry.note}</p> : null}
-                <p className="mt-0.5 text-xs text-muted-foreground" title={fmtDateTime(entry.createdAt)}>
-                  {timeAgo(entry.createdAt)}
+                <p className="mt-0.5 text-xs text-muted-foreground" title={fmtDateTime(entry.createdAt, locale)}>
+                  {timeAgo(entry.createdAt, locale)}
                 </p>
               </div>
             </li>

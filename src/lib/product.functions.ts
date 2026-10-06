@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import type { Database, Json } from "@/integrations/supabase/types";
+import { storagePublicUrl } from "@/lib/store.functions";
 
 type LocalizedText = Json | null;
 
@@ -20,7 +21,11 @@ function localized(value: LocalizedText, locale: string, fallback: string) {
   return typeof text === "string" ? text : fallback;
 }
 
-function publicUrl(path: string | null) { return path && /^https?:\/\//.test(path) ? path : null; }
+function publicUrl(path: string | null) {
+  if (!path) return null;
+  if (/^https?:\/\//.test(path)) return path;
+  return storagePublicUrl(path);
+}
 
 /** Public URL for a review photo stored in the `review-images` bucket. */
 function reviewImageUrl(path: string | null): string | null {
@@ -40,7 +45,7 @@ export const getProductDetail = createServerFn({ method: "GET" })
   .validator((data) => z.object({ slug: z.string(), locale: z.string() }).parse(data))
   .handler(async ({ data }) => {
     const supabase = createPublicClient();
-    const productResult = await supabase.from("products").select("id,slug,name,description,short_description,base_price,compare_at_price,currency,featured,weight_grams,category_id,category:categories(name,slug),brand:brands(name,slug),store:stores(name,slug,logo_path,verification_status)").eq("slug", data.slug).maybeSingle();
+    const productResult = await supabase.from("products").select("id,slug,name,description,short_description,base_price,compare_at_price,currency,featured,weight_grams,category_id,category:categories(name,slug),brand:brands(name,slug),store:stores(name,slug,logo_path,verification_status)").eq("slug", data.slug).eq("status", "active").eq("publication_status", "published").eq("moderation_status", "approved").eq("visibility", "public").maybeSingle();
     if (productResult.error) throw new Error("The product could not be loaded.");
     if (!productResult.data) return null;
     const product = productResult.data;

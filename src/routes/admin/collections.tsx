@@ -7,7 +7,7 @@ import { AdminCard, EmptyState } from "@/components/admin/ui";
 import { Button } from "@/components/ui/button";
 import { BackLink } from "@/components/routing/back-link";
 import { listAllCollections } from "@/lib/admin-collections.functions";
-import { getLocale } from "@/lib/i18n";
+import { getLocale, getTranslations } from "@/lib/i18n";
 import { strParam } from "@/hooks/use-url-state";
 
 export const Route = createFileRoute("/admin/collections")({
@@ -27,6 +27,7 @@ export const Route = createFileRoute("/admin/collections")({
 
 function CollectionsPage() {
   const { locale, back } = Route.useSearch();
+  const t = getTranslations(locale).admin.collections;
 
   const collectionsQuery = useQuery({
     queryKey: ["admin-all-collections"],
@@ -38,21 +39,21 @@ function CollectionsPage() {
   return (
     <AdminGate>
       <AdminShell
-        title="Collections"
-        subtitle="Curated product collections across all stores."
-        breadcrumbs={[{ label: "Collections" }]}
+        title={t.title}
+        subtitle={t.subtitle}
+        breadcrumbs={[{ label: t.title }]}
         actions={
           <Button size="sm" asChild>
             <Link to="/admin/official-store" search={{ locale, tab: "collections" }}>
               <Plus className="size-4 me-1.5" />
-              New collection
+              {t.newCollection}
             </Link>
           </Button>
         }
       >
         <BackLink back={back} fallbackTo="/admin" fallbackSearch={{ locale }}>
           <ArrowLeft className="size-4 me-1.5" />
-          Back
+          {t.back}
         </BackLink>
 
         {collectionsQuery.isPending ? (
@@ -62,10 +63,7 @@ function CollectionsPage() {
           </div>
         ) : collections.length === 0 ? (
           <AdminCard className="mt-4">
-            <EmptyState
-              title="No collections yet"
-              text="Create curated collections from the official store."
-            />
+            <EmptyState title={t.emptyTitle} text={t.emptyText} />
           </AdminCard>
         ) : (
           <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -78,14 +76,17 @@ function CollectionsPage() {
                   <div className="min-w-0 flex-1">
                     <p className="font-medium truncate">{c.title}</p>
                     <p className="text-sm text-muted-foreground">
-                      {c.productCount} products · {c.storeName ?? "Store"}
+                      {t.productsUnit(c.productCount)} · {c.storeName ?? t.storeFallback}
                     </p>
+                    {/* No per-store collection editor exists — link to that
+                        collection's own store page, which shows its collections. */}
                     <Button variant="link" size="sm" className="px-0" asChild>
                       <Link
-                        to="/admin/official-store"
-                        search={{ locale, tab: "collections" }}
+                        to="/admin/stores/$storeId"
+                        params={{ storeId: c.storeId }}
+                        search={{ back, locale, q: "", status: "all", page: 1 }}
                       >
-                        Manage
+                        {t.manage}
                       </Link>
                     </Button>
                   </div>

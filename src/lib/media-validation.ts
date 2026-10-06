@@ -1,13 +1,14 @@
 /**
- * Shared media validation rules for product media (images + 3D models).
+ * Shared media validation rules for product media (images + videos + 3D models).
  *
  * Imported by server functions (enforced at upload / finalize time) and by
  * the `MediaUploader` component (client-side pre-check for fast UX — the
  * server check is the authority and always re-runs).
  *
  * Supported kinds mirror the `product_images.media_type` DB check constraint:
- * `image` and `model_3d`. Validation is content-based (magic bytes), never
- * extension-only: a renamed executable is rejected even if it ends in .png.
+ * `image`, `video` and `model_3d`. Validation is content-based (magic bytes),
+ * never extension-only: a renamed executable is rejected even if it ends in
+ * .mp4.
  */
 
 export const MEDIA_LIMITS = {
@@ -20,6 +21,11 @@ export const MEDIA_LIMITS = {
     maxWidth: 8000,
     maxHeight: 8000,
   },
+  video: {
+    maxBytes: 100 * 1024 * 1024, // 100 MB
+    mimeTypes: ["video/mp4", "video/webm"] as const,
+    extensions: ["mp4", "webm"] as const,
+  },
   model_3d: {
     maxBytes: 50 * 1024 * 1024, // 50 MB
     mimeTypes: ["model/gltf-binary", "model/gltf+json"] as const,
@@ -27,7 +33,7 @@ export const MEDIA_LIMITS = {
   },
 } as const;
 
-export type MediaKind = keyof typeof MEDIA_LIMITS; // "image" | "model_3d"
+export type MediaKind = keyof typeof MEDIA_LIMITS; // "image" | "video" | "model_3d"
 
 export type MediaErrorCode =
   | "unsupported-type"
@@ -91,7 +97,7 @@ export function validateMediaMeta(input: {
   if (!kind) {
     throw new MediaValidationError(
       "unsupported-type",
-      "Unsupported file type. Allowed: JPG, PNG, WebP, GIF images and GLB/GLTF 3D models.",
+      "Unsupported file type. Allowed: JPG, PNG, WebP, GIF images; MP4, WebM videos; GLB/GLTF 3D models.",
     );
   }
   if (expectedKind && kind !== expectedKind) {
@@ -99,15 +105,18 @@ export function validateMediaMeta(input: {
       "unsupported-type",
       expectedKind === "image"
         ? "Expected an image file (JPG, PNG, WebP, GIF)."
-        : "Expected a 3D model file (GLB or GLTF).",
+        : expectedKind === "video"
+          ? "Expected a video file (MP4 or WebM)."
+          : "Expected a 3D model file (GLB or GLTF).",
     );
   }
   const maxBytes = MEDIA_LIMITS[kind].maxBytes;
   if (sizeBytes > maxBytes) {
     const mb = Math.round(maxBytes / (1024 * 1024));
+    const label = kind === "image" ? "images" : kind === "video" ? "videos" : "3D models";
     throw new MediaValidationError(
       "too-large",
-      `The file is too large (max ${mb} MB for ${kind === "image" ? "images" : "3D models"}).`,
+      `The file is too large (max ${mb} MB for ${label}).`,
     );
   }
   return { kind, extension: extOf(filename) };
@@ -262,6 +271,26 @@ function validateGltfJson(b: Uint8Array): void {
   }
 }
 
+/** MP4/MOV container: first box is `ftyp` at offset 4. */
+function validateMp4(b: Uint8Array): void {
+  if (b.length < 12 || ascii(b, 4, 4) !== "ftyp") {
+    throw new MediaValidationError("corrupt-file", "The file is not a valid MP4 video.");
+  }
+}
+
+/** WebM container: EBML header 0x1A45DFA3 at offset 0. */
+function validateWebm(b: Uint8Array): void {
+  if (
+    b.length < 4 ||
+    b[0] !== 0x1a ||
+    b[1] !== 0x45 ||
+    b[2] !== 0xdf ||
+    b[3] !== 0xa3
+  ) {
+    throw new MediaValidationError("corrupt-file", "The file is not a valid WebM video.");
+  }
+}
+
 /**
  * Deep content validation of already-uploaded bytes. Throws
  * MediaValidationError when the content does not match the declared kind.
@@ -294,6 +323,11 @@ export function validateMediaBytes(
       );
     }
     return dims;
+  }
+  if (kind === "video") {
+    if (extension === "mp4") validateMp4(bytes);
+    else validateWebm(bytes);
+    return {};
   }
   if (extension === "glb") validateGlb(bytes);
   else validateGltfJson(bytes);

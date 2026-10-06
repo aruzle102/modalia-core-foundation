@@ -194,6 +194,49 @@ export const updateIntelligenceSettings = createServerFn({ method: "POST" })
     return toSettings(row as unknown as Record<string, unknown>);
   });
 
+export type IntelligenceToggles = {
+  support_enabled: boolean;
+  smart_shopping_enabled: boolean;
+  recommendations_enabled: boolean;
+};
+
+const INTELLIGENCE_TOGGLES_DEFAULT: IntelligenceToggles = {
+  support_enabled: true,
+  smart_shopping_enabled: true,
+  recommendations_enabled: true,
+};
+
+/**
+ * Server-side read of the intelligence feature toggles (V8 #177).
+ *
+ * Reads via the admin client — `intelligence_settings` is admin-only under
+ * RLS by design, so the public client cannot see it. Used to GATE server
+ * functions (aiChat, getRecommendations): client-side hiding is not enough,
+ * the endpoints themselves must refuse when a toggle is off.
+ *
+ * Fail-open to `true` (matching the public config defaults) so a transient
+ * DB error never hard-disables storefront features.
+ */
+export async function readIntelligenceToggles(): Promise<IntelligenceToggles> {
+  try {
+    const sb = await adminClient();
+    const { data, error } = await sb
+      .from("intelligence_settings")
+      .select("support_enabled, smart_shopping_enabled, recommendations_enabled")
+      .eq("id", 1)
+      .maybeSingle();
+    if (error || !data) return { ...INTELLIGENCE_TOGGLES_DEFAULT };
+    const r = data as unknown as Record<string, unknown>;
+    return {
+      support_enabled: r["support_enabled"] === true,
+      smart_shopping_enabled: r["smart_shopping_enabled"] === true,
+      recommendations_enabled: r["recommendations_enabled"] !== false,
+    };
+  } catch {
+    return { ...INTELLIGENCE_TOGGLES_DEFAULT };
+  }
+}
+
 /**
  * Public (storefront) read of the assistant-facing copy + toggles.
  * Only exposes what the chat UI needs — never ranking weights internals.
@@ -204,13 +247,14 @@ export const getPublicIntelligenceConfig = createServerFn({ method: "GET" })
     const sb = await adminClient();
     const { data: row, error } = await sb
       .from("intelligence_settings")
-      .select("support_enabled, smart_shopping_enabled, welcome_message, suggested_questions, fallback_message")
+      .select("support_enabled, smart_shopping_enabled, recommendations_enabled, welcome_message, suggested_questions, fallback_message")
       .eq("id", 1)
       .maybeSingle();
     if (error || !row) {
       return {
         support_enabled: true,
         smart_shopping_enabled: true,
+        recommendations_enabled: true,
         welcome_message: "",
         suggested_questions: [] as string[],
         fallback_message: "",
@@ -242,6 +286,7 @@ export const getPublicIntelligenceConfig = createServerFn({ method: "GET" })
     return {
       support_enabled: r["support_enabled"] === true,
       smart_shopping_enabled: r["smart_shopping_enabled"] === true,
+      recommendations_enabled: r["recommendations_enabled"] !== false,
       welcome_message: pick(r["welcome_message"]),
       suggested_questions: questions,
       fallback_message: pick(r["fallback_message"]),

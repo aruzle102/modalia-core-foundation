@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { queryOptions, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import {
@@ -22,16 +22,19 @@ import { SiteFooter, SiteHeader } from "@/components/layout/site-shell";
 import { useReveal } from "@/hooks/use-reveal";
 import { useParallax } from "@/hooks/use-parallax";
 import { Magnetic, Marquee, TextReveal, ImageReveal } from "@/components/motion";
+import { motionPreset, motionTw } from "@/lib/motion-tokens";
 import {
   getDiscoveryData,
   type CatalogProduct,
   type CatalogStore,
   type HomepageSection,
 } from "@/lib/catalog.functions";
-import { pageHead, siteMeta, organizationJsonLd, websiteJsonLd } from "@/lib/seo";
-import { subscribeNewsletter } from "@/lib/engagement.functions";
+import { pageHead, defaultSeoForLocale, organizationJsonLd, websiteJsonLd, type PublicSeoOverrides } from "@/lib/seo";
+import { getPublicSeoSettings, subscribeNewsletter } from "@/lib/engagement.functions";
+import { SiteButtons } from "@/components/layout/site-buttons";
 import { getBestsellers, getTrendingProducts } from "@/lib/analytics.functions";
 import { getRecommendations } from "@/lib/recommendations";
+import { getPublicIntelligenceConfig } from "@/lib/intelligence-settings.functions";
 import { getFeaturedReviews, type FeaturedReview } from "@/lib/reviews.functions";
 import { getRecentlyViewed, track } from "@/lib/analytics";
 import { getLocale, getTranslations, localeDirections, type Translation } from "@/lib/i18n";
@@ -42,10 +45,41 @@ const HeroScene = lazy(() =>
   import("@/components/commerce/HeroScene").then((m) => ({ default: m.HeroScene })),
 );
 
+/** Stale window shared by the homepage's queries (discovery + section queries). */
+const SECTION_STALE_MS = 5 * 60_000;
+
 const homeQuery = (locale: string) =>
   queryOptions({
     queryKey: ["discovery", locale],
     queryFn: () => getDiscoveryData({ data: { locale } }),
+    // Homepage discovery is a large payload shared by every section; keep it
+    // fresh-in-cache for a few minutes so tab-focus refetches don't re-pull
+    // the whole thing (and re-render every section) on every window focus.
+    staleTime: SECTION_STALE_MS,
+  });
+
+const bestsellersQuery = (locale: string) =>
+  queryOptions({
+    queryKey: ["bestsellers", locale],
+    queryFn: () => getBestsellers({ data: { limit: 8, locale } }),
+    staleTime: SECTION_STALE_MS,
+    retry: false,
+  });
+
+const trendingQuery = (locale: string) =>
+  queryOptions({
+    queryKey: ["trending-products", locale],
+    queryFn: () => getTrendingProducts({ data: { days: 7, limit: 8, locale } }),
+    staleTime: SECTION_STALE_MS,
+    retry: false,
+  });
+
+const featuredReviewsQuery = (locale: string) =>
+  queryOptions({
+    queryKey: ["featured-reviews", locale],
+    queryFn: () => getFeaturedReviews({ data: { limit: 8, locale } }),
+    staleTime: SECTION_STALE_MS,
+    retry: false,
   });
 
 type HomeCopy = Translation["home"];
@@ -55,18 +89,38 @@ export const Route = createFileRoute("/")({
     locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined),
   }),
   loaderDeps: ({ search }) => ({ locale: search.locale }),
-  loader: ({ context, deps }) => context.queryClient.ensureQueryData(homeQuery(deps.locale)),
+  loader: async ({ context, deps }) => {
+    await context.queryClient.ensureQueryData(homeQuery(deps.locale));
+    // Prefetch the below-fold section queries with the main payload: without
+    // this they fire one-by-one after mount (waterfall) and each section pops
+    // in late, shifting the layout. Prefetch failures are swallowed by design
+    // (sections already render nothing when their data is absent).
+    // The admin-configured SEO defaults (Admin > SEO) ride along so the head
+    // can use them; failure falls back to the locale defaults.
+    const [seo] = await Promise.all([
+      getPublicSeoSettings().catch(() => null),
+      context.queryClient.prefetchQuery(bestsellersQuery(deps.locale)),
+      context.queryClient.prefetchQuery(trendingQuery(deps.locale)),
+      context.queryClient.prefetchQuery(featuredReviewsQuery(deps.locale)),
+    ]);
+    return { seo };
+  },
   pendingComponent: DiscoverySkeleton,
   errorComponent: HomeError,
   notFoundComponent: HomeNotFound,
   head: (context) => {
     const rawSearch = (context as unknown as { search?: Record<string, unknown> }).search ?? {};
     const locale = getLocale(typeof rawSearch["locale"] === "string" ? rawSearch["locale"] : undefined);
-    const meta = siteMeta(locale);
+    // Admin-configured SEO defaults (Admin > SEO) win over the locale copy;
+    // a global noindex set there is honored via the robots tag.
+    const seo = (context.loaderData as { seo?: PublicSeoOverrides | null } | undefined)?.seo ?? null;
+    const meta = defaultSeoForLocale(locale, seo);
     return pageHead({
       title: meta.title,
       description: meta.description,
       path: "/",
+      keywords: meta.keywords,
+      robots: meta.robots,
       jsonLd: [organizationJsonLd(), websiteJsonLd()],
     });
   },
@@ -134,7 +188,7 @@ function BrandEntrance() {
       setReducedMotion(true);
       return;
     }
-    const id = window.setTimeout(() => setDone(true), 1250);
+    const id = window.setTimeout(() => setDone(true), motionPreset.brandEntrance.dwellMs);
     return () => window.clearTimeout(id);
   }, []);
 
@@ -170,12 +224,18 @@ function Hero({
   // Tier-adaptive hero: high gets full WebGL, mid gets the lite scene,
   // everything else keeps the quiet editorial fallback.
   const showWebGL = (tier === "high" || tier === "mid") && webgl && !reducedMotion;
-  const featured = products.find((p) => p.imagePath);
+  // Derived once per products identity: these filters ran on every Hero
+  // render (e.g. on each homepage data refresh) for no reason.
+  const featured = useMemo(() => products.find((p) => p.imagePath), [products]);
   // Real product imagery for the 3D showcase: first 4 products with images.
-  const showcaseProducts = products
-    .filter((p) => p.imagePath)
-    .slice(0, 4)
-    .map((p) => ({ imagePath: p.imagePath as string, name: p.name, slug: p.slug }));
+  const showcaseProducts = useMemo(
+    () =>
+      products
+        .filter((p) => p.imagePath)
+        .slice(0, 4)
+        .map((p) => ({ imagePath: p.imagePath as string, name: p.name, slug: p.slug })),
+    [products],
+  );
   const shopSearch: ShopSearch = { locale, q: "", category: "", sort: "newest", page: 1, focus: "", view: "", brands: [], stores: [], colors: [], sizes: [], inStock: false, onSale: false };
   return (
     <section className="relative overflow-hidden bg-ink text-white">
@@ -228,14 +288,29 @@ function Hero({
                 </Link>
               </Button>
             </Magnetic>
+            {/* Admin-configured primary CTAs (Admin > Button Control). */}
+            <SiteButtons
+              placement="hero_primary"
+              locale={locale}
+              variant="button"
+              size="lg"
+              buttonClassName="border border-white/25 bg-white/10 px-8 text-white backdrop-blur-sm hover:bg-white/20 hover:text-white"
+            />
             <Link
               to="/shop"
               search={{ ...shopSearch, onSale: true }}
               className="group inline-flex items-center gap-2 text-[15px] font-medium text-white/85 transition-colors hover:text-white"
             >
               {copy.offersTitle}
-              <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1 motion-reduce:transition-none" />
+              <ArrowRight className={`size-4 ${motionTw.transition.transform} ${motionTw.duration.feedback} group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1 motion-reduce:transition-none`} />
             </Link>
+            {/* Admin-configured secondary CTAs (Admin > Button Control). */}
+            <SiteButtons
+              placement="hero_secondary"
+              locale={locale}
+              variant="link"
+              itemClassName="inline-flex items-center gap-2 text-[15px] font-medium text-white/85 transition-colors hover:text-white"
+            />
           </div>
         </div>
         {featured?.imagePath ? (
@@ -252,7 +327,9 @@ function Hero({
                   src={featured.imagePath}
                   alt={featured.name}
                   loading="eager"
-                  className="size-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-[1.04] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+                  // Above-the-fold LCP candidate: tell the browser to prioritize it.
+                  fetchPriority="high"
+                  className={`size-full object-cover transition-transform ${motionTw.duration.heroImage} ${motionTw.ease.out} group-hover:scale-[1.04] motion-reduce:transition-none motion-reduce:group-hover:scale-100`}
                 />
               </div>
               <div className="mt-4 flex items-baseline justify-between gap-4">
@@ -320,7 +397,7 @@ function SectionHeading({
             className="group inline-flex shrink-0 items-center gap-2 text-small font-medium text-foreground"
           >
             {viewAll}
-            <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5 motion-reduce:transition-none" />
+            <ArrowRight className={`size-4 ${motionTw.transition.transform} ${motionTw.duration.feedback} group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5 motion-reduce:transition-none`} />
           </Link>
         </div>
         <h2 className="mt-3 max-w-2xl font-display text-[clamp(1.9rem,4.5vw,3rem)] font-semibold leading-[1.06] tracking-tight text-foreground">
@@ -345,7 +422,7 @@ function SectionHeading({
           className="group inline-flex shrink-0 items-center gap-1.5 text-small font-medium text-muted-foreground transition-colors hover:text-foreground"
         >
           {viewAll}
-          <ArrowRight className="size-3.5 transition-transform duration-300 group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5 motion-reduce:transition-none" />
+          <ArrowRight className={`size-3.5 ${motionTw.transition.transform} ${motionTw.duration.feedback} group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5 motion-reduce:transition-none`} />
         </Link>
       </div>
     );
@@ -364,7 +441,7 @@ function SectionHeading({
         className="group inline-flex shrink-0 items-center gap-2 text-small font-medium text-foreground"
       >
         {viewAll}
-        <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5 motion-reduce:transition-none" />
+        <ArrowRight className={`size-4 ${motionTw.transition.transform} ${motionTw.duration.feedback} group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5 motion-reduce:transition-none`} />
       </Link>
     </div>
   );
@@ -430,7 +507,7 @@ function CategoryGrid({
   const t = getTranslations(locale).card;
   const tileClass = (index: number): string => {
     const base =
-      "group relative flex min-h-44 flex-col justify-between overflow-hidden border p-5 transition-colors duration-300 motion-reduce:transition-none sm:p-6";
+      `group relative flex min-h-44 flex-col justify-between overflow-hidden border p-5 ${motionTw.transition.colors} ${motionTw.duration.feedback} motion-reduce:transition-none sm:p-6`;
     if (index === 0)
       return `${base} col-span-2 min-h-64 border-transparent bg-ink text-white sm:min-h-80 lg:col-span-7 lg:row-span-2 lg:min-h-[30rem]`;
     if (index === 1 || index === 2) return `${base} border-border bg-card hover:bg-secondary/60 lg:col-span-5 lg:min-h-60`;
@@ -490,7 +567,7 @@ function CategoryGrid({
                   {t.productsCount(category.productCount)}
                 </p>
                 <ArrowRight
-                  className={`${featured ? "text-white/60" : "text-muted-foreground"} mt-4 size-4 transition-transform duration-300 group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1 motion-reduce:transition-none`}
+                  className={`${featured ? "text-white/60" : "text-muted-foreground"} mt-4 size-4 ${motionTw.transition.transform} ${motionTw.duration.feedback} group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1 motion-reduce:transition-none`}
                 />
               </div>
             </Link>
@@ -631,12 +708,7 @@ function BestsellersSection({
   viewAll: string;
   shopSearch: ShopSearch;
 }) {
-  const { data } = useQuery({
-    queryKey: ["bestsellers", locale],
-    queryFn: () => getBestsellers({ data: { limit: 8, locale } }),
-    staleTime: 5 * 60_000,
-    retry: false,
-  });
+  const { data } = useQuery(bestsellersQuery(locale));
   if (!data?.hasData || data.products.length === 0) return null;
   return (
     <Reveal>
@@ -680,12 +752,7 @@ function PopularNow({
   viewAll: string;
   shopSearch: ShopSearch;
 }) {
-  const { data } = useQuery({
-    queryKey: ["trending-products", locale],
-    queryFn: () => getTrendingProducts({ data: { days: 7, limit: 8, locale } }),
-    staleTime: 5 * 60_000,
-    retry: false,
-  });
+  const { data } = useQuery(trendingQuery(locale));
   if (!data?.hasData || data.products.length === 0) return null;
   return (
     <Reveal>
@@ -724,9 +791,13 @@ function NewArrivalsSection({
   viewAll: string;
   shopSearch: ShopSearch;
 }) {
-  const newest = [...products]
-    .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt))
-    .slice(0, 8);
+  const newest = useMemo(
+    () =>
+      [...products]
+        .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt))
+        .slice(0, 8),
+    [products],
+  );
   if (!newest.length) return null;
   return (
     <Reveal>
@@ -767,13 +838,17 @@ function OffersSection({
   viewAll: string;
   shopSearch: ShopSearch;
 }) {
-  const offers = products
-    .filter((p) => p.compareAtPrice != null && p.compareAtPrice > p.price)
-    .sort(
-      (a, b) =>
-        (b.compareAtPrice as number) / b.price - (a.compareAtPrice as number) / a.price,
-    )
-    .slice(0, 8);
+  const offers = useMemo(
+    () =>
+      products
+        .filter((p) => p.compareAtPrice != null && p.compareAtPrice > p.price)
+        .sort(
+          (a, b) =>
+            (b.compareAtPrice as number) / b.price - (a.compareAtPrice as number) / a.price,
+        )
+        .slice(0, 8),
+    [products],
+  );
   if (!offers.length) return null;
   return (
     <Reveal>
@@ -796,7 +871,7 @@ function OffersSection({
                 className="group inline-flex shrink-0 items-center gap-2 text-small font-medium text-white/85 transition-colors hover:text-white"
               >
                 {viewAll}
-                <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5 motion-reduce:transition-none" />
+                <ArrowRight className={`size-4 ${motionTw.transition.transform} ${motionTw.duration.feedback} group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5 motion-reduce:transition-none`} />
               </Link>
             </div>
             <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 lg:pb-0">
@@ -836,10 +911,15 @@ function FlashSaleSection({
   // Subtle scroll parallax on the sale band background.
   const bandRef = useParallax<HTMLElement>(0.15);
 
+  // The 1s countdown ticker only runs while the sale is actually live. When
+  // the section would render nothing (no window, or expired), no timer is
+  // scheduled at all — previously it ticked forever on a null render.
+  const live = endsAt !== null && endsAt > now;
   useEffect(() => {
+    if (!live) return;
     const id = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(id);
-  }, []);
+  }, [live]);
 
   if (!endsAt || endsAt <= now) return null;
 
@@ -893,7 +973,7 @@ function FlashSaleSection({
                 className="group mt-8 inline-flex items-center gap-2 text-small font-medium text-white"
               >
                 {viewAll}
-                <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5 motion-reduce:transition-none" />
+                <ArrowRight className={`size-4 ${motionTw.transition.transform} ${motionTw.duration.feedback} group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5 motion-reduce:transition-none`} />
               </Link>
             </div>
             {products.length ? (
@@ -963,7 +1043,7 @@ function BrandStores({
                       src={store.bannerPath}
                       alt=""
                       loading="lazy"
-                      className="size-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+                      className={`size-full object-cover transition-transform ${motionTw.duration.cinematic} ${motionTw.ease.out} group-hover:scale-[1.03] motion-reduce:transition-none motion-reduce:group-hover:scale-100`}
                     />
                   </div>
                 ) : (
@@ -1087,32 +1167,41 @@ function RecommendationsSection({
   viewAll: string;
   shopSearch: ShopSearch;
 }) {
-  const [categorySlugs, setCategorySlugs] = useState<string[]>([]);
-  const [excludeIds, setExcludeIds] = useState<string[]>([]);
-
-  useEffect(() => {
+  const [signals] = useState(() => {
+    // Read the visitor's device history once, during initial state creation:
+    // the query key below depends on these signals, so hydrating them in an
+    // effect would fire the query twice (once with empty signals, once with
+    // the real ones). getRecentlyViewed is SSR-safe and never throws.
     try {
       const recent = getRecentlyViewed();
-      setCategorySlugs(
-        [...new Set(recent.map((p) => p.categorySlug).filter((s): s is string => !!s))].slice(0, 10),
-      );
-      setExcludeIds(recent.map((p) => p.id).slice(0, 20));
+      return {
+        categorySlugs: [
+          ...new Set(recent.map((p) => p.categorySlug).filter((s): s is string => !!s)),
+        ].slice(0, 10),
+        excludeIds: recent.map((p) => p.id).slice(0, 20),
+      };
     } catch {
       // localStorage unavailable — fall back to non-personalized ranking.
+      return { categorySlugs: [] as string[], excludeIds: [] as string[] };
     }
-  }, []);
+  });
 
   const { data } = useQuery({
-    queryKey: ["recommendations", locale, categorySlugs.join(","), excludeIds.join(",")],
+    queryKey: [
+      "recommendations",
+      locale,
+      signals.categorySlugs.join(","),
+      signals.excludeIds.join(","),
+    ],
     queryFn: () =>
       getRecommendations({
         data: {
           locale,
           limit: 8,
-          sessionSignals: { categorySlugs, excludeIds },
+          sessionSignals: signals,
         },
       }),
-    staleTime: 5 * 60_000,
+    staleTime: SECTION_STALE_MS,
     retry: false,
   });
 
@@ -1148,12 +1237,7 @@ function TestimonialsSection({
   locale: SupportedLocale;
   copy: HomeCopy;
 }) {
-  const { data } = useQuery({
-    queryKey: ["featured-reviews", locale],
-    queryFn: () => getFeaturedReviews({ data: { limit: 8, locale } }),
-    staleTime: 5 * 60_000,
-    retry: false,
-  });
+  const { data } = useQuery(featuredReviewsQuery(locale));
   if (!data?.hasData || data.reviews.length === 0) return null;
   return (
     <Reveal>
@@ -1292,7 +1376,7 @@ function PostCard({ post, featured }: { post: BlogPost; featured?: boolean }) {
             src={post.image}
             alt=""
             loading="lazy"
-            className="absolute inset-0 size-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+            className={`absolute inset-0 size-full object-cover transition-transform ${motionTw.duration.cinematic} ${motionTw.ease.out} group-hover:scale-[1.04] motion-reduce:transition-none motion-reduce:group-hover:scale-100`}
           />
         </div>
       ) : null}
@@ -1310,7 +1394,7 @@ function PostCard({ post, featured }: { post: BlogPost; featured?: boolean }) {
           </p>
         ) : null}
         <p className="mt-3 inline-flex items-center gap-1.5 text-small font-medium text-foreground">
-          <ArrowUpRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 motion-reduce:transition-none" />
+          <ArrowUpRight className={`size-4 ${motionTw.transition.transform} ${motionTw.duration.feedback} group-hover:translate-x-0.5 group-hover:-translate-y-0.5 motion-reduce:transition-none`} />
         </p>
       </div>
     </>
@@ -1386,8 +1470,8 @@ function AppBannerSection({
               </div>
             </div>
             {image ? (
-              <div className="relative mx-auto w-full max-w-sm overflow-hidden rounded-3xl border border-white/10 shadow-2xl">
-                <img src={image} alt="" loading="lazy" className="w-full object-cover" />
+              <div className="relative mx-auto aspect-[21/9] w-full max-w-sm overflow-hidden rounded-3xl border border-white/10 shadow-2xl">
+                <img src={image} alt="" loading="lazy" className="size-full object-cover" />
               </div>
             ) : null}
           </div>
@@ -1481,32 +1565,54 @@ function HomePage() {
   const t = getTranslations(locale);
   const copy = t.home;
 
-  const sectionByKind = (kind: string) => data.sections.find((section) => section.kind === kind);
+  // Stable section lookup + stable link-search object: without these every
+  // homepage re-render (e.g. a data refresh) rebuilt the object identities
+  // handed to all ~15 sections below.
+  const sectionByKind = useMemo(() => {
+    const byKind = new Map<string, HomepageSection>();
+    for (const section of data.sections) {
+      if (!byKind.has(section.kind)) byKind.set(section.kind, section);
+    }
+    return (kind: string) => byKind.get(kind);
+  }, [data.sections]);
   const hero = sectionByKind("hero");
   const trending = sectionByKind("trending");
   const editorial = sectionByKind("editorial");
   const recommendations = sectionByKind("recommendations");
+
+  // Recommendations toggle (admin Intelligence settings): when disabled, the
+  // personalized section is hidden entirely — no fake toggle.
+  const intelQuery = useQuery({
+    queryKey: ["public-intelligence-config", locale],
+    queryFn: () => getPublicIntelligenceConfig({ data: { locale } }),
+    staleTime: 10 * 60 * 1000,
+    retry: 1,
+  });
+  const recommendationsEnabled = intelQuery.data?.recommendations_enabled !== false;
   const blog = sectionByKind("blog");
   const appBanner = sectionByKind("app_banner");
 
-  const shopSearch: ShopSearch = {
-    locale,
-    q: "",
-    category: "",
-    sort: "newest",
-    page: 1,
-    focus: "",
-    view: "",
-    brands: [],
-    stores: [],
-    colors: [],
-    sizes: [],
-    inStock: false,
-    onSale: false,
-  };
+  const shopSearch: ShopSearch = useMemo(
+    () => ({
+      locale,
+      q: "",
+      category: "",
+      sort: "newest",
+      page: 1,
+      focus: "",
+      view: "",
+      brands: [],
+      stores: [],
+      colors: [],
+      sizes: [],
+      inStock: false,
+      onSale: false,
+    }),
+    [locale],
+  );
 
   const flash = sectionByKind("flash_sale");
-  const flashContent = sectionContent(flash);
+  const flashContent = useMemo(() => sectionContent(flash), [flash]);
   const flashEndsAt = contentDate(flashContent["ends_at"]);
   const flashActive = flash && flashEndsAt !== null;
 
@@ -1586,7 +1692,7 @@ function HomePage() {
             shopSearch={shopSearch}
           />
 
-          {recommendations ? (
+          {recommendations && recommendationsEnabled ? (
             <RecommendationsSection
               locale={locale}
               section={recommendations}

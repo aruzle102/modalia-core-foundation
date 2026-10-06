@@ -2,10 +2,16 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { SellerShell } from "@/components/seller/SellerShell";
 import { NotificationList } from "@/components/notifications/notification-center";
 import { getLocale, getTranslations, localeDirections } from "@/lib/i18n";
+import { pageHead, pageHeadCopy } from "@/lib/seo";
 
 export const Route = createFileRoute("/_authenticated/seller/notifications")({
   validateSearch: (search: Record<string, unknown>) => ({ locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined) }),
-  head: () => ({ meta: [{ name: "robots", content: "noindex,nofollow" }, { title: "Notifications — Seller — Modalia" }, { name: "description", content: "Notifications for your store." }] }),
+  head: (context) => {
+    const rawSearch = (context as unknown as { search?: Record<string, unknown> }).search ?? {};
+    const locale = getLocale(typeof rawSearch["locale"] === "string" ? rawSearch["locale"] : undefined);
+    const copy = pageHeadCopy(locale, "sellerNotifications");
+    return pageHead({ title: copy.title, description: copy.description, path: "/seller/notifications", robots: "noindex,nofollow" });
+  },
   component: SellerNotificationsPage,
 });
 

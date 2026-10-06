@@ -36,7 +36,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { listMedia, getMediaSignedUrl, type MediaEntry } from "@/lib/admin-ops.functions";
+import { listMedia, getMediaSignedUrl, type MediaEntry } from "@/lib/admin-media.functions";
 import {
   deleteMedia,
   deleteStorageObject,
@@ -112,11 +112,7 @@ function MediaPage() {
 
   return (
     <AdminGate>
-      <AdminShell
-        title={t.title}
-        subtitle={t.subtitle}
-        breadcrumbs={[{ label: nav.media }]}
-      >
+      <AdminShell title={t.title} subtitle={t.subtitle} breadcrumbs={[{ label: nav.media }]}>
         <div className="mb-4 flex gap-1 rounded-lg border border-border bg-card p-1">
           {(["product", "storage"] as const).map((key) => (
             <button
@@ -292,8 +288,10 @@ function ProductMediaManager({
   };
 
   const altMutation = useMutation({
-    mutationFn: (input: { imageId: string; altText: { fr?: string | undefined; en?: string | undefined; ar?: string | undefined } }) =>
-      updateMediaAlt({ data: { imageId: input.imageId, productId, altText: input.altText } }),
+    mutationFn: (input: {
+      imageId: string;
+      altText: { fr?: string | undefined; en?: string | undefined; ar?: string | undefined };
+    }) => updateMediaAlt({ data: { imageId: input.imageId, productId, altText: input.altText } }),
     onSuccess: () => {
       toast.success(t.altSaved);
       setAltEditor(null);
@@ -358,7 +356,9 @@ function ProductMediaManager({
         headers: { "Content-Type": file.type || "application/octet-stream" },
       });
       if (!put.ok) throw new Error(t.errUploadFailed);
-      await replaceMedia({ data: { imageId: target.id, productId, path: req.path, mediaKind: kind } });
+      await replaceMedia({
+        data: { imageId: target.id, productId, path: req.path, mediaKind: kind },
+      });
       toast.success(t.replaced);
       invalidate();
     } catch (e) {
@@ -397,10 +397,7 @@ function ProductMediaManager({
           ) : (
             <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {items.map((m, i) => (
-                <li
-                  key={m.id}
-                  className="overflow-hidden rounded-lg border border-border bg-card"
-                >
+                <li key={m.id} className="overflow-hidden rounded-lg border border-border bg-card">
                   <button
                     type="button"
                     onClick={() => setPreview(m)}
@@ -415,7 +412,13 @@ function ProductMediaManager({
                     ) : m.previewUrl ? (
                       <img
                         src={m.previewUrl}
-                        alt={m.altText[locale] || m.altText["en"] || m.altText["fr"] || m.altText["ar"] || ""}
+                        alt={
+                          m.altText[locale] ||
+                          m.altText["en"] ||
+                          m.altText["fr"] ||
+                          m.altText["ar"] ||
+                          ""
+                        }
                         className="h-full w-full object-cover"
                         loading="lazy"
                       />
@@ -601,7 +604,11 @@ function AltTextForm({
   t: MediaT;
   initial: Record<string, string>;
   saving: boolean;
-  onSave: (altText: { fr?: string | undefined; en?: string | undefined; ar?: string | undefined }) => void;
+  onSave: (altText: {
+    fr?: string | undefined;
+    en?: string | undefined;
+    ar?: string | undefined;
+  }) => void;
   onCancel: () => void;
 }) {
   const [fr, setFr] = useState(initial["fr"] ?? "");
@@ -616,12 +623,7 @@ function AltTextForm({
         <Input value={en} onChange={(e) => setEn(e.target.value)} maxLength={500} />
       </Field>
       <Field label={t.altAr}>
-        <Input
-          value={ar}
-          onChange={(e) => setAr(e.target.value)}
-          maxLength={500}
-          dir="rtl"
-        />
+        <Input value={ar} onChange={(e) => setAr(e.target.value)} maxLength={500} dir="rtl" />
       </Field>
       <DialogFooter>
         <Button type="button" variant="outline" onClick={onCancel}>

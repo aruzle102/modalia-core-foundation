@@ -64,7 +64,6 @@ import {
 } from "@/components/ui/sheet";
 import { getLocale } from "@/lib/i18n";
 import { strParam, useUrlState } from "@/hooks/use-url-state";
-import { updateHomepageSection } from "@/lib/admin.functions";
 import {
   HOMEPAGE_KINDS,
   createHomepageSection,
@@ -86,7 +85,10 @@ export const Route = createFileRoute("/admin/homepage")({
     meta: [
       { name: "robots", content: "noindex,nofollow" },
       { title: "Homepage builder — Modalia Admin" },
-      { name: "description", content: "Reorder, toggle and edit the sections of the Modalia storefront homepage." },
+      {
+        name: "description",
+        content: "Reorder, toggle and edit the sections of the Modalia storefront homepage.",
+      },
     ],
   }),
   component: HomepageBuilderPage,
@@ -125,8 +127,7 @@ const CONTENT_JSON_KINDS: readonly HomepageKind[] = ["editorial", "blog", "app_b
 const CONTENT_JSON_HINT: Record<string, string> = {
   editorial:
     'JSON object: { "image": "https://…", "image_alt": "…", "cta_label": "…", "cta_href": "/shop" }',
-  blog:
-    'JSON object: { "posts": [ { "title": "…", "excerpt": "…", "image": "https://…", "href": "https://…" } ] }',
+  blog: 'JSON object: { "posts": [ { "title": "…", "excerpt": "…", "image": "https://…", "href": "https://…" } ] }',
   app_banner:
     'JSON object: { "ios_url": "https://…", "android_url": "https://…", "image": "https://…" } — shown only when at least one store URL is set.',
 };
@@ -248,7 +249,9 @@ function BuilderManager() {
 
   const toggle = useMutation({
     mutationFn: (payload: { sectionId: string; enabled: boolean }) =>
-      updateHomepageSection({ data: payload }),
+      updateHomepageContent({
+        data: { sectionId: payload.sectionId, patch: { enabled: payload.enabled } },
+      }),
     onSuccess: () => invalidate(),
     onError: (error) => toast.error(errMsg(error)),
   });
@@ -319,8 +322,8 @@ function BuilderManager() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted-foreground">
-          {items.length} section{items.length === 1 ? "" : "s"} · drag the handle or use the arrows to
-          reorder — the order saves automatically.
+          {items.length} section{items.length === 1 ? "" : "s"} · drag the handle or use the arrows
+          to reorder — the order saves automatically.
         </p>
         <Button onClick={() => setAddOpen(true)}>
           <Plus className="size-4" /> Add section
@@ -331,7 +334,11 @@ function BuilderManager() {
         <EmptyState
           title="No homepage sections"
           text="Add your first section to start building the storefront homepage."
-          action={<Button onClick={() => setAddOpen(true)}><Plus className="size-4" /> Add section</Button>}
+          action={
+            <Button onClick={() => setAddOpen(true)}>
+              <Plus className="size-4" /> Add section
+            </Button>
+          }
         />
       ) : (
         <ol className="space-y-3" aria-label="Homepage sections in display order">
@@ -562,7 +569,14 @@ function SectionCard({
             >
               <ChevronDown className="size-4" />
             </Button>
-            <Button size="icon" variant="ghost" className="h-8 w-8" onClick={onEdit} aria-label={`Edit ${section.section_key}`} title="Edit settings">
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-8 w-8"
+              onClick={onEdit}
+              aria-label={`Edit ${section.section_key}`}
+              title="Edit settings"
+            >
               <Pencil className="size-4" />
             </Button>
             <Button
@@ -689,11 +703,13 @@ function AddSectionDialog({
   });
 
   const trimmed = key.trim();
-  const keyError =
-    !trimmed ? null
-    : trimmed.length < 3 ? "Key must be at least 3 characters."
-    : !SECTION_KEY_RE.test(trimmed) ? "Use lowercase letters, numbers, dashes or underscores."
-    : null;
+  const keyError = !trimmed
+    ? null
+    : trimmed.length < 3
+      ? "Key must be at least 3 characters."
+      : !SECTION_KEY_RE.test(trimmed)
+        ? "Use lowercase letters, numbers, dashes or underscores."
+        : null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -729,7 +745,10 @@ function AddSectionDialog({
               aria-invalid={Boolean(keyError)}
             />
           </Field>
-          <Field label="Title (English, optional)" hint="You can add Arabic and French titles from the settings panel.">
+          <Field
+            label="Title (English, optional)"
+            hint="You can add Arabic and French titles from the settings panel."
+          >
             <Input value={titleEn} onChange={(event) => setTitleEn(event.target.value)} />
           </Field>
         </div>
@@ -737,7 +756,10 @@ function AddSectionDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button disabled={!trimmed || Boolean(keyError) || create.isPending} onClick={() => create.mutate()}>
+          <Button
+            disabled={!trimmed || Boolean(keyError) || create.isPending}
+            onClick={() => create.mutate()}
+          >
             {create.isPending ? "Creating…" : "Create & edit"}
           </Button>
         </DialogFooter>
@@ -897,7 +919,12 @@ function SectionSettingsSheet({
   })();
 
   return (
-    <Sheet open onOpenChange={(open) => { if (!open) onClose(); }}>
+    <Sheet
+      open
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+    >
       <SheetContent side="right" className="flex w-full flex-col overflow-hidden sm:max-w-lg">
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
@@ -965,7 +992,9 @@ function SectionSettingsSheet({
               <div className="grid grid-cols-2 gap-4">
                 <Field label="Text alignment">
                   <Select value={form.alignment} onValueChange={(v) => set("alignment", v)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="start">Start</SelectItem>
                       <SelectItem value="center">Center</SelectItem>
@@ -975,7 +1004,9 @@ function SectionSettingsSheet({
                 </Field>
                 <Field label="Overlay">
                   <Select value={form.overlay} onValueChange={(v) => set("overlay", v)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">None</SelectItem>
                       <SelectItem value="soft">Soft</SelectItem>
@@ -1045,7 +1076,8 @@ function SectionSettingsSheet({
           <section className="space-y-4">
             <h3 className="text-sm font-semibold">Scheduling</h3>
             <p className="text-caption text-muted-foreground">
-              The storefront only shows sections inside their schedule. Leave both empty to always show.
+              The storefront only shows sections inside their schedule. Leave both empty to always
+              show.
             </p>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Field label="Starts at">
@@ -1072,7 +1104,10 @@ function SectionSettingsSheet({
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button disabled={save.isPending || Boolean(limitError) || Boolean(contentJsonError)} onClick={() => save.mutate()}>
+          <Button
+            disabled={save.isPending || Boolean(limitError) || Boolean(contentJsonError)}
+            onClick={() => save.mutate()}
+          >
             {save.isPending ? "Saving…" : "Save changes"}
           </Button>
         </SheetFooter>

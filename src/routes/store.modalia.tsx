@@ -9,7 +9,7 @@ import { CategoryRail, ProductGrid } from "@/components/marketplace/discovery";
 import { OfficialStoreBadge } from "@/components/marketplace/StoreBadges";
 import { SiteFooter, SiteHeader } from "@/components/layout/site-shell";
 import { getStoreDetail } from "@/lib/store.functions";
-import { breadcrumbJsonLd, canonicalUrl, onlineStoreJsonLd, pageHead } from "@/lib/seo";
+import { breadcrumbJsonLd, canonicalUrl, onlineStoreJsonLd, pageHead, prefetchSeoSettings, seoRobotsFromHeadCtx } from "@/lib/seo";
 import type { CatalogProduct } from "@/lib/catalog.functions";
 import { accentById } from "@/lib/store-settings";
 import { RouteError, RoutePending } from "@/components/routing/route-states";
@@ -135,6 +135,7 @@ export const Route = createFileRoute("/store/modalia")({
     Promise.all([
       context.queryClient.ensureQueryData(storeQuery(deps.locale)),
       context.queryClient.ensureQueryData(reviewsQuery(deps.locale)),
+      prefetchSeoSettings(context.queryClient),
     ]),
   pendingComponent: () => <RoutePending label="Loading the official store…" />,
   errorComponent: ({ reset }) => (
@@ -143,9 +144,10 @@ export const Route = createFileRoute("/store/modalia")({
       reset={reset}
     />
   ),
-  head: ({ loaderData }) => {
-    const store = loaderData?.[0] ?? null;
+  head: (context) => {
+    const store = context.loaderData?.[0] ?? null;
     return pageHead({
+      robots: seoRobotsFromHeadCtx(context),
       title: "Modalia Official Store — Modalia",
       description: store?.description
         ? `Modalia Official Store on Modalia: ${store.description}`

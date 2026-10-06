@@ -7,20 +7,24 @@ import { Input } from "@/components/ui/input";
 import { SiteFooter, SiteHeader } from "@/components/layout/site-shell";
 import { getLocale, getTranslations, localeDirections } from "@/lib/i18n";
 import { formatDate, formatPrice } from "@/lib/i18n/format";
-import { trackGuestOrder } from "@/lib/orders.functions";
-import { pageHead } from "@/lib/seo";
+import { trackGuestOrder, type GuestOrderHistoryEvent } from "@/lib/orders.functions";
+import { pageHead, pageHeadCopy } from "@/lib/seo";
 
 export const Route = createFileRoute("/track-order")({
   validateSearch: (search: Record<string, unknown>) => ({
     locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined),
   }),
-  head: () =>
-    pageHead({
-      title: "Track order — Modalia",
-      description: "Check the latest status of your Modalia order.",
+  head: (context) => {
+    const rawSearch = (context as unknown as { search?: Record<string, unknown> }).search ?? {};
+    const locale = getLocale(typeof rawSearch["locale"] === "string" ? rawSearch["locale"] : undefined);
+    const copy = pageHeadCopy(locale, "trackOrder");
+    return pageHead({
+      title: copy.title,
+      description: copy.description,
       path: "/track-order",
       robots: "noindex,nofollow",
-    }),
+    });
+  },
   component: TrackOrderPage,
   errorComponent: TrackOrderError,
 });
@@ -196,6 +200,33 @@ function TrackOrderPage() {
               timelineCurrent={tt.timelineCurrent}
               terminalNotice={tt.terminalNotice}
             />
+
+            <h3 className="mt-6 text-nav text-foreground">{tt.historyTitle}</h3>
+            {lookup.data.history.length > 0 ? (
+              <ol className="mt-3 space-y-3">
+                {lookup.data.history.map((event: GuestOrderHistoryEvent) => (
+                  <li
+                    key={`${event.at}-${event.status}`}
+                    className="flex items-start gap-3 rounded-lg border border-border bg-muted/40 p-4"
+                  >
+                    <span aria-hidden className="mt-1.5 size-2 shrink-0 rounded-full bg-foreground" />
+                    <div className="min-w-0">
+                      <p className="text-small font-semibold text-foreground">
+                        {t.orders.statusLabel(event.status)}
+                      </p>
+                      <p className="text-caption text-muted-foreground">
+                        {formatDate(event.at, locale, { dateStyle: "medium", timeStyle: "short" })}
+                      </p>
+                      {event.note ? (
+                        <p className="mt-1 text-small text-muted-foreground">{event.note}</p>
+                      ) : null}
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <p className="mt-3 text-small text-muted-foreground">{tt.historyEmpty}</p>
+            )}
 
             <div className="mt-6 divide-y divide-border">
               {lookup.data.sellerOrders.map((sellerOrder: { storeName: string; status: string }) => (

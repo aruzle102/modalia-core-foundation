@@ -76,7 +76,7 @@ export function QuickCreate() {
       label: t.homepageSection,
       hint: null,
       icon: <LayoutTemplate className="h-4 w-4 text-muted-foreground" />,
-      run: () => go("/admin/homepage", { create: "section" }),
+      run: () => go("/admin/homepage/builder", { create: "section" }),
     },
   ];
 

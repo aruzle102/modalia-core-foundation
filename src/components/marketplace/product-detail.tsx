@@ -5,7 +5,7 @@ import { ArrowRight, Box, Heart, Minus, Plus, ShieldCheck, ShoppingBag, Star, St
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ProductGrid } from "@/components/marketplace/discovery";
-import { VerifiedBadge } from "@/components/marketplace/VerifiedBadge";
+import { OfficialStoreBadge, VerifiedSellerBadge } from "@/components/marketplace/StoreBadges";
 import { ReviewForm } from "@/components/marketplace/review-form";
 import { BackInStockNotify } from "@/components/marketplace/back-in-stock-notify";
 import { formatNumber, formatPrice } from "@/lib/i18n/format";
@@ -380,7 +380,11 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
               {t.soldBy}{" "}
               <span className="inline-flex items-center gap-1 font-medium text-foreground">
                 {product.store.name}
-                <VerifiedBadge verified={product.store.verified} label={verifiedLabel} />
+                {product.store.slug === "modalia" ? (
+                <OfficialStoreBadge label={verifiedLabel} />
+              ) : (
+                <VerifiedSellerBadge verified={product.store.verified} label={verifiedLabel} />
+              )}
               </span>
             </Link>
           ) : null}
@@ -618,7 +622,11 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
                   <span>
                     <span className="flex items-center gap-1.5 text-small font-medium text-foreground">
                       {product.store.name}
-                      <VerifiedBadge verified={product.store.verified} label={verifiedLabel} />
+                      {product.store.slug === "modalia" ? (
+                <OfficialStoreBadge label={verifiedLabel} />
+              ) : (
+                <VerifiedSellerBadge verified={product.store.verified} label={verifiedLabel} />
+              )}
                     </span>
                     <span className="mt-0.5 inline-flex items-center gap-1 text-caption text-muted-foreground">
                       {t.visitStore}

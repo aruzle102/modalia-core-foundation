@@ -8,7 +8,7 @@ import { useCart } from "@/lib/cart-store";
 import { isWishlisted, toggleWishlist } from "@/lib/wishlist-store";
 import { microAnimationClass, replayAnimation } from "@/lib/motion";
 import type { CatalogCategory, CatalogProduct, CatalogStore } from "@/lib/catalog.functions";
-import { VerifiedBadge } from "@/components/marketplace/VerifiedBadge";
+import { OfficialStoreBadge, VerifiedSellerBadge } from "@/components/marketplace/StoreBadges";
 import type { SupportedLocale } from "@/config/platform";
 
 const NEW_BADGE_DAYS = 14;
@@ -335,7 +335,11 @@ export function StoreRail({ stores, locale }: { stores: CatalogStore[]; locale: 
                 <span className="truncate transition-colors group-hover:text-foreground/70">
                   {store.name}
                 </span>
-                <VerifiedBadge verified={store.verified} label={storeT.verifiedStore} />
+                {store.slug === "modalia" ? (
+                  <OfficialStoreBadge label={storeT.officialStore} />
+                ) : (
+                  <VerifiedSellerBadge verified={store.verified} label={storeT.verifiedStore} />
+                )}
               </h3>
               <p className="mt-0.5 text-caption text-muted-foreground">
                 {t.productsCount(store.productCount)}

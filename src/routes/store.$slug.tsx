@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
-import { VerifiedBadge } from "@/components/marketplace/VerifiedBadge";
+import { VerifiedSellerBadge } from "@/components/marketplace/StoreBadges";
 import { CategoryRail, ProductCard, ProductGrid } from "@/components/marketplace/discovery";
 import { SiteFooter, SiteHeader } from "@/components/layout/site-shell";
 import { getStoreDetail, type StoreSectionView } from "@/lib/store.functions";
@@ -79,7 +79,7 @@ function StorePage(){
             <div>
               <div className="flex flex-wrap items-center gap-2.5">
                 <h1 className="font-display text-4xl font-semibold tracking-tight text-white sm:text-5xl">{store.name}</h1>
-                <VerifiedBadge verified={store.verified} label={t.store.verifiedStore}/>
+                <VerifiedSellerBadge verified={store.verified} label={t.store.verifiedStore} />
               </div>
               <p className="mt-2 text-small text-white/70">{store.official?t.store.officialTagline:t.store.independent}</p>
             </div>

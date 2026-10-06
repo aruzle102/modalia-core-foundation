@@ -6,7 +6,7 @@ import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { Star } from "lucide-react";
 import { CategoryRail, ProductGrid } from "@/components/marketplace/discovery";
-import { VerifiedBadge } from "@/components/marketplace/VerifiedBadge";
+import { OfficialStoreBadge } from "@/components/marketplace/StoreBadges";
 import { SiteFooter, SiteHeader } from "@/components/layout/site-shell";
 import { getStoreDetail } from "@/lib/store.functions";
 import { breadcrumbJsonLd, canonicalUrl, onlineStoreJsonLd, pageHead } from "@/lib/seo";
@@ -265,7 +265,7 @@ function OfficialStorePage() {
               <div>
                 <p className="flex items-center gap-2 text-eyebrow text-muted-foreground">
                   {official.heroEyebrow}
-                  <VerifiedBadge verified={store.verified} label={t.store.verifiedStore} />
+                  <OfficialStoreBadge label={t.store.officialStore} />
                 </p>
                 <h1 className="mt-2 text-display">{store.name}</h1>
               </div>
@@ -366,7 +366,7 @@ function OfficialStorePage() {
               <p className="text-eyebrow text-muted-foreground">{official.heroEyebrow}</p>
               <h2 className="mt-2 text-h2">{official.storyTitle}</h2>
               <div className="mt-6 flex items-center gap-2">
-                <VerifiedBadge verified={store.verified} label={t.store.verifiedStore} />
+                <OfficialStoreBadge label={t.store.officialStore} />
                 <span className="text-small font-medium text-foreground">{store.name}</span>
               </div>
             </div>

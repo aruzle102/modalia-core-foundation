@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useDeviceTier } from "@/hooks/use-device-tier";
 import { DiscoverySkeleton, ProductCard } from "@/components/marketplace/discovery";
-import { VerifiedBadge } from "@/components/marketplace/VerifiedBadge";
+import { OfficialStoreBadge, VerifiedSellerBadge } from "@/components/marketplace/StoreBadges";
 import { SiteFooter, SiteHeader } from "@/components/layout/site-shell";
 import { useReveal } from "@/hooks/use-reveal";
 import {
@@ -863,7 +863,11 @@ function BrandStores({
                   <div className="min-w-0 pt-0.5">
                     <h3 className="flex items-center gap-1.5 text-h3 text-foreground">
                       <span className="truncate">{store.name}</span>
-                      <VerifiedBadge verified={store.verified} label={storeT.verifiedStore} />
+                      {store.slug === "modalia" ? (
+                        <OfficialStoreBadge label={storeT.officialStore} />
+                      ) : (
+                        <VerifiedSellerBadge verified={store.verified} label={storeT.verifiedStore} />
+                      )}
                     </h3>
                   </div>
                 </div>

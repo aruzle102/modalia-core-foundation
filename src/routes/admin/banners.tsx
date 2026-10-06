@@ -11,7 +11,7 @@ import {
   updateHomepageContent,
   type HomepageSection,
 } from "@/lib/admin-homepage.functions";
-import { getLocale } from "@/lib/i18n";
+import { getLocale, getTranslations } from "@/lib/i18n";
 import { strParam } from "@/hooks/use-url-state";
 import { toast } from "sonner";
 
@@ -62,7 +62,7 @@ function BannersPage() {
       <AdminShell
         title="Banners"
         subtitle="Promotional banners across the storefront."
-        breadcrumbs={[{ label: "Banners" }]}
+        breadcrumbs={[{ label: getTranslations(locale).adminNav.items.banners }]}
         actions={
           <Button size="sm" asChild>
             <Link to="/admin/homepage/builder" search={{ locale, create: "section" }}>
@@ -82,6 +82,17 @@ function BannersPage() {
             <div className="h-16 animate-pulse rounded-xl bg-muted" />
             <div className="h-16 animate-pulse rounded-xl bg-muted" />
           </div>
+        ) : sectionsQuery.isError ? (
+          <AdminCard className="mt-4">
+            <EmptyState
+              title={getTranslations(locale).common.loadError}
+              action={
+                <Button type="button" variant="outline" size="sm" onClick={() => sectionsQuery.refetch()}>
+                  {getTranslations(locale).common.retry}
+                </Button>
+              }
+            />
+          </AdminCard>
         ) : sections.length === 0 ? (
           <AdminCard className="mt-4">
             <EmptyState

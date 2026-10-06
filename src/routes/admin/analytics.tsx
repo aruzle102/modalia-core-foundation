@@ -3,12 +3,13 @@ import { keepPreviousData, queryOptions, useQuery, useSuspenseQuery } from "@tan
 import { Info } from "lucide-react";
 import { AdminGate } from "@/components/admin/AdminGate";
 import { AdminShell } from "@/components/admin/AdminShell";
-import { AdminCard, EmptyState, Stat } from "@/components/admin/ui";
+import { AdminCard, EmptyState, SegmentedControl, StatRow, StatRows } from "@/components/admin/ui";
 import { numParam, useUrlState } from "@/hooks/use-url-state";
 import { TopList } from "@/components/admin/Charts";
 import { FunnelChart } from "@/components/analytics/FunnelChart";
 import { getAdminAnalytics } from "@/lib/analytics.functions";
 import { getLocale, getTranslations } from "@/lib/i18n";
+import { useAdminLocale } from "@/components/admin/useAdminLocale";
 
 const RANGES = [7, 30, 90] as const;
 
@@ -27,12 +28,8 @@ export const Route = createFileRoute("/admin/analytics")({
   loaderDeps: ({ search }) => ({ days: search.days }),
   loader: ({ context, deps }) =>
     context.queryClient.ensureQueryData(analyticsQuery(numParam(deps.days, 30))),
-  pendingComponent: () => <div className="px-6 py-24 text-center text-muted-foreground">Loading analytics…</div>,
-  errorComponent: () => (
-    <div role="alert" className="px-6 py-24 text-center text-muted-foreground">
-      Analytics could not be loaded.
-    </div>
-  ),
+  pendingComponent: AnalyticsPending,
+  errorComponent: AnalyticsError,
   head: () => ({
     meta: [
       { name: "robots", content: "noindex,nofollow" },
@@ -47,7 +44,26 @@ export const Route = createFileRoute("/admin/analytics")({
 });
 
 /** Minimal vertical bars for per-day purchase velocity (hand-drawn SVG). */
-function VelocityBars({ data }: { data: { date: string; purchases: number }[] }) {
+function AnalyticsPending() {
+  const ta = getTranslations(useAdminLocale()).admin.analytics;
+  return <div className="px-6 py-24 text-center text-muted-foreground">{ta.loading}</div>;
+}
+
+function AnalyticsError() {
+  const ta = getTranslations(useAdminLocale()).admin.analytics;
+  return (
+    <div role="alert" className="px-6 py-24 text-center text-muted-foreground">
+      {ta.loadError}
+    </div>
+  );
+}
+function VelocityBars({
+  data,
+  t,
+}: {
+  data: { date: string; purchases: number }[];
+  t: ReturnType<typeof getTranslations>["admin"]["analytics"];
+}) {
   const W = 720;
   const H = 220;
   const PAD = 8;
@@ -63,8 +79,8 @@ function VelocityBars({ data }: { data: { date: string; purchases: number }[] })
         role="img"
         aria-label={
           data.some((d) => d.purchases > 0)
-            ? `Daily purchases over the last ${data.length} days. Peak ${Math.max(...data.map((d) => d.purchases))} in a day.`
-            : `No purchases recorded in the last ${data.length} days.`
+            ? t.velocityAriaHas(data.length, Math.max(...data.map((d) => d.purchases)))
+            : t.velocityAriaEmpty(data.length)
         }
       >
         {data.map((d, i) => {
@@ -103,6 +119,7 @@ function VelocityBars({ data }: { data: { date: string; purchases: number }[] })
 function AdminAnalyticsPage() {
   const { locale } = Route.useSearch();
   const t = getTranslations(locale);
+  const ta = t.admin.analytics;
   const url = useUrlState({ days: 30 });
   const days = numParam(url.search["days"], 30);
   const setDays = (next: number) => url.set({ days: next });
@@ -117,114 +134,100 @@ function AdminAnalyticsPage() {
   return (
     <AdminGate>
       <AdminShell
-        title="Analytics"
-        subtitle="Real storefront events — views, carts, checkouts, purchases. Never estimated."
+        title={ta.title}
+        subtitle={ta.subtitle}
+        breadcrumbs={[{ label: t.adminNav.items.analytics }]}
         actions={
-          <div role="group" aria-label={t.common.dateRange} className="flex gap-1 rounded-full border border-border p-1">
-            {RANGES.map((r) => (
-              <button
-                key={r}
-                type="button"
-                onClick={() => setDays(r)}
-                aria-pressed={days === r}
-                className={`rounded-full px-3 py-1 text-small font-medium transition-colors ${
-                  days === r ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {r}d
-              </button>
-            ))}
-          </div>
+          <SegmentedControl
+            ariaLabel={t.common.dateRange}
+            value={String(days)}
+            onChange={(v) => setDays(Number(v))}
+            options={RANGES.map((r) => ({ value: String(r), label: ta.rangeDays(r) }))}
+          />
         }
       >
         {!analytics.hasData ? (
-          <AdminCard title="No analytics data yet">
-            <EmptyState
-              title="Nothing recorded in this window"
-              text="Figures appear here once visitors browse the storefront. Event collection starts automatically — no setup needed. If collection was disabled in site settings, re-enable analytics_enabled to resume."
-            />
+          <AdminCard title={ta.noDataTitle}>
+            <EmptyState title={ta.noDataEmptyTitle} text={ta.noDataEmptyText} />
           </AdminCard>
         ) : (
           <>
             {/* KPI stats */}
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <Stat label="Events recorded" value={totals.events.toLocaleString()} hint={`Last ${days} days`} />
-              <Stat label="Unique visitors" value={totals.uniqueVisitors.toLocaleString()} hint="Anonymous visitor ids" />
-              <Stat label="Product view events" value={totals.productViews.toLocaleString()} hint="Genuine product page views" />
-              <Stat label="View → purchase" value={viewToPurchase} hint="Purchases ÷ product views" />
-            </div>
+            <StatRows>
+              <StatRow label={ta.eventsRecorded} value={totals.events.toLocaleString()} hint={ta.lastDays(days)} />
+              <StatRow label={ta.uniqueVisitors} value={totals.uniqueVisitors.toLocaleString()} hint={ta.visitorsHint} />
+              <StatRow label={ta.productViews} value={totals.productViews.toLocaleString()} hint={ta.productViewsHint} />
+              <StatRow label={ta.viewToPurchase} value={viewToPurchase} hint={ta.conversionHint} />
+            </StatRows>
 
             {/* Funnel */}
             <div className="mt-6">
-              <AdminCard
-                title="Conversion funnel"
-                subtitle={`Last ${days} days — unique visitors reaching each stage`}
-              >
-                <FunnelChart stages={funnel} />
+              <AdminCard title={ta.funnelTitle} subtitle={ta.funnelSubtitle(days)}>
+                <FunnelChart stages={funnel} caption={ta.funnelCaption} />
               </AdminCard>
             </div>
 
             <div className="mt-6 grid gap-6 lg:grid-cols-2">
-              <AdminCard title="Trending products" subtitle="Most-viewed products in the window">
+              <AdminCard title={ta.trendingTitle} subtitle={ta.trendingSubtitle}>
                 {trendingProducts.length > 0 ? (
                   <TopList
-                    title="Trending products"
+                    title={ta.trendingTitle}
                     rows={trendingProducts.map((p) => ({
                       label: p.name,
-                      value: `${p.views.toLocaleString()} views`,
+                      value: ta.viewsUnit(p.views.toLocaleString()),
                     }))}
                   />
                 ) : (
-                  <EmptyState title="No product views yet" text="Trending products appear once visitors view listings." />
+                  <EmptyState title={ta.trendingEmptyTitle} text={ta.trendingEmptyText} />
                 )}
               </AdminCard>
-              <AdminCard title="Popular searches" subtitle="What visitors actually typed">
+              <AdminCard title={ta.searchesTitle} subtitle={ta.searchesSubtitle}>
                 {popularSearches.length > 0 ? (
                   <TopList
-                    title="Popular searches"
+                    title={ta.searchesTitle}
                     rows={popularSearches.map((s) => ({
                       label: s.query,
-                      value: `${s.count.toLocaleString()} searches`,
+                      value: ta.searchesUnit(s.count.toLocaleString()),
                     }))}
                   />
                 ) : (
-                  <EmptyState title="No searches yet" text="Popular searches appear once visitors use search." />
+                  <EmptyState title={ta.searchesEmptyTitle} text={ta.searchesEmptyText} />
                 )}
               </AdminCard>
             </div>
 
             <div className="mt-6 grid gap-6 lg:grid-cols-2">
-              <AdminCard title="Purchase velocity" subtitle={`Purchases per day, last ${days} days`}>
-                <VelocityBars data={velocity} />
+              <AdminCard title={ta.velocityTitle} subtitle={ta.velocitySubtitle(days)}>
+                <VelocityBars data={velocity} t={ta} />
               </AdminCard>
-              <AdminCard title="Category performance" subtitle="Category page views in the window">
+              <AdminCard title={ta.categoriesTitle} subtitle={ta.categoriesSubtitle}>
                 {categories.length > 0 ? (
                   <TopList
-                    title="Top categories"
+                    title={ta.categoriesTitle}
                     rows={categories.map((c) => ({
                       label: c.name,
-                      value: `${c.views.toLocaleString()} views`,
+                      value: ta.viewsUnit(c.views.toLocaleString()),
                     }))}
                   />
                 ) : (
-                  <EmptyState title="No category views yet" text="Category rankings appear once visitors browse categories." />
+                  <EmptyState title={ta.categoriesEmptyTitle} text={ta.categoriesEmptyText} />
                 )}
               </AdminCard>
             </div>
 
             <div className="mt-6">
-              <AdminCard title="Seller performance" subtitle="Product views and bags per seller in the window">
+              <AdminCard title={ta.sellersTitle} subtitle={ta.sellersSubtitle}>
                 {sellers.length > 0 ? (
                   <TopList
-                    title="Top sellers"
+                    title={ta.sellersTitle}
                     rows={sellers.map((s) => ({
                       label: s.name,
-                      value: `${s.views.toLocaleString()} views`,
-                      hint: `${s.carts.toLocaleString()} added to bag`,
+                      value: ta.viewsUnit(s.views.toLocaleString()),
+                      hint: ta.bagHint(s.carts.toLocaleString()),
                     }))}
                   />
                 ) : (
-                  <EmptyState title="No seller activity yet" text="Seller rankings appear once visitors view products." />
+                  <EmptyState title={ta.sellersEmptyTitle} text={ta.sellersEmptyText} />
                 )}
               </AdminCard>
             </div>
@@ -235,12 +238,11 @@ function AdminAnalyticsPage() {
         <div className="mt-6 flex gap-3 rounded-2xl border border-border bg-card p-5">
           <Info className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
           <div>
-            <p className="text-small font-semibold">About these figures</p>
+            <p className="text-small font-semibold">{ta.aboutTitle}</p>
             <p className="mt-1 text-small leading-6 text-muted-foreground">
-              Every figure on this page is computed from real storefront events recorded in the last {days} days —
-              nothing is estimated, sampled or backfilled. Visitors are identified by a random first-party id only;
-              Do-Not-Track requests are honored and no third-party cookies are used. Collection can be paused
-              platform-wide via the <span className="font-mono">analytics_enabled</span> site setting.
+              {ta.aboutText(days)}{" "}
+              {ta.aboutPause} <span className="font-mono">analytics_enabled</span>
+              {ta.aboutPauseSuffix}
             </p>
           </div>
         </div>

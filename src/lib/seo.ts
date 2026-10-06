@@ -6,7 +6,11 @@
  * from the database (never invent prices, availability, ratings, or images).
  */
 
-export const SITE_URL = "https://modalia-core-foundation.lovable.app";
+/** Public site URL: env-configurable, falls back to the Lovable preview URL. */
+export const SITE_URL =
+  (typeof process !== "undefined" && process.env?.["SITE_URL"]) ||
+  (typeof import.meta !== "undefined" && (import.meta as any).env?.["VITE_SITE_URL"]) ||
+  "https://modalia-core-foundation.lovable.app";
 
 export function canonicalUrl(path: string): string {
   const clean = path.startsWith("/") ? path : `/${path}`;

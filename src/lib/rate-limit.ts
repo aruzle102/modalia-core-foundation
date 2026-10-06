@@ -27,8 +27,14 @@ export function getClientIp(): string {
     if (!headers) return "unknown";
     const forwarded = headers.get("x-forwarded-for");
     if (forwarded) {
-      const first = forwarded.split(",")[0]?.trim();
-      if (first) return first;
+      // Use the LAST entry, not the first: each proxy appends the address it
+      // received the request from, so the last entry is the one added by the
+      // trusted proxy closest to our server. The first entry is client-
+      // supplied and trivially forgeable (IP spoofing), which would let an
+      // attacker rotate identities and bypass rate limits.
+      const parts = forwarded.split(",").map((part) => part.trim()).filter(Boolean);
+      const last = parts[parts.length - 1];
+      if (last) return last;
     }
     for (const name of ["cf-connecting-ip", "x-real-ip", "x-client-ip"]) {
       const value = headers.get(name)?.trim();

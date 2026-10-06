@@ -24,6 +24,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireSeller } from "@/lib/seller-auth";
 import type { Database, Json } from "@/integrations/supabase/types";
 import { emitCustomerNotification, emitSellerNotification } from "@/lib/notifications.functions";
+import { getProductModerationMode, publishStateForMode } from "@/lib/moderation-mode";
 
 type Sb = SupabaseClient<Database>;
 
@@ -149,7 +150,7 @@ const imageInput = z.object({
   storagePath: z.string().min(1).max(500),
   isPrimary: z.boolean().default(false),
   sortOrder: z.number().int().min(0).default(0),
-  mediaType: z.enum(["image", "model_3d"]).default("image"),
+  mediaType: z.enum(["image", "video", "model_3d"]).default("image"),
   altText: localeText.optional(),
 });
 
@@ -293,10 +294,413 @@ export const getProductEditor = createServerFn({ method: "GET" })
   });
 
 // ---------------------------------------------------------------------------
-// Save (create / update) — ordered writes, no real transaction available
+// Save core (shared): the admin product editor reuses this exact write path
+// via `executeProductSave` so sellers and admins never diverge. `scope`
+// carries the only things that differ: whose seller the product belongs to,
+// whose store, who the actor is, and whether this is an admin override
+// (admin overrides are flagged in audit_logs).
 // ---------------------------------------------------------------------------
 
-type SaveInput = z.infer<typeof saveProductSchema>;
+export { saveProductSchema };
+export type SaveProductInput = z.infer<typeof saveProductSchema>;
+export type ProductSaveScope = {
+  sellerId: string;
+  storeId: string | null;
+  actorId: string | null;
+  isAdmin: boolean;
+};
+
+export async function executeProductSave(
+  sb: Sb,
+  data: SaveProductInput,
+  scope: ProductSaveScope,
+): Promise<{ productId: string }> {
+  // Variant SKUs must be unique within the input itself…
+  const seen = new Set<string>();
+  for (const v of data.variants) {
+    const key = v.sku.trim().toLowerCase();
+    if (seen.has(key)) throw new Error(`Duplicate variant SKU in this product: ${v.sku}`);
+    seen.add(key);
+  }
+  // …and unique per seller across the catalog.
+  await ensureUniqueVariantSkus(
+    sb,
+    scope.sellerId,
+    data.variants.map((v) => v.sku.trim()),
+    data.id,
+  );
+
+  // Media uploaded through storage lives under `<sellerId>/…` (see the
+  // product-media bucket policies). Reject paths outside the caller's own
+  // prefix so one seller cannot attach another seller's objects to their
+  // products.
+  const mediaPrefix = `${scope.sellerId}/`;
+  for (const img of data.images) {
+    const path = img.storagePath.trim();
+    if (path.includes("..") || !path.startsWith(mediaPrefix)) {
+      throw new Error("One or more image paths are not valid for this product's seller.");
+    }
+  }
+
+  let productId: string;
+  let isNew: boolean;
+
+  if (data.id) {
+    const existing = await ownedProduct(sb, scope.sellerId, data.id);
+    const wasPublished = existing.moderation_status === "approved";
+    const { error } = await sb
+      .from("products")
+      .update({
+        name: data.name as unknown as Json,
+        description: (data.description ?? {}) as unknown as Json,
+        short_description: (data.shortDescription ?? {}) as unknown as Json,
+        category_id: data.categoryId ?? null,
+        brand_id: data.brandId ?? null,
+        sku: data.sku?.trim() || null,
+        barcode: data.barcode?.trim() || null,
+        weight_grams: data.weightGrams ?? null,
+        base_price: data.basePrice,
+        compare_at_price: data.compareAtPrice ?? null,
+        metadata: {
+          seo_title: data.seoTitle ?? null,
+          seo_description: data.seoDescription ?? null,
+        } as unknown as Json,
+      })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    productId = data.id;
+    isNew = false;
+    if (wasPublished) {
+      const editedMeta: Record<string, Json> = { seller_id: scope.sellerId };
+      if (scope.isAdmin) editedMeta["admin_override"] = true;
+      await auditLog(scope.actorId, "product_edited_published", "product", productId, editedMeta);
+    }
+  } else {
+    if (!scope.storeId) throw new Error("Create a store before adding products.");
+    const nameObj = Object.fromEntries(
+      Object.entries(data.name).filter(([, v]) => typeof v === "string" && v.trim()),
+    ) as Record<string, string>;
+    const { data: inserted, error } = await sb
+      .from("products")
+      .insert({
+        seller_id: scope.sellerId,
+        store_id: scope.storeId,
+        slug: makeSlug(nameObj),
+        name: data.name as unknown as Json,
+        description: (data.description ?? {}) as unknown as Json,
+        short_description: (data.shortDescription ?? {}) as unknown as Json,
+        category_id: data.categoryId ?? null,
+        brand_id: data.brandId ?? null,
+        sku: data.sku?.trim() || null,
+        barcode: data.barcode?.trim() || null,
+        weight_grams: data.weightGrams ?? null,
+        base_price: data.basePrice,
+        compare_at_price: data.compareAtPrice ?? null,
+        status: "draft",
+        moderation_status: "pending",
+        publication_status: "pending_review",
+        visibility: "private",
+        metadata: {
+          seo_title: data.seoTitle ?? null,
+          seo_description: data.seoDescription ?? null,
+        } as unknown as Json,
+      })
+      .select("id")
+      .single();
+    if (error || !inserted) throw new Error(error?.message ?? "Unable to create product.");
+    productId = inserted.id;
+    isNew = true;
+  }
+
+  // Tags — rebuild assignments against existing global tags only.
+  const { error: delTagsErr } = await sb
+    .from("product_tag_assignments")
+    .delete()
+    .eq("product_id", productId);
+  if (delTagsErr) throw new Error(delTagsErr.message);
+  const tagSlugs = [...new Set(data.tags.map((t) => slugify(t)).filter(Boolean))];
+  if (tagSlugs.length) {
+    const { data: tagRows, error: tagErr } = await sb
+      .from("product_tags")
+      .select("id, slug")
+      .in("slug", tagSlugs);
+    if (tagErr) throw new Error(tagErr.message);
+    if (tagRows && tagRows.length) {
+      const { error: assignErr } = await sb.from("product_tag_assignments").insert(
+        tagRows.map((t) => ({ product_id: productId, tag_id: t.id })),
+      );
+      if (assignErr) throw new Error(assignErr.message);
+    }
+  }
+
+  // Options — rebuild: clear variant links first (FK), then values, then options.
+  const { data: variantIdsRows } = await sb
+    .from("product_variants")
+    .select("id")
+    .eq("product_id", productId);
+  const allVariantIds = (variantIdsRows ?? []).map((r) => r.id);
+  if (allVariantIds.length) {
+    const { error: e1 } = await sb
+      .from("variant_option_values")
+      .delete()
+      .in("variant_id", allVariantIds);
+    if (e1) throw new Error(e1.message);
+  }
+  const { data: optionRows } = await sb
+    .from("product_options")
+    .select("id")
+    .eq("product_id", productId);
+  const optionIds = (optionRows ?? []).map((r) => r.id);
+  if (optionIds.length) {
+    const { error: e2 } = await sb
+      .from("product_option_values")
+      .delete()
+      .in("product_option_id", optionIds);
+    if (e2) throw new Error(e2.message);
+    const { error: e3 } = await sb.from("product_options").delete().in("id", optionIds);
+    if (e3) throw new Error(e3.message);
+  }
+
+  // Insert fresh options + values; build optionCode::value → id map.
+  const valueIdByKey = new Map<string, string>();
+  const optionCodeByIndex = data.options.map((o, i) => {
+    const fromName = slugify(
+      Object.values(o.name).find((v) => v && v.trim()) ?? `option-${i + 1}`,
+    );
+    return o.code ?? (fromName || `option-${i + 1}`);
+  });
+  for (let i = 0; i < data.options.length; i++) {
+    const opt = data.options[i]!;
+    const code = optionCodeByIndex[i]!;
+    const { data: insertedOpt, error: optErr } = await sb
+      .from("product_options")
+      .insert({
+        product_id: productId,
+        code,
+        name: opt.name as unknown as Json,
+        required: true,
+        sort_order: i,
+      })
+      .select("id")
+      .single();
+    if (optErr || !insertedOpt) throw new Error(optErr?.message ?? "Unable to save options.");
+    for (let j = 0; j < opt.values.length; j++) {
+      const val = opt.values[j]!;
+      const { data: insertedVal, error: valErr } = await sb
+        .from("product_option_values")
+        .insert({
+          product_option_id: insertedOpt.id,
+          label: val.label as unknown as Json,
+          value: val.value,
+          color_id: val.colorId ?? null,
+          sort_order: j,
+        })
+        .select("id")
+        .single();
+      if (valErr || !insertedVal)
+        throw new Error(valErr?.message ?? "Unable to save option values.");
+      valueIdByKey.set(`${code}::${val.value}`, insertedVal.id);
+    }
+  }
+
+  // Variants — sync by id: update existing, insert new, retire removed.
+  const existingIds = new Set(allVariantIds);
+  const inputIds = new Set(
+    data.variants.filter((v) => v.id && existingIds.has(v.id)).map((v) => v.id as string),
+  );
+  const removedIds = allVariantIds.filter((id) => !inputIds.has(id));
+
+  for (const v of data.variants) {
+    const row = {
+      sku: v.sku.trim(),
+      price: v.price,
+      compare_at_price: v.compareAtPrice ?? null,
+      barcode: v.barcode?.trim() || null,
+      weight_grams: v.weightGrams ?? null,
+      available: v.stock > 0,
+      sort_order: data.variants.indexOf(v),
+    };
+    if (v.id && existingIds.has(v.id)) {
+      const { error: upErr } = await sb.from("product_variants").update(row).eq("id", v.id);
+      if (upErr) throw new Error(upErr.message);
+    } else {
+      const { data: inserted, error: insErr } = await sb
+        .from("product_variants")
+        .insert({ ...row, product_id: productId, status: "active" })
+        .select("id")
+        .single();
+      if (insErr || !inserted) throw new Error(insErr?.message ?? "Unable to save variants.");
+      v.id = inserted.id;
+    }
+  }
+
+  // Retire variants removed from the editor: delete when unreferenced,
+  // otherwise archive (orders/carts may still reference them).
+  for (const vid of removedIds) {
+    const [orders, carts] = await Promise.all([
+      sb.from("order_items").select("id", { count: "exact", head: true }).eq("variant_id", vid),
+      sb.from("cart_items").select("id", { count: "exact", head: true }).eq("variant_id", vid),
+    ]);
+    const referenced = (orders.count ?? 0) > 0 || (carts.count ?? 0) > 0;
+    if (referenced) {
+      const { error: archErr } = await sb
+        .from("product_variants")
+        .update({ status: "archived", available: false })
+        .eq("id", vid);
+      if (archErr) throw new Error(archErr.message);
+    } else {
+      await sb.from("inventory").delete().eq("variant_id", vid);
+      const { error: delErr } = await sb.from("product_variants").delete().eq("id", vid);
+      if (delErr) throw new Error(delErr.message);
+    }
+  }
+
+  // Rebuild variant_option_values from client-stable option refs.
+  const { data: finalVariants, error: fvErr } = await sb
+    .from("product_variants")
+    .select("id")
+    .eq("product_id", productId)
+    .neq("status", "archived");
+  if (fvErr) throw new Error(fvErr.message);
+  const finalIds = (finalVariants ?? []).map((r) => r.id);
+  const linkRows: { variant_id: string; product_option_value_id: string }[] = [];
+  for (const v of data.variants) {
+    if (!v.id || !finalIds.includes(v.id)) continue;
+    for (const ref of v.optionRefs) {
+      const valueId = valueIdByKey.get(`${ref.optionCode}::${ref.value}`);
+      if (valueId) linkRows.push({ variant_id: v.id, product_option_value_id: valueId });
+    }
+  }
+  if (linkRows.length) {
+    const { error: linkErr } = await sb.from("variant_option_values").insert(linkRows);
+    if (linkErr) throw new Error(linkErr.message);
+  }
+
+  // Inventory — upsert per variant (reserved_quantity untouched).
+  const { data: invRows, error: invSelErr } = await sb
+    .from("inventory")
+    .select("variant_id")
+    .in("variant_id", finalIds);
+  if (invSelErr) throw new Error(invSelErr.message);
+  const hasInv = new Set((invRows ?? []).map((r) => r.variant_id));
+  for (const v of data.variants) {
+    if (!v.id || !finalIds.includes(v.id)) continue;
+    if (hasInv.has(v.id)) {
+      const { error: invErr } = await sb
+        .from("inventory")
+        .update({ quantity: v.stock, low_stock_threshold: v.lowStockThreshold })
+        .eq("variant_id", v.id);
+      if (invErr) throw new Error(invErr.message);
+    } else {
+      const { error: invErr } = await sb.from("inventory").insert({
+        variant_id: v.id,
+        quantity: v.stock,
+        reserved_quantity: 0,
+        low_stock_threshold: v.lowStockThreshold,
+      });
+      if (invErr) throw new Error(invErr.message);
+    }
+  }
+
+  // Images — sync by id: update existing, insert new, delete removed.
+  const { data: existingImages, error: imgSelErr } = await sb
+    .from("product_images")
+    .select("id, storage_path")
+    .eq("product_id", productId);
+  if (imgSelErr) throw new Error(imgSelErr.message);
+  const existingImageIds = new Set((existingImages ?? []).map((r) => r.id));
+  const inputImageIds = new Set(
+    data.images.filter((img) => img.id && existingImageIds.has(img.id)).map((img) => img.id as string),
+  );
+  const removedImageIds = [...existingImageIds].filter((id) => !inputImageIds.has(id));
+  // Storage paths of removed rows, for orphan cleanup after the delete.
+  const removedImagePaths = (existingImages ?? [])
+    .filter((r) => removedImageIds.includes(r.id))
+    .map((r) => r.storage_path);
+
+  let primarySeen = false;
+  for (let i = 0; i < data.images.length; i++) {
+    const img = data.images[i]!;
+    const isPrimary = img.isPrimary && !primarySeen;
+    if (img.isPrimary) primarySeen = true;
+    const row = {
+      storage_path: img.storagePath,
+      alt_text: (img.altText ?? {}) as unknown as Json,
+      is_primary: isPrimary,
+      sort_order: img.sortOrder ?? i,
+      media_type: img.mediaType,
+      variant_id: null,
+    };
+    if (img.id && existingImageIds.has(img.id)) {
+      const { error: upErr } = await sb.from("product_images").update(row).eq("id", img.id);
+      if (upErr) throw new Error(upErr.message);
+    } else {
+      const { data: inserted, error: insErr } = await sb
+        .from("product_images")
+        .insert({ ...row, product_id: productId })
+        .select("id")
+        .single();
+      if (insErr || !inserted) throw new Error(insErr?.message ?? "Unable to save images.");
+      img.id = inserted.id;
+    }
+  }
+  if (removedImageIds.length) {
+    await sb
+      .from("product_variants")
+      .update({ image_id: null })
+      .in("image_id", removedImageIds)
+      .eq("product_id", productId);
+    const { error: imgDelErr } = await sb.from("product_images").delete().in("id", removedImageIds);
+    if (imgDelErr) throw new Error(imgDelErr.message);
+    // Delete storage objects left unreferenced by any product_images row
+    // (duplicateProduct copies storage paths between products, so a blind
+    // delete would break the copies). Runs under the seller's session, so
+    // the "Seller staff can delete own media" storage policy applies.
+    const uniqPaths = [...new Set(removedImagePaths.filter(Boolean))];
+    if (uniqPaths.length) {
+      const { data: refs, error: refErr } = await sb
+        .from("product_images")
+        .select("storage_path")
+        .in("storage_path", uniqPaths);
+      if (refErr) throw new Error(refErr.message);
+      const referenced = new Set((refs ?? []).map((r) => r.storage_path));
+      const orphans = uniqPaths.filter((p) => !referenced.has(p));
+      if (orphans.length) {
+        const { error: rmErr } = await sb.storage.from("product-media").remove(orphans);
+        if (rmErr) throw new Error(rmErr.message);
+      }
+    }
+  }
+
+  // Link variants to images chosen in the matrix (variant.imageId refs image ids).
+  // Ids of images removed in this save are skipped — the nulling above already cleared them.
+  const removedImageSet = new Set(removedImageIds);
+  for (const v of data.variants) {
+    if (!v.id || !finalIds.includes(v.id)) continue;
+    if (v.imageId && removedImageSet.has(v.imageId)) continue;
+    const { error: imgLinkErr } = await sb
+      .from("product_variants")
+      .update({ image_id: v.imageId ?? null })
+      .eq("id", v.id);
+    if (imgLinkErr) throw new Error(imgLinkErr.message);
+  }
+
+  const auditMeta: Record<string, Json> = {
+    seller_id: scope.sellerId,
+    variants: data.variants.length,
+  };
+  // Admin overrides of seller settings are explicit in the audit trail.
+  if (scope.isAdmin) auditMeta["admin_override"] = true;
+  await auditLog(
+    scope.actorId,
+    isNew ? "product_created" : "product_updated",
+    "product",
+    productId,
+    auditMeta,
+  );
+
+  return { productId };
+}
 
 async function ensureUniqueVariantSkus(
   sb: Sb,
@@ -324,384 +728,12 @@ export const saveProduct = createServerFn({ method: "POST" })
   .inputValidator((data) => saveProductSchema.parse(data))
   .handler(async ({ data, context }) => {
     const seller = await requireSeller(context, "products.edit");
-    const sb = context.supabase as Sb;
-
-    // Variant SKUs must be unique within the input itself…
-    const seen = new Set<string>();
-    for (const v of data.variants) {
-      const key = v.sku.trim().toLowerCase();
-      if (seen.has(key)) throw new Error(`Duplicate variant SKU in this product: ${v.sku}`);
-      seen.add(key);
-    }
-    // …and unique per seller across the catalog.
-    await ensureUniqueVariantSkus(
-      sb,
-      seller.sellerId,
-      data.variants.map((v) => v.sku.trim()),
-      data.id,
-    );
-
-    // Media uploaded through storage lives under `<sellerId>/…` (see the
-    // product-media bucket policies). Reject paths outside the caller's own
-    // prefix so one seller cannot attach another seller's objects to their
-    // products.
-    const mediaPrefix = `${seller.sellerId}/`;
-    for (const img of data.images) {
-      const path = img.storagePath.trim();
-      if (path.includes("..") || !path.startsWith(mediaPrefix)) {
-        throw new Error("One or more image paths are not valid for this seller.");
-      }
-    }
-
-    let productId: string;
-    let isNew: boolean;
-
-    if (data.id) {
-      const existing = await ownedProduct(sb, seller.sellerId, data.id);
-      const wasPublished = existing.moderation_status === "approved";
-      const { error } = await sb
-        .from("products")
-        .update({
-          name: data.name as unknown as Json,
-          description: (data.description ?? {}) as unknown as Json,
-          short_description: (data.shortDescription ?? {}) as unknown as Json,
-          category_id: data.categoryId ?? null,
-          brand_id: data.brandId ?? null,
-          sku: data.sku?.trim() || null,
-          barcode: data.barcode?.trim() || null,
-          weight_grams: data.weightGrams ?? null,
-          base_price: data.basePrice,
-          compare_at_price: data.compareAtPrice ?? null,
-          metadata: {
-            seo_title: data.seoTitle ?? null,
-            seo_description: data.seoDescription ?? null,
-          } as unknown as Json,
-        })
-        .eq("id", data.id);
-      if (error) throw new Error(error.message);
-      productId = data.id;
-      isNew = false;
-      if (wasPublished) {
-        await auditLog(context.userId, "product_edited_published", "product", productId, {
-          seller_id: seller.sellerId,
-        });
-      }
-    } else {
-      if (!seller.storeId) throw new Error("Create a store before adding products.");
-      const nameObj = Object.fromEntries(
-        Object.entries(data.name).filter(([, v]) => typeof v === "string" && v.trim()),
-      ) as Record<string, string>;
-      const { data: inserted, error } = await sb
-        .from("products")
-        .insert({
-          seller_id: seller.sellerId,
-          store_id: seller.storeId,
-          slug: makeSlug(nameObj),
-          name: data.name as unknown as Json,
-          description: (data.description ?? {}) as unknown as Json,
-          short_description: (data.shortDescription ?? {}) as unknown as Json,
-          category_id: data.categoryId ?? null,
-          brand_id: data.brandId ?? null,
-          sku: data.sku?.trim() || null,
-          barcode: data.barcode?.trim() || null,
-          weight_grams: data.weightGrams ?? null,
-          base_price: data.basePrice,
-          compare_at_price: data.compareAtPrice ?? null,
-          status: "draft",
-          moderation_status: "pending",
-          publication_status: "pending_review",
-          visibility: "private",
-          metadata: {
-            seo_title: data.seoTitle ?? null,
-            seo_description: data.seoDescription ?? null,
-          } as unknown as Json,
-        })
-        .select("id")
-        .single();
-      if (error || !inserted) throw new Error(error?.message ?? "Unable to create product.");
-      productId = inserted.id;
-      isNew = true;
-    }
-
-    // Tags — rebuild assignments against existing global tags only.
-    const { error: delTagsErr } = await sb
-      .from("product_tag_assignments")
-      .delete()
-      .eq("product_id", productId);
-    if (delTagsErr) throw new Error(delTagsErr.message);
-    const tagSlugs = [...new Set(data.tags.map((t) => slugify(t)).filter(Boolean))];
-    if (tagSlugs.length) {
-      const { data: tagRows, error: tagErr } = await sb
-        .from("product_tags")
-        .select("id, slug")
-        .in("slug", tagSlugs);
-      if (tagErr) throw new Error(tagErr.message);
-      if (tagRows && tagRows.length) {
-        const { error: assignErr } = await sb.from("product_tag_assignments").insert(
-          tagRows.map((t) => ({ product_id: productId, tag_id: t.id })),
-        );
-        if (assignErr) throw new Error(assignErr.message);
-      }
-    }
-
-    // Options — rebuild: clear variant links first (FK), then values, then options.
-    const { data: variantIdsRows } = await sb
-      .from("product_variants")
-      .select("id")
-      .eq("product_id", productId);
-    const allVariantIds = (variantIdsRows ?? []).map((r) => r.id);
-    if (allVariantIds.length) {
-      const { error: e1 } = await sb
-        .from("variant_option_values")
-        .delete()
-        .in("variant_id", allVariantIds);
-      if (e1) throw new Error(e1.message);
-    }
-    const { data: optionRows } = await sb
-      .from("product_options")
-      .select("id")
-      .eq("product_id", productId);
-    const optionIds = (optionRows ?? []).map((r) => r.id);
-    if (optionIds.length) {
-      const { error: e2 } = await sb
-        .from("product_option_values")
-        .delete()
-        .in("product_option_id", optionIds);
-      if (e2) throw new Error(e2.message);
-      const { error: e3 } = await sb.from("product_options").delete().in("id", optionIds);
-      if (e3) throw new Error(e3.message);
-    }
-
-    // Insert fresh options + values; build optionCode::value → id map.
-    const valueIdByKey = new Map<string, string>();
-    const optionCodeByIndex = data.options.map((o, i) => {
-      const fromName = slugify(
-        Object.values(o.name).find((v) => v && v.trim()) ?? `option-${i + 1}`,
-      );
-      return o.code ?? (fromName || `option-${i + 1}`);
+    return executeProductSave(context.supabase as Sb, data, {
+      sellerId: seller.sellerId,
+      storeId: seller.storeId,
+      actorId: context.userId,
+      isAdmin: false,
     });
-    for (let i = 0; i < data.options.length; i++) {
-      const opt = data.options[i]!;
-      const code = optionCodeByIndex[i]!;
-      const { data: insertedOpt, error: optErr } = await sb
-        .from("product_options")
-        .insert({
-          product_id: productId,
-          code,
-          name: opt.name as unknown as Json,
-          required: true,
-          sort_order: i,
-        })
-        .select("id")
-        .single();
-      if (optErr || !insertedOpt) throw new Error(optErr?.message ?? "Unable to save options.");
-      for (let j = 0; j < opt.values.length; j++) {
-        const val = opt.values[j]!;
-        const { data: insertedVal, error: valErr } = await sb
-          .from("product_option_values")
-          .insert({
-            product_option_id: insertedOpt.id,
-            label: val.label as unknown as Json,
-            value: val.value,
-            color_id: val.colorId ?? null,
-            sort_order: j,
-          })
-          .select("id")
-          .single();
-        if (valErr || !insertedVal)
-          throw new Error(valErr?.message ?? "Unable to save option values.");
-        valueIdByKey.set(`${code}::${val.value}`, insertedVal.id);
-      }
-    }
-
-    // Variants — sync by id: update existing, insert new, retire removed.
-    const existingIds = new Set(allVariantIds);
-    const inputIds = new Set(
-      data.variants.filter((v) => v.id && existingIds.has(v.id)).map((v) => v.id as string),
-    );
-    const removedIds = allVariantIds.filter((id) => !inputIds.has(id));
-
-    for (const v of data.variants) {
-      const row = {
-        sku: v.sku.trim(),
-        price: v.price,
-        compare_at_price: v.compareAtPrice ?? null,
-        barcode: v.barcode?.trim() || null,
-        weight_grams: v.weightGrams ?? null,
-        available: v.stock > 0,
-        sort_order: data.variants.indexOf(v),
-      };
-      if (v.id && existingIds.has(v.id)) {
-        const { error: upErr } = await sb.from("product_variants").update(row).eq("id", v.id);
-        if (upErr) throw new Error(upErr.message);
-      } else {
-        const { data: inserted, error: insErr } = await sb
-          .from("product_variants")
-          .insert({ ...row, product_id: productId, status: "active" })
-          .select("id")
-          .single();
-        if (insErr || !inserted) throw new Error(insErr?.message ?? "Unable to save variants.");
-        v.id = inserted.id;
-      }
-    }
-
-    // Retire variants removed from the editor: delete when unreferenced,
-    // otherwise archive (orders/carts may still reference them).
-    for (const vid of removedIds) {
-      const [orders, carts] = await Promise.all([
-        sb.from("order_items").select("id", { count: "exact", head: true }).eq("variant_id", vid),
-        sb.from("cart_items").select("id", { count: "exact", head: true }).eq("variant_id", vid),
-      ]);
-      const referenced = (orders.count ?? 0) > 0 || (carts.count ?? 0) > 0;
-      if (referenced) {
-        const { error: archErr } = await sb
-          .from("product_variants")
-          .update({ status: "archived", available: false })
-          .eq("id", vid);
-        if (archErr) throw new Error(archErr.message);
-      } else {
-        await sb.from("inventory").delete().eq("variant_id", vid);
-        const { error: delErr } = await sb.from("product_variants").delete().eq("id", vid);
-        if (delErr) throw new Error(delErr.message);
-      }
-    }
-
-    // Rebuild variant_option_values from client-stable option refs.
-    const { data: finalVariants, error: fvErr } = await sb
-      .from("product_variants")
-      .select("id")
-      .eq("product_id", productId)
-      .neq("status", "archived");
-    if (fvErr) throw new Error(fvErr.message);
-    const finalIds = (finalVariants ?? []).map((r) => r.id);
-    const linkRows: { variant_id: string; product_option_value_id: string }[] = [];
-    for (const v of data.variants) {
-      if (!v.id || !finalIds.includes(v.id)) continue;
-      for (const ref of v.optionRefs) {
-        const valueId = valueIdByKey.get(`${ref.optionCode}::${ref.value}`);
-        if (valueId) linkRows.push({ variant_id: v.id, product_option_value_id: valueId });
-      }
-    }
-    if (linkRows.length) {
-      const { error: linkErr } = await sb.from("variant_option_values").insert(linkRows);
-      if (linkErr) throw new Error(linkErr.message);
-    }
-
-    // Inventory — upsert per variant (reserved_quantity untouched).
-    const { data: invRows, error: invSelErr } = await sb
-      .from("inventory")
-      .select("variant_id")
-      .in("variant_id", finalIds);
-    if (invSelErr) throw new Error(invSelErr.message);
-    const hasInv = new Set((invRows ?? []).map((r) => r.variant_id));
-    for (const v of data.variants) {
-      if (!v.id || !finalIds.includes(v.id)) continue;
-      if (hasInv.has(v.id)) {
-        const { error: invErr } = await sb
-          .from("inventory")
-          .update({ quantity: v.stock, low_stock_threshold: v.lowStockThreshold })
-          .eq("variant_id", v.id);
-        if (invErr) throw new Error(invErr.message);
-      } else {
-        const { error: invErr } = await sb.from("inventory").insert({
-          variant_id: v.id,
-          quantity: v.stock,
-          reserved_quantity: 0,
-          low_stock_threshold: v.lowStockThreshold,
-        });
-        if (invErr) throw new Error(invErr.message);
-      }
-    }
-
-    // Images — sync by id: update existing, insert new, delete removed.
-    const { data: existingImages, error: imgSelErr } = await sb
-      .from("product_images")
-      .select("id, storage_path")
-      .eq("product_id", productId);
-    if (imgSelErr) throw new Error(imgSelErr.message);
-    const existingImageIds = new Set((existingImages ?? []).map((r) => r.id));
-    const inputImageIds = new Set(
-      data.images.filter((img) => img.id && existingImageIds.has(img.id)).map((img) => img.id as string),
-    );
-    const removedImageIds = [...existingImageIds].filter((id) => !inputImageIds.has(id));
-    // Storage paths of removed rows, for orphan cleanup after the delete.
-    const removedImagePaths = (existingImages ?? [])
-      .filter((r) => removedImageIds.includes(r.id))
-      .map((r) => r.storage_path);
-
-    let primarySeen = false;
-    for (let i = 0; i < data.images.length; i++) {
-      const img = data.images[i]!;
-      const isPrimary = img.isPrimary && !primarySeen;
-      if (img.isPrimary) primarySeen = true;
-      const row = {
-        storage_path: img.storagePath,
-        alt_text: (img.altText ?? {}) as unknown as Json,
-        is_primary: isPrimary,
-        sort_order: img.sortOrder ?? i,
-        media_type: img.mediaType,
-        variant_id: null,
-      };
-      if (img.id && existingImageIds.has(img.id)) {
-        const { error: upErr } = await sb.from("product_images").update(row).eq("id", img.id);
-        if (upErr) throw new Error(upErr.message);
-      } else {
-        const { data: inserted, error: insErr } = await sb
-          .from("product_images")
-          .insert({ ...row, product_id: productId })
-          .select("id")
-          .single();
-        if (insErr || !inserted) throw new Error(insErr?.message ?? "Unable to save images.");
-        img.id = inserted.id;
-      }
-    }
-    if (removedImageIds.length) {
-      await sb
-        .from("product_variants")
-        .update({ image_id: null })
-        .in("image_id", removedImageIds)
-        .eq("product_id", productId);
-      const { error: imgDelErr } = await sb.from("product_images").delete().in("id", removedImageIds);
-      if (imgDelErr) throw new Error(imgDelErr.message);
-      // Delete storage objects left unreferenced by any product_images row
-      // (duplicateProduct copies storage paths between products, so a blind
-      // delete would break the copies). Runs under the seller's session, so
-      // the "Seller staff can delete own media" storage policy applies.
-      const uniqPaths = [...new Set(removedImagePaths.filter(Boolean))];
-      if (uniqPaths.length) {
-        const { data: refs, error: refErr } = await sb
-          .from("product_images")
-          .select("storage_path")
-          .in("storage_path", uniqPaths);
-        if (refErr) throw new Error(refErr.message);
-        const referenced = new Set((refs ?? []).map((r) => r.storage_path));
-        const orphans = uniqPaths.filter((p) => !referenced.has(p));
-        if (orphans.length) {
-          const { error: rmErr } = await sb.storage.from("product-media").remove(orphans);
-          if (rmErr) throw new Error(rmErr.message);
-        }
-      }
-    }
-
-    // Link variants to images chosen in the matrix (variant.imageId refs image ids).
-    // Ids of images removed in this save are skipped — the nulling above already cleared them.
-    const removedImageSet = new Set(removedImageIds);
-    for (const v of data.variants) {
-      if (!v.id || !finalIds.includes(v.id)) continue;
-      if (v.imageId && removedImageSet.has(v.imageId)) continue;
-      const { error: imgLinkErr } = await sb
-        .from("product_variants")
-        .update({ image_id: v.imageId ?? null })
-        .eq("id", v.id);
-      if (imgLinkErr) throw new Error(imgLinkErr.message);
-    }
-
-    await auditLog(context.userId, isNew ? "product_created" : "product_updated", "product", productId, {
-      seller_id: seller.sellerId,
-      variants: data.variants.length,
-    });
-
-    return { productId };
   });
 
 // ---------------------------------------------------------------------------
@@ -944,12 +976,20 @@ export const bulkUpdateProducts = createServerFn({ method: "POST" })
     const seller = await requireSeller(context, ...permissions);
     const sb = context.supabase as Sb;
 
+    // Platform moderation mode: in `auto_publish`, bulk "submit" approves
+    // directly (server-side), same as the single-product publish action.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const mode = data.action === "submit" ? await getProductModerationMode(supabaseAdmin) : null;
+    const now = new Date().toISOString();
+
     const patch =
       data.action === "archive"
         ? { status: "archived" as const }
         : data.action === "hide"
           ? { visibility: "hidden" }
-          : { moderation_status: "pending", publication_status: "pending_review", visibility: "private" };
+          : mode === "auto_publish"
+            ? publishStateForMode("auto_publish", now)
+            : { moderation_status: "pending", publication_status: "pending_review", visibility: "private" };
 
     let updated = 0;
     for (const id of data.ids) {
@@ -958,6 +998,7 @@ export const bulkUpdateProducts = createServerFn({ method: "POST" })
       if (error) throw new Error(error.message);
       await auditLog(context.userId, `product_bulk_${data.action}`, "product", id, {
         seller_id: seller.sellerId,
+        ...(mode ? { moderation_mode: mode } : {}),
       });
       updated++;
     }
@@ -971,19 +1012,22 @@ export const submitForModeration = createServerFn({ method: "POST" })
     const seller = await requireSeller(context, "products.publish");
     const sb = context.supabase as Sb;
     await ownedProduct(sb, seller.sellerId, data.productId);
+    // Platform moderation mode (site_settings): in `auto_publish` the seller's
+    // publish action approves the product directly, server-side.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const mode = await getProductModerationMode(supabaseAdmin);
+    const now = new Date().toISOString();
     const { error } = await sb
       .from("products")
-      .update({
-        moderation_status: "pending",
-        publication_status: "pending_review",
-        visibility: "private",
-      })
+      .update(publishStateForMode(mode, now))
       .eq("id", data.productId);
     if (error) throw new Error(error.message);
     await auditLog(context.userId, "product_submitted", "product", data.productId, {
       seller_id: seller.sellerId,
+      moderation_mode: mode,
+      auto_published: mode === "auto_publish",
     });
-    return { ok: true };
+    return { ok: true, autoPublished: mode === "auto_publish" };
   });
 
 // ---------------------------------------------------------------------------

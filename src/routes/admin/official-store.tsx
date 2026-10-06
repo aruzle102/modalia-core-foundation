@@ -47,7 +47,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
-import { getOfficialStore } from "@/lib/admin-ops.functions";
+import { getOfficialStore } from "@/lib/admin-official-store.functions";
 import {
   listAdminProducts,
   moderateAdminProduct,
@@ -99,19 +99,22 @@ type TabId = (typeof TABS)[number];
 export const Route = createFileRoute("/admin/official-store")({
   validateSearch: (search: Record<string, unknown>) => ({
     locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined),
-    tab: (TABS as readonly string[]).includes(typeof search["tab"] === "string" ? search["tab"] : "")
+    tab: (TABS as readonly string[]).includes(
+      typeof search["tab"] === "string" ? search["tab"] : "",
+    )
       ? (search["tab"] as TabId)
       : "overview",
   }),
   head: () => ({
-    meta: [{ name: "robots", content: "noindex,nofollow" }, { title: "Official Store — Modalia Admin" }],
+    meta: [
+      { name: "robots", content: "noindex,nofollow" },
+      { title: "Official Store — Modalia Admin" },
+    ],
   }),
   component: OfficialStorePage,
 });
 
-type OfficialStoreData = NonNullable<
-  Awaited<ReturnType<typeof getOfficialStore>>["official"]
->;
+type OfficialStoreData = NonNullable<Awaited<ReturnType<typeof getOfficialStore>>["official"]>;
 
 function OfficialStorePage() {
   const { locale, tab } = Route.useSearch();
@@ -126,8 +129,7 @@ function OfficialStorePage() {
   });
   const official = storeQuery.data?.official ?? null;
 
-  const setTab = (next: TabId) =>
-    navigate({ search: (prev) => ({ ...prev, tab: next }) });
+  const setTab = (next: TabId) => navigate({ search: (prev) => ({ ...prev, tab: next }) });
 
   return (
     <AdminGate>
@@ -156,7 +158,12 @@ function OfficialStorePage() {
             title={t.common.loadingError}
             text={errMsg(storeQuery.error)}
             action={
-              <Button type="button" variant="outline" size="sm" onClick={() => storeQuery.refetch()}>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => storeQuery.refetch()}
+              >
                 {t.common.tryAgain}
               </Button>
             }
@@ -188,26 +195,14 @@ function OfficialStorePage() {
                 </TabsList>
               </div>
             </Tabs>
-            {tab === "overview" && (
-              <OverviewTab locale={locale} official={official} />
-            )}
-            {tab === "products" && (
-              <ProductsTab locale={locale} official={official} />
-            )}
-            {tab === "inventory" && (
-              <InventoryTab locale={locale} official={official} />
-            )}
-            {tab === "categories" && (
-              <CategoriesTab locale={locale} official={official} />
-            )}
-            {tab === "collections" && (
-              <CollectionsTab locale={locale} official={official} />
-            )}
+            {tab === "overview" && <OverviewTab locale={locale} official={official} />}
+            {tab === "products" && <ProductsTab locale={locale} official={official} />}
+            {tab === "inventory" && <InventoryTab locale={locale} official={official} />}
+            {tab === "categories" && <CategoriesTab locale={locale} official={official} />}
+            {tab === "collections" && <CollectionsTab locale={locale} official={official} />}
             {tab === "offers" && <OffersTab locale={locale} official={official} />}
             {tab === "reviews" && <ReviewsTab locale={locale} official={official} />}
-            {tab === "appearance" && (
-              <AppearanceTab locale={locale} official={official} />
-            )}
+            {tab === "appearance" && <AppearanceTab locale={locale} official={official} />}
           </div>
         )}
       </AdminShell>
@@ -490,8 +485,11 @@ function ProductsTab({
   };
 
   const moderate = useMutation({
-    mutationFn: (payload: { id: string; decision: "approve" | "reject" | "hide"; reason?: string }) =>
-      moderateAdminProduct({ data: payload }),
+    mutationFn: (payload: {
+      id: string;
+      decision: "approve" | "reject" | "hide";
+      reason?: string;
+    }) => moderateAdminProduct({ data: payload }),
     onSuccess: invalidate,
     onError: (e) => toast.error(errMsg(e)),
   });
@@ -519,7 +517,9 @@ function ProductsTab({
   const toggleSelect = (id: string) =>
     setSelected((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
   const toggleSelectAll = () =>
-    setSelected((cur) => (cur.length === products.length ? [] : products.map((p) => p.id as string)));
+    setSelected((cur) =>
+      cur.length === products.length ? [] : products.map((p) => p.id as string),
+    );
 
   const bulkMutate = (actionLabel: string, fn: () => Promise<{ ok: true; count: number }>) => {
     setConfirm({
@@ -626,7 +626,11 @@ function ProductsTab({
                   onClick={() =>
                     bulkMutate(tb.bulkReject, () =>
                       bulkModerateAdminProducts({
-                        data: { ids: selected, decision: "reject", reason: "Rejected by admin (bulk)" },
+                        data: {
+                          ids: selected,
+                          decision: "reject",
+                          reason: "Rejected by admin (bulk)",
+                        },
                       }),
                     )
                   }
@@ -679,7 +683,12 @@ function ProductsTab({
               title={t.common.loadingError}
               text={errMsg(productsQuery.error)}
               action={
-                <Button type="button" variant="outline" size="sm" onClick={() => productsQuery.refetch()}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => productsQuery.refetch()}
+                >
                   {t.common.tryAgain}
                 </Button>
               }
@@ -780,14 +789,23 @@ function ProductsTab({
                               size="sm"
                               variant="outline"
                               onClick={() =>
-                                mutate("reject-product", () =>
-                                  moderateAdminProduct({ data: { id: p.id, decision: "reject", reason: "Rejected by admin" } }),
-                                {
-                                  confirm: {
-                                    title: t.products.confirmRejectTitle,
-                                    description: t.products.confirmRejectDesc,
+                                mutate(
+                                  "reject-product",
+                                  () =>
+                                    moderateAdminProduct({
+                                      data: {
+                                        id: p.id,
+                                        decision: "reject",
+                                        reason: "Rejected by admin",
+                                      },
+                                    }),
+                                  {
+                                    confirm: {
+                                      title: t.products.confirmRejectTitle,
+                                      description: t.products.confirmRejectDesc,
+                                    },
                                   },
-                                })
+                                )
                               }
                             >
                               {t.products.reject}
@@ -807,14 +825,17 @@ function ProductsTab({
                               size="sm"
                               variant="ghost"
                               onClick={() =>
-                                mutate("archive-product", () =>
-                                  setProductStatus({ data: { id: p.id, status: "archived" } }),
-                                {
-                                  confirm: {
-                                    title: t.products.confirmArchiveTitle,
-                                    description: t.products.confirmArchiveDesc,
+                                mutate(
+                                  "archive-product",
+                                  () =>
+                                    setProductStatus({ data: { id: p.id, status: "archived" } }),
+                                  {
+                                    confirm: {
+                                      title: t.products.confirmArchiveTitle,
+                                      description: t.products.confirmArchiveDesc,
+                                    },
                                   },
-                                })
+                                )
                               }
                             >
                               {t.products.archive}
@@ -891,7 +912,9 @@ function OfficialEditProductDialog({
   const [compareAt, setCompareAt] = useState(
     product.compare_at_price != null ? String(product.compare_at_price) : "",
   );
-  const [weight, setWeight] = useState(product.weight_grams != null ? String(product.weight_grams) : "");
+  const [weight, setWeight] = useState(
+    product.weight_grams != null ? String(product.weight_grams) : "",
+  );
   const [categoryId, setCategoryId] = useState<string>(product.category_id ?? "none");
   const [featured, setFeatured] = useState(Boolean(product.featured));
   const [serverError, setServerError] = useState<string | null>(null);
@@ -918,19 +941,25 @@ function OfficialEditProductDialog({
     onError: (e) => setServerError(errMsg(e)),
   });
 
-  const priceError =
-    basePrice.trim() !== "" && !(Number(basePrice) > 0) ? t.products.price : null;
+  const priceError = basePrice.trim() !== "" && !(Number(basePrice) > 0) ? t.products.price : null;
   const compareError =
     compareAt.trim() !== "" && !(Number(compareAt) > 0) ? t.products.compareAt : null;
 
   return (
-    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+    >
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>{t.products.editTitle}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-          <p className="text-small text-muted-foreground">{pickName(product.name) || product.slug}</p>
+          <p className="text-small text-muted-foreground">
+            {pickName(product.name) || product.slug}
+          </p>
           <Field label={t.products.price} error={priceError ?? undefined}>
             <Input
               inputMode="decimal"
@@ -939,8 +968,16 @@ function OfficialEditProductDialog({
               placeholder="4990"
             />
           </Field>
-          <Field label={t.products.compareAt} error={compareError ?? undefined} hint={t.products.compareAtHint}>
-            <Input inputMode="decimal" value={compareAt} onChange={(e) => setCompareAt(e.target.value)} />
+          <Field
+            label={t.products.compareAt}
+            error={compareError ?? undefined}
+            hint={t.products.compareAtHint}
+          >
+            <Input
+              inputMode="decimal"
+              value={compareAt}
+              onChange={(e) => setCompareAt(e.target.value)}
+            />
           </Field>
           <Field label={t.products.weight}>
             <Input inputMode="numeric" value={weight} onChange={(e) => setWeight(e.target.value)} />
@@ -963,7 +1000,11 @@ function OfficialEditProductDialog({
           </Field>
           <div className="flex items-center justify-between gap-3">
             <Label htmlFor="official-product-featured">{t.products.featured}</Label>
-            <Switch id="official-product-featured" checked={featured} onCheckedChange={setFeatured} />
+            <Switch
+              id="official-product-featured"
+              checked={featured}
+              onCheckedChange={setFeatured}
+            />
           </div>
           {serverError ? (
             <p role="alert" className="text-small text-destructive">
@@ -1034,7 +1075,12 @@ function OfficialNewProductDialog({
   });
 
   return (
-    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+    >
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>{t.products.createTitle}</DialogTitle>
@@ -1216,7 +1262,13 @@ function InventoryTab({
                     <td className="px-3 py-3 text-end text-muted-foreground">{r.threshold}</td>
                     <td className="px-3 py-3">
                       <StatusPill
-                        status={r.status === "ok" ? t.inventory.ok : r.status === "low" ? t.inventory.low : t.inventory.out}
+                        status={
+                          r.status === "ok"
+                            ? t.inventory.ok
+                            : r.status === "low"
+                              ? t.inventory.low
+                              : t.inventory.out
+                        }
                       />
                     </td>
                     <td className="px-3 py-3 text-end">
@@ -1269,7 +1321,13 @@ function AdjustInventoryDialog({
   onSaved,
 }: {
   locale: "ar" | "fr" | "en";
-  row: { variantId: string; sku: string | null; productName: string; quantity: number; threshold: number };
+  row: {
+    variantId: string;
+    sku: string | null;
+    productName: string;
+    quantity: number;
+    threshold: number;
+  };
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -1283,7 +1341,9 @@ function AdjustInventoryDialog({
   const qtyError =
     quantity.trim() === "" || !Number.isInteger(qtyNum) || qtyNum < 0 ? t.inventory.quantity : null;
   const thrError =
-    threshold.trim() === "" || !Number.isInteger(thrNum) || thrNum < 0 ? t.inventory.thresholdLabel : null;
+    threshold.trim() === "" || !Number.isInteger(thrNum) || thrNum < 0
+      ? t.inventory.thresholdLabel
+      : null;
 
   const adjust = useMutation({
     mutationFn: () =>
@@ -1298,7 +1358,12 @@ function AdjustInventoryDialog({
   });
 
   return (
-    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+    >
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>{t.inventory.adjustTitle}</DialogTitle>
@@ -1308,15 +1373,29 @@ function AdjustInventoryDialog({
           </p>
         </DialogHeader>
         <div className="space-y-4">
-          <Field label={t.inventory.quantity} error={qtyError ?? undefined} hint={t.inventory.quantityHint}>
-            <Input inputMode="numeric" dir="ltr" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
+          <Field
+            label={t.inventory.quantity}
+            error={qtyError ?? undefined}
+            hint={t.inventory.quantityHint}
+          >
+            <Input
+              inputMode="numeric"
+              dir="ltr"
+              value={quantity}
+              onChange={(e) => setQuantity(e.target.value)}
+            />
           </Field>
           <Field
             label={t.inventory.thresholdLabel}
             error={thrError ?? undefined}
             hint={t.inventory.thresholdHint}
           >
-            <Input inputMode="numeric" dir="ltr" value={threshold} onChange={(e) => setThreshold(e.target.value)} />
+            <Input
+              inputMode="numeric"
+              dir="ltr"
+              value={threshold}
+              onChange={(e) => setThreshold(e.target.value)}
+            />
           </Field>
           {serverError ? (
             <p role="alert" className="text-small text-destructive">
@@ -1418,7 +1497,9 @@ function CategoriesTab({
                       <p className="text-caption text-muted-foreground">{c.slug}</p>
                     </td>
                     <td className="px-3 py-3 text-end font-medium">{c.official_products}</td>
-                    <td className="px-3 py-3 text-end text-muted-foreground">{c.official_published}</td>
+                    <td className="px-3 py-3 text-end text-muted-foreground">
+                      {c.official_published}
+                    </td>
                     <td className="px-3 py-3">
                       <StatusPill status={c.status ?? "active"} />
                     </td>
@@ -1499,7 +1580,12 @@ function CollectionsTab({
             title={t.common.loadingError}
             text={errMsg(appearanceQuery.error)}
             action={
-              <Button type="button" variant="outline" size="sm" onClick={() => appearanceQuery.refetch()}>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => appearanceQuery.refetch()}
+              >
                 {t.common.tryAgain}
               </Button>
             }
@@ -1554,7 +1640,10 @@ function CollectionsTab({
         <CollectionDialog
           locale={locale}
           collection={editing === "new" ? null : editing}
-          products={products.map((p) => ({ id: p.id as string, name: pickName(p.name) || (p.slug as string) }))}
+          products={products.map((p) => ({
+            id: p.id as string,
+            name: pickName(p.name) || (p.slug as string),
+          }))}
           onClose={() => setEditing(null)}
           onSaved={() => {
             invalidate();
@@ -1625,7 +1714,12 @@ function CollectionDialog({
   });
 
   return (
-    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+    >
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>{collection ? t.collections.edit : t.collections.new}</DialogTitle>
@@ -1637,7 +1731,11 @@ function CollectionDialog({
               id="collection-title"
               value={title}
               onChange={setTitle}
-              labels={{ ar: t.collections.nameAr, fr: t.collections.nameFr, en: t.collections.nameEn }}
+              labels={{
+                ar: t.collections.nameAr,
+                fr: t.collections.nameFr,
+                en: t.collections.nameEn,
+              }}
             />
           </div>
           <TriText
@@ -1662,8 +1760,14 @@ function CollectionDialog({
                 <p className="p-2 text-small text-muted-foreground">{t.products.emptyText}</p>
               ) : (
                 filtered.map((p) => (
-                  <label key={p.id} className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 hover:bg-muted/40">
-                    <Checkbox checked={productIds.includes(p.id)} onCheckedChange={() => toggle(p.id)} />
+                  <label
+                    key={p.id}
+                    className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 hover:bg-muted/40"
+                  >
+                    <Checkbox
+                      checked={productIds.includes(p.id)}
+                      onCheckedChange={() => toggle(p.id)}
+                    />
                     <span className="text-small">{p.name}</span>
                   </label>
                 ))
@@ -1687,7 +1791,13 @@ function CollectionDialog({
           <Button variant="outline" onClick={onClose}>
             {t.common.cancel}
           </Button>
-          <Button onClick={() => { setServerError(null); save.mutate(); }} disabled={save.isPending}>
+          <Button
+            onClick={() => {
+              setServerError(null);
+              save.mutate();
+            }}
+            disabled={save.isPending}
+          >
             {save.isPending ? "…" : t.collections.save}
           </Button>
         </DialogFooter>
@@ -1763,7 +1873,12 @@ function OffersTab({
             title={t.common.loadingError}
             text={errMsg(couponsQuery.error)}
             action={
-              <Button type="button" variant="outline" size="sm" onClick={() => couponsQuery.refetch()}>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => couponsQuery.refetch()}
+              >
                 {t.common.tryAgain}
               </Button>
             }
@@ -1787,7 +1902,9 @@ function OffersTab({
                 {coupons.map((c) => (
                   <tr key={c.id} className="align-top hover:bg-muted/40">
                     <td className="px-3 py-3">
-                      <p className="font-mono font-medium" dir="ltr">{c.code}</p>
+                      <p className="font-mono font-medium" dir="ltr">
+                        {c.code}
+                      </p>
                       <p className="text-caption text-muted-foreground">
                         {c.starts_at ? fmtDateTime(c.starts_at) : "—"}
                         {" → "}
@@ -1807,7 +1924,9 @@ function OffersTab({
                       {c.usage_limit ? ` / ${c.usage_limit}` : ""}
                     </td>
                     <td className="px-3 py-3">
-                      <StatusPill status={c.status === "active" ? t.offers.active : t.offers.inactive} />
+                      <StatusPill
+                        status={c.status === "active" ? t.offers.active : t.offers.inactive}
+                      />
                     </td>
                     <td className="px-3 py-3">
                       <div className="flex flex-wrap justify-end gap-1.5">
@@ -1897,11 +2016,15 @@ function CouponDialog({
     (coupon?.discount_type as "percentage" | "fixed" | undefined) ?? "percentage",
   );
   const [value, setValue] = useState(coupon ? String(coupon.discount_value) : "");
-  const [minOrder, setMinOrder] = useState(coupon?.min_order_amount != null ? String(coupon.min_order_amount) : "");
+  const [minOrder, setMinOrder] = useState(
+    coupon?.min_order_amount != null ? String(coupon.min_order_amount) : "",
+  );
   const [maxDiscount, setMaxDiscount] = useState(
     coupon?.max_discount_amount != null ? String(coupon.max_discount_amount) : "",
   );
-  const [usageLimit, setUsageLimit] = useState(coupon?.usage_limit != null ? String(coupon.usage_limit) : "");
+  const [usageLimit, setUsageLimit] = useState(
+    coupon?.usage_limit != null ? String(coupon.usage_limit) : "",
+  );
   const [perCustomer, setPerCustomer] = useState(
     coupon?.per_customer_limit != null ? String(coupon.per_customer_limit) : "",
   );
@@ -1924,7 +2047,8 @@ function CouponDialog({
           min_order_amount: num(minOrder),
           max_discount_amount: num(maxDiscount),
           usage_limit: num(usageLimit) != null ? Math.trunc(num(usageLimit) as number) : null,
-          per_customer_limit: num(perCustomer) != null ? Math.trunc(num(perCustomer) as number) : null,
+          per_customer_limit:
+            num(perCustomer) != null ? Math.trunc(num(perCustomer) as number) : null,
           starts_at: startsAt ? new Date(startsAt).toISOString() : null,
           ends_at: endsAt ? new Date(endsAt).toISOString() : null,
           seller_id: sellerId,
@@ -1939,7 +2063,12 @@ function CouponDialog({
   });
 
   return (
-    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+    >
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>{coupon ? t.offers.edit : t.offers.new}</DialogTitle>
@@ -1947,7 +2076,13 @@ function CouponDialog({
         <div className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label={t.offers.code}>
-              <Input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder={t.offers.codePh} dir="ltr" maxLength={32} />
+              <Input
+                value={code}
+                onChange={(e) => setCode(e.target.value.toUpperCase())}
+                placeholder={t.offers.codePh}
+                dir="ltr"
+                maxLength={32}
+              />
             </Field>
             <Field label={t.offers.type}>
               <Select value={type} onValueChange={(v) => setType(v as "percentage" | "fixed")}>
@@ -1963,7 +2098,12 @@ function CouponDialog({
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label={t.offers.value}>
-              <Input inputMode="decimal" dir="ltr" value={value} onChange={(e) => setValue(e.target.value)} />
+              <Input
+                inputMode="decimal"
+                dir="ltr"
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+              />
             </Field>
             <Field label={t.offers.status}>
               <Select value={status} onValueChange={(v) => setStatus(v as "active" | "inactive")}>
@@ -1979,26 +2119,56 @@ function CouponDialog({
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label={t.offers.minOrder}>
-              <Input inputMode="decimal" dir="ltr" value={minOrder} onChange={(e) => setMinOrder(e.target.value)} />
+              <Input
+                inputMode="decimal"
+                dir="ltr"
+                value={minOrder}
+                onChange={(e) => setMinOrder(e.target.value)}
+              />
             </Field>
             <Field label={t.offers.maxDiscount}>
-              <Input inputMode="decimal" dir="ltr" value={maxDiscount} onChange={(e) => setMaxDiscount(e.target.value)} />
+              <Input
+                inputMode="decimal"
+                dir="ltr"
+                value={maxDiscount}
+                onChange={(e) => setMaxDiscount(e.target.value)}
+              />
             </Field>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label={t.offers.usageLimit}>
-              <Input inputMode="numeric" dir="ltr" value={usageLimit} onChange={(e) => setUsageLimit(e.target.value)} />
+              <Input
+                inputMode="numeric"
+                dir="ltr"
+                value={usageLimit}
+                onChange={(e) => setUsageLimit(e.target.value)}
+              />
             </Field>
             <Field label={t.offers.perCustomer}>
-              <Input inputMode="numeric" dir="ltr" value={perCustomer} onChange={(e) => setPerCustomer(e.target.value)} />
+              <Input
+                inputMode="numeric"
+                dir="ltr"
+                value={perCustomer}
+                onChange={(e) => setPerCustomer(e.target.value)}
+              />
             </Field>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label={t.offers.startsAt}>
-              <Input type="datetime-local" dir="ltr" value={startsAt} onChange={(e) => setStartsAt(e.target.value)} />
+              <Input
+                type="datetime-local"
+                dir="ltr"
+                value={startsAt}
+                onChange={(e) => setStartsAt(e.target.value)}
+              />
             </Field>
             <Field label={t.offers.endsAt}>
-              <Input type="datetime-local" dir="ltr" value={endsAt} onChange={(e) => setEndsAt(e.target.value)} />
+              <Input
+                type="datetime-local"
+                dir="ltr"
+                value={endsAt}
+                onChange={(e) => setEndsAt(e.target.value)}
+              />
             </Field>
           </div>
           {serverError ? (
@@ -2057,8 +2227,11 @@ function ReviewsTab({
     queryClient.invalidateQueries({ queryKey: ["admin-official-store-reviews"] });
 
   const moderate = useMutation({
-    mutationFn: (payload: { id: string; decision: "approve" | "reject" | "hide"; reason?: string }) =>
-      moderateReview({ data: payload }),
+    mutationFn: (payload: {
+      id: string;
+      decision: "approve" | "reject" | "hide";
+      reason?: string;
+    }) => moderateReview({ data: payload }),
     onSuccess: () => {
       toast.success(t.reviews.approve);
       setModerating(null);
@@ -2097,7 +2270,12 @@ function ReviewsTab({
             title={t.common.loadingError}
             text={errMsg(reviewsQuery.error)}
             action={
-              <Button type="button" variant="outline" size="sm" onClick={() => reviewsQuery.refetch()}>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => reviewsQuery.refetch()}
+              >
                 {t.common.tryAgain}
               </Button>
             }
@@ -2223,11 +2401,20 @@ function OfficialModerateReviewDialog({
   const [reason, setReason] = useState("");
   const needsReason = decision !== "approve";
   return (
-    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+    >
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {decision === "approve" ? t.reviews.approveTitle : decision === "reject" ? t.reviews.rejectTitle : t.reviews.hideTitle}
+            {decision === "approve"
+              ? t.reviews.approveTitle
+              : decision === "reject"
+                ? t.reviews.rejectTitle
+                : t.reviews.hideTitle}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
@@ -2320,7 +2507,9 @@ function AppearanceTab({
   const products = productsQuery.data?.products ?? [];
   const categories = categoriesQuery.data?.flat ?? [];
 
-  const [announcement, setAnnouncement] = useState<{ ar: string; fr: string; en: string } | null>(null);
+  const [announcement, setAnnouncement] = useState<{ ar: string; fr: string; en: string } | null>(
+    null,
+  );
   const [accent, setAccent] = useState<string | null>(null);
   const [sections, setSections] = useState<SectionDraft[] | null>(null);
   const [featuredProducts, setFeaturedProducts] = useState<string[] | null>(null);
@@ -2341,8 +2530,10 @@ function AppearanceTab({
         })),
       );
     }
-    if (featuredProducts === null) setFeaturedProducts([...appearance.settings.featured_product_ids]);
-    if (featuredCategories === null) setFeaturedCategories([...appearance.settings.featured_category_ids]);
+    if (featuredProducts === null)
+      setFeaturedProducts([...appearance.settings.featured_product_ids]);
+    if (featuredCategories === null)
+      setFeaturedCategories([...appearance.settings.featured_category_ids]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appearance]);
 
@@ -2407,7 +2598,12 @@ function AppearanceTab({
         title={t.common.loadingError}
         text={appearanceQuery.isError ? errMsg(appearanceQuery.error) : undefined}
         action={
-          <Button type="button" variant="outline" size="sm" onClick={() => appearanceQuery.refetch()}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => appearanceQuery.refetch()}
+          >
             {t.common.tryAgain}
           </Button>
         }
@@ -2519,7 +2715,9 @@ function AppearanceTab({
                   id={`section-${s.id}`}
                   value={s.title}
                   onChange={(v) =>
-                    setSections((cur) => (cur ?? []).map((x) => (x.id === s.id ? { ...x, title: v } : x)))
+                    setSections((cur) =>
+                      (cur ?? []).map((x) => (x.id === s.id ? { ...x, title: v } : x)),
+                    )
                   }
                   labels={{ ar: "العربية", fr: "Français", en: "English" }}
                 />
@@ -2531,7 +2729,9 @@ function AppearanceTab({
         <div className="mt-6 grid gap-6 lg:grid-cols-2">
           <div className="space-y-1.5">
             <Label>{t.appearance.featuredProducts}</Label>
-            <p className="text-caption text-muted-foreground">{t.appearance.featuredProductsHint}</p>
+            <p className="text-caption text-muted-foreground">
+              {t.appearance.featuredProductsHint}
+            </p>
             <div className="max-h-64 overflow-y-auto rounded-md border border-border p-2">
               {products.length === 0 ? (
                 <p className="p-2 text-small text-muted-foreground">{t.products.emptyText}</p>
@@ -2543,7 +2743,9 @@ function AppearanceTab({
                   >
                     <Checkbox
                       checked={(featuredProducts ?? []).includes(p.id as string)}
-                      onCheckedChange={() => toggleId(featuredProducts, p.id as string, setFeaturedProducts)}
+                      onCheckedChange={() =>
+                        toggleId(featuredProducts, p.id as string, setFeaturedProducts)
+                      }
                     />
                     <span className="text-small">{pickName(p.name) || (p.slug as string)}</span>
                   </label>
@@ -2553,7 +2755,9 @@ function AppearanceTab({
           </div>
           <div className="space-y-1.5">
             <Label>{t.appearance.featuredCategories}</Label>
-            <p className="text-caption text-muted-foreground">{t.appearance.featuredCategoriesHint}</p>
+            <p className="text-caption text-muted-foreground">
+              {t.appearance.featuredCategoriesHint}
+            </p>
             <div className="max-h-64 overflow-y-auto rounded-md border border-border p-2">
               {categories.length === 0 ? (
                 <p className="p-2 text-small text-muted-foreground">{t.categories.emptyText}</p>
@@ -2565,7 +2769,9 @@ function AppearanceTab({
                   >
                     <Checkbox
                       checked={(featuredCategories ?? []).includes(c.id)}
-                      onCheckedChange={() => toggleId(featuredCategories, c.id, setFeaturedCategories)}
+                      onCheckedChange={() =>
+                        toggleId(featuredCategories, c.id, setFeaturedCategories)
+                      }
                     />
                     <span className="text-small">
                       {c.parent_id ? "— " : ""}

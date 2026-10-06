@@ -22,7 +22,13 @@ export const Route = createFileRoute("/track-order")({
       robots: "noindex,nofollow",
     }),
   component: TrackOrderPage,
+  errorComponent: TrackOrderError,
 });
+
+function TrackOrderError() {
+  const { locale } = Route.useSearch();
+  return <div role="alert" className="px-6 py-24 text-center text-muted-foreground">{getTranslations(locale).common.loadError}</div>;
+}
 
 /** Ordered journey steps; each entry is the canonical order_status value. */
 const JOURNEY = [

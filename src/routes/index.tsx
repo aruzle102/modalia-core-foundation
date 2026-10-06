@@ -975,7 +975,7 @@ function BrandStores({
                     </span>
                   </div>
                 )}
-                <div className="absolute bottom-0 left-6 translate-y-1/2">
+                <div className="absolute bottom-0 start-6 translate-y-1/2">
                   {store.logoPath ? (
                     <img
                       src={store.logoPath}

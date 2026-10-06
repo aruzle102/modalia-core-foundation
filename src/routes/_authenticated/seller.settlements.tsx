@@ -46,6 +46,8 @@ function SettlementsPage() {
 }
 
 function RequestForm() {
+  const { locale } = Route.useSearch();
+  const t = getTranslations(locale);
   const { data } = useSuspenseQuery(q);
   const qc = useQueryClient();
   const [amount, setAmount] = useState("");
@@ -77,7 +79,7 @@ function RequestForm() {
           />
         </Field>
         <Field label="Notes (optional)">
-          <Input placeholder="Bank transfer details" value={notes} onChange={(e) => setNotes(e.target.value)} />
+          <Input placeholder={t.common.bankTransferDetails} value={notes} onChange={(e) => setNotes(e.target.value)} />
         </Field>
       </div>
       <div className="mt-4 flex flex-wrap items-center gap-3">

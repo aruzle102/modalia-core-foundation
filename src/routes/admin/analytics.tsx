@@ -8,7 +8,7 @@ import { numParam, useUrlState } from "@/hooks/use-url-state";
 import { TopList } from "@/components/admin/Charts";
 import { FunnelChart } from "@/components/analytics/FunnelChart";
 import { getAdminAnalytics } from "@/lib/analytics.functions";
-import { getLocale } from "@/lib/i18n";
+import { getLocale, getTranslations } from "@/lib/i18n";
 
 const RANGES = [7, 30, 90] as const;
 
@@ -101,6 +101,8 @@ function VelocityBars({ data }: { data: { date: string; purchases: number }[] })
 }
 
 function AdminAnalyticsPage() {
+  const { locale } = Route.useSearch();
+  const t = getTranslations(locale);
   const url = useUrlState({ days: 30 });
   const days = numParam(url.search["days"], 30);
   const setDays = (next: number) => url.set({ days: next });
@@ -118,7 +120,7 @@ function AdminAnalyticsPage() {
         title="Analytics"
         subtitle="Real storefront events — views, carts, checkouts, purchases. Never estimated."
         actions={
-          <div role="group" aria-label="Date range" className="flex gap-1 rounded-full border border-border p-1">
+          <div role="group" aria-label={t.common.dateRange} className="flex gap-1 rounded-full border border-border p-1">
             {RANGES.map((r) => (
               <button
                 key={r}

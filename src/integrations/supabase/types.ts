@@ -2272,6 +2272,45 @@ export type Database = {
         }
         Relationships: []
       }
+      intelligence_settings: {
+        Row: {
+          id: number
+          support_enabled: boolean
+          smart_shopping_enabled: boolean
+          recommendations_enabled: boolean
+          welcome_message: Json
+          suggested_questions: Json
+          fallback_message: Json
+          ranking_weights: Json
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          id: number
+          support_enabled?: boolean
+          smart_shopping_enabled?: boolean
+          recommendations_enabled?: boolean
+          welcome_message?: Json
+          suggested_questions?: Json
+          fallback_message?: Json
+          ranking_weights?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          id?: number
+          support_enabled?: boolean
+          smart_shopping_enabled?: boolean
+          recommendations_enabled?: boolean
+          welcome_message?: Json
+          suggested_questions?: Json
+          fallback_message?: Json
+          ranking_weights?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       site_settings: {
         Row: {
           key: string

@@ -41,7 +41,7 @@ import {
   upsertShippingRule,
   type SellerShippingRuleRow,
 } from "@/lib/seller-marketing.functions";
-import { getLocale, localeDirections } from "@/lib/i18n";
+import { getLocale, getTranslations, localeDirections } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/seller/shipping")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -87,6 +87,7 @@ const EMPTY_FORM: RuleForm = {
 
 function ShippingPage() {
   const { locale } = Route.useSearch();
+  const t = getTranslations(locale);
   const qc = useQueryClient();
   const query = useQuery({ queryKey: ["seller-shipping-rules"], queryFn: () => getShippingRules() });
   const wilayasQuery = useQuery({ queryKey: ["seller-shipping-wilayas"], queryFn: () => listShippingWilayas() });
@@ -283,7 +284,7 @@ function ShippingPage() {
                     value={form.wilayaId}
                     onValueChange={(v) => setForm({ ...form, wilayaId: v, communeId: "all" })}
                   >
-                    <SelectTrigger><SelectValue placeholder="Choose a wilaya" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder={t.common.chooseWilaya} /></SelectTrigger>
                     <SelectContent>
                       {wilayas.map((w) => (
                         <SelectItem key={w.id} value={w.id}>

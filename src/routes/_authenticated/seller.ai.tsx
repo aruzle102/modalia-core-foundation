@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { AdminCard, EmptyState, Field, TableSkeleton } from "@/components/admin/ui";
 import { getSellerAiCatalog, type AiCatalogProduct } from "@/lib/seller-orders.functions";
 import { aiSellerDraft, aiApplySellerDraft } from "@/lib/ai.functions";
-import { getLocale } from "@/lib/i18n";
+import { getLocale, getTranslations } from "@/lib/i18n";
 import { SellerShell } from "@/components/seller/SellerShell";
 import { errMsg } from "../admin/_shared";
 
@@ -92,6 +92,7 @@ function improveDescription(product: AiCatalogProduct): string {
 
 function SellerAiPage() {
   const { locale } = Route.useSearch();
+  const t = getTranslations(locale);
   const catalogQuery = useQuery({
     queryKey: ["seller-ai-catalog"],
     queryFn: () => getSellerAiCatalog({ data: {} }),
@@ -145,7 +146,7 @@ function SellerAiPage() {
             <div className="max-w-md">
               <Field label="Product">
                 <Select value={product?.id ?? ""} onValueChange={setProductId}>
-                  <SelectTrigger><SelectValue placeholder="Select a product" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t.common.selectProduct} /></SelectTrigger>
                   <SelectContent>
                     {products.map((p) => (
                       <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>

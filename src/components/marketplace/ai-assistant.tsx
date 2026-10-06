@@ -21,6 +21,8 @@ import {
 import { localeDirections, type SupportedLocale, type Translation } from "@/lib/i18n";
 import { formatPrice } from "@/lib/i18n/format";
 import { aiChat, getAiStatus, type AiChatProduct } from "@/lib/ai.functions";
+import { getPublicIntelligenceConfig } from "@/lib/intelligence-settings.functions";
+import { answerSupportQuestion } from "@/lib/support-knowledge";
 import { cn } from "@/lib/utils";
 
 type ChatMessage = {
@@ -163,6 +165,16 @@ export function AiAssistantDrawer({
     retry: false,
   });
 
+  // Modalia Intelligence control plane: support toggle + trilingual copy.
+  const intelQuery = useQuery({
+    queryKey: ["intelligence-config", locale],
+    queryFn: () => getPublicIntelligenceConfig({ data: { locale } }),
+    staleTime: 60_000,
+    retry: false,
+  });
+  const intel = intelQuery.data;
+  const supportEnabled = intel?.support_enabled ?? true;
+
   const chat = useMutation({
     mutationFn: (message: string) =>
       aiChat({
@@ -212,6 +224,31 @@ export function AiAssistantDrawer({
       { id: idRef.current++, role: "user", text: message, products: [], source: "rules", intentSummary: null },
     ]);
     setInput("");
+
+    // Support knowledge first: when enabled and the question matches a
+    // confirmed support intent, answer deterministically from the knowledge
+    // base instead of searching the catalog.
+    if (supportEnabled) {
+      const support = answerSupportQuestion(message, locale);
+      if (support.answer) {
+        const actionLinks = support.suggestedActions
+          .map((a) => `[${a.label}](${a.href})`)
+          .join(" · ");
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: idRef.current++,
+            role: "assistant",
+            text: `${support.answer}\n\n${actionLinks}`,
+            products: [],
+            source: "rules",
+            intentSummary: t.assistant.supportLabel ?? null,
+          },
+        ]);
+        return;
+      }
+    }
+
     chat.mutate(message);
   };
 
@@ -250,9 +287,14 @@ export function AiAssistantDrawer({
               <span className="grid size-14 place-items-center rounded-2xl bg-muted">
                 <Sparkles className="size-6 text-muted-foreground" />
               </span>
-              <p className="max-w-xs text-sm text-muted-foreground">{t.assistant.empty}</p>
+              <p className="max-w-xs text-sm text-muted-foreground">
+                {intel?.welcome_message || t.assistant.empty}
+              </p>
               <div className="flex flex-wrap justify-center gap-2">
-                {t.assistant.suggestions.map((suggestion) => (
+                {(intel?.suggested_questions?.length
+                  ? intel.suggested_questions
+                  : t.assistant.suggestions
+                ).map((suggestion) => (
                   <Button
                     key={suggestion}
                     type="button"

@@ -21,8 +21,14 @@ export const Route = createFileRoute("/wishlist")({
   validateSearch: (search: Record<string, unknown>) => ({
     locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined),
   }),
+  errorComponent: WishlistError,
   component: WishlistPage,
 });
+
+function WishlistError() {
+  const { locale } = Route.useSearch();
+  return <div role="alert" className="px-6 py-24 text-center text-muted-foreground">{getTranslations(locale).common.loadError}</div>;
+}
 
 function WishlistPage() {
   const { locale } = Route.useSearch();

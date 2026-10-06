@@ -6,7 +6,7 @@ import { SellerShell } from "@/components/seller/SellerShell";
 import { AdminCard, EmptyState, Stat, fmtMoney } from "@/components/admin/ui";
 import { Donut, OrdersBars, SalesLine, TopList } from "@/components/seller/SellerCharts";
 import { FunnelChart } from "@/components/analytics/FunnelChart";
-import { getLocale } from "@/lib/i18n";
+import { getLocale, getTranslations } from "@/lib/i18n";
 import { numParam, useUrlState } from "@/hooks/use-url-state";
 import {
   getSellerOrderStatusBreakdown,
@@ -80,6 +80,7 @@ function SellerAnalyticsPage() {
   const days = numParam(url.search["days"], 30);
   const setDays = (next: number) => url.set({ days: next }, { push: true });
   const { locale } = Route.useSearch();
+  const t = getTranslations(locale);
   const { data: overview } = useSuspenseQuery(overviewQuery);
   const { data: topProducts } = useSuspenseQuery(topProductsQuery);
   const { data: topCategories } = useSuspenseQuery(topCategoriesQuery);
@@ -148,7 +149,7 @@ function SellerAnalyticsPage() {
         title="Sales performance"
         subtitle="Delivered sales and order counts per day"
         actions={
-          <div role="group" aria-label="Date range" className="flex gap-1 rounded-full border border-border p-1">
+          <div role="group" aria-label={t.common.dateRange} className="flex gap-1 rounded-full border border-border p-1">
             {RANGES.map((r) => (
               <button
                 key={r}

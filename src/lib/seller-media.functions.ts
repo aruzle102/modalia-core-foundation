@@ -44,7 +44,7 @@ export const requestSellerMediaUpload = createServerFn({ method: "POST" })
         filename: z.string().min(1).max(200),
         mimeType: z.string().max(120).optional(),
         sizeBytes: z.number().int().min(1),
-        mediaKind: z.enum(["image", "model_3d"]).optional(),
+        mediaKind: z.enum(["image", "video", "model_3d"]).optional(),
       })
       .parse(data),
   )
@@ -73,7 +73,7 @@ export const finalizeSellerMediaUpload = createServerFn({ method: "POST" })
     z
       .object({
         path: z.string().min(1).max(500),
-        mediaKind: z.enum(["image", "model_3d"]),
+        mediaKind: z.enum(["image", "video", "model_3d"]),
       })
       .parse(data),
   )

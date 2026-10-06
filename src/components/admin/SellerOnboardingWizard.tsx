@@ -55,6 +55,7 @@ const STEPS = [
   { key: "commission", label: "Commission" },
   { key: "permissions", label: "Permissions" },
   { key: "review", label: "Review" },
+  { key: "create", label: "Create" },
 ];
 
 const PHONE_RE = /^\+213[5-7][0-9]{8}$/;
@@ -84,6 +85,8 @@ export function SellerOnboardingWizard({ open, onOpenChange, application, onCrea
   >(null);
   const [slugChecking, setSlugChecking] = useState(false);
   const [storeDescription, setStoreDescription] = useState("");
+  const [storeLogoUrl, setStoreLogoUrl] = useState("");
+  const [storeBannerUrl, setStoreBannerUrl] = useState("");
   const [commissionRate, setCommissionRate] = useState("10");
   const [role, setRole] = useState<"seller_owner" | "seller_staff">("seller_owner");
   const [staffTitle, setStaffTitle] = useState("");
@@ -116,6 +119,8 @@ export function SellerOnboardingWizard({ open, onOpenChange, application, onCrea
     setStoreName(name);
     setSlug(slugifyName(name));
     setStoreDescription(application?.business_description ?? "");
+    setStoreLogoUrl("");
+    setStoreBannerUrl("");
     setCommissionRate("10");
     setRole("seller_owner");
     setStaffTitle("");
@@ -159,6 +164,8 @@ export function SellerOnboardingWizard({ open, onOpenChange, application, onCrea
           storeName: storeName.trim(),
           storeSlug: slug,
           storeDescription: storeDescription.trim() || undefined,
+          storeLogoUrl: storeLogoUrl.trim() || undefined,
+          storeBannerUrl: storeBannerUrl.trim() || undefined,
           commissionRate: Number(commissionRate),
           role,
           staffTitle: role === "seller_staff" ? staffTitle.trim() || undefined : undefined,
@@ -405,6 +412,22 @@ export function SellerOnboardingWizard({ open, onOpenChange, application, onCrea
                       rows={4}
                     />
                   </Field>
+                  <Field label="Logo URL" hint="Optional. Direct link to the store logo image.">
+                    <Input
+                      value={storeLogoUrl}
+                      onChange={(e) => setStoreLogoUrl(e.target.value)}
+                      dir="ltr"
+                      placeholder="https://…"
+                    />
+                  </Field>
+                  <Field label="Banner URL" hint="Optional. Direct link to the store banner image.">
+                    <Input
+                      value={storeBannerUrl}
+                      onChange={(e) => setStoreBannerUrl(e.target.value)}
+                      dir="ltr"
+                      placeholder="https://…"
+                    />
+                  </Field>
                 </div>
               )}
 
@@ -533,14 +556,57 @@ export function SellerOnboardingWizard({ open, onOpenChange, application, onCrea
                     </div>
                   </dl>
                   <p className="text-sm text-muted-foreground">
-                    Creating will write real records: auth user, seller, store, role
-                    {role === "seller_staff" ? ", staff permissions" : ""}, commission history and
-                    audit log. The temporary password is shown once afterwards.
+                    Review the details above, then continue to create.
                   </p>
+                </div>
+              )}
+
+              {STEPS[step]?.key === "create" && (
+                <div className="space-y-4">
+                  <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
+                    <h3 className="font-semibold">Ready to create</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      This will create the seller account, store, and all related records.
+                      The temporary password will be shown once — copy it securely.
+                    </p>
+                  </div>
+                  <dl className="grid grid-cols-1 gap-3 rounded-lg border p-4 text-sm sm:grid-cols-2">
+                    <div>
+                      <dt className="text-xs text-muted-foreground">Seller</dt>
+                      <dd className="font-medium">
+                        {firstName.trim()} {lastName.trim()}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs text-muted-foreground">Login email</dt>
+                      <dd className="font-medium" dir="ltr">{email.trim()}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs text-muted-foreground">Store</dt>
+                      <dd className="font-medium">
+                        {storeName.trim()} <span className="text-muted-foreground" dir="ltr">/{slug}</span>
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs text-muted-foreground">Commission</dt>
+                      <dd className="font-medium">{commissionRate}%</dd>
+                    </div>
+                  </dl>
                   {createMutation.isError && (
                     <p className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
                       {(createMutation.error as Error).message}
                     </p>
+                  )}
+                  {createMutation.isSuccess && createMutation.data && (
+                    <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4">
+                      <p className="font-semibold text-emerald-700">Seller created successfully</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Temporary password: <code className="font-mono" dir="ltr">{createMutation.data.tempPassword}</code>
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Copy it now — it will not be shown again. The seller must change it on first login.
+                      </p>
+                    </div>
                   )}
                 </div>
               )}

@@ -502,6 +502,8 @@ const provisionSellerInput = z
       .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug may only contain lowercase letters, numbers and dashes.")
       .optional(),
     storeDescription: z.string().trim().max(2000).optional(),
+    storeLogoUrl: z.string().trim().max(500).optional(),
+    storeBannerUrl: z.string().trim().max(500).optional(),
     commissionRate: z.number().min(0).max(100),
     role: z.enum(["seller_owner", "seller_staff"]),
     staffTitle: z.string().trim().max(120).optional(),
@@ -661,6 +663,8 @@ export const provisionSeller = createServerFn({ method: "POST" })
           status: "active",
           verification_status: "unverified",
           description: data.storeDescription || null,
+          logo_path: data.storeLogoUrl || null,
+          banner_path: data.storeBannerUrl || null,
         })
         .select("id")
         .single();

@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Ban,
   BarChart3,
+  Bell,
   ExternalLink,
   Layers,
   LayoutDashboard,
@@ -62,6 +63,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Commission", to: "/seller/commission", icon: <Percent className="h-4 w-4" /> },
   { label: "Settlements", to: "/seller/settlements", icon: <Wallet className="h-4 w-4" /> },
   { label: "Support", to: "/seller/support", icon: <LifeBuoy className="h-4 w-4" /> },
+  { label: "Notifications", to: "/seller/notifications", icon: <Bell className="h-4 w-4" /> },
   { label: "AI Tools", to: "/seller/ai", icon: <Sparkles className="h-4 w-4" /> },
   { label: "Settings", to: "/seller/settings", icon: <Settings className="h-4 w-4" /> },
 ];

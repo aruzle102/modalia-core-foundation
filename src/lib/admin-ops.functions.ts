@@ -80,21 +80,22 @@ export const listAdminStores = createServerFn({ method: "GET" })
     const supabaseAdmin = await adminClient();
     const q = data.q ? sanitizeSearch(data.q) : "";
 
-    let query = supabaseAdmin
-      .from("stores")
-      .select("*, sellers(legal_name)", { count: "exact" });
+    let query = supabaseAdmin.from("stores").select("*, sellers(legal_name)", { count: "exact" });
     if (data.status) query = query.eq("status", data.status);
     if (q) query = query.or(`name.ilike.%${q}%,slug.ilike.%${q}%`);
 
     const from = (data.page - 1) * PAGE_SIZE;
-    const { data: rows, error, count } = await query
-      .order("created_at", { ascending: false })
-      .range(from, from + PAGE_SIZE - 1);
+    const {
+      data: rows,
+      error,
+      count,
+    } = await query.order("created_at", { ascending: false }).range(from, from + PAGE_SIZE - 1);
     if (error) throw new Error(error.message);
 
     const items: AdminStoreListItem[] = (rows ?? []).map((s) => ({
       ...(s as StoreRow),
-      seller_legal_name: (s as { sellers?: { legal_name?: string | null } | null }).sellers?.legal_name ?? null,
+      seller_legal_name:
+        (s as { sellers?: { legal_name?: string | null } | null }).sellers?.legal_name ?? null,
       product_count: 0,
     }));
 
@@ -142,9 +143,11 @@ export const listAdminCustomers = createServerFn({ method: "GET" })
     if (q) query = query.or(`display_name.ilike.%${q}%,phone.ilike.%${q}%`);
 
     const from = (data.page - 1) * PAGE_SIZE;
-    const { data: rows, error, count } = await query
-      .order("created_at", { ascending: false })
-      .range(from, from + PAGE_SIZE - 1);
+    const {
+      data: rows,
+      error,
+      count,
+    } = await query.order("created_at", { ascending: false }).range(from, from + PAGE_SIZE - 1);
     if (error) throw new Error(error.message);
 
     const items: AdminCustomerListItem[] = (rows ?? []).map((p) => ({
@@ -249,6 +252,10 @@ export type AdminWilayaListItem = WilayaRow & {
   rule_count: number;
 };
 
+/**
+ * Rich wilaya list for the management page (with commune_count + rule_count).
+ * For simple dropdowns, use the lite `listWilayas` in admin-catalog.functions.ts.
+ */
 export const listAdminWilayas = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .inputValidator((data) => z.object({}).parse(data))
@@ -294,6 +301,11 @@ const listCommunesInput = z.object({
   page: z.number().int().min(1).default(1),
 });
 
+/**
+ * Rich paginated/searchable commune list for the management page.
+ * For simple dropdowns by wilaya, use the lite `listCommunes` in
+ * admin-catalog.functions.ts.
+ */
 export const listAdminCommunes = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .inputValidator((data) => listCommunesInput.parse(data))
@@ -302,16 +314,16 @@ export const listAdminCommunes = createServerFn({ method: "GET" })
     const supabaseAdmin = await adminClient();
     const q = data.q ? sanitizeSearch(data.q) : "";
 
-    let query = supabaseAdmin
-      .from("communes")
-      .select("*, wilayas(code,name)", { count: "exact" });
+    let query = supabaseAdmin.from("communes").select("*, wilayas(code,name)", { count: "exact" });
     if (data.wilayaId) query = query.eq("wilaya_id", data.wilayaId);
     if (q) query = query.or(`code.ilike.%${q}%`);
 
     const from = (data.page - 1) * PAGE_SIZE;
-    const { data: rows, error, count } = await query
-      .order("code")
-      .range(from, from + PAGE_SIZE - 1);
+    const {
+      data: rows,
+      error,
+      count,
+    } = await query.order("code").range(from, from + PAGE_SIZE - 1);
     if (error) throw new Error(error.message);
 
     const items: AdminCommuneListItem[] = (rows ?? []).map((c) => {
@@ -328,121 +340,6 @@ export const listAdminCommunes = createServerFn({ method: "GET" })
   });
 
 /* ------------------------------------------------------------------ */
-/* Official store (settings.official === true)                         */
-/* ------------------------------------------------------------------ */
-
-export type OfficialStoreOverview = {
-  store: StoreRow;
-  seller_legal_name: string | null;
-  product_count: number;
-  published_count: number;
-  recent_products: { id: string; slug: string; name: Json; base_price: number; status: string }[];
-} | null;
-
-export const getOfficialStore = createServerFn({ method: "GET" })
-  .middleware(adminOnly)
-  .inputValidator((data) => z.object({}).parse(data))
-  .handler(async ({ context }): Promise<{ official: OfficialStoreOverview }> => {
-    await assertAdmin(context);
-    const supabaseAdmin = await adminClient();
-    const { data: store, error } = await supabaseAdmin
-      .from("stores")
-      .select("*, sellers(legal_name)")
-      .contains("settings", { official: true })
-      .maybeSingle();
-    if (error) throw new Error(error.message);
-    if (!store) return { official: null };
-
-    const sellerId = (store as StoreRow).seller_id;
-    const [{ data: products }, { data: sellerProducts }] = await Promise.all([
-      supabaseAdmin
-        .from("products")
-        .select("id,slug,name,base_price,status,publication_status")
-        .eq("seller_id", sellerId)
-        .order("created_at", { ascending: false })
-        .limit(8),
-      supabaseAdmin.from("products").select("id,status").eq("seller_id", sellerId).limit(2000),
-    ]);
-
-    const published = (sellerProducts ?? []).filter(
-      (p) => p.status === "active",
-    ).length;
-
-    return {
-      official: {
-        store: store as StoreRow,
-        seller_legal_name:
-          (store as { sellers?: { legal_name?: string | null } | null }).sellers?.legal_name ?? null,
-        product_count: (sellerProducts ?? []).length,
-        published_count: published,
-        recent_products: (products ?? []).map((p) => ({
-          id: p.id,
-          slug: p.slug,
-          name: p.name,
-          base_price: Number(p.base_price) || 0,
-          status: p.status,
-        })),
-      },
-    };
-  });
-
-/* ------------------------------------------------------------------ */
-/* Media library (product-media bucket)                                */
-/* ------------------------------------------------------------------ */
-
-export type MediaEntry = {
-  name: string;
-  path: string;
-  isFolder: boolean;
-  size: number | null;
-  mime: string | null;
-  updatedAt: string | null;
-};
-
-const MEDIA_BUCKET = "product-media";
-
-export const listMedia = createServerFn({ method: "GET" })
-  .middleware(adminOnly)
-  .inputValidator((data) => z.object({ prefix: z.string().max(500).default("") }).parse(data))
-  .handler(async ({ data, context }): Promise<{ prefix: string; entries: MediaEntry[] }> => {
-    await assertAdmin(context);
-    const supabaseAdmin = await adminClient();
-    const prefix = data.prefix.replace(/(^\/+|\/+$)/g, "");
-    const { data: objects, error } = await supabaseAdmin.storage
-      .from(MEDIA_BUCKET)
-      .list(prefix || undefined, { limit: 100, sortBy: { column: "updated_at", order: "desc" } });
-    if (error) throw new Error(error.message);
-
-    const entries: MediaEntry[] = (objects ?? [])
-      .filter((o) => o.name !== ".emptyFolderPlaceholder")
-      .map((o) => {
-        const isFolder = o.id == null && (!o.metadata || Object.keys(o.metadata).length === 0);
-        return {
-          name: o.name,
-          path: prefix ? `${prefix}/${o.name}` : o.name,
-          isFolder,
-          size: typeof o.metadata?.size === "number" ? o.metadata.size : null,
-          mime: typeof o.metadata?.mimetype === "string" ? o.metadata.mimetype : null,
-          updatedAt: o.updated_at ?? o.created_at ?? null,
-        };
-      });
-    return { prefix, entries };
-  });
-
-export const getMediaSignedUrl = createServerFn({ method: "GET" })
-  .middleware(adminOnly)
-  .inputValidator((data) => z.object({ path: z.string().min(1).max(1000) }).parse(data))
-  .handler(async ({ data, context }) => {
-    await assertAdmin(context);
-    const supabaseAdmin = await adminClient();
-    const { data: signed, error } = await supabaseAdmin.storage
-      .from(MEDIA_BUCKET)
-      .createSignedUrl(data.path, 3600);
-    if (error || !signed?.signedUrl) throw new Error(error?.message ?? "Could not sign URL.");
-    return { url: signed.signedUrl };
-  });
-
-/* ------------------------------------------------------------------ */
 /* Security overview                                                   */
 /* ------------------------------------------------------------------ */
 
@@ -450,7 +347,12 @@ export type SecurityOverview = {
   roleCounts: { role: string; count: number }[];
   superAdmins: { user_id: string; display_name: string | null; created_at: string }[];
   passwordResetRequired: number;
-  recentSecurityEvents: { id: string; action: string; created_at: string; resource: string | null }[];
+  recentSecurityEvents: {
+    id: string;
+    action: string;
+    created_at: string;
+    resource: string | null;
+  }[];
 };
 
 export const getSecurityOverview = createServerFn({ method: "GET" })
@@ -460,22 +362,31 @@ export const getSecurityOverview = createServerFn({ method: "GET" })
     await assertAdmin(context);
     const supabaseAdmin = await adminClient();
 
-    const [{ data: roles }, { data: admins }, { data: resetSellers, count: resetCount }, { data: events }] =
-      await Promise.all([
-        supabaseAdmin.from("user_roles").select("role"),
-        supabaseAdmin
-          .from("user_roles")
-          .select("user_id,created_at")
-          .eq("role", "super_admin")
-          .order("created_at"),
-        supabaseAdmin.from("sellers").select("id", { count: "exact" }).eq("must_reset_password", true),
-        supabaseAdmin
-          .from("audit_logs")
-          .select("id,action,created_at,resource")
-          .or("action.ilike.%password%,action.ilike.%login%,action.ilike.%role%,action.ilike.%session%,action.ilike.%auth%")
-          .order("created_at", { ascending: false })
-          .limit(20),
-      ]);
+    const [
+      { data: roles },
+      { data: admins },
+      { data: resetSellers, count: resetCount },
+      { data: events },
+    ] = await Promise.all([
+      supabaseAdmin.from("user_roles").select("role"),
+      supabaseAdmin
+        .from("user_roles")
+        .select("user_id,created_at")
+        .eq("role", "super_admin")
+        .order("created_at"),
+      supabaseAdmin
+        .from("sellers")
+        .select("id", { count: "exact" })
+        .eq("must_reset_password", true),
+      supabaseAdmin
+        .from("audit_logs")
+        .select("id,action,created_at,resource")
+        .or(
+          "action.ilike.%password%,action.ilike.%login%,action.ilike.%role%,action.ilike.%session%,action.ilike.%auth%",
+        )
+        .order("created_at", { ascending: false })
+        .limit(20),
+    ]);
 
     const adminIds = (admins ?? []).map((a) => a.user_id);
     const { data: adminProfiles } =
@@ -544,11 +455,7 @@ export const getSiteSettings = createServerFn({ method: "GET" })
 
 export const updateSiteSettings = createServerFn({ method: "POST" })
   .middleware(adminOnly)
-  .inputValidator((data) =>
-    z
-      .object({ values: z.record(z.string(), z.unknown()) })
-      .parse(data),
-  )
+  .inputValidator((data) => z.object({ values: z.record(z.string(), z.unknown()) }).parse(data))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const supabaseAdmin = await adminClient();

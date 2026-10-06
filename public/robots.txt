@@ -1,6 +1,7 @@
 # Modalia — public crawler policy
-# The dynamic sitemap is served by the server at /sitemap.xml (see src/server.ts).
-# Private flows (admin, seller, account, checkout, cart, auth) stay out of the index.
+# NOTE: the running server intercepts /robots.txt (see src/server.ts) and
+# serves a dynamic version whose Sitemap line comes from VITE_SITE_URL.
+# This static file is only a fallback for static hosts.
 
 User-agent: *
 Allow: /
@@ -34,5 +35,3 @@ Disallow: /cart
 Disallow: /auth
 Disallow: /order-success
 Disallow: /wishlist
-
-Sitemap: https://modalia-core-foundation.lovable.app/sitemap.xml

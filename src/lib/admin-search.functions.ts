@@ -127,29 +127,4 @@ export const adminGlobalSearch = createServerFn({ method: "GET" })
     };
   });
 
-/**
- * Admin-only lookup of the store flagged as the platform's official store
- * (`stores.settings.official === true`). Returns `{ store: null }` when no
- * store is flagged yet — the UI must say so honestly instead of guessing.
- */
-export const getOfficialStore = createServerFn({ method: "GET" })
-  .middleware(adminOnly)
-  .handler(async ({ context }) => {
-    await assertAdmin(context);
-    const supabaseAdmin = await adminClient();
-    try {
-      const { data, error } = await supabaseAdmin
-        .from("stores")
-        .select("id,name,slug")
-        .filter("settings->>official", "eq", "true")
-        .order("created_at", { ascending: true })
-        .limit(1)
-        .maybeSingle();
-      if (error || !data) return { store: null as { id: string; name: string; slug: string } | null };
-      return { store: data };
-    } catch {
-      return { store: null as { id: string; name: string; slug: string } | null };
-    }
-  });
-
 export type AdminGlobalSearchResult = Awaited<ReturnType<typeof adminGlobalSearch>>;

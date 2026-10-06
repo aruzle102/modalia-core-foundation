@@ -24,6 +24,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import type { Database, Json } from "@/integrations/supabase/types";
 import type { CatalogProduct } from "@/lib/catalog.functions";
+import { readIntelligenceToggles } from "@/lib/intelligence-settings.functions";
 
 /** Tunable weights. Keys mirror intelligence_settings.ranking_weights where overlapping. */
 export const RECOMMENDATION_WEIGHTS = {
@@ -400,6 +401,13 @@ async function toCatalogProducts(
 export const getRecommendations = createServerFn({ method: "GET" })
   .inputValidator((data) => recommendationsInput.parse(data))
   .handler(async ({ data }) => {
+    // V8 #177 — server-side gate. The storefront hides recommendation rails
+    // when the toggle is off (index route), but the endpoint itself must
+    // refuse: a direct GET must not bypass the admin's switch.
+    const toggles = await readIntelligenceToggles();
+    if (!toggles.recommendations_enabled) {
+      return { products: [] as CatalogProduct[], hasData: false };
+    }
     const client = publicClient();
     const now = Date.now();
 

@@ -149,7 +149,7 @@ export function ProductCard({
           onClick={handleWishlist}
           aria-pressed={wishlisted}
           aria-label={t.wishlist(product.name)}
-          className={`card-action ${wishlisted ? "is-active" : ""} absolute end-3 top-3 z-10 grid size-9 place-items-center rounded-full bg-background/90 text-foreground backdrop-blur-sm transition-colors hover:bg-background`}
+          className={`card-action ${wishlisted ? "is-active" : ""} absolute end-3 top-3 z-10 grid size-10 place-items-center rounded-full bg-background/90 text-foreground backdrop-blur-sm transition-colors hover:bg-background`}
         >
           <Heart
             className={`size-4 ${wishlisted ? "fill-destructive text-destructive" : ""}`}

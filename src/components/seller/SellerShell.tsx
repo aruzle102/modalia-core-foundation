@@ -218,6 +218,7 @@ function SellerNavLink({ item, compact, onNavigate }: { item: NavItem; compact?:
   return (
     <Link
       to={item.to}
+      preload="intent"
       onClick={onNavigate}
       {...(item.exact ? { activeOptions: { exact: true } } : {})}
       activeProps={{ className: "bg-accent text-accent-foreground font-medium" }}

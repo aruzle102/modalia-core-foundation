@@ -305,7 +305,7 @@ export const updateAdminProduct = createServerFn({ method: "POST" })
     const { error } = await supabaseAdmin.from("products").update(update).eq("id", data.id);
     if (error) throw new Error(error.message);
     await auditLog(context.userId ?? null, "product_updated", "product", data.id, {
-      patch: update as unknown as Json,
+      patch: update,
     });
     return { ok: true as const };
   });
@@ -1728,4 +1728,110 @@ export const listAdminCommissions = createServerFn({ method: "GET" })
     });
 
     return { rows, total: count ?? 0, page: data.page, pageSize: PAGE_SIZE };
+  });
+
+/* ── Seller product deletion + warnings ─────────────────────────── */
+
+/** Admin: permanently delete a seller's product + record a violation warning. */
+export const deleteSellerProduct = createServerFn({ method: "POST" })
+  .middleware(adminOnly)
+  .validator((d) =>
+    z
+      .object({
+        productId: z.string().uuid(),
+        reason: z.string().min(3).max(1000),
+      })
+      .parse(d)
+  )
+  .handler(async ({ data, context }): Promise<{ ok: boolean }> => {
+    await assertAdminPermission(context, "products.manage");
+    const supabaseAdmin = await adminClient();
+
+    const { data: product, error: prodError } = await supabaseAdmin
+      .from("products")
+      .select("id, seller_id, name")
+      .eq("id", data.productId)
+      .maybeSingle();
+    if (prodError || !product) throw new Error("Product not found");
+
+    const rawName = product.name as Record<string, unknown> | string | null;
+    const productName =
+      typeof rawName === "string"
+        ? rawName
+        : typeof rawName?.["fr"] === "string"
+          ? (rawName["fr"] as string)
+          : typeof rawName?.["en"] === "string"
+            ? (rawName["en"] as string)
+            : "Product";
+
+    // Record the warning first (keeps product_id for the record)
+    const { error: warnError } = await supabaseAdmin.from("seller_warnings").insert({
+      seller_id: product.seller_id,
+      product_id: product.id,
+      reason: data.reason.trim(),
+      action_taken: "product_deleted",
+      issued_by: (context as any)?.userId ?? null,
+    });
+    if (warnError) throw new Error(warnError.message);
+
+    // Delete the product
+    const { error: delError } = await supabaseAdmin.from("products").delete().eq("id", data.productId);
+    if (delError) throw new Error(delError.message);
+
+    await auditLog((context as any)?.userId ?? null, "product_deleted", "product", data.productId, {
+      reason: data.reason,
+    });
+
+    // Notify the seller
+    try {
+      await emitSellerNotification(product.seller_id, {
+        type: "product_rejected",
+        params: { productName, reason: data.reason.trim() },
+        payload: { product_id: data.productId, action: "deleted" },
+      });
+    } catch {
+      /* best-effort */
+    }
+    return { ok: true };
+  });
+
+/** Admin: issue a warning to a seller without deleting (notice only). */
+export const issueSellerWarning = createServerFn({ method: "POST" })
+  .middleware(adminOnly)
+  .validator((d) =>
+    z
+      .object({
+        sellerId: z.string().uuid(),
+        productId: z.string().uuid().optional(),
+        reason: z.string().min(3).max(1000),
+      })
+      .parse(d)
+  )
+  .handler(async ({ data, context }): Promise<{ ok: boolean }> => {
+    await assertAdminPermission(context, "products.manage");
+    const supabaseAdmin = await adminClient();
+
+    const { error } = await supabaseAdmin.from("seller_warnings").insert({
+      seller_id: data.sellerId,
+      product_id: data.productId ?? null,
+      reason: data.reason.trim(),
+      action_taken: "notice",
+      issued_by: (context as any)?.userId ?? null,
+    });
+    if (error) throw new Error(error.message);
+
+    await auditLog((context as any)?.userId ?? null, "seller_warned", "seller", data.sellerId, {
+      reason: data.reason,
+    });
+
+    try {
+      await emitSellerNotification(data.sellerId, {
+        type: "product_rejected",
+        params: { reason: data.reason.trim() },
+        payload: { action: "warning" },
+      });
+    } catch {
+      /* best-effort */
+    }
+    return { ok: true };
   });

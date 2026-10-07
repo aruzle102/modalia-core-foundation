@@ -72,17 +72,18 @@ export function ProductCard({
 
   return (
     <article className="group relative min-w-0 overflow-hidden rounded-2xl border border-border/60 bg-card shadow-[0_1px_3px_rgba(0,0,0,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_32px_rgba(0,0,0,0.12)]">
+      <Link
+        to="/product/$slug"
+        params={{ slug: product.slug }}
+        search={{ locale }}
+        className="block"
+        aria-label={product.name}
+      >
       {/* Image — 4:5 with premium hover zoom */}
       <div
         className={`relative aspect-[4/5] overflow-hidden bg-muted ${soldOut ? "saturate-50" : ""}`}
       >
-        <Link
-          to="/product/$slug"
-          params={{ slug: product.slug }}
-          search={{ locale }}
-          className="block size-full"
-          aria-label={product.name}
-        >
+        <div className="block size-full">
           {product.imagePath ? (
             <img
               src={product.imagePath}
@@ -116,7 +117,7 @@ export function ProductCard({
               className={`absolute inset-0 size-full object-cover opacity-0 ${motionTw.transition.opacity} ${motionTw.duration.crossfade} group-hover:opacity-100 motion-reduce:transition-none motion-reduce:group-hover:opacity-0`}
             />
           ) : null}
-        </Link>
+        </div>
 
         {/* Premium badges — pill style with subtle shadow */}
         <div className="pointer-events-none absolute start-3 top-3 z-10 flex flex-col items-start gap-1.5">
@@ -159,14 +160,9 @@ export function ProductCard({
         <h3
           className={`line-clamp-2 min-h-[2.6em] text-[15px] font-semibold leading-snug ${dark ? "text-white" : "text-foreground"}`}
         >
-          <Link
-            to="/product/$slug"
-            params={{ slug: product.slug }}
-            search={{ locale }}
-            className={`transition-colors ${dark ? "hover:text-white/70" : "hover:text-primary"}`}
-          >
+          <span className={`transition-colors ${dark ? "group-hover:text-white/70" : "group-hover:text-primary"}`}>
             {product.name}
-          </Link>
+          </span>
         </h3>
         <p className="flex items-baseline gap-2 pt-1">
           <span
@@ -193,6 +189,7 @@ export function ProductCard({
           </p>
         ) : null}
       </div>
+      </Link>
     </article>
   );
 }

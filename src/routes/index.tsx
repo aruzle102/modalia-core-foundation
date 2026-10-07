@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useDeviceTier } from "@/hooks/use-device-tier";
 import { DiscoverySkeleton, ProductCard } from "@/components/marketplace/discovery";
+import { PartnerBannerCarousel } from "@/components/marketplace/PartnerBannerCarousel";
 import { OfficialStoreBadge, VerifiedSellerBadge } from "@/components/marketplace/StoreBadges";
 import { SiteFooter, SiteHeader } from "@/components/layout/site-shell";
 import { useReveal } from "@/hooks/use-reveal";
@@ -1635,9 +1636,10 @@ function HomePage() {
 
   return (
     <div dir={localeDirections[locale]} lang={locale} className="min-h-screen bg-background">
-      <BrandEntrance />
+      {/* BrandEntrance disabled per owner request */}
       <SiteHeader locale={locale} t={t} />
       <main id="main-content" tabIndex={-1}>
+        <PartnerBannerCarousel />
         <Hero locale={locale} hero={hero} copy={copy} products={data.products} />
         <TrustMarquee copy={copy} />
         <TrustStrip copy={copy} />

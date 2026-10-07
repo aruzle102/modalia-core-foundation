@@ -1,1 +1,74 @@
-LyoqCiAqIFNlbGxlciB3YXJuaW5ncyBpbmJveCDigJQgbW9kZXJhdGlvbiBub3RpY2VzIGZyb20gYWRtaW4KICogKHByb2R1Y3QgZGVsZXRlZC9yZWplY3RlZC9oaWRkZW4sIG9yIHBsYWluIHdhcm5pbmdzKS4KICovCmltcG9ydCB7IHVzZVF1ZXJ5LCB1c2VNdXRhdGlvbiwgdXNlUXVlcnlDbGllbnQgfSBmcm9tICJAdGFuc3RhY2svcmVhY3QtcXVlcnkiOwppbXBvcnQgeyBBbGVydFRyaWFuZ2xlLCBDaGVjayB9IGZyb20gImx1Y2lkZS1yZWFjdCI7CmltcG9ydCB7IEJ1dHRvbiB9IGZyb20gIkAvY29tcG9uZW50cy91aS9idXR0b24iOwppbXBvcnQgeyBBZG1pbkNhcmQgfSBmcm9tICJAL2NvbXBvbmVudHMvYWRtaW4vdWkiOwppbXBvcnQgeyBnZXRNeVdhcm5pbmdzLCBhY2tub3dsZWRnZVdhcm5pbmcgfSBmcm9tICJAL2xpYi9zZWxsZXItd2FybmluZ3MuZnVuY3Rpb25zIjsKCmNvbnN0IEFDVElPTl9MQUJFTFM6IFJlY29yZDxzdHJpbmcsIHN0cmluZz4gPSB7CiAgbm90aWNlOiAiTm90aWNlIiwKICBwcm9kdWN0X2RlbGV0ZWQ6ICJQcm9kdWN0IGRlbGV0ZWQiLAogIHByb2R1Y3RfcmVqZWN0ZWQ6ICJQcm9kdWN0IHJlamVjdGVkIiwKICBwcm9kdWN0X2hpZGRlbjogIlByb2R1Y3QgaGlkZGVuIiwKfTsKCmV4cG9ydCBmdW5jdGlvbiBXYXJuaW5nc0luYm94KCkgewogIGNvbnN0IHF1ZXJ5Q2xpZW50ID0gdXNlUXVlcnlDbGllbnQoKTsKICBjb25zdCB7IGRhdGEsIGlzTG9hZGluZyB9ID0gdXNlUXVlcnkoewogICAgcXVlcnlLZXk6IFsic2VsbGVyLXdhcm5pbmdzIl0sCiAgICBxdWVyeUZuOiAoKSA9PiBnZXRNeVdhcm5pbmdzKCksCiAgfSk7CiAgY29uc3QgYWNrID0gdXNlTXV0YXRpb24oewogICAgbXV0YXRpb25GbjogKGlkOiBzdHJpbmcpID0+IGFja25vd2xlZGdlV2FybmluZyh7IGRhdGE6IHsgd2FybmluZ0lkOiBpZCB9IH0pLAogICAgb25TdWNjZXNzOiAoKSA9PiBxdWVyeUNsaWVudC5pbnZhbGlkYXRlUXVlcmllcyh7IHF1ZXJ5S2V5OiBbInNlbGxlci13YXJuaW5ncyJdIH0pLAogIH0pOwoKICBpZiAoaXNMb2FkaW5nKSByZXR1cm4gbnVsbDsKICBpZiAoIWRhdGEgfHwgZGF0YS5sZW5ndGggPT09IDApIHJldHVybiBudWxsOwoKICBjb25zdCB1bmFja2VkID0gZGF0YS5maWx0ZXIoKHcpID0+ICF3LmFja25vd2xlZGdlZEF0KTsKCiAgcmV0dXJuICgKICAgIDxBZG1pbkNhcmQgdGl0bGU9Ik1vZGVyYXRpb24gd2FybmluZ3MiIGNsYXNzTmFtZT0ibXQtNiBib3JkZXItYW1iZXItMjAwIj4KICAgICAgPGRpdiBjbGFzc05hbWU9InNwYWNlLXktMyI+CiAgICAgICAge3VuYWNrZWQubGVuZ3RoID4gMCA/ICgKICAgICAgICAgIDxwIGNsYXNzTmFtZT0idGV4dC1zbSBmb250LW1lZGl1bSB0ZXh0LWFtYmVyLTcwMCI+CiAgICAgICAgICAgIFlvdSBoYXZlIHt1bmFja2VkLmxlbmd0aH0gdW5yZWFkIHdhcm5pbmd7dW5hY2tlZC5sZW5ndGggPiAxID8gInMiIDogIiJ9LgogICAgICAgICAgPC9wPgogICAgICAgICkgOiBudWxsfQogICAgICAgIHtkYXRhLm1hcCgodykgPT4gKAogICAgICAgICAgPGRpdgogICAgICAgICAgICBrZXk9e3cuaWR9CiAgICAgICAgICAgIGNsYXNzTmFtZT17YHJvdW5kZWQtbGcgYm9yZGVyIHAtMyAke3cuYWNrbm93bGVkZ2VkQXQgPyAib3BhY2l0eS02MCIgOiAiYm9yZGVyLWFtYmVyLTMwMCBiZy1hbWJlci01MCJ9YH0KICAgICAgICAgID4KICAgICAgICAgICAgPGRpdiBjbGFzc05hbWU9ImZsZXggaXRlbXMtc3RhcnQganVzdGlmeS1iZXR3ZWVuIGdhcC0zIj4KICAgICAgICAgICAgICA8ZGl2IGNsYXNzTmFtZT0iZmxleCBpdGVtcy1zdGFydCBnYXAtMiI+CiAgICAgICAgICAgICAgICA8QWxlcnRUcmlhbmdsZSBjbGFzc05hbWU9Im10LTAuNSBoLTQgdy00IHNocmluay0wIHRleHQtYW1iZXItNjAwIiAvPgogICAgICAgICAgICAgICAgPGRpdj4KICAgICAgICAgICAgICAgICAgPHAgY2xhc3NOYW1lPSJ0ZXh0LXNtIGZvbnQtbWVkaXVtIj57QUNUSU9OX0xBQkVMU1t3LmFjdGlvblRha2VuXSA/PyB3LmFjdGlvblRha2VufTwvcD4KICAgICAgICAgICAgICAgICAgPHAgY2xhc3NOYW1lPSJtdC0xIHRleHQtc20gdGV4dC1tdXRlZC1mb3JlZ3JvdW5kIj57dy5yZWFzb259PC9wPgogICAgICAgICAgICAgICAgICA8cCBjbGFzc05hbWU9Im10LTEgdGV4dC14cyB0ZXh0LW11dGVkLWZvcmVncm91bmQiPgogICAgICAgICAgICAgICAgICAgIHtuZXcgRGF0ZSh3Lmlzc3VlZEF0KS50b0xvY2FsZURhdGVTdHJpbmcoKX0KICAgICAgICAgICAgICAgICAgPC9wPgogICAgICAgICAgICAgICAgPC9kaXY+CiAgICAgICAgICAgICAgPC9kaXY+CiAgICAgICAgICAgICAgeyF3LmFja25vd2xlZGdlZEF0ID8gKAogICAgICAgICAgICAgICAgPEJ1dHRvbgogICAgICAgICAgICAgICAgICBzaXplPSJzbSIKICAgICAgICAgICAgICAgICAgdmFyaWFudD0ib3V0bGluZSIKICAgICAgICAgICAgICAgICAgb25DbGljaz17KCkgPT4gYWNrLm11dGF0ZSh3LmlkKX0KICAgICAgICAgICAgICAgICAgZGlzYWJsZWQ9e2Fjay5pc1BlbmRpbmd9CiAgICAgICAgICAgICAgICA+CiAgICAgICAgICAgICAgICAgIDxDaGVjayBjbGFzc05hbWU9Im1yLTEgaC0zIHctMyIgLz4gR290IGl0CiAgICAgICAgICAgICAgICA8L0J1dHRvbj4KICAgICAgICAgICAgICApIDogbnVsbH0KICAgICAgICAgICAgPC9kaXY+CiAgICAgICAgICA8L2Rpdj4KICAgICAgICApKX0KICAgICAgPC9kaXY+CiAgICA8L0FkbWluQ2FyZD4KICApOwp9Cg==
+/**
+ * Seller warnings inbox — moderation notices from admin
+ * (product deleted/rejected/hidden, or plain warnings).
+ */
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { AlertTriangle, Check } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { AdminCard } from "@/components/admin/ui";
+import { getMyWarnings, acknowledgeWarning } from "@/lib/seller-warnings.functions";
+
+const ACTION_LABELS: Record<string, string> = {
+  notice: "Notice",
+  product_deleted: "Product deleted",
+  product_rejected: "Product rejected",
+  product_hidden: "Product hidden",
+};
+
+export function WarningsInbox() {
+  const queryClient = useQueryClient();
+  const { data, isLoading } = useQuery({
+    queryKey: ["seller-warnings"],
+    queryFn: () => getMyWarnings(),
+  });
+  const ack = useMutation({
+    mutationFn: (id: string) => acknowledgeWarning({ data: { warningId: id } }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["seller-warnings"] }),
+  });
+
+  if (isLoading) return null;
+  if (!data || data.length === 0) return null;
+
+  const unacked = data.filter((w) => !w.acknowledgedAt);
+
+  return (
+    <AdminCard title="Moderation warnings" className="mt-6 border-amber-200">
+      <div className="space-y-3">
+        {unacked.length > 0 ? (
+          <p className="text-sm font-medium text-amber-700">
+            You have {unacked.length} unread warning{unacked.length > 1 ? "s" : ""}.
+          </p>
+        ) : null}
+        {data.map((w) => (
+          <div
+            key={w.id}
+            className={`rounded-lg border p-3 ${w.acknowledgedAt ? "opacity-60" : "border-amber-300 bg-amber-50"}`}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+                <div>
+                  <p className="text-sm font-medium">{ACTION_LABELS[w.actionTaken] ?? w.actionTaken}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">{w.reason}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {new Date(w.issuedAt).toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
+              {!w.acknowledgedAt ? (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => ack.mutate(w.id)}
+                  disabled={ack.isPending}
+                >
+                  <Check className="mr-1 h-3 w-3" /> Got it
+                </Button>
+              ) : null}
+            </div>
+          </div>
+        ))}
+      </div>
+    </AdminCard>
+  );
+}

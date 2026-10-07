@@ -1,1 +1,130 @@
-LyoqCiAqIE1PREFMSUEg4oCUIFByb2JsZW0gcmVwb3J0cy4KICogUHVibGljIGZvcm0gKHdpdGggaW1hZ2UgYXR0YWNobWVudHMpIC0+IGFkbWluIGluYm94IGF0IC9hZG1pbi9yZXBvcnRzLgogKi8KaW1wb3J0IHsgY3JlYXRlU2VydmVyRm4gfSBmcm9tICJAdGFuc3RhY2svcmVhY3Qtc3RhcnQiOwppbXBvcnQgeyB6IH0gZnJvbSAiem9kIjsKaW1wb3J0IHsgcmVxdWlyZVN1cGFiYXNlQXV0aCB9IGZyb20gIkAvaW50ZWdyYXRpb25zL3N1cGFiYXNlL2F1dGgtbWlkZGxld2FyZSI7CmltcG9ydCB7IGFzc2VydEFkbWluIH0gZnJvbSAiQC9saWIvYWRtaW4tYXV0aCI7Cgpjb25zdCByZXBvcnRTY2hlbWEgPSB6Lm9iamVjdCh7CiAgcmVwb3J0ZXJOYW1lOiB6LnN0cmluZygpLm1heCgyMDApLm9wdGlvbmFsKCksCiAgcmVwb3J0ZXJFbWFpbDogei5zdHJpbmcoKS5lbWFpbCgpLm1heCgyNTQpLm9wdGlvbmFsKCksCiAgcmVwb3J0ZXJQaG9uZTogei5zdHJpbmcoKS5tYXgoNDApLm9wdGlvbmFsKCksCiAgY2F0ZWdvcnk6IHouZW51bShbIm9yZGVyIiwgInByb2R1Y3QiLCAic3RvcmUiLCAicGF5bWVudCIsICJhY2NvdW50IiwgInRlY2huaWNhbCIsICJvdGhlciJdKSwKICBzdWJqZWN0OiB6LnN0cmluZygpLm1pbigzKS5tYXgoMjAwKSwKICBkZXNjcmlwdGlvbjogei5zdHJpbmcoKS5taW4oMjApLm1heCg1MDAwKSwKICBpbWFnZVVybHM6IHouYXJyYXkoei5zdHJpbmcoKS51cmwoKS5tYXgoMjAwMCkpLm1heCg1KS5kZWZhdWx0KFtdKSwKICBvcmRlcklkOiB6LnN0cmluZygpLnV1aWQoKS5vcHRpb25hbCgpLAp9KTsKCmNvbnN0IFJFUE9SVF9CVUNLRVQgPSAicHJvYmxlbS1yZXBvcnRzIjsKCi8qKiBQdWJsaWM6IGdldCBhIHNpZ25lZCB1cGxvYWQgVVJMIGZvciBhIHJlcG9ydCBpbWFnZS4gKi8KZXhwb3J0IGNvbnN0IGdldFJlcG9ydFVwbG9hZFVybCA9IGNyZWF0ZVNlcnZlckZuKHsgbWV0aG9kOiAiUE9TVCIgfSkKICAudmFsaWRhdG9yKChkKSA9PgogICAgegogICAgICAub2JqZWN0KHsKICAgICAgICBjb250ZW50VHlwZTogei5lbnVtKFsiaW1hZ2UvanBlZyIsICJpbWFnZS9wbmciLCAiaW1hZ2Uvd2VicCJdKSwKICAgICAgfSkKICAgICAgLnBhcnNlKGQpCiAgKQogIC5oYW5kbGVyKGFzeW5jICh7IGRhdGEsIGNvbnRleHQgfSk6IFByb21pc2U8eyBwYXRoOiBzdHJpbmc7IHNpZ25lZFVybDogc3RyaW5nOyB0b2tlbjogc3RyaW5nIH0+ID0+IHsKICAgIGNvbnN0IHsgY3JlYXRlQ2xpZW50IH0gPSBhd2FpdCBpbXBvcnQoIkBzdXBhYmFzZS9zdXBhYmFzZS1qcyIpOwogICAgY29uc3QgdXJsID0gcHJvY2Vzcy5lbnZbIlNVUEFCQVNFX1VSTCJdITsKICAgIGNvbnN0IGtleSA9IHByb2Nlc3MuZW52WyJTVVBBQkFTRV9TRVJWSUNFX1JPTEVfS0VZIl0hOwogICAgY29uc3Qgc3VwYWJhc2VBZG1pbiA9IGNyZWF0ZUNsaWVudCh1cmwsIGtleSk7CiAgICBjb25zdCBleHRlbnNpb24gPSBkYXRhLmNvbnRlbnRUeXBlID09PSAiaW1hZ2UvcG5nIiA/ICJwbmciIDogZGF0YS5jb250ZW50VHlwZSA9PT0gImltYWdlL3dlYnAiID8gIndlYnAiIDogImpwZyI7CiAgICBjb25zdCBwYXRoID0gYHJlcG9ydHMvJHtjcnlwdG8ucmFuZG9tVVVJRCgpfS4ke2V4dGVuc2lvbn1gOwogICAgY29uc3Qgc2lnbmVkID0gYXdhaXQgc3VwYWJhc2VBZG1pbi5zdG9yYWdlLmZyb20oUkVQT1JUX0JVQ0tFVCkuY3JlYXRlU2lnbmVkVXBsb2FkVXJsKHBhdGgpOwogICAgaWYgKHNpZ25lZC5lcnJvciB8fCAhc2lnbmVkLmRhdGEpIHRocm93IG5ldyBFcnJvcigiVGhlIHBob3RvIGNvdWxkIG5vdCBiZSBwcmVwYXJlZC4iKTsKICAgIHJldHVybiB7IHBhdGgsIHNpZ25lZFVybDogc2lnbmVkLmRhdGEuc2lnbmVkVXJsLCB0b2tlbjogc2lnbmVkLmRhdGEudG9rZW4gfTsKICB9KTsKCi8qKiBQdWJsaWM6IHN1Ym1pdCBhIHByb2JsZW0gcmVwb3J0LiAqLwpleHBvcnQgY29uc3Qgc3VibWl0UHJvYmxlbVJlcG9ydCA9IGNyZWF0ZVNlcnZlckZuKHsgbWV0aG9kOiAiUE9TVCIgfSkKICAudmFsaWRhdG9yKChkKSA9PiByZXBvcnRTY2hlbWEucGFyc2UoZCkpCiAgLmhhbmRsZXIoYXN5bmMgKHsgZGF0YSwgY29udGV4dCB9KTogUHJvbWlzZTx7IG9rOiBib29sZWFuIH0+ID0+IHsKICAgIGNvbnN0IHN1cGFiYXNlID0gKGNvbnRleHQgYXMgYW55KS5zdXBhYmFzZTsKICAgIGNvbnN0IHsgZXJyb3IgfSA9IGF3YWl0IHN1cGFiYXNlLmZyb20oInByb2JsZW1fcmVwb3J0cyIpLmluc2VydCh7CiAgICAgIHJlcG9ydGVyX25hbWU6IGRhdGEucmVwb3J0ZXJOYW1lPy50cmltKCkgfHwgbnVsbCwKICAgICAgcmVwb3J0ZXJfZW1haWw6IGRhdGEucmVwb3J0ZXJFbWFpbD8udHJpbSgpLnRvTG93ZXJDYXNlKCkgfHwgbnVsbCwKICAgICAgcmVwb3J0ZXJfcGhvbmU6IGRhdGEucmVwb3J0ZXJQaG9uZT8udHJpbSgpIHx8IG51bGwsCiAgICAgIGNhdGVnb3J5OiBkYXRhLmNhdGVnb3J5LAogICAgICBzdWJqZWN0OiBkYXRhLnN1YmplY3QudHJpbSgpLAogICAgICBkZXNjcmlwdGlvbjogZGF0YS5kZXNjcmlwdGlvbi50cmltKCksCiAgICAgIGltYWdlX3VybHM6IGRhdGEuaW1hZ2VVcmxzLAogICAgICBvcmRlcl9pZDogZGF0YS5vcmRlcklkID8/IG51bGwsCiAgICB9KTsKICAgIGlmIChlcnJvcikgdGhyb3cgbmV3IEVycm9yKGVycm9yLm1lc3NhZ2UpOwogICAgcmV0dXJuIHsgb2s6IHRydWUgfTsKICB9KTsKCmV4cG9ydCB0eXBlIFByb2JsZW1SZXBvcnRSb3cgPSB7CiAgaWQ6IHN0cmluZzsKICByZXBvcnRlck5hbWU6IHN0cmluZyB8IG51bGw7CiAgcmVwb3J0ZXJFbWFpbDogc3RyaW5nIHwgbnVsbDsKICByZXBvcnRlclBob25lOiBzdHJpbmcgfCBudWxsOwogIGNhdGVnb3J5OiBzdHJpbmc7CiAgc3ViamVjdDogc3RyaW5nOwogIGRlc2NyaXB0aW9uOiBzdHJpbmc7CiAgaW1hZ2VVcmxzOiBzdHJpbmdbXTsKICBzdGF0dXM6IHN0cmluZzsKICBjcmVhdGVkQXQ6IHN0cmluZzsKfTsKCi8qKiBBZG1pbjogbGlzdCBwcm9ibGVtIHJlcG9ydHMuICovCmV4cG9ydCBjb25zdCBsaXN0UHJvYmxlbVJlcG9ydHMgPSBjcmVhdGVTZXJ2ZXJGbih7IG1ldGhvZDogIkdFVCIgfSkKICAubWlkZGxld2FyZShbcmVxdWlyZVN1cGFiYXNlQXV0aF0gYXMgY29uc3QpCiAgLnZhbGlkYXRvcigoZCkgPT4gei5vYmplY3QoeyBzdGF0dXM6IHouc3RyaW5nKCkub3B0aW9uYWwoKSB9KS5wYXJzZShkKSkKICAuaGFuZGxlcihhc3luYyAoeyBkYXRhLCBjb250ZXh0IH0pOiBQcm9taXNlPFByb2JsZW1SZXBvcnRSb3dbXT4gPT4gewogICAgYXdhaXQgYXNzZXJ0QWRtaW4oY29udGV4dCk7CiAgICBjb25zdCBzdXBhYmFzZSA9IChjb250ZXh0IGFzIGFueSkuc3VwYWJhc2U7CiAgICBsZXQgcSA9IHN1cGFiYXNlCiAgICAgIC5mcm9tKCJwcm9ibGVtX3JlcG9ydHMiKQogICAgICAuc2VsZWN0KCIqIikKICAgICAgLm9yZGVyKCJjcmVhdGVkX2F0IiwgeyBhc2NlbmRpbmc6IGZhbHNlIH0pCiAgICAgIC5saW1pdCgxMDApOwogICAgaWYgKGRhdGEuc3RhdHVzICYmIGRhdGEuc3RhdHVzICE9PSAiYWxsIikgcSA9IHEuZXEoInN0YXR1cyIsIGRhdGEuc3RhdHVzKTsKICAgIGNvbnN0IHsgZGF0YTogcm93cywgZXJyb3IgfSA9IGF3YWl0IHE7CiAgICBpZiAoZXJyb3IpIHRocm93IG5ldyBFcnJvcihlcnJvci5tZXNzYWdlKTsKICAgIHJldHVybiAocm93cyA/PyBbXSkubWFwKChyOiBhbnkpID0+ICh7CiAgICAgIGlkOiByLmlkLAogICAgICByZXBvcnRlck5hbWU6IHIucmVwb3J0ZXJfbmFtZSwKICAgICAgcmVwb3J0ZXJFbWFpbDogci5yZXBvcnRlcl9lbWFpbCwKICAgICAgcmVwb3J0ZXJQaG9uZTogci5yZXBvcnRlcl9waG9uZSwKICAgICAgY2F0ZWdvcnk6IHIuY2F0ZWdvcnksCiAgICAgIHN1YmplY3Q6IHIuc3ViamVjdCwKICAgICAgZGVzY3JpcHRpb246IHIuZGVzY3JpcHRpb24sCiAgICAgIGltYWdlVXJsczogci5pbWFnZV91cmxzID8/IFtdLAogICAgICBzdGF0dXM6IHIuc3RhdHVzLAogICAgICBjcmVhdGVkQXQ6IHIuY3JlYXRlZF9hdCwKICAgIH0pKTsKICB9KTsKCi8qKiBBZG1pbjogdXBkYXRlIHJlcG9ydCBzdGF0dXMgKyBub3Rlcy4gKi8KZXhwb3J0IGNvbnN0IHVwZGF0ZVByb2JsZW1SZXBvcnQgPSBjcmVhdGVTZXJ2ZXJGbih7IG1ldGhvZDogIlBPU1QiIH0pCiAgLm1pZGRsZXdhcmUoW3JlcXVpcmVTdXBhYmFzZUF1dGhdIGFzIGNvbnN0KQogIC52YWxpZGF0b3IoKGQpID0+CiAgICB6CiAgICAgIC5vYmplY3QoewogICAgICAgIGlkOiB6LnN0cmluZygpLnV1aWQoKSwKICAgICAgICBzdGF0dXM6IHouZW51bShbIm5ldyIsICJpbl9yZXZpZXciLCAicmVzb2x2ZWQiLCAiY2xvc2VkIl0pLAogICAgICAgIGFkbWluTm90ZXM6IHouc3RyaW5nKCkubWF4KDIwMDApLm9wdGlvbmFsKCksCiAgICAgIH0pCiAgICAgIC5wYXJzZShkKQogICkKICAuaGFuZGxlcihhc3luYyAoeyBkYXRhLCBjb250ZXh0IH0pOiBQcm9taXNlPHsgb2s6IGJvb2xlYW4gfT4gPT4gewogICAgYXdhaXQgYXNzZXJ0QWRtaW4oY29udGV4dCk7CiAgICBjb25zdCBzdXBhYmFzZSA9IChjb250ZXh0IGFzIGFueSkuc3VwYWJhc2U7CiAgICBjb25zdCB7IGVycm9yIH0gPSBhd2FpdCBzdXBhYmFzZQogICAgICAuZnJvbSgicHJvYmxlbV9yZXBvcnRzIikKICAgICAgLnVwZGF0ZSh7CiAgICAgICAgc3RhdHVzOiBkYXRhLnN0YXR1cywKICAgICAgICBhZG1pbl9ub3RlczogZGF0YS5hZG1pbk5vdGVzPy50cmltKCkgfHwgbnVsbCwKICAgICAgICB1cGRhdGVkX2F0OiBuZXcgRGF0ZSgpLnRvSVNPU3RyaW5nKCksCiAgICAgIH0pCiAgICAgIC5lcSgiaWQiLCBkYXRhLmlkKTsKICAgIGlmIChlcnJvcikgdGhyb3cgbmV3IEVycm9yKGVycm9yLm1lc3NhZ2UpOwogICAgcmV0dXJuIHsgb2s6IHRydWUgfTsKICB9KTsK
+/**
+ * MODALIA — Problem reports.
+ * Public form (with image attachments) -> admin inbox at /admin/reports.
+ */
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertAdmin } from "@/lib/admin-auth";
+
+const reportSchema = z.object({
+  reporterName: z.string().max(200).optional(),
+  reporterEmail: z.string().email().max(254).optional(),
+  reporterPhone: z.string().max(40).optional(),
+  category: z.enum(["order", "product", "store", "payment", "account", "technical", "other"]),
+  subject: z.string().min(3).max(200),
+  description: z.string().min(20).max(5000),
+  imageUrls: z.array(z.string().url().max(2000)).max(5).default([]),
+  orderId: z.string().uuid().optional(),
+});
+
+const REPORT_BUCKET = "problem-reports";
+
+/** Public: get a signed upload URL for a report image. */
+export const getReportUploadUrl = createServerFn({ method: "POST" })
+  .validator((d) =>
+    z
+      .object({
+        contentType: z.enum(["image/jpeg", "image/png", "image/webp"]),
+      })
+      .parse(d)
+  )
+  .handler(async ({ data, context }): Promise<{ path: string; signedUrl: string; token: string }> => {
+    const { createClient } = await import("@supabase/supabase-js");
+    const url = process.env["SUPABASE_URL"]!;
+    const key = process.env["SUPABASE_SERVICE_ROLE_KEY"]!;
+    const supabaseAdmin = createClient(url, key);
+    const extension = data.contentType === "image/png" ? "png" : data.contentType === "image/webp" ? "webp" : "jpg";
+    const path = `reports/${crypto.randomUUID()}.${extension}`;
+    const signed = await supabaseAdmin.storage.from(REPORT_BUCKET).createSignedUploadUrl(path);
+    if (signed.error || !signed.data) throw new Error("The photo could not be prepared.");
+    return { path, signedUrl: signed.data.signedUrl, token: signed.data.token };
+  });
+
+/** Public: submit a problem report. */
+export const submitProblemReport = createServerFn({ method: "POST" })
+  .validator((d) => reportSchema.parse(d))
+  .handler(async ({ data, context }): Promise<{ ok: boolean }> => {
+    const supabase = (context as any).supabase;
+    const { error } = await supabase.from("problem_reports").insert({
+      reporter_name: data.reporterName?.trim() || null,
+      reporter_email: data.reporterEmail?.trim().toLowerCase() || null,
+      reporter_phone: data.reporterPhone?.trim() || null,
+      category: data.category,
+      subject: data.subject.trim(),
+      description: data.description.trim(),
+      image_urls: data.imageUrls,
+      order_id: data.orderId ?? null,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export type ProblemReportRow = {
+  id: string;
+  reporterName: string | null;
+  reporterEmail: string | null;
+  reporterPhone: string | null;
+  category: string;
+  subject: string;
+  description: string;
+  imageUrls: string[];
+  status: string;
+  createdAt: string;
+};
+
+/** Admin: list problem reports. */
+export const listProblemReports = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth] as const)
+  .validator((d) => z.object({ status: z.string().optional() }).parse(d))
+  .handler(async ({ data, context }): Promise<ProblemReportRow[]> => {
+    await assertAdmin(context);
+    const supabase = (context as any).supabase;
+    let q = supabase
+      .from("problem_reports")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(100);
+    if (data.status && data.status !== "all") q = q.eq("status", data.status);
+    const { data: rows, error } = await q;
+    if (error) throw new Error(error.message);
+    return (rows ?? []).map((r: any) => ({
+      id: r.id,
+      reporterName: r.reporter_name,
+      reporterEmail: r.reporter_email,
+      reporterPhone: r.reporter_phone,
+      category: r.category,
+      subject: r.subject,
+      description: r.description,
+      imageUrls: r.image_urls ?? [],
+      status: r.status,
+      createdAt: r.created_at,
+    }));
+  });
+
+/** Admin: update report status + notes. */
+export const updateProblemReport = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth] as const)
+  .validator((d) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        status: z.enum(["new", "in_review", "resolved", "closed"]),
+        adminNotes: z.string().max(2000).optional(),
+      })
+      .parse(d)
+  )
+  .handler(async ({ data, context }): Promise<{ ok: boolean }> => {
+    await assertAdmin(context);
+    const supabase = (context as any).supabase;
+    const { error } = await supabase
+      .from("problem_reports")
+      .update({
+        status: data.status,
+        admin_notes: data.adminNotes?.trim() || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });

@@ -1,1 +1,125 @@
-LyoqCiAqIFNlbGxlciB2ZXJpZmljYXRpb24gcmVxdWVzdCBjYXJkLgogKiBTaG93cyBwcm9ncmVzcyB0b3dhcmQ6IDUwIHNhbGVzLzMwZCArIDUwMDAgdW5pcXVlIHN0b3JlIHZpZXdzLgogKiBFbGlnaWJsZSBzZWxsZXJzIGNhbiBzdWJtaXQgYSB2ZXJpZmljYXRpb24gcmVxdWVzdCBmb3IgYWRtaW4gcmV2aWV3LgogKi8KaW1wb3J0IHsgdXNlU3RhdGUgfSBmcm9tICJyZWFjdCI7CmltcG9ydCB7IHVzZVF1ZXJ5LCB1c2VNdXRhdGlvbiwgdXNlUXVlcnlDbGllbnQgfSBmcm9tICJAdGFuc3RhY2svcmVhY3QtcXVlcnkiOwppbXBvcnQgeyBCYWRnZUNoZWNrLCBMb2FkZXIyIH0gZnJvbSAibHVjaWRlLXJlYWN0IjsKaW1wb3J0IHsgQnV0dG9uIH0gZnJvbSAiQC9jb21wb25lbnRzL3VpL2J1dHRvbiI7CmltcG9ydCB7IEFkbWluQ2FyZCB9IGZyb20gIkAvY29tcG9uZW50cy9hZG1pbi91aSI7CmltcG9ydCB7CiAgZ2V0VmVyaWZpY2F0aW9uU3RhdHVzLAogIHJlcXVlc3RWZXJpZmljYXRpb24sCiAgdHlwZSBWZXJpZmljYXRpb25FbGlnaWJpbGl0eSwKfSBmcm9tICJAL2xpYi92ZXJpZmljYXRpb24uZnVuY3Rpb25zIjsKCmZ1bmN0aW9uIFByb2dyZXNzQmFyKHsgdmFsdWUsIG1heCB9OiB7IHZhbHVlOiBudW1iZXI7IG1heDogbnVtYmVyIH0pIHsKICBjb25zdCBwY3QgPSBNYXRoLm1pbigxMDAsIE1hdGgucm91bmQoKHZhbHVlIC8gbWF4KSAqIDEwMCkpOwogIHJldHVybiAoCiAgICA8ZGl2IGNsYXNzTmFtZT0iaC0yIHctZnVsbCBvdmVyZmxvdy1oaWRkZW4gcm91bmRlZC1mdWxsIGJnLW11dGVkIj4KICAgICAgPGRpdiBjbGFzc05hbWU9ImgtZnVsbCByb3VuZGVkLWZ1bGwgYmctcHJpbWFyeSB0cmFuc2l0aW9uLWFsbCIgc3R5bGU9e3sgd2lkdGg6IGAke3BjdH0lYCB9fSAvPgogICAgPC9kaXY+CiAgKTsKfQoKZXhwb3J0IGZ1bmN0aW9uIFZlcmlmaWNhdGlvbkNhcmQoKSB7CiAgY29uc3QgcXVlcnlDbGllbnQgPSB1c2VRdWVyeUNsaWVudCgpOwogIGNvbnN0IFttZXNzYWdlLCBzZXRNZXNzYWdlXSA9IHVzZVN0YXRlPHN0cmluZyB8IG51bGw+KG51bGwpOwogIGNvbnN0IHsgZGF0YSwgaXNMb2FkaW5nLCBpc0Vycm9yIH0gPSB1c2VRdWVyeSh7CiAgICBxdWVyeUtleTogWyJ2ZXJpZmljYXRpb24tc3RhdHVzIl0sCiAgICBxdWVyeUZuOiAoKSA9PiBnZXRWZXJpZmljYXRpb25TdGF0dXMoKSwKICB9KTsKICBjb25zdCBtdXRhdGlvbiA9IHVzZU11dGF0aW9uKHsKICAgIG11dGF0aW9uRm46ICgpID0+IHJlcXVlc3RWZXJpZmljYXRpb24oKSwKICAgIG9uU3VjY2VzczogKHJlcykgPT4gewogICAgICBzZXRNZXNzYWdlKHJlcy5tZXNzYWdlKTsKICAgICAgcXVlcnlDbGllbnQuaW52YWxpZGF0ZVF1ZXJpZXMoeyBxdWVyeUtleTogWyJ2ZXJpZmljYXRpb24tc3RhdHVzIl0gfSk7CiAgICB9LAogICAgb25FcnJvcjogKGU6IEVycm9yKSA9PiBzZXRNZXNzYWdlKGUubWVzc2FnZSksCiAgfSk7CgogIGlmIChpc0xvYWRpbmcpIHsKICAgIHJldHVybiAoCiAgICAgIDxBZG1pbkNhcmQgdGl0bGU9IlN0b3JlIHZlcmlmaWNhdGlvbiIgY2xhc3NOYW1lPSJtdC02Ij4KICAgICAgICA8ZGl2IGNsYXNzTmFtZT0iZmxleCBpdGVtcy1jZW50ZXIgZ2FwLTIgdGV4dC1tdXRlZC1mb3JlZ3JvdW5kIj4KICAgICAgICAgIDxMb2FkZXIyIGNsYXNzTmFtZT0iaC00IHctNCBhbmltYXRlLXNwaW4iIC8+IExvYWRpbmfigKYKICAgICAgICA8L2Rpdj4KICAgICAgPC9BZG1pbkNhcmQ+CiAgICApOwogIH0KICBpZiAoaXNFcnJvciB8fCAhZGF0YSkgewogICAgcmV0dXJuICgKICAgICAgPEFkbWluQ2FyZCB0aXRsZT0iU3RvcmUgdmVyaWZpY2F0aW9uIiBjbGFzc05hbWU9Im10LTYiPgogICAgICAgIDxwIGNsYXNzTmFtZT0idGV4dC1zbSB0ZXh0LW11dGVkLWZvcmVncm91bmQiPkNvdWxkIG5vdCBsb2FkIHZlcmlmaWNhdGlvbiBzdGF0dXMuPC9wPgogICAgICA8L0FkbWluQ2FyZD4KICAgICk7CiAgfQoKICBjb25zdCB2OiBWZXJpZmljYXRpb25FbGlnaWJpbGl0eSA9IGRhdGE7CiAgaWYgKHYudmVyaWZpY2F0aW9uU3RhdHVzID09PSAidmVyaWZpZWQiKSB7CiAgICByZXR1cm4gKAogICAgICA8QWRtaW5DYXJkIHRpdGxlPSJTdG9yZSB2ZXJpZmljYXRpb24iIGNsYXNzTmFtZT0ibXQtNiI+CiAgICAgICAgPGRpdiBjbGFzc05hbWU9ImZsZXggaXRlbXMtY2VudGVyIGdhcC0yIHRleHQtZ3JlZW4tNjAwIj4KICAgICAgICAgIDxCYWRnZUNoZWNrIGNsYXNzTmFtZT0iaC01IHctNSIgLz4KICAgICAgICAgIDxzcGFuIGNsYXNzTmFtZT0iZm9udC1tZWRpdW0iPllvdXIgc3RvcmUgaXMgdmVyaWZpZWQ8L3NwYW4+CiAgICAgICAgPC9kaXY+CiAgICAgIDwvQWRtaW5DYXJkPgogICAgKTsKICB9CgogIHJldHVybiAoCiAgICA8QWRtaW5DYXJkCiAgICAgIHRpdGxlPSJTdG9yZSB2ZXJpZmljYXRpb24iCiAgICAgIHN1YnRpdGxlPSJHZXQgdGhlIHZlcmlmaWVkIGJhZGdlOiA1MCBzYWxlcyBpbiAzMCBkYXlzICsgNSwwMDAgdW5pcXVlIHN0b3JlIHZpZXdzIgogICAgICBjbGFzc05hbWU9Im10LTYiCiAgICA+CiAgICAgIDxkaXYgY2xhc3NOYW1lPSJzcGFjZS15LTQiPgogICAgICAgIDxkaXY+CiAgICAgICAgICA8ZGl2IGNsYXNzTmFtZT0ibWItMSBmbGV4IGp1c3RpZnktYmV0d2VlbiB0ZXh0LXNtIj4KICAgICAgICAgICAgPHNwYW4+U2FsZXMgKDMwIGRheXMpPC9zcGFuPgogICAgICAgICAgICA8c3BhbiBjbGFzc05hbWU9ImZvbnQtbWVkaXVtIj4KICAgICAgICAgICAgICB7di5zYWxlczMwZH0gLyB7di5zYWxlc1JlcXVpcmVkfQogICAgICAgICAgICA8L3NwYW4+CiAgICAgICAgICA8L2Rpdj4KICAgICAgICAgIDxQcm9ncmVzc0JhciB2YWx1ZT17di5zYWxlczMwZH0gbWF4PXt2LnNhbGVzUmVxdWlyZWR9IC8+CiAgICAgICAgPC9kaXY+CiAgICAgICAgPGRpdj4KICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPSJtYi0xIGZsZXgganVzdGlmeS1iZXR3ZWVuIHRleHQtc20iPgogICAgICAgICAgICA8c3Bhbj5VbmlxdWUgc3RvcmUgdmlld3M8L3NwYW4+CiAgICAgICAgICAgIDxzcGFuIGNsYXNzTmFtZT0iZm9udC1tZWRpdW0iPgogICAgICAgICAgICAgIHt2LnVuaXF1ZVZpZXdzLnRvTG9jYWxlU3RyaW5nKCl9IC8ge3Yudmlld3NSZXF1aXJlZC50b0xvY2FsZVN0cmluZygpfQogICAgICAgICAgICA8L3NwYW4+CiAgICAgICAgICA8L2Rpdj4KICAgICAgICAgIDxQcm9ncmVzc0JhciB2YWx1ZT17di51bmlxdWVWaWV3c30gbWF4PXt2LnZpZXdzUmVxdWlyZWR9IC8+CiAgICAgICAgICA8cCBjbGFzc05hbWU9Im10LTEgdGV4dC14cyB0ZXh0LW11dGVkLWZvcmVncm91bmQiPkVhY2ggZGV2aWNlIGNvdW50cyBvbmNlLjwvcD4KICAgICAgICA8L2Rpdj4KCiAgICAgICAge3YucmVxdWVzdFN0YXR1cyA9PT0gInBlbmRpbmciID8gKAogICAgICAgICAgPHAgY2xhc3NOYW1lPSJ0ZXh0LXNtIHRleHQtYW1iZXItNjAwIj5Zb3VyIHZlcmlmaWNhdGlvbiByZXF1ZXN0IGlzIHVuZGVyIHJldmlldy48L3A+CiAgICAgICAgKSA6IHYucmVxdWVzdFN0YXR1cyA9PT0gInJlamVjdGVkIiA/ICgKICAgICAgICAgIDxwIGNsYXNzTmFtZT0idGV4dC1zbSB0ZXh0LXJlZC02MDAiPgogICAgICAgICAgICBZb3VyIGxhc3QgcmVxdWVzdCB3YXMgbm90IGFwcHJvdmVkLiBLZWVwIGdyb3dpbmcgYW5kIHRyeSBhZ2FpbiB3aGVuIGVsaWdpYmxlLgogICAgICAgICAgPC9wPgogICAgICAgICkgOiBudWxsfQoKICAgICAgICB7bWVzc2FnZSA/IDxwIGNsYXNzTmFtZT0idGV4dC1zbSB0ZXh0LW11dGVkLWZvcmVncm91bmQiPnttZXNzYWdlfTwvcD4gOiBudWxsfQoKICAgICAgICA8QnV0dG9uCiAgICAgICAgICBkaXNhYmxlZD17IXYuZWxpZ2libGUgfHwgdi5yZXF1ZXN0U3RhdHVzID09PSAicGVuZGluZyIgfHwgbXV0YXRpb24uaXNQZW5kaW5nfQogICAgICAgICAgb25DbGljaz17KCkgPT4gbXV0YXRpb24ubXV0YXRlKCl9CiAgICAgICAgPgogICAgICAgICAge211dGF0aW9uLmlzUGVuZGluZyA/ICgKICAgICAgICAgICAgPD4KICAgICAgICAgICAgICA8TG9hZGVyMiBjbGFzc05hbWU9Im1yLTIgaC00IHctNCBhbmltYXRlLXNwaW4iIC8+IFN1Ym1pdHRpbmfigKYKICAgICAgICAgICAgPC8+CiAgICAgICAgICApIDogdi5lbGlnaWJsZSA/ICgKICAgICAgICAgICAgIlJlcXVlc3QgdmVyaWZpY2F0aW9uIgogICAgICAgICAgKSA6ICgKICAgICAgICAgICAgIk5vdCB5ZXQgZWxpZ2libGUiCiAgICAgICAgICApfQogICAgICAgIDwvQnV0dG9uPgogICAgICA8L2Rpdj4KICAgIDwvQWRtaW5DYXJkPgogICk7Cn0K
+/**
+ * Seller verification request card.
+ * Shows progress toward: 50 sales/30d + 5000 unique store views.
+ * Eligible sellers can submit a verification request for admin review.
+ */
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { BadgeCheck, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { AdminCard } from "@/components/admin/ui";
+import {
+  getVerificationStatus,
+  requestVerification,
+  type VerificationEligibility,
+} from "@/lib/verification.functions";
+
+function ProgressBar({ value, max }: { value: number; max: number }) {
+  const pct = Math.min(100, Math.round((value / max) * 100));
+  return (
+    <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+      <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${pct}%` }} />
+    </div>
+  );
+}
+
+export function VerificationCard() {
+  const queryClient = useQueryClient();
+  const [message, setMessage] = useState<string | null>(null);
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["verification-status"],
+    queryFn: () => getVerificationStatus(),
+  });
+  const mutation = useMutation({
+    mutationFn: () => requestVerification(),
+    onSuccess: (res) => {
+      setMessage(res.message);
+      queryClient.invalidateQueries({ queryKey: ["verification-status"] });
+    },
+    onError: (e: Error) => setMessage(e.message),
+  });
+
+  if (isLoading) {
+    return (
+      <AdminCard title="Store verification" className="mt-6">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" /> Loading…
+        </div>
+      </AdminCard>
+    );
+  }
+  if (isError || !data) {
+    return (
+      <AdminCard title="Store verification" className="mt-6">
+        <p className="text-sm text-muted-foreground">Could not load verification status.</p>
+      </AdminCard>
+    );
+  }
+
+  const v: VerificationEligibility = data;
+  if (v.verificationStatus === "verified") {
+    return (
+      <AdminCard title="Store verification" className="mt-6">
+        <div className="flex items-center gap-2 text-green-600">
+          <BadgeCheck className="h-5 w-5" />
+          <span className="font-medium">Your store is verified</span>
+        </div>
+      </AdminCard>
+    );
+  }
+
+  return (
+    <AdminCard
+      title="Store verification"
+      subtitle="Get the verified badge: 50 sales in 30 days + 5,000 unique store views"
+      className="mt-6"
+    >
+      <div className="space-y-4">
+        <div>
+          <div className="mb-1 flex justify-between text-sm">
+            <span>Sales (30 days)</span>
+            <span className="font-medium">
+              {v.sales30d} / {v.salesRequired}
+            </span>
+          </div>
+          <ProgressBar value={v.sales30d} max={v.salesRequired} />
+        </div>
+        <div>
+          <div className="mb-1 flex justify-between text-sm">
+            <span>Unique store views</span>
+            <span className="font-medium">
+              {v.uniqueViews.toLocaleString()} / {v.viewsRequired.toLocaleString()}
+            </span>
+          </div>
+          <ProgressBar value={v.uniqueViews} max={v.viewsRequired} />
+          <p className="mt-1 text-xs text-muted-foreground">Each device counts once.</p>
+        </div>
+
+        {v.requestStatus === "pending" ? (
+          <p className="text-sm text-amber-600">Your verification request is under review.</p>
+        ) : v.requestStatus === "rejected" ? (
+          <p className="text-sm text-red-600">
+            Your last request was not approved. Keep growing and try again when eligible.
+          </p>
+        ) : null}
+
+        {message ? <p className="text-sm text-muted-foreground">{message}</p> : null}
+
+        <Button
+          disabled={!v.eligible || v.requestStatus === "pending" || mutation.isPending}
+          onClick={() => mutation.mutate()}
+        >
+          {mutation.isPending ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Submitting…
+            </>
+          ) : v.eligible ? (
+            "Request verification"
+          ) : (
+            "Not yet eligible"
+          )}
+        </Button>
+      </div>
+    </AdminCard>
+  );
+}

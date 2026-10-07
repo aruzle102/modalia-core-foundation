@@ -212,7 +212,7 @@ function SellersList() {
                           <Link
                             to="/admin/sellers/$sellerId"
                             params={{ sellerId: seller.id }}
-                            search={{ back: backParam, q, status: accountStatusFilter, page, create: "" }}
+                            search={{ back: backParam, tab: "overview", q, status: accountStatusFilter, page, create: "" }}
                             className="font-medium text-primary hover:underline"
                           >
                             {seller.legal_name}
@@ -259,7 +259,7 @@ function SellersList() {
                               <Link
                                 to="/admin/sellers/$sellerId"
                                 params={{ sellerId: seller.id }}
-                                search={{ back: backParam, q, status: accountStatusFilter, page, create: "" }}
+                                search={{ back: backParam, tab: "overview", q, status: accountStatusFilter, page, create: "" }}
                               >
                                 {t.open}
                               </Link>

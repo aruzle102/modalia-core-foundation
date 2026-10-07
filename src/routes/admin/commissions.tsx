@@ -126,7 +126,7 @@ function CommissionsPage() {
                             <Link
                               to="/admin/sellers/$sellerId"
                               params={{ sellerId: r.sellerId }}
-                              search={{ back: backParam, q, status: "", page, create: "" }}
+                              search={{ back: backParam, tab: "overview", q, status: "", page, create: "" }}
                               className="font-medium text-primary hover:underline"
                             >
                               {r.legalName}

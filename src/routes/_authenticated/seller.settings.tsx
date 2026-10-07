@@ -50,8 +50,14 @@ function ProfileForm({ t }: { t: ReturnType<typeof getTranslations>["seller"]["s
 
   const mutation = useMutation({
     mutationFn: () => updateSellerProfile({ data: { legalName: form.legalName.trim(), phone: form.phone.trim() || undefined, email: form.email.trim() || undefined } }),
-    onSuccess: () => {
-      setMessage(t.updated);
+    onSuccess: (result) => {
+      if (result.emailChanged && result.verificationPending) {
+        setMessage(t.emailVerificationSent);
+      } else if (result.emailChanged && result.emailVerified) {
+        setMessage(t.emailAlreadyVerified);
+      } else {
+        setMessage(t.updated);
+      }
       qc.invalidateQueries({ queryKey: ["seller-profile"] });
     },
     onError: (err) => setMessage(err instanceof Error ? err.message : t.updateFailed),

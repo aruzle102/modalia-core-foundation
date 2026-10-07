@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import {
+  AtSign,
   BadgeCheck,
   ExternalLink,
   LayoutTemplate,
@@ -13,6 +14,7 @@ import {
   Settings,
   ShoppingBag,
   Store,
+  Tag,
   Ticket,
   Truck,
   User,
@@ -41,10 +43,12 @@ interface SearchItem {
  * ("Search…" + ⌘K hint); ⌘K / Ctrl+K opens, Esc or backdrop click closes.
  *
  * Searches orders (by number, email, phone, customer name), sellers, stores,
- * products and customers through the admin-only `adminGlobalSearch` server
- * function — no mock data. Clicking a result navigates to the real record.
- * A "Quick actions" group offers Create product / seller (+ store) / coupon and
- * opening shipping, homepage, settings and the official storefront.
+ * products (by name in all locales and slug), customers, categories (by name),
+ * coupons (by code) and seller login usernames through the admin-only
+ * `adminGlobalSearch` server function — no mock data. Clicking a result
+ * navigates to the real record. A "Quick actions" group offers Create product
+ * / seller (+ store) / coupon and opening shipping, homepage, settings and the
+ * official storefront.
  */
 export function CommandBar() {
   const locale = useAdminLocale();
@@ -224,8 +228,8 @@ export function CommandBar() {
         results.push({
           key: `product-${p.id}`,
           group: groups.products,
-          label: p.slug,
-          sub: `${p.price} DZD · ${p.status.replace(/_/g, " ")}`,
+          label: p.name,
+          sub: `${p.slug} · ${p.price} DZD · ${p.status.replace(/_/g, " ")}`,
           icon: <Package className="h-4 w-4 text-muted-foreground" />,
           run: () => go("/admin/products", { search: { q: p.slug } }),
         });
@@ -250,6 +254,36 @@ export function CommandBar() {
           sub: [c.email, c.phone].filter(Boolean).join(" · ") || "—",
           icon: <User className="h-4 w-4 text-muted-foreground" />,
           run: () => go("/admin/orders", { search: { q: c.phone ?? c.email ?? c.name } }),
+        });
+      }
+      for (const c of data.categories) {
+        results.push({
+          key: `category-${c.id}`,
+          group: groups.categories,
+          label: c.name,
+          sub: `${c.slug} · ${c.status.replace(/_/g, " ")}`,
+          icon: <Tag className="h-4 w-4 text-muted-foreground" />,
+          run: () => go("/admin/categories", {}),
+        });
+      }
+      for (const c of data.coupons) {
+        results.push({
+          key: `coupon-${c.id}`,
+          group: groups.coupons,
+          label: c.code,
+          sub: `${c.value} · ${c.status.replace(/_/g, " ")}`,
+          icon: <Ticket className="h-4 w-4 text-muted-foreground" />,
+          run: () => go("/admin/coupons", {}),
+        });
+      }
+      for (const u of data.usernames) {
+        results.push({
+          key: `username-${u.sellerId}`,
+          group: groups.usernames,
+          label: u.username,
+          sub: u.sellerName,
+          icon: <AtSign className="h-4 w-4 text-muted-foreground" />,
+          run: () => go("/admin/sellers/$sellerId", { params: { sellerId: u.sellerId } }),
         });
       }
     }

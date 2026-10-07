@@ -1890,6 +1890,56 @@ export type Database = {
         }
         Relationships: []
       }
+      seller_accounts: {
+        Row: {
+          auth_user_id: string
+          created_at: string
+          email: string | null
+          email_verified_at: string | null
+          id: string
+          login_method: string
+          must_change_password: boolean
+          seller_id: string
+          status: string
+          updated_at: string
+          username: string
+        }
+        Insert: {
+          auth_user_id: string
+          created_at?: string
+          email?: string | null
+          email_verified_at?: string | null
+          id?: string
+          login_method?: string
+          must_change_password?: boolean
+          seller_id: string
+          status?: string
+          updated_at?: string
+          username: string
+        }
+        Update: {
+          auth_user_id?: string
+          created_at?: string
+          email?: string | null
+          email_verified_at?: string | null
+          id?: string
+          login_method?: string
+          must_change_password?: boolean
+          seller_id?: string
+          status?: string
+          updated_at?: string
+          username?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seller_accounts_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       seller_applications: {
         Row: {
           additional_information: string | null
@@ -2273,6 +2323,7 @@ export type Database = {
           commission_rate: number
           created_at: string
           email: string | null
+          email_verified_at: string | null
           first_name: string | null
           id: string
           last_name: string | null
@@ -2290,6 +2341,7 @@ export type Database = {
           commission_rate?: number
           created_at?: string
           email?: string | null
+          email_verified_at?: string | null
           first_name?: string | null
           id?: string
           last_name?: string | null
@@ -2307,6 +2359,7 @@ export type Database = {
           commission_rate?: number
           created_at?: string
           email?: string | null
+          email_verified_at?: string | null
           first_name?: string | null
           id?: string
           last_name?: string | null

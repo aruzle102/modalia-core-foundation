@@ -352,15 +352,16 @@ const personSchema = z.object({
 
 /**
  * Owner provisioning — quick-create mode (user-requested flow):
- * the admin only supplies the login email + commission rate. Name/phone and
- * the store profile are OPTIONAL: the seller completes them himself in the
- * seller onboarding wizard after first login with the temporary credentials.
- * When an application is attached, its data still pre-fills everything.
+ * the admin only supplies the commission rate. Name/phone/store profile and
+ * even the email are OPTIONAL: the system generates a unique username +
+ * temporary password, and the seller completes everything himself in the
+ * seller onboarding wizard after first login. When an application is
+ * attached, its data still pre-fills everything.
  */
 const ownerProvisionInput = z.object({
   mode: z.literal("owner"),
   applicationId: z.string().uuid().optional(),
-  email: z.string().trim().email().max(255),
+  email: z.string().trim().email().max(255).optional(),
   firstName: z.string().trim().max(100).optional(),
   lastName: z.string().trim().max(100).optional(),
   phone: z.string().trim().max(60).optional(),
@@ -378,6 +379,22 @@ const ownerProvisionInput = z.object({
   storeContactEmail: z.string().trim().email().max(255).optional(),
   storeContactPhone: z.string().trim().max(60).optional(),
   commissionRate: z.number().min(0).max(100),
+  /** Spec Section 5+6: when the commission rate takes effect (ISO date). */
+  commissionEffectiveDate: z.string().trim().max(10).optional(),
+  /**
+   * Spec Section 6: admin-previewed username from the wizard. When provided
+   * and still free, the server uses it verbatim; otherwise it generates a
+   * fresh unique one. Validated against SELLER_USERNAME_RE.
+   */
+  preferredUsername: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .regex(
+      /^seller_[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{5}$/,
+      "Username must look like seller_XXXXX.",
+    )
+    .optional(),
 });
 
 const staffProvisionInput = z.object({
@@ -402,6 +419,8 @@ export type ProvisionSellerResult = {
   storeId: string | null;
   storeSlug: string | null;
   mode: "owner" | "staff";
+  /** Spec Section 8: generated seller username (owner mode only). */
+  username: string | null;
 };
 
 /** Server-side slugify shared with the wizard's client-side suggestion. */
@@ -531,6 +550,7 @@ export const provisionSeller = createServerFn({ method: "POST" })
           storeId: null,
           storeSlug: null,
           mode: "staff",
+          username: null,
         };
       } catch (err) {
         // Best-effort compensation: never leave partial state behind.
@@ -545,7 +565,28 @@ export const provisionSeller = createServerFn({ method: "POST" })
     // Quick-create defaults (data is narrowed to the owner variant here): the
     // seller fills the real profile/store data in onboarding — the admin only
     // guarantees a usable login + store row.
-    const emailLocal = data.email.split("@")[0] || "seller";
+    //
+    // Spec Section 8: the admin is NOT required to enter the seller's real
+    // email. The system generates a unique username (seller_XXXXX); the Auth
+    // user is created with the synthetic email {username}@seller.modalia.internal.
+    // Spec Section 6: when the wizard previews a username, honor it if still free.
+    const { generateUniqueUsername, syntheticEmailForUsername } = await import(
+      "@/lib/seller-identity"
+    );
+    let username: string;
+    const preferred = data.preferredUsername?.trim().toUpperCase();
+    if (preferred) {
+      const { data: clash } = await supabaseAdmin
+        .from("seller_accounts")
+        .select("id")
+        .eq("username", preferred)
+        .maybeSingle();
+      username = clash ? await generateUniqueUsername(supabaseAdmin) : preferred;
+    } else {
+      username = await generateUniqueUsername(supabaseAdmin);
+    }
+    const loginEmail = syntheticEmailForUsername(username);
+    const emailLocal = data.email?.split("@")[0] || username;
     const displayName = `${data.firstName?.trim() ?? ""} ${data.lastName?.trim() ?? ""}`.trim() || emailLocal;
     const storeName = data.storeName?.trim() || displayName;
     let application: { id: string; status: string; seller_id: string | null } | null = null;
@@ -567,21 +608,22 @@ export const provisionSeller = createServerFn({ method: "POST" })
 
     const { data: created, error: createError } =
       await supabaseAdmin.auth.admin.createUser({
-        email: data.email,
+        // Spec Section 8: synthetic auth email — the seller logs in with the
+        // USERNAME. The real email is collected + verified later in onboarding.
+        email: loginEmail,
         password: tempPassword,
         email_confirm: true,
         user_metadata: {
           display_name: displayName,
+          seller_username: username,
           force_password_reset: true,
           provisioned_by: "modalia-admin",
         },
       });
     if (createError) {
-      // An already-registered email is REJECTED — never silently
-      // password-reset an existing login (registry #3 fixed-inline).
-      if (/already been registered|already exists|duplicate/i.test(createError.message ?? "")) {
-        throw new Error(ALREADY_REGISTERED_MESSAGE);
-      }
+      // Synthetic emails are unique by construction; a clash here is
+      // unexpected — surface it plainly (registry #3's silent-reset branch
+      // does not apply: there is no real email to collide with).
       throw new Error(`Could not create login: ${createError.message}`);
     }
     const authUserId = created?.user?.id;
@@ -600,7 +642,9 @@ export const provisionSeller = createServerFn({ method: "POST" })
           first_name: data.firstName?.trim() || null,
           last_name: data.lastName?.trim() || null,
           phone: data.phone?.trim() || null,
-          email: data.email,
+          // Spec Section 8: the real email is optional at creation — the
+          // seller provides + verifies it later in onboarding.
+          email: data.email?.trim() || null,
           status: "active",
           account_status: "active",
           commission_rate: commissionFraction,
@@ -611,6 +655,21 @@ export const provisionSeller = createServerFn({ method: "POST" })
         .single();
       if (sellerError || !seller) throw new Error(sellerError?.message ?? "Could not create seller.");
       sellerId = seller.id;
+
+      // Spec Section 8: identity mapping row (username <-> auth user).
+      // The UNIQUE constraint on username is the final arbiter; a clash here
+      // is retried by the caller only via a fresh provision attempt.
+      const { error: identityError } = await supabaseAdmin.from("seller_accounts").insert({
+        seller_id: seller.id,
+        username,
+        auth_user_id: authUserId,
+        login_method: "username",
+        email: null,
+        email_verified_at: null,
+        must_change_password: true,
+        status: "active",
+      });
+      if (identityError) throw new Error(identityError.message);
 
       // Unique store slug.
       const base = data.storeSlug ?? slugifyServer(storeName);
@@ -655,7 +714,10 @@ export const provisionSeller = createServerFn({ method: "POST" })
         .insert({
           seller_id: seller.id,
           rate: commissionFraction,
-          effective_from: now,
+          // Spec Section 5+6: admin-chosen effective date; defaults to now.
+          effective_from: data.commissionEffectiveDate
+            ? new Date(data.commissionEffectiveDate + "T00:00:00").toISOString()
+            : now,
           changed_by: context.userId,
         });
       if (historyError) throw new Error(historyError.message);
@@ -678,7 +740,11 @@ export const provisionSeller = createServerFn({ method: "POST" })
           store_id: store.id,
           store_slug: slug,
           user_id: authUserId,
-          email: data.email,
+          // Spec Section 8: the username is the login identifier; the temp
+          // password is never logged. The admin-provided email (if any) is
+          // kept for reference only until the seller verifies it.
+          username,
+          email: data.email?.trim() || null,
           role: "seller_owner",
           commission_rate: commissionFraction,
           must_reset_password: true,
@@ -692,11 +758,17 @@ export const provisionSeller = createServerFn({ method: "POST" })
         storeId: store.id,
         storeSlug: slug,
         mode: "owner",
+        username,
       };
     } catch (err) {
-      // Best-effort compensation: clean the user_roles residue, the sellers
-      // row, then the auth user — never leave a half-provisioned account.
-      if (sellerId) await supabaseAdmin.from("sellers").delete().eq("id", sellerId);
+      // Best-effort compensation: clean the identity row, user_roles residue,
+      // the sellers row, then the auth user — never leave a half-provisioned
+      // account. (Deleting the sellers row cascades to seller_accounts via
+      // the FK, but we delete explicitly for clarity.)
+      if (sellerId) {
+        await supabaseAdmin.from("seller_accounts").delete().eq("seller_id", sellerId);
+        await supabaseAdmin.from("sellers").delete().eq("id", sellerId);
+      }
       await supabaseAdmin.from("user_roles").delete().eq("user_id", authUserId);
       await supabaseAdmin.auth.admin.deleteUser(authUserId);
       throw err;
@@ -1156,16 +1228,19 @@ const updateSellerDetailsInput = z.object({
   email: z.string().trim().email().max(255).nullable().optional(),
 });
 
-/** Edit a seller's identity/contact details. Audited with a from/to diff. */
+/** Edit a seller's identity/contact details. Audited with a from/to diff.
+ * Email is NEVER written directly: it goes through the verified Auth-synced
+ * flow (Section 9) so sellers.email always equals auth.users.email. */
 export const updateSellerDetails = createServerFn({ method: "POST" })
   .middleware(adminOnly)
   .inputValidator((data) => updateSellerDetailsInput.parse(data))
   .handler(async ({ data, context }) => {
     await assertAdminPermission(context, "sellers.manage");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { changeSellerEmail } = await import("@/lib/seller-email-sync");
     const { data: seller } = await supabaseAdmin
       .from("sellers")
-      .select("id, legal_name, first_name, last_name, phone, email")
+      .select("id, owner_id, legal_name, first_name, last_name, phone, email")
       .eq("id", data.sellerId)
       .maybeSingle();
     if (!seller) throw new Error("Seller not found.");
@@ -1174,11 +1249,26 @@ export const updateSellerDetails = createServerFn({ method: "POST" })
       first_name: data.firstName,
       last_name: data.lastName,
       phone: data.phone?.trim() || null,
-      email: data.email?.trim() || null,
       updated_at: new Date().toISOString(),
     };
     const { error } = await supabaseAdmin.from("sellers").update(patch).eq("id", data.sellerId);
     if (error) throw new Error(error.message);
+
+    // Email change goes through Supabase Auth (verification email sent),
+    // then sellers.email is synced to the authoritative Auth value.
+    let emailResult: { changed: boolean; email: string; verified: boolean } | null = null;
+    const requestedEmail = data.email?.trim() || null;
+    if (requestedEmail) {
+      emailResult = await changeSellerEmail({
+        supabaseAdmin,
+        sellerId: data.sellerId,
+        authUserId: (seller as { owner_id: string }).owner_id,
+        newEmail: requestedEmail,
+        actorId: context.userId,
+        actorType: "admin",
+      });
+    }
+
     await supabaseAdmin.from("audit_logs").insert({
       actor_id: context.userId,
       action: "seller_details_updated",
@@ -1197,11 +1287,17 @@ export const updateSellerDetails = createServerFn({ method: "POST" })
           first_name: patch.first_name,
           last_name: patch.last_name,
           phone: patch.phone,
-          email: patch.email,
+          email: emailResult ? emailResult.email : (seller.email as string | null),
         },
+        email_changed: emailResult?.changed ?? false,
+        email_verified: emailResult?.verified ?? null,
       },
     });
-    return { ok: true as const };
+    return {
+      ok: true as const,
+      emailChanged: emailResult?.changed ?? false,
+      emailVerified: emailResult?.verified ?? null,
+    };
   });
 
 export const updateCommissionRate = createServerFn({ method: "POST" })
@@ -1242,4 +1338,174 @@ export const updateCommissionRate = createServerFn({ method: "POST" })
       metadata: { from: seller.commission_rate, to: fraction },
     });
     return { ok: true as const, rate: fraction };
+  });
+
+/* ------------------------------------------------------------------ */
+/* Seller workspace tabs — identity / customers / shipping / security   */
+/* ------------------------------------------------------------------ */
+
+const sellerIdInput = z.object({ sellerId: z.string().uuid() });
+
+/**
+ * Identity tab: seller_accounts row (username, login method, email
+ * verification) plus the sellers auth-relevant flags. Read-only for admin.
+ */
+export const getSellerIdentity = createServerFn({ method: "GET" })
+  .middleware(adminOnly)
+  .inputValidator((data) => sellerIdInput.parse(data))
+  .handler(async ({ data, context }) => {
+    await assertAdminPermission(context, "sellers.view");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: account } = await supabaseAdmin
+      .from("seller_accounts")
+      .select("username,auth_user_id,login_method,email,email_verified_at,must_change_password,status,created_at,updated_at")
+      .eq("seller_id", data.sellerId)
+      .maybeSingle();
+    const { data: seller } = await supabaseAdmin
+      .from("sellers")
+      .select("id,legal_name,email,phone,first_name,last_name,must_reset_password,onboarded_at,account_status")
+      .eq("id", data.sellerId)
+      .single();
+    if (!seller) throw new Error("Seller not found.");
+    return { account: account ?? null, seller };
+  });
+
+type SellerCustomer = {
+  name: string;
+  email: string | null;
+  phone: string | null;
+  orders: number;
+  spent: number;
+  lastOrderAt: string | null;
+};
+
+/**
+ * Customers tab: distinct customers who placed orders containing this
+ * seller's items, with order count and total spent (server-aggregated).
+ */
+export const getSellerCustomers = createServerFn({ method: "GET" })
+  .middleware(adminOnly)
+  .inputValidator((data) => sellerIdInput.parse(data))
+  .handler(async ({ data, context }): Promise<{ customers: SellerCustomer[] }> => {
+    await assertAdminPermission(context, "sellers.view");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: sellerOrders, error } = await supabaseAdmin
+      .from("seller_orders")
+      .select("order_id")
+      .eq("seller_id", data.sellerId)
+      .limit(5000);
+    if (error) throw new Error(error.message);
+    const orderIds = [...new Set((sellerOrders ?? []).map((r) => r.order_id))];
+    if (orderIds.length === 0) return { customers: [] };
+    const { data: orders, error: orderError } = await supabaseAdmin
+      .from("orders")
+      .select("id,first_name,last_name,guest_email,guest_phone,grand_total,created_at")
+      .in("id", orderIds)
+      .order("created_at", { ascending: false })
+      .limit(2000);
+    if (orderError) throw new Error(orderError.message);
+    const map = new Map<string, SellerCustomer>();
+    for (const o of orders ?? []) {
+      const row = o as { id: string; first_name?: string | null; last_name?: string | null; guest_email?: string | null; guest_phone?: string | null; grand_total?: number | null; created_at: string };
+      const key = row.guest_email || row.guest_phone || row.id;
+      const name = `${row.first_name ?? ""} ${row.last_name ?? ""}`.trim() || "—";
+      const entry = map.get(key) ?? {
+        name,
+        email: row.guest_email ?? null,
+        phone: row.guest_phone ?? null,
+        orders: 0,
+        spent: 0,
+        lastOrderAt: null,
+      };
+      entry.orders += 1;
+      entry.spent += Number(row.grand_total) || 0;
+      if (!entry.lastOrderAt || row.created_at > entry.lastOrderAt) entry.lastOrderAt = row.created_at;
+      map.set(key, entry);
+    }
+    return { customers: [...map.values()].sort((a, b) => b.spent - a.spent) };
+  });
+
+/**
+ * Shipping tab: seller delivery offices and shipping method config.
+ * Reads the seller's offices (public-safe fields only) — never exposes
+ * internal identifiers beyond what the admin already sees.
+ */
+export const getSellerShipping = createServerFn({ method: "GET" })
+  .middleware(adminOnly)
+  .inputValidator((data) => sellerIdInput.parse(data))
+  .handler(async ({ data, context }) => {
+    await assertAdminPermission(context, "sellers.view");
+    const { v8Admin } = await import("@/lib/seller-offices.functions");
+    const supabaseAdmin = await v8Admin();
+    const { data: offices, error } = await supabaseAdmin
+      .from("seller_offices")
+      .select("id,name,wilaya_id,commune_id,address,phone,active,created_at")
+      .eq("seller_id", data.sellerId)
+      .order("created_at", { ascending: false })
+      .limit(100);
+    if (error) throw new Error(error.message);
+    return { offices: offices ?? [] };
+  });
+
+/**
+ * Security tab: force the seller to rotate their password on next login.
+ * Server-enforced via sellers.must_reset_password; audit-logged.
+ */
+export const forceSellerPasswordReset = createServerFn({ method: "POST" })
+  .middleware(adminOnly)
+  .inputValidator((data) => sellerIdInput.parse(data))
+  .handler(async ({ data, context }) => {
+    await assertAdminPermission(context, "sellers.manage");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: seller } = await supabaseAdmin
+      .from("sellers")
+      .select("id")
+      .eq("id", data.sellerId)
+      .single();
+    if (!seller) throw new Error("Seller not found.");
+    const { error } = await supabaseAdmin
+      .from("sellers")
+      .update({ must_reset_password: true })
+      .eq("id", data.sellerId);
+    if (error) throw new Error(error.message);
+    await supabaseAdmin.from("seller_accounts").update({ must_change_password: true }).eq("seller_id", data.sellerId);
+    await supabaseAdmin.from("audit_logs").insert({
+      actor_id: context.userId,
+      action: "seller_password_reset_forced",
+      resource: "seller",
+      resource_id: data.sellerId,
+      metadata: {},
+    });
+    return { ok: true as const };
+  });
+
+/**
+ * Reset the seller onboarding flow (admin action): clears onboarded_at so
+ * the seller must complete the onboarding wizard again. Audit-logged.
+ */
+export const resetSellerOnboarding = createServerFn({ method: "POST" })
+  .middleware(adminOnly)
+  .inputValidator((data) => sellerIdInput.parse(data))
+  .handler(async ({ data, context }) => {
+    await assertAdminPermission(context, "sellers.manage");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: seller } = await supabaseAdmin
+      .from("sellers")
+      .select("id")
+      .eq("id", data.sellerId)
+      .single();
+    if (!seller) throw new Error("Seller not found.");
+    const { error } = await supabaseAdmin
+      .from("sellers")
+      .update({ onboarded_at: null })
+      .eq("id", data.sellerId);
+    if (error) throw new Error(error.message);
+    await supabaseAdmin.from("audit_logs").insert({
+      actor_id: context.userId,
+      action: "seller_onboarding_reset",
+      resource: "seller",
+      resource_id: data.sellerId,
+      metadata: {},
+    });
+    return { ok: true as const };
   });

@@ -529,7 +529,7 @@ function DashboardContent({ locale }: { locale: Locale }) {
                   <Link
                     to="/admin/sellers/$sellerId"
                     params={{ sellerId: st.sellerId }}
-                    search={{ back: "", q: "", status: "all", page: 1, create: "" }}
+                    search={{ back: "", tab: "overview", q: "", status: "all", page: 1, create: "" }}
                     className="min-w-0 flex-1 truncate text-small font-medium hover:underline"
                   >
                     {st.label}

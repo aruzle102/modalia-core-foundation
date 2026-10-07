@@ -71,10 +71,21 @@ export const getSellerProfile = createServerFn({ method: "GET" })
     const seller = await requireSeller({ supabase: context.supabase, userId: context.userId });
     const { data, error } = await context.supabase
       .from("sellers")
-      .select("id,legal_name,first_name,last_name,phone,email,account_status,commission_rate")
+      .select("id,legal_name,first_name,last_name,phone,email,email_verified_at,account_status,commission_rate")
       .eq("id", seller.sellerId)
       .single();
     if (error || !data) throw new Error(error?.message ?? "Seller profile unavailable.");
+
+    // Best-effort: mirror Auth verification state into sellers.email_verified_at
+    // (Section 9). Never throws; keeps sellers.email == auth.users.email.
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { syncEmailVerificationState } = await import("@/lib/seller-email-sync");
+      await syncEmailVerificationState(supabaseAdmin, seller.sellerId, context.userId);
+    } catch {
+      /* verification sync is best-effort */
+    }
+
     return {
       isOwner: seller.isOwner,
       profile: {
@@ -84,6 +95,7 @@ export const getSellerProfile = createServerFn({ method: "GET" })
         lastName: (data.last_name as string | null) ?? "",
         phone: (data.phone as string | null) ?? "",
         email: (data.email as string | null) ?? "",
+        emailVerifiedAt: (data as { email_verified_at?: string | null }).email_verified_at ?? null,
         accountStatus: data.account_status as string,
         commissionRate: Number(data.commission_rate ?? 0),
       },
@@ -112,13 +124,15 @@ export const updateSellerProfile = createServerFn({ method: "POST" })
     const phone = data.phone?.trim() || null;
     if (phone && !phonePattern().test(phone)) throw new Error("Phone number is not valid.");
 
+    // Email is NEVER written directly: it goes through the verified
+    // Auth-synced flow (Section 9) so sellers.email always equals
+    // auth.users.email.
     const patch: {
       legal_name: string;
       phone: string | null;
-      email: string | null;
       first_name?: string;
       last_name?: string;
-    } = { legal_name: data.legalName, phone, email: data.email ?? null };
+    } = { legal_name: data.legalName, phone };
     if (data.firstName !== undefined) patch.first_name = data.firstName;
     if (data.lastName !== undefined) patch.last_name = data.lastName;
 
@@ -126,15 +140,42 @@ export const updateSellerProfile = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { changeSellerEmail } = await import("@/lib/seller-email-sync");
+
+    let emailResult: { changed: boolean; email: string; verified: boolean } | null = null;
+    const requestedEmail = data.email?.trim() || null;
+    if (requestedEmail) {
+      // For an owner, sellers.owner_id === the auth user id.
+      emailResult = await changeSellerEmail({
+        supabaseAdmin,
+        sellerId: seller.sellerId,
+        authUserId: context.userId,
+        newEmail: requestedEmail,
+        actorId: context.userId,
+        actorType: "seller",
+      });
+    }
+
     await supabaseAdmin.from("audit_logs").insert({
       actor_id: context.userId,
       action: "seller_profile.update",
       resource: "sellers",
       resource_id: seller.sellerId,
-      metadata: { legal_name: data.legalName, phone, email: data.email ?? null },
+      metadata: {
+        legal_name: data.legalName,
+        phone,
+        email: requestedEmail,
+        email_changed: emailResult?.changed ?? false,
+        email_verified: emailResult?.verified ?? null,
+      },
     });
 
-    return { ok: true };
+    return {
+      ok: true,
+      emailChanged: emailResult?.changed ?? false,
+      emailVerified: emailResult?.verified ?? null,
+      verificationPending: emailResult ? !emailResult.verified : null,
+    };
   });
 
 /* ----------------------------- Onboarding ------------------------------- */

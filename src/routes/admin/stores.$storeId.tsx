@@ -197,7 +197,7 @@ function StoreProfilePage() {
                       <Link
                         to="/admin/sellers/$sellerId"
                         params={{ sellerId: seller.id }}
-                        search={{ back, q: "", status: "all", page: 1, create: "" }}
+                        search={{ back, tab: "overview", q: "", status: "all", page: 1, create: "" }}
                       >
                         <UserRound className="size-4 me-1.5" />
                         {p.viewSeller}
@@ -400,7 +400,7 @@ function StoreProfilePage() {
                         <Link
                           to="/admin/sellers/$sellerId"
                           params={{ sellerId: seller.id }}
-                          search={{ back, q: "", status: "all", page: 1, create: "" }}
+                          search={{ back, tab: "overview", q: "", status: "all", page: 1, create: "" }}
                           className="underline-offset-4 hover:underline"
                         >
                           {seller.legal_name}

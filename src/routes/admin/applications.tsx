@@ -514,7 +514,7 @@ function ApplicationDrawer({
                   <Link
                     to="/admin/sellers/$sellerId"
                     params={{ sellerId: app.seller_id }}
-                    search={{ back: "", q: "", status: "all", page: 1, create: "" }}
+                    search={{ back: "", tab: "overview", q: "", status: "all", page: 1, create: "" }}
                     className="inline-flex"
                   >
                     <Button variant="outline">

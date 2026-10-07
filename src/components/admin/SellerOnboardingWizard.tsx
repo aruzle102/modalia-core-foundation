@@ -39,6 +39,8 @@ import {
 import { getDefaultCommissionRate } from "@/lib/admin-ops.functions";
 import type { SellerPermission } from "@/lib/seller-auth";
 import { SELLER_ROLE_PRESETS, type SellerStaffRole } from "@/lib/seller-auth";
+/** Spec Section 6: client-safe username preview for the Account step. */
+import { generateUsername } from "@/lib/seller-identity";
 import {
   Select,
   SelectContent,
@@ -145,6 +147,12 @@ export function SellerOnboardingWizard({ open, onOpenChange, application, onCrea
   const [storeContactEmail, setStoreContactEmail] = useState("");
   const [storeContactPhone, setStoreContactPhone] = useState("");
   const [commissionRate, setCommissionRate] = useState("10");
+  /** Spec Section 5+6: commission effective date (ISO yyyy-mm-dd, defaults to today). */
+  const [commissionEffectiveDate, setCommissionEffectiveDate] = useState(
+    () => new Date().toISOString().slice(0, 10),
+  );
+  /** Spec Section 6: admin-previewed username; the server honors it if still free. */
+  const [usernamePreview, setUsernamePreview] = useState(() => generateUsername());
   // Platform default commission (Admin > Settings > Default commission rate).
   // The wizard seeds its commission field from the freshest fetched value on
   // every open instead of a hardcoded 10 (registry #170).
@@ -177,7 +185,11 @@ export function SellerOnboardingWizard({ open, onOpenChange, application, onCrea
   const [showPassword, setShowPassword] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   // Snapshot for the result screen (so the review summary stays readable).
-  const [resultMeta, setResultMeta] = useState<{ email: string; storeName: string; sellerName: string } | null>(null);
+  const [resultMeta, setResultMeta] = useState<{
+    email: string;
+    storeName: string;
+    sellerName: string;
+  } | null>(null);
 
   const lockedOwner = application != null;
   const effectiveMode: WizardMode = mode ?? "owner";
@@ -219,6 +231,8 @@ export function SellerOnboardingWizard({ open, onOpenChange, application, onCrea
     setStoreContactEmail("");
     setStoreContactPhone("");
     setCommissionRate(seededCommissionDefault());
+    setCommissionEffectiveDate(new Date().toISOString().slice(0, 10));
+    setUsernamePreview(generateUsername());
     setStaffTitle("");
     setStaffPermissions([]);
     setPickedSeller(null);
@@ -300,7 +314,8 @@ export function SellerOnboardingWizard({ open, onOpenChange, application, onCrea
         data: {
           mode: "owner",
           applicationId: application?.id,
-          email: person.email,
+          // Spec Section 8: email optional — a username login is generated.
+          email: person.email || undefined,
           // Optional in quick-create — the seller completes them in onboarding.
           firstName: firstName.trim() || undefined,
           lastName: lastName.trim() || undefined,
@@ -313,6 +328,9 @@ export function SellerOnboardingWizard({ open, onOpenChange, application, onCrea
           storeContactEmail: storeContactEmail.trim() || undefined,
           storeContactPhone: storeContactPhone.trim() || undefined,
           commissionRate: Number(commissionRate),
+          // Spec Section 5+6: admin-chosen effective date + previewed username.
+          commissionEffectiveDate: commissionEffectiveDate || undefined,
+          preferredUsername: usernamePreview || undefined,
         },
       });
     },
@@ -335,9 +353,14 @@ export function SellerOnboardingWizard({ open, onOpenChange, application, onCrea
       case "mode":
         return mode ? null : t.modeRequired;
       case "identity":
-        // Quick-create: only the login email is mandatory. Name/phone are
-        // optional — the seller completes his profile in onboarding.
-        if (!EMAIL_RE.test(email.trim())) return t.errors.email;
+        // Spec Section 8: owner mode generates a username login — the email
+        // is optional (validated only when provided). Staff mode still
+        // requires a real email for login.
+        if (effectiveMode === "owner") {
+          if (email.trim() && !EMAIL_RE.test(email.trim())) return t.errors.email;
+        } else if (!EMAIL_RE.test(email.trim())) {
+          return t.errors.email;
+        }
         if (firstName.trim() && firstName.trim().length < 2) return t.errors.firstName;
         if (lastName.trim() && lastName.trim().length < 2) return t.errors.lastName;
         if (phone.trim() && !PHONE_RE.test(phone.trim())) return t.errors.phone;
@@ -358,6 +381,10 @@ export function SellerOnboardingWizard({ open, onOpenChange, application, onCrea
       case "commission": {
         const n = Number(commissionRate);
         if (!Number.isFinite(n) || n < 0 || n > 100) return t.errors.commission;
+        // Spec Section 5: effective date must be a valid ISO date.
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(commissionEffectiveDate)) return t.errors.commissionDate;
+        const d = new Date(commissionEffectiveDate + "T00:00:00");
+        if (Number.isNaN(d.getTime())) return t.errors.commissionDate;
         return null;
       }
       case "permissions":
@@ -385,6 +412,7 @@ export function SellerOnboardingWizard({ open, onOpenChange, application, onCrea
     commissionRate,
     pickedSeller,
     staffPermissions,
+    commissionEffectiveDate,
   ]);
 
   const goNext = () => {
@@ -563,7 +591,10 @@ export function SellerOnboardingWizard({ open, onOpenChange, application, onCrea
           inputMode="tel"
         />
       </Field>
-      <Field label={t.email} hint={t.emailHint}>
+      <Field
+        label={t.email}
+        hint={effectiveMode === "owner" ? t.emailHintOwner : t.emailHint}
+      >
         <Input
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -577,6 +608,29 @@ export function SellerOnboardingWizard({ open, onOpenChange, application, onCrea
 
   const renderAccountStep = () => (
     <div className="space-y-4">
+      {/* Spec Section 6: generated username preview — admin can regenerate.
+          The server honors the previewed value when still free; the final
+          username is confirmed on the result screen. */}
+      <div className="rounded-lg border p-4">
+        <p className="text-sm font-medium">{t.usernamePreviewLabel}</p>
+        <div className="mt-2 flex items-center gap-2">
+          <code
+            dir="ltr"
+            className="flex-1 truncate rounded-md bg-muted px-3 py-2 font-mono text-sm font-semibold"
+          >
+            {usernamePreview}
+          </code>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setUsernamePreview(generateUsername())}
+          >
+            {t.regenerateUsername}
+          </Button>
+        </div>
+        <p className="mt-2 text-xs text-muted-foreground">{t.usernamePreviewHint}</p>
+      </div>
       <div className="rounded-lg border p-4 text-sm">
         <p className="font-medium">{t.accountTitle}</p>
         <p className="mt-1 text-muted-foreground">
@@ -689,49 +743,62 @@ export function SellerOnboardingWizard({ open, onOpenChange, application, onCrea
   );
 
   const renderCommissionStep = () => (
-    <Field label={t.commissionRate} hint={t.commissionHint}>
-      <div className="flex items-center gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          aria-label="−1"
-          onClick={() => {
-            const n = Number(commissionRate);
-            setCommissionRate(String(Number.isFinite(n) ? Math.max(0, n - 1) : 10));
-          }}
-        >
-          <Minus className="size-4" />
-        </Button>
+    <div className="space-y-4">
+      <Field label={t.commissionRate} hint={t.commissionHint}>
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            aria-label="−1"
+            onClick={() => {
+              const n = Number(commissionRate);
+              setCommissionRate(String(Number.isFinite(n) ? Math.max(0, n - 1) : 10));
+            }}
+          >
+            <Minus className="size-4" />
+          </Button>
+          <Input
+            type="number"
+            min={0}
+            max={100}
+            step={0.5}
+            dir="ltr"
+            className="w-28 text-center"
+            value={commissionRate}
+            onChange={(e) => setCommissionRate(e.target.value)}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            aria-label="+1"
+            onClick={() => {
+              const n = Number(commissionRate);
+              setCommissionRate(String(Number.isFinite(n) ? Math.min(100, n + 1) : 10));
+            }}
+          >
+            <Plus className="size-4" />
+          </Button>
+          <span className="text-sm text-muted-foreground">
+            ={" "}
+            {Number.isFinite(Number(commissionRate)) ? (Number(commissionRate) / 100).toFixed(4) : "—"}{" "}
+            {t.commissionAsFraction}
+          </span>
+        </div>
+      </Field>
+      {/* Spec Section 5: the rate takes effect on this date; history is versioned. */}
+      <Field label={t.commissionEffectiveDate} hint={t.commissionEffectiveDateHint}>
         <Input
-          type="number"
-          min={0}
-          max={100}
-          step={0.5}
+          type="date"
           dir="ltr"
-          className="w-28 text-center"
-          value={commissionRate}
-          onChange={(e) => setCommissionRate(e.target.value)}
+          className="w-44"
+          value={commissionEffectiveDate}
+          max="2100-12-31"
+          onChange={(e) => setCommissionEffectiveDate(e.target.value)}
         />
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          aria-label="+1"
-          onClick={() => {
-            const n = Number(commissionRate);
-            setCommissionRate(String(Number.isFinite(n) ? Math.min(100, n + 1) : 10));
-          }}
-        >
-          <Plus className="size-4" />
-        </Button>
-        <span className="text-sm text-muted-foreground">
-          ={" "}
-          {Number.isFinite(Number(commissionRate)) ? (Number(commissionRate) / 100).toFixed(4) : "—"}{" "}
-          {t.commissionAsFraction}
-        </span>
-      </div>
-    </Field>
+      </Field>
+    </div>
   );
 
   const renderOwnerPermissionsStep = () => (
@@ -854,8 +921,10 @@ export function SellerOnboardingWizard({ open, onOpenChange, application, onCrea
     ];
     if (effectiveMode === "owner") {
       rows.push(
+        { label: t.loginUsernameLabel, value: usernamePreview, ltr: true },
         { label: t.storeName, value: `${storeName.trim()} /${slug}`, ltr: true },
         { label: t.commissionRate, value: `${commissionRate}%` },
+        { label: t.commissionEffectiveDate, value: commissionEffectiveDate, ltr: true },
         { label: t.steps.permissions, value: t.reviewRoleOwner },
       );
     } else {
@@ -916,10 +985,22 @@ export function SellerOnboardingWizard({ open, onOpenChange, application, onCrea
     const isOwner = result.mode === "owner";
     const email = resultMeta.email;
     const storeUrl = result.storeSlug ? `/store/${result.storeSlug}` : null;
-    const fields: { key: string; label: string; value: string; ltr: boolean }[] = [
-      { key: "email", label: t.loginEmailLabel, value: email, ltr: true },
-      { key: "password", label: t.tempPasswordLabel, value: result.tempPassword, ltr: true },
-    ];
+    // Spec Section 6: seller login URL (full origin for easy copying).
+    const loginUrl =
+      typeof window !== "undefined" ? `${window.location.origin}/seller/login` : "/seller/login";
+    // Spec Section 8: owner mode logs in with the generated USERNAME.
+    const fields: { key: string; label: string; value: string; ltr: boolean }[] =
+      isOwner && result.username
+        ? [
+            { key: "username", label: t.loginUsernameLabel, value: result.username, ltr: true },
+            { key: "password", label: t.tempPasswordLabel, value: result.tempPassword, ltr: true },
+            { key: "loginUrl", label: t.loginUrlLabel, value: loginUrl, ltr: true },
+          ]
+        : [
+            { key: "email", label: t.loginEmailLabel, value: email, ltr: true },
+            { key: "password", label: t.tempPasswordLabel, value: result.tempPassword, ltr: true },
+            { key: "loginUrl", label: t.loginUrlLabel, value: loginUrl, ltr: true },
+          ];
     if (isOwner) {
       if (resultMeta.storeName) fields.push({ key: "store", label: t.storeNameLabel, value: resultMeta.storeName, ltr: false });
       if (storeUrl) fields.push({ key: "url", label: t.storeUrlLabel, value: storeUrl, ltr: true });
@@ -935,7 +1016,7 @@ export function SellerOnboardingWizard({ open, onOpenChange, application, onCrea
               <p className="font-semibold text-brand">{t.resultTitle}</p>
               <p className="mt-1 text-sm text-brand/90">
                 {isOwner
-                  ? t.resultOwnerBody(email, result.storeSlug ?? "")
+                  ? t.resultOwnerBody(result.username ?? email, result.storeSlug ?? "")
                   : t.resultStaffBody(email, resultMeta.sellerName)}
               </p>
               <p className="mt-2 text-sm font-medium text-brand">

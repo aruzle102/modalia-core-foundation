@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { getSellerAccessStatus } from "@/lib/seller-auth";
+import { resolveUsernameToEmail } from "@/lib/seller-identity";
 import {
   checkLoginAllowed,
   clearLoginAttempts,
@@ -57,7 +58,10 @@ function SellerLoginPage() {
   const target = sanitizeRedirect(redirect);
 
   const [mode, setMode] = useState<"signin" | "forgot">("signin");
-  const [email, setEmail] = useState("");
+  // Spec Section 8: sign-in accepts a USERNAME or an email. Usernames map
+  // deterministically to the synthetic auth email; real emails pass through.
+  const [identifier, setIdentifier] = useState("");
+  const [forgotEmail, setForgotEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [messageTone, setMessageTone] = useState<"info" | "error">("info");
@@ -107,10 +111,14 @@ function SellerLoginPage() {
     setLoading(true);
     setMessage("");
     try {
+      // Spec Section 8: resolve username -> synthetic auth email (or
+      // pass a real email through). Invalid identifiers fail closed with
+      // the same generic message as a bad password.
+      const authEmail = resolveUsernameToEmail(identifier);
       // V8 Sec 57 #151: server-side brute-force gate BEFORE the password
       // check. Denied attempts get one generic, non-enumerating message.
-      await checkLoginAllowed({ data: { identifier: email } });
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      await checkLoginAllowed({ data: { identifier: identifier.trim() } });
+      const { error } = await supabase.auth.signInWithPassword({ email: authEmail, password });
       if (error) throw error;
       // Ownership proven: reset the brute-force bucket so stale failed
       // attempts never lock out a legitimate user. Best-effort.
@@ -150,7 +158,11 @@ function SellerLoginPage() {
     setLoading(true);
     setMessage("");
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      // Password reset is email-only: usernames have no inbox. The seller
+      // must use the verified real email (post-transition).
+      const resetEmail = forgotEmail.trim().toLowerCase();
+      if (!resetEmail.includes("@")) throw new Error("email-required");
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
         redirectTo: `${window.location.origin}/seller/reset-password?locale=${locale}`,
       });
       if (error) throw error;
@@ -183,8 +195,17 @@ function SellerLoginPage() {
           ) : mode === "signin" ? (
             <form onSubmit={handleSignIn}>
               <label className="mt-7 block text-small">
-                {t.email}
-                <Input className="mt-2" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
+                {t.identifier}
+                <Input
+                  className="mt-2"
+                  type="text"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
+                  required
+                  autoComplete="username"
+                  placeholder={t.identifierPlaceholder}
+                  spellCheck={false}
+                />
               </label>
               <label className="mt-5 block text-small">
                 {t.password}
@@ -228,7 +249,7 @@ function SellerLoginPage() {
             <form onSubmit={handleForgot}>
               <label className="mt-7 block text-small">
                 {t.email}
-                <Input className="mt-2" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
+                <Input className="mt-2" type="email" value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} required autoComplete="email" />
               </label>
               {message ? (
                 <p

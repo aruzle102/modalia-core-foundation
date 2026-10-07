@@ -1,1 +1,482 @@
-aW1wb3J0IHsgY3JlYXRlRmlsZVJvdXRlIH0gZnJvbSAiQHRhbnN0YWNrL3JlYWN0LXJvdXRlciI7CmltcG9ydCB7IHVzZVN0YXRlIH0gZnJvbSAicmVhY3QiOwppbXBvcnQgeyB1c2VNdXRhdGlvbiwgdXNlUXVlcnksIHVzZVF1ZXJ5Q2xpZW50IH0gZnJvbSAiQHRhbnN0YWNrL3JlYWN0LXF1ZXJ5IjsKaW1wb3J0IHsgUGVuY2lsLCBQbHVzIH0gZnJvbSAibHVjaWRlLXJlYWN0IjsKaW1wb3J0IHsgdG9hc3QgfSBmcm9tICJzb25uZXIiOwppbXBvcnQgeyBCdXR0b24gfSBmcm9tICJAL2NvbXBvbmVudHMvdWkvYnV0dG9uIjsKaW1wb3J0IHsKICBEaWFsb2csCiAgRGlhbG9nQ29udGVudCwKICBEaWFsb2dGb290ZXIsCiAgRGlhbG9nSGVhZGVyLAogIERpYWxvZ1RpdGxlLAp9IGZyb20gIkAvY29tcG9uZW50cy91aS9kaWFsb2ciOwppbXBvcnQgeyBJbnB1dCB9IGZyb20gIkAvY29tcG9uZW50cy91aS9pbnB1dCI7CmltcG9ydCB7IExhYmVsIH0gZnJvbSAiQC9jb21wb25lbnRzL3VpL2xhYmVsIjsKaW1wb3J0IHsKICBTZWxlY3QsCiAgU2VsZWN0Q29udGVudCwKICBTZWxlY3RJdGVtLAogIFNlbGVjdFRyaWdnZXIsCiAgU2VsZWN0VmFsdWUsCn0gZnJvbSAiQC9jb21wb25lbnRzL3VpL3NlbGVjdCI7CmltcG9ydCB7IFN3aXRjaCB9IGZyb20gIkAvY29tcG9uZW50cy91aS9zd2l0Y2giOwppbXBvcnQgeyBUYWJsZSwgVGFibGVCb2R5LCBUYWJsZUNlbGwsIFRhYmxlSGVhZCwgVGFibGVIZWFkZXIsIFRhYmxlUm93IH0gZnJvbSAiQC9jb21wb25lbnRzL3VpL3RhYmxlIjsKaW1wb3J0IHsKICBBZG1pbkNhcmQsCiAgQ29uZmlybURpYWxvZywKICBFbXB0eVN0YXRlLAogIEZpZWxkLAogIFN0YXQsCiAgVGFibGVTa2VsZXRvbiwKfSBmcm9tICJAL2NvbXBvbmVudHMvYWRtaW4vdWkiOwppbXBvcnQgeyBTZWxsZXJTaGVsbCB9IGZyb20gIkAvY29tcG9uZW50cy9zZWxsZXIvU2VsbGVyU2hlbGwiOwppbXBvcnQgeyBSb3V0ZUVycm9yIH0gZnJvbSAiQC9jb21wb25lbnRzL3JvdXRpbmcvcm91dGUtc3RhdGVzIjsKaW1wb3J0IHsKICBjcmVhdGVTZWxsZXJPZmZpY2UsCiAgZGVsZXRlU2VsbGVyT2ZmaWNlLAogIGxpc3RTZWxsZXJPZmZpY2VzLAogIHVwZGF0ZVNlbGxlck9mZmljZSwKICB0eXBlIFNlbGxlck9mZmljZSwKfSBmcm9tICJAL2xpYi9zZWxsZXItb2ZmaWNlcy5mdW5jdGlvbnMiOwppbXBvcnQgeyBsaXN0U2hpcHBpbmdDb21tdW5lcywgbGlzdFNoaXBwaW5nV2lsYXlhcyB9IGZyb20gIkAvbGliL3NlbGxlci1tYXJrZXRpbmcuZnVuY3Rpb25zIjsKaW1wb3J0IHsgZ2V0TG9jYWxlLCBnZXRUcmFuc2xhdGlvbnMsIGxvY2FsZURpcmVjdGlvbnMgfSBmcm9tICJAL2xpYi9pMThuIjsKCmV4cG9ydCBjb25zdCBSb3V0ZSA9IGNyZWF0ZUZpbGVSb3V0ZSgiL19hdXRoZW50aWNhdGVkL3NlbGxlci9vZmZpY2VzIikoewogIHZhbGlkYXRlU2VhcmNoOiAoc2VhcmNoOiBSZWNvcmQ8c3RyaW5nLCB1bmtub3duPikgPT4gKHsKICAgIGxvY2FsZTogZ2V0TG9jYWxlKHR5cGVvZiBzZWFyY2hbImxvY2FsZSJdID09PSAic3RyaW5nIiA/IHNlYXJjaFsibG9jYWxlIl0gOiB1bmRlZmluZWQpLAogIH0pLAogIGVycm9yQ29tcG9uZW50OiAoeyByZXNldCB9KSA9PiAoCiAgICA8U2VsbGVyU2hlbGwgZXllYnJvdz0iU2VsbGVyIHdvcmtzcGFjZSIgdGl0bGU9IkRlbGl2ZXJ5IE9mZmljZXMiPgogICAgICA8Um91dGVFcnJvciBtZXNzYWdlPSJZb3VyIGRlbGl2ZXJ5IG9mZmljZXMgY291bGQgbm90IGJlIGxvYWRlZC4gQ2hlY2sgeW91ciBjb25uZWN0aW9uIGFuZCB0cnkgYWdhaW4uIiByZXNldD17cmVzZXR9IC8+CiAgICA8L1NlbGxlclNoZWxsPgogICksCiAgaGVhZDogKCkgPT4gKHsKICAgIG1ldGE6IFsKICAgICAgeyBuYW1lOiAicm9ib3RzIiwgY29udGVudDogIm5vaW5kZXgsbm9mb2xsb3ciIH0sCiAgICAgIHsgdGl0bGU6ICJEZWxpdmVyeSBPZmZpY2VzIOKAlCBTZWxsZXIg4oCUIE1vZGFsaWEiIH0sCiAgICAgIHsgbmFtZTogImRlc2NyaXB0aW9uIiwgY29udGVudDogIk1hbmFnZSB5b3VyIGRlbGl2ZXJ5IG9mZmljZXMg4oCUIHRoZSBwaWNrdXAgcG9pbnRzIHdoZXJlIGN1c3RvbWVycyBjb2xsZWN0IG9yZGVycy4iIH0sCiAgICBdLAogIH0pLAogIGNvbXBvbmVudDogU2VsbGVyT2ZmaWNlc1BhZ2UsCn0pOwoKZnVuY3Rpb24gcGxhY2VOYW1lKG5hbWU6IHVua25vd24sIGxvY2FsZTogc3RyaW5nLCBmYWxsYmFjazogc3RyaW5nKTogc3RyaW5nIHsKICBpZiAobmFtZSAmJiB0eXBlb2YgbmFtZSA9PT0gIm9iamVjdCIpIHsKICAgIGNvbnN0IG4gPSBuYW1lIGFzIFJlY29yZDxzdHJpbmcsIHVua25vd24+OwogICAgZm9yIChjb25zdCBrZXkgb2YgW2xvY2FsZSwgImVuIiwgImZyIiwgImFyIl0pIHsKICAgICAgaWYgKHR5cGVvZiBuW2tleV0gPT09ICJzdHJpbmciICYmIChuW2tleV0gYXMgc3RyaW5nKS50cmltKCkpIHJldHVybiBuW2tleV0gYXMgc3RyaW5nOwogICAgfQogIH0KICByZXR1cm4gZmFsbGJhY2s7Cn0KCnR5cGUgT2ZmaWNlRm9ybSA9IHsKICBuYW1lOiBzdHJpbmc7CiAgd2lsYXlhSWQ6IHN0cmluZzsKICBjb21tdW5lSWQ6IHN0cmluZzsKICBhZGRyZXNzOiBzdHJpbmc7CiAgcGhvbmU6IHN0cmluZzsKICBvcGVuaW5nSG91cnM6IHN0cmluZzsKICBhY3RpdmU6IGJvb2xlYW47Cn07Cgpjb25zdCBFTVBUWV9PRkZJQ0VfRk9STTogT2ZmaWNlRm9ybSA9IHsKICBuYW1lOiAiIiwKICB3aWxheWFJZDogIiIsCiAgY29tbXVuZUlkOiAiYWxsIiwKICBhZGRyZXNzOiAiIiwKICBwaG9uZTogIiIsCiAgb3BlbmluZ0hvdXJzOiAiIiwKICBhY3RpdmU6IHRydWUsCn07Cgp0eXBlIE9mZmljZUZvcm1FcnJvcnMgPSB7CiAgbmFtZT86IHN0cmluZzsKICB3aWxheWFJZD86IHN0cmluZzsKICBwaG9uZT86IHN0cmluZzsKfTsKCmZ1bmN0aW9uIFNlbGxlck9mZmljZXNQYWdlKCkgewogIGNvbnN0IHNlYXJjaCA9IFJvdXRlLnVzZVNlYXJjaCgpIGFzIHVua25vd24gYXMgeyBsb2NhbGU/OiBzdHJpbmcgfTsKICAvLyBEZWZlbnNpdmU6IHRoZSBnZW5lcmF0ZWQgcm91dGUgdHJlZSBtYXkgbm90IHlldCBpbmNsdWRlIHRoaXMgcGF0aAogIC8vIChUYW5TdGFjayBjb2RlZ2VuIHJ1bnMgYXQgYnVpbGQgdGltZSk7IG5vcm1hbGl6ZSB0aHJvdWdoIGdldExvY2FsZS4KICBjb25zdCBsb2NhbGUgPSBnZXRMb2NhbGUoc2VhcmNoLmxvY2FsZSk7CiAgY29uc3QgdCA9IGdldFRyYW5zbGF0aW9ucyhsb2NhbGUpOwogIGNvbnN0IG8gPSB0LnNlbGxlclNoaXBwaW5nVjgub2ZmaWNlczsKICBjb25zdCBuYXZUaXRsZSA9IHQuc2VsbGVyRGFzaGJvYXJkVjgubmF2Lm9mZmljZXM7CiAgY29uc3QgcWMgPSB1c2VRdWVyeUNsaWVudCgpOwoKICBjb25zdCBbZGlhbG9nT3Blbiwgc2V0RGlhbG9nT3Blbl0gPSB1c2VTdGF0ZShmYWxzZSk7CiAgY29uc3QgW2VkaXRpbmcsIHNldEVkaXRpbmddID0gdXNlU3RhdGU8U2VsbGVyT2ZmaWNlIHwgbnVsbD4obnVsbCk7CiAgY29uc3QgW2Zvcm0sIHNldEZvcm1dID0gdXNlU3RhdGU8T2ZmaWNlRm9ybT4oRU1QVFlfT0ZGSUNFX0ZPUk0pOwogIGNvbnN0IFtmb3JtRXJyb3JzLCBzZXRGb3JtRXJyb3JzXSA9IHVzZVN0YXRlPE9mZmljZUZvcm1FcnJvcnM+KHt9KTsKICBjb25zdCBbZGVsZXRlVGFyZ2V0LCBzZXREZWxldGVUYXJnZXRdID0gdXNlU3RhdGU8U2VsbGVyT2ZmaWNlIHwgbnVsbD4obnVsbCk7CgogIGNvbnN0IG9mZmljZXNRdWVyeSA9IHVzZVF1ZXJ5KHsgcXVlcnlLZXk6IFsic2VsbGVyLW9mZmljZXMiXSwgcXVlcnlGbjogKCkgPT4gbGlzdFNlbGxlck9mZmljZXMoKSB9KTsKICBjb25zdCBvZmZpY2VzID0gb2ZmaWNlc1F1ZXJ5LmRhdGE/Lm9mZmljZXMgPz8gW107CgogIGNvbnN0IHdpbGF5YXNRdWVyeSA9IHVzZVF1ZXJ5KHsgcXVlcnlLZXk6IFsic2VsbGVyLXNoaXBwaW5nLXdpbGF5YXMiXSwgcXVlcnlGbjogKCkgPT4gbGlzdFNoaXBwaW5nV2lsYXlhcygpIH0pOwogIGNvbnN0IHdpbGF5YXMgPSB3aWxheWFzUXVlcnkuZGF0YT8ud2lsYXlhcyA/PyBbXTsKCiAgY29uc3QgY29tbXVuZXNRdWVyeSA9IHVzZVF1ZXJ5KHsKICAgIHF1ZXJ5S2V5OiBbInNlbGxlci1vZmZpY2UtY29tbXVuZXMiLCBmb3JtLndpbGF5YUlkXSwKICAgIHF1ZXJ5Rm46ICgpID0+IGxpc3RTaGlwcGluZ0NvbW11bmVzKHsgZGF0YTogeyB3aWxheWFJZDogZm9ybS53aWxheWFJZCB9IH0pLAogICAgZW5hYmxlZDogZGlhbG9nT3BlbiAmJiBmb3JtLndpbGF5YUlkICE9PSAiIiwKICB9KTsKICBjb25zdCBjb21tdW5lcyA9IGNvbW11bmVzUXVlcnkuZGF0YT8uY29tbXVuZXMgPz8gW107CgogIGNvbnN0IGVyck1lc3NhZ2UgPSAoZTogdW5rbm93bikgPT4gKGUgaW5zdGFuY2VvZiBFcnJvciA/IGUubWVzc2FnZSA6IFN0cmluZyhlKSk7CgogIC8vIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQogIC8vIENsaWVudC1zaWRlIHZhbGlkYXRpb246IG5hbWUgPj0gMiBjaGFycywgd2lsYXlhIHJlcXVpcmVkLAogIC8vIHBob25lIG11c3QgbWF0Y2ggdGhlIHNlcnZlciBzY2hlbWEgd2hlbiBwcm92aWRlZC4KICAvLyAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KICBmdW5jdGlvbiB2YWxpZGF0ZShuZXh0OiBPZmZpY2VGb3JtKTogT2ZmaWNlRm9ybUVycm9ycyB7CiAgICBjb25zdCBlcnJvcnM6IE9mZmljZUZvcm1FcnJvcnMgPSB7fTsKICAgIGlmIChuZXh0Lm5hbWUudHJpbSgpLmxlbmd0aCA8IDIpIGVycm9ycy5uYW1lID0gZXJyTmFtZShuZXh0Lm5hbWUudHJpbSgpLmxlbmd0aCA9PT0gMCk7CiAgICBpZiAobmV4dC53aWxheWFJZCA9PT0gIiIpIGVycm9ycy53aWxheWFJZCA9IGVycldpbGF5YTsKICAgIGNvbnN0IHBob25lID0gbmV4dC5waG9uZS50cmltKCk7CiAgICBpZiAocGhvbmUgIT09ICIiKSB7CiAgICAgIGlmIChwaG9uZS5sZW5ndGggPCA2IHx8IHBob25lLmxlbmd0aCA+IDI0IHx8ICEvXlsrMC05XVswLTlcc1wtL10qJC8udGVzdChwaG9uZSkpIHsKICAgICAgICBlcnJvcnMucGhvbmUgPSBlcnJQaG9uZTsKICAgICAgfQogICAgfQogICAgcmV0dXJuIGVycm9yczsKICB9CgogIC8vIElubGluZSB2YWxpZGF0aW9uIHN0cmluZ3MgKHRyaWxpbmd1YWwpLgogIGNvbnN0IGVyck5hbWUgPSAobWlzc2luZzogYm9vbGVhbikgPT4KICAgIG1pc3NpbmcKICAgICAgPyBsb2NhbGUgPT09ICJhciIKICAgICAgICA/ICLYo9iv2K7ZhCDYp9iz2YUg2KfZhNmF2YPYqtioLiIKICAgICAgICA6IGxvY2FsZSA9PT0gImZyIgogICAgICAgICAgPyAiU2Fpc2lzc2V6IGxlIG5vbSBkdSBidXJlYXUuIgogICAgICAgICAgOiAiRW50ZXIgdGhlIG9mZmljZSBuYW1lLiIKICAgICAgOiBsb2NhbGUgPT09ICJhciIKICAgICAgICA/ICLYp9mE2KfYs9mFINmK2KzYqCDYo9mGINmK2K3YqtmI2Yog2LnZhNmJINit2LHZgdmK2YYg2LnZhNmJINin2YTYo9mC2YQuIgogICAgICAgIDogbG9jYWxlID09PSAiZnIiCiAgICAgICAgICA/ICJMZSBub20gZG9pdCBjb250ZW5pciBhdSBtb2lucyAyIGNhcmFjdMOocmVzLiIKICAgICAgICAgIDogIk5hbWUgbmVlZHMgYXQgbGVhc3QgMiBjaGFyYWN0ZXJzLiI7CiAgY29uc3QgZXJyV2lsYXlhID0KICAgIGxvY2FsZSA9PT0gImFyIgogICAgICA/ICLYp9iu2KrYsSDYp9mE2YjZhNin2YrYqS4iCiAgICAgIDogbG9jYWxlID09PSAiZnIiCiAgICAgICAgPyAiQ2hvaXNpc3NleiB1bmUgd2lsYXlhLiIKICAgICAgICA6ICJDaG9vc2UgYSB3aWxheWEuIjsKICBjb25zdCBlcnJQaG9uZSA9CiAgICBsb2NhbGUgPT09ICJhciIKICAgICAgPyAi2LHZgtmFINin2YTZh9in2KrZgSDYutmK2LEg2LXYp9mE2K0uIgogICAgICA6IGxvY2FsZSA9PT0gImZyIgogICAgICAgID8gIk51bcOpcm8gZGUgdMOpbMOpcGhvbmUgaW52YWxpZGUuIgogICAgICAgIDogIlBob25lIG51bWJlciBsb29rcyBpbnZhbGlkLiI7CgogIGNvbnN0IHNhdmVNdXRhdGlvbiA9IHVzZU11dGF0aW9uKHsKICAgIG11dGF0aW9uRm46IGFzeW5jICgpID0+IHsKICAgICAgY29uc3QgcGF5bG9hZCA9IHsKICAgICAgICBuYW1lOiBmb3JtLm5hbWUudHJpbSgpLAogICAgICAgIHdpbGF5YV9pZDogZm9ybS53aWxheWFJZCwKICAgICAgICBjb21tdW5lX2lkOiBmb3JtLmNvbW11bmVJZCA9PT0gImFsbCIgPyBudWxsIDogZm9ybS5jb21tdW5lSWQsCiAgICAgICAgYWRkcmVzczogZm9ybS5hZGRyZXNzLnRyaW0oKSA9PT0gIiIgPyBudWxsIDogZm9ybS5hZGRyZXNzLnRyaW0oKSwKICAgICAgICBwaG9uZTogZm9ybS5waG9uZS50cmltKCkgPT09ICIiID8gbnVsbCA6IGZvcm0ucGhvbmUudHJpbSgpLAogICAgICAgIG9wZW5pbmdfaG91cnM6IGZvcm0ub3BlbmluZ0hvdXJzLnRyaW0oKSA9PT0gIiIgPyBudWxsIDogZm9ybS5vcGVuaW5nSG91cnMudHJpbSgpLAogICAgICAgIGFjdGl2ZTogZm9ybS5hY3RpdmUsCiAgICAgIH07CiAgICAgIGlmIChlZGl0aW5nKSB7CiAgICAgICAgYXdhaXQgdXBkYXRlU2VsbGVyT2ZmaWNlKHsgZGF0YTogeyAuLi5wYXlsb2FkLCBpZDogZWRpdGluZy5pZCB9IH0pOwogICAgICB9IGVsc2UgewogICAgICAgIGF3YWl0IGNyZWF0ZVNlbGxlck9mZmljZSh7IGRhdGE6IHBheWxvYWQgfSk7CiAgICAgIH0KICAgICAgcmV0dXJuIHsgb2s6IHRydWUgYXMgY29uc3QgfTsKICAgIH0sCiAgICBvblN1Y2Nlc3M6ICgpID0+IHsKICAgICAgdG9hc3Quc3VjY2VzcyhlZGl0aW5nID8gb1NhdmVkIDogb0NyZWF0ZWQpOwogICAgICBzZXREaWFsb2dPcGVuKGZhbHNlKTsKICAgICAgc2V0RWRpdGluZyhudWxsKTsKICAgICAgc2V0Rm9ybShFTVBUWV9PRkZJQ0VfRk9STSk7CiAgICAgIHNldEZvcm1FcnJvcnMoe30pOwogICAgICBxYy5pbnZhbGlkYXRlUXVlcmllcyh7IHF1ZXJ5S2V5OiBbInNlbGxlci1vZmZpY2VzIl0gfSk7CiAgICB9LAogICAgb25FcnJvcjogKGUpID0+IHRvYXN0LmVycm9yKGVyck1lc3NhZ2UoZSkpLAogIH0pOwoKICBjb25zdCB0b2dnbGVNdXRhdGlvbiA9IHVzZU11dGF0aW9uKHsKICAgIG11dGF0aW9uRm46IChpbnB1dDogeyBpZDogc3RyaW5nOyBhY3RpdmU6IGJvb2xlYW4gfSkgPT4gdXBkYXRlU2VsbGVyT2ZmaWNlKHsgZGF0YTogaW5wdXQgfSksCiAgICBvblN1Y2Nlc3M6ICgpID0+IHFjLmludmFsaWRhdGVRdWVyaWVzKHsgcXVlcnlLZXk6IFsic2VsbGVyLW9mZmljZXMiXSB9KSwKICAgIG9uRXJyb3I6IChlKSA9PiB0b2FzdC5lcnJvcihlcnJNZXNzYWdlKGUpKSwKICB9KTsKCiAgY29uc3QgZGVsZXRlTXV0YXRpb24gPSB1c2VNdXRhdGlvbih7CiAgICBtdXRhdGlvbkZuOiAoaW5wdXQ6IHsgaWQ6IHN0cmluZyB9KSA9PiBkZWxldGVTZWxsZXJPZmZpY2UoeyBkYXRhOiBpbnB1dCB9KSwKICAgIG9uU3VjY2VzczogKCkgPT4gewogICAgICB0b2FzdC5zdWNjZXNzKG9EZWxldGVkKTsKICAgICAgc2V0RGVsZXRlVGFyZ2V0KG51bGwpOwogICAgICBxYy5pbnZhbGlkYXRlUXVlcmllcyh7IHF1ZXJ5S2V5OiBbInNlbGxlci1vZmZpY2VzIl0gfSk7CiAgICB9LAogICAgb25FcnJvcjogKGUpID0+IHRvYXN0LmVycm9yKGVyck1lc3NhZ2UoZSkpLAogIH0pOwoKICBjb25zdCBvQ3JlYXRlZCA9CiAgICBsb2NhbGUgPT09ICJhciIgPyAi2KrZhdiqINil2LbYp9mB2Kkg2KfZhNmF2YPYqtioLiIgOiBsb2NhbGUgPT09ICJmciIgPyAiQnVyZWF1IGFqb3V0w6kuIiA6ICJPZmZpY2UgYWRkZWQuIjsKICBjb25zdCBvU2F2ZWQgPQogICAgbG9jYWxlID09PSAiYXIiID8gItiq2YUg2K3Zgdi4INin2YTYqti62YrZitix2KfYqi4iIDogbG9jYWxlID09PSAiZnIiID8gIk1vZGlmaWNhdGlvbnMgZW5yZWdpc3Ryw6llcy4iIDogIkNoYW5nZXMgc2F2ZWQuIjsKICBjb25zdCBvRGVsZXRlZCA9CiAgICBsb2NhbGUgPT09ICJhciIgPyAi2KrZhSDYrdiw2YEg2KfZhNmF2YPYqtioLiIgOiBsb2NhbGUgPT09ICJmciIgPyAiQnVyZWF1IHN1cHByaW3DqS4iIDogIk9mZmljZSBkZWxldGVkLiI7CgogIGNvbnN0IG9wZW5DcmVhdGUgPSAoKSA9PiB7CiAgICBzZXRFZGl0aW5nKG51bGwpOwogICAgc2V0Rm9ybShFTVBUWV9PRkZJQ0VfRk9STSk7CiAgICBzZXRGb3JtRXJyb3JzKHt9KTsKICAgIHNldERpYWxvZ09wZW4odHJ1ZSk7CiAgfTsKCiAgY29uc3Qgb3BlbkVkaXQgPSAob2ZmaWNlOiBTZWxsZXJPZmZpY2UpID0+IHsKICAgIHNldEVkaXRpbmcob2ZmaWNlKTsKICAgIHNldEZvcm0oewogICAgICBuYW1lOiBvZmZpY2UubmFtZSwKICAgICAgd2lsYXlhSWQ6IG9mZmljZS53aWxheWFfaWQsCiAgICAgIGNvbW11bmVJZDogb2ZmaWNlLmNvbW11bmVfaWQgPz8gImFsbCIsCiAgICAgIGFkZHJlc3M6IG9mZmljZS5hZGRyZXNzID8/ICIiLAogICAgICBwaG9uZTogb2ZmaWNlLnBob25lID8/ICIiLAogICAgICBvcGVuaW5nSG91cnM6IG9mZmljZS5vcGVuaW5nX2hvdXJzID8/ICIiLAogICAgICBhY3RpdmU6IG9mZmljZS5hY3RpdmUsCiAgICB9KTsKICAgIHNldEZvcm1FcnJvcnMoe30pOwogICAgc2V0RGlhbG9nT3Blbih0cnVlKTsKICB9OwoKICBjb25zdCBzYXZlRXJyb3IgPSBzYXZlTXV0YXRpb24uZXJyb3IgaW5zdGFuY2VvZiBFcnJvciA/IHNhdmVNdXRhdGlvbi5lcnJvci5tZXNzYWdlIDogbnVsbDsKICBjb25zdCBjYW5TdWJtaXQgPSAhc2F2ZU11dGF0aW9uLmlzUGVuZGluZzsKCiAgY29uc3QgaGFuZGxlU2F2ZSA9ICgpID0+IHsKICAgIGNvbnN0IGVycm9ycyA9IHZhbGlkYXRlKGZvcm0pOwogICAgc2V0Rm9ybUVycm9ycyhlcnJvcnMpOwogICAgaWYgKE9iamVjdC5rZXlzKGVycm9ycykubGVuZ3RoID4gMCkgcmV0dXJuOwogICAgc2F2ZU11dGF0aW9uLm11dGF0ZSgpOwogIH07CgogIGNvbnN0IGFjdGl2ZUNvdW50ID0gb2ZmaWNlcy5maWx0ZXIoKHgpID0+IHguYWN0aXZlKS5sZW5ndGg7CiAgY29uc3QgbG9hZEVycm9yID0gb2ZmaWNlc1F1ZXJ5LmVycm9yIGluc3RhbmNlb2YgRXJyb3IgPyBvZmZpY2VzUXVlcnkuZXJyb3IubWVzc2FnZSA6IG8uZW1wdHk7CgogIHJldHVybiAoCiAgICA8ZGl2IGRpcj17bG9jYWxlRGlyZWN0aW9uc1tsb2NhbGVdfSBsYW5nPXtsb2NhbGV9PgogICAgICA8U2VsbGVyU2hlbGwKICAgICAgICBleWVicm93PSJTZWxsZXIgd29ya3NwYWNlIgogICAgICAgIHRpdGxlPXtuYXZUaXRsZX0KICAgICAgICBhY3Rpb25zPXsKICAgICAgICAgIDxCdXR0b24gb25DbGljaz17b3BlbkNyZWF0ZX0+CiAgICAgICAgICAgIDxQbHVzIGNsYXNzTmFtZT0ibWUtMiBoLTQgdy00IiAvPgogICAgICAgICAgICB7by5hZGR9CiAgICAgICAgICA8L0J1dHRvbj4KICAgICAgICB9CiAgICAgID4KICAgICAgICA8cCBjbGFzc05hbWU9InRleHQtYm9keSB0ZXh0LW11dGVkLWZvcmVncm91bmQiPntvLmhpbnR9PC9wPgoKICAgICAgICA8ZGl2IGNsYXNzTmFtZT0ibXQtNCBncmlkIGdhcC00IHNtOmdyaWQtY29scy0zIj4KICAgICAgICAgIDxTdGF0IGxhYmVsPXtuYXZUaXRsZX0gdmFsdWU9e29mZmljZXMubGVuZ3RofSAvPgogICAgICAgICAgPFN0YXQgbGFiZWw9e28uYWN0aXZlfSB2YWx1ZT17YWN0aXZlQ291bnR9IC8+CiAgICAgICAgICA8U3RhdAogICAgICAgICAgICBsYWJlbD17bG9jYWxlID09PSAiYXIiID8gIti62YrYsSDZhti02LciIDogbG9jYWxlID09PSAiZnIiID8gIkluYWN0aWZzIiA6ICJJbmFjdGl2ZSJ9CiAgICAgICAgICAgIHZhbHVlPXtvZmZpY2VzLmxlbmd0aCAtIGFjdGl2ZUNvdW50fQogICAgICAgICAgLz4KICAgICAgICA8L2Rpdj4KCiAgICAgICAgPEFkbWluQ2FyZCB0aXRsZT17by50aXRsZX0gc3VidGl0bGU9e28uaGludH0gY2xhc3NOYW1lPSJtdC02Ij4KICAgICAgICAgIHtvZmZpY2VzUXVlcnkuaXNQZW5kaW5nID8gKAogICAgICAgICAgICA8VGFibGVTa2VsZXRvbiByb3dzPXszfSAvPgogICAgICAgICAgKSA6IG9mZmljZXNRdWVyeS5pc0Vycm9yID8gKAogICAgICAgICAgICA8RW1wdHlTdGF0ZQogICAgICAgICAgICAgIHRpdGxlPXtsb2FkRXJyb3J9CiAgICAgICAgICAgICAgYWN0aW9uPXsKICAgICAgICAgICAgICAgIDxCdXR0b24gdmFyaWFudD0ib3V0bGluZSIgb25DbGljaz17KCkgPT4gb2ZmaWNlc1F1ZXJ5LnJlZmV0Y2goKX0+CiAgICAgICAgICAgICAgICAgIHtsb2NhbGUgPT09ICJhciIgPyAi2KXYudin2K/YqSDYp9mE2YXYrdin2YjZhNipIiA6IGxvY2FsZSA9PT0gImZyIiA/ICJSw6llc3NheWVyIiA6ICJSZXRyeSJ9CiAgICAgICAgICAgICAgICA8L0J1dHRvbj4KICAgICAgICAgICAgICB9CiAgICAgICAgICAgIC8+CiAgICAgICAgICApIDogb2ZmaWNlcy5sZW5ndGggPT09IDAgPyAoCiAgICAgICAgICAgIDxFbXB0eVN0YXRlIHRpdGxlPXtvLmVtcHR5fSB0ZXh0PXtvLmVtcHR5VGV4dH0gYWN0aW9uPXs8QnV0dG9uIG9uQ2xpY2s9e29wZW5DcmVhdGV9PntvLmFkZH08L0J1dHRvbj59IC8+CiAgICAgICAgICApIDogKAogICAgICAgICAgICA8ZGl2IGNsYXNzTmFtZT0ib3ZlcmZsb3cteC1hdXRvIj4KICAgICAgICAgICAgICA8VGFibGU+CiAgICAgICAgICAgICAgICA8VGFibGVIZWFkZXI+CiAgICAgICAgICAgICAgICAgIDxUYWJsZVJvdz4KICAgICAgICAgICAgICAgICAgICA8VGFibGVIZWFkPntvLm5hbWV9PC9UYWJsZUhlYWQ+CiAgICAgICAgICAgICAgICAgICAgPFRhYmxlSGVhZD57by53aWxheWF9PC9UYWJsZUhlYWQ+CiAgICAgICAgICAgICAgICAgICAgPFRhYmxlSGVhZD57by5hZGRyZXNzfTwvVGFibGVIZWFkPgogICAgICAgICAgICAgICAgICAgIDxUYWJsZUhlYWQ+e28ucGhvbmV9PC9UYWJsZUhlYWQ+CiAgICAgICAgICAgICAgICAgICAgPFRhYmxlSGVhZD57by5ob3Vyc308L1RhYmxlSGVhZD4KICAgICAgICAgICAgICAgICAgICA8VGFibGVIZWFkPntvLmFjdGl2ZX08L1RhYmxlSGVhZD4KICAgICAgICAgICAgICAgICAgICA8VGFibGVIZWFkIGNsYXNzTmFtZT0idGV4dC1lbmQiPgogICAgICAgICAgICAgICAgICAgICAge2xvY2FsZSA9PT0gImFyIiA/ICLYpdis2LHYp9ih2KfYqiIgOiBsb2NhbGUgPT09ICJmciIgPyAiQWN0aW9ucyIgOiAiQWN0aW9ucyJ9CiAgICAgICAgICAgICAgICAgICAgPC9UYWJsZUhlYWQ+CiAgICAgICAgICAgICAgICAgIDwvVGFibGVSb3c+CiAgICAgICAgICAgICAgICA8L1RhYmxlSGVhZGVyPgogICAgICAgICAgICAgICAgPFRhYmxlQm9keT4KICAgICAgICAgICAgICAgICAge29mZmljZXMubWFwKChvZmZpY2UpID0+ICgKICAgICAgICAgICAgICAgICAgICA8VGFibGVSb3cga2V5PXtvZmZpY2UuaWR9PgogICAgICAgICAgICAgICAgICAgICAgPFRhYmxlQ2VsbCBjbGFzc05hbWU9ImZvbnQtbWVkaXVtIj57b2ZmaWNlLm5hbWV9PC9UYWJsZUNlbGw+CiAgICAgICAgICAgICAgICAgICAgICA8VGFibGVDZWxsIGNsYXNzTmFtZT0id2hpdGVzcGFjZS1ub3dyYXAiPgogICAgICAgICAgICAgICAgICAgICAgICB7b2ZmaWNlLndpbGF5YXMKICAgICAgICAgICAgICAgICAgICAgICAgICA/IGAke29mZmljZS53aWxheWFzLmNvZGV9IMK3ICR7cGxhY2VOYW1lKG9mZmljZS53aWxheWFzLm5hbWUsIGxvY2FsZSwgb2ZmaWNlLndpbGF5YXMuY29kZSl9YAogICAgICAgICAgICAgICAgICAgICAgICAgIDogIuKAlCJ9CiAgICAgICAgICAgICAgICAgICAgICAgIHtvZmZpY2UuY29tbXVuZXMgJiYgKAogICAgICAgICAgICAgICAgICAgICAgICAgIDxzcGFuIGNsYXNzTmFtZT0iYmxvY2sgdGV4dC14cyB0ZXh0LW11dGVkLWZvcmVncm91bmQiPgogICAgICAgICAgICAgICAgICAgICAgICAgICAge3BsYWNlTmFtZShvZmZpY2UuY29tbXVuZXMubmFtZSwgbG9jYWxlLCBvZmZpY2UuY29tbXVuZXMuY29kZSl9CiAgICAgICAgICAgICAgICAgICAgICAgICAgPC9zcGFuPgogICAgICAgICAgICAgICAgICAgICAgICApfQogICAgICAgICAgICAgICAgICAgICAgPC9UYWJsZUNlbGw+CiAgICAgICAgICAgICAgICAgICAgICA8VGFibGVDZWxsIGNsYXNzTmFtZT0ibWF4LXctNTIgdHJ1bmNhdGUgdGV4dC1zbSB0ZXh0LW11dGVkLWZvcmVncm91bmQiPgogICAgICAgICAgICAgICAgICAgICAgICB7b2ZmaWNlLmFkZHJlc3MgPz8gIuKAlCJ9CiAgICAgICAgICAgICAgICAgICAgICA8L1RhYmxlQ2VsbD4KICAgICAgICAgICAgICAgICAgICAgIDxUYWJsZUNlbGwgY2xhc3NOYW1lPSJ3aGl0ZXNwYWNlLW5vd3JhcCB0YWJ1bGFyLW51bXMiPntvZmZpY2UucGhvbmUgPz8gIuKAlCJ9PC9UYWJsZUNlbGw+CiAgICAgICAgICAgICAgICAgICAgICA8VGFibGVDZWxsIGNsYXNzTmFtZT0ibWF4LXctNDAgdHJ1bmNhdGUgdGV4dC1zbSB0ZXh0LW11dGVkLWZvcmVncm91bmQiPgogICAgICAgICAgICAgICAgICAgICAgICB7b2ZmaWNlLm9wZW5pbmdfaG91cnMgPz8gIuKAlCJ9CiAgICAgICAgICAgICAgICAgICAgICA8L1RhYmxlQ2VsbD4KICAgICAgICAgICAgICAgICAgICAgIDxUYWJsZUNlbGw+CiAgICAgICAgICAgICAgICAgICAgICAgIDxTd2l0Y2gKICAgICAgICAgICAgICAgICAgICAgICAgICBjaGVja2VkPXtvZmZpY2UuYWN0aXZlfQogICAgICAgICAgICAgICAgICAgICAgICAgIGRpc2FibGVkPXt0b2dnbGVNdXRhdGlvbi5pc1BlbmRpbmd9CiAgICAgICAgICAgICAgICAgICAgICAgICAgb25DaGVja2VkQ2hhbmdlPXsodikgPT4gdG9nZ2xlTXV0YXRpb24ubXV0YXRlKHsgaWQ6IG9mZmljZS5pZCwgYWN0aXZlOiB2IH0pfQogICAgICAgICAgICAgICAgICAgICAgICAgIGFyaWEtbGFiZWw9e29mZmljZS5hY3RpdmUgPyB0LnNlbGxlclNoaXBwaW5nVjguZGlhbG9nLm9mZiA6IHQuc2VsbGVyU2hpcHBpbmdWOC5kaWFsb2cub259CiAgICAgICAgICAgICAgICAgICAgICAgIC8+CiAgICAgICAgICAgICAgICAgICAgICA8L1RhYmxlQ2VsbD4KICAgICAgICAgICAgICAgICAgICAgIDxUYWJsZUNlbGw+CiAgICAgICAgICAgICAgICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPSJmbGV4IGp1c3RpZnktZW5kIGdhcC0xIj4KICAgICAgICAgICAgICAgICAgICAgICAgICA8QnV0dG9uIHZhcmlhbnQ9Imdob3N0IiBzaXplPSJzbSIgb25DbGljaz17KCkgPT4gb3BlbkVkaXQob2ZmaWNlKX0+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8UGVuY2lsIGNsYXNzTmFtZT0ibWUtMSBoLTMuNSB3LTMuNSIgLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIHt0LnNlbGxlclNoaXBwaW5nVjgucnVsZXMuZWRpdH0KICAgICAgICAgICAgICAgICAgICAgICAgICA8L0J1dHRvbj4KICAgICAgICAgICAgICAgICAgICAgICAgICA8QnV0dG9uIHZhcmlhbnQ9Imdob3N0IiBzaXplPSJzbSIgb25DbGljaz17KCkgPT4gc2V0RGVsZXRlVGFyZ2V0KG9mZmljZSl9PgogICAgICAgICAgICAgICAgICAgICAgICAgICAge3Quc2VsbGVyU2hpcHBpbmdWOC5ydWxlcy5kZWxldGV9CiAgICAgICAgICAgICAgICAgICAgICAgICAgPC9CdXR0b24+CiAgICAgICAgICAgICAgICAgICAgICAgIDwvZGl2PgogICAgICAgICAgICAgICAgICAgICAgPC9UYWJsZUNlbGw+CiAgICAgICAgICAgICAgICAgICAgPC9UYWJsZVJvdz4KICAgICAgICAgICAgICAgICAgKSl9CiAgICAgICAgICAgICAgICA8L1RhYmxlQm9keT4KICAgICAgICAgICAgICA8L1RhYmxlPgogICAgICAgICAgICA8L2Rpdj4KICAgICAgICAgICl9CiAgICAgICAgPC9BZG1pbkNhcmQ+CgogICAgICAgIHsvKiBDcmVhdGUgLyBlZGl0IGRpYWxvZyAqL30KICAgICAgICA8RGlhbG9nIG9wZW49e2RpYWxvZ09wZW59IG9uT3BlbkNoYW5nZT17c2V0RGlhbG9nT3Blbn0+CiAgICAgICAgICA8RGlhbG9nQ29udGVudCBjbGFzc05hbWU9Im1heC1oLVs5MHZoXSBvdmVyZmxvdy15LWF1dG8gc206bWF4LXctbGciPgogICAgICAgICAgICA8RGlhbG9nSGVhZGVyPgogICAgICAgICAgICAgIDxEaWFsb2dUaXRsZT57ZWRpdGluZyA/IG8uZWRpdFRpdGxlIDogby5uZXdUaXRsZX08L0RpYWxvZ1RpdGxlPgogICAgICAgICAgICA8L0RpYWxvZ0hlYWRlcj4KICAgICAgICAgICAgPGRpdiBjbGFzc05hbWU9ImdyaWQgZ2FwLTQgcHktMiI+CiAgICAgICAgICAgICAgPEZpZWxkIGxhYmVsPXtvLm5hbWV9IGVycm9yPXtmb3JtRXJyb3JzLm5hbWV9PgogICAgICAgICAgICAgICAgPElucHV0CiAgICAgICAgICAgICAgICAgIHZhbHVlPXtmb3JtLm5hbWV9CiAgICAgICAgICAgICAgICAgIG9uQ2hhbmdlPXsoZSkgPT4gc2V0Rm9ybSh7IC4uLmZvcm0sIG5hbWU6IGUudGFyZ2V0LnZhbHVlIH0pfQogICAgICAgICAgICAgICAgICBtYXhMZW5ndGg9ezEyMH0KICAgICAgICAgICAgICAgICAgYXJpYS1pbnZhbGlkPXtmb3JtRXJyb3JzLm5hbWUgPyB0cnVlIDogdW5kZWZpbmVkfQogICAgICAgICAgICAgICAgLz4KICAgICAgICAgICAgICA8L0ZpZWxkPgogICAgICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPSJncmlkIGdyaWQtY29scy0yIGdhcC00Ij4KICAgICAgICAgICAgICAgIDxGaWVsZCBsYWJlbD17by53aWxheWF9IGVycm9yPXtmb3JtRXJyb3JzLndpbGF5YUlkfT4KICAgICAgICAgICAgICAgICAgPFNlbGVjdAogICAgICAgICAgICAgICAgICAgIHZhbHVlPXtmb3JtLndpbGF5YUlkfQogICAgICAgICAgICAgICAgICAgIG9uVmFsdWVDaGFuZ2U9eyh2KSA9PiBzZXRGb3JtKHsgLi4uZm9ybSwgd2lsYXlhSWQ6IHYsIGNvbW11bmVJZDogImFsbCIgfSl9CiAgICAgICAgICAgICAgICAgID4KICAgICAgICAgICAgICAgICAgICA8U2VsZWN0VHJpZ2dlcj4KICAgICAgICAgICAgICAgICAgICAgIDxTZWxlY3RWYWx1ZSBwbGFjZWhvbGRlcj17by5jaG9vc2VXaWxheWF9IC8+CiAgICAgICAgICAgICAgICAgICAgPC9TZWxlY3RUcmlnZ2VyPgogICAgICAgICAgICAgICAgICAgIDxTZWxlY3RDb250ZW50PgogICAgICAgICAgICAgICAgICAgICAge3dpbGF5YXMubWFwKCh3KSA9PiAoCiAgICAgICAgICAgICAgICAgICAgICAgIDxTZWxlY3RJdGVtIGtleT17dy5pZH0gdmFsdWU9e3cuaWR9PgogICAgICAgICAgICAgICAgICAgICAgICAgIHt3LmNvZGV9IMK3IHtwbGFjZU5hbWUody5uYW1lLCBsb2NhbGUsIHcuY29kZSl9CiAgICAgICAgICAgICAgICAgICAgICAgIDwvU2VsZWN0SXRlbT4KICAgICAgICAgICAgICAgICAgICAgICkpfQogICAgICAgICAgICAgICAgICAgIDwvU2VsZWN0Q29udGVudD4KICAgICAgICAgICAgICAgICAgPC9TZWxlY3Q+CiAgICAgICAgICAgICAgICA8L0ZpZWxkPgogICAgICAgICAgICAgICAgPEZpZWxkIGxhYmVsPXtgJHtvLmNvbW11bmV9ICgke28uY29tbXVuZU9wdGlvbmFsfSlgfT4KICAgICAgICAgICAgICAgICAgPFNlbGVjdAogICAgICAgICAgICAgICAgICAgIHZhbHVlPXtmb3JtLmNvbW11bmVJZH0KICAgICAgICAgICAgICAgICAgICBvblZhbHVlQ2hhbmdlPXsodikgPT4gc2V0Rm9ybSh7IC4uLmZvcm0sIGNvbW11bmVJZDogdiB9KX0KICAgICAgICAgICAgICAgICAgICBkaXNhYmxlZD17Zm9ybS53aWxheWFJZCA9PT0gIiJ9CiAgICAgICAgICAgICAgICAgID4KICAgICAgICAgICAgICAgICAgICA8U2VsZWN0VHJpZ2dlcj4KICAgICAgICAgICAgICAgICAgICAgIDxTZWxlY3RWYWx1ZSAvPgogICAgICAgICAgICAgICAgICAgIDwvU2VsZWN0VHJpZ2dlcj4KICAgICAgICAgICAgICAgICAgICA8U2VsZWN0Q29udGVudD4KICAgICAgICAgICAgICAgICAgICAgIDxTZWxlY3RJdGVtIHZhbHVlPSJhbGwiPntvLmFsbENvbW11bmVzfTwvU2VsZWN0SXRlbT4KICAgICAgICAgICAgICAgICAgICAgIHtjb21tdW5lcy5tYXAoKGMpID0+ICgKICAgICAgICAgICAgICAgICAgICAgICAgPFNlbGVjdEl0ZW0ga2V5PXtjLmlkfSB2YWx1ZT17Yy5pZH0+CiAgICAgICAgICAgICAgICAgICAgICAgICAge2MuY29kZX0gwrcge3BsYWNlTmFtZShjLm5hbWUsIGxvY2FsZSwgYy5jb2RlKX0KICAgICAgICAgICAgICAgICAgICAgICAgPC9TZWxlY3RJdGVtPgogICAgICAgICAgICAgICAgICAgICAgKSl9CiAgICAgICAgICAgICAgICAgICAgPC9TZWxlY3RDb250ZW50PgogICAgICAgICAgICAgICAgICA8L1NlbGVjdD4KICAgICAgICAgICAgICAgIDwvRmllbGQ+CiAgICAgICAgICAgICAgPC9kaXY+CiAgICAgICAgICAgICAgPEZpZWxkIGxhYmVsPXtvLmFkZHJlc3N9PgogICAgICAgICAgICAgICAgPElucHV0CiAgICAgICAgICAgICAgICAgIHZhbHVlPXtmb3JtLmFkZHJlc3N9CiAgICAgICAgICAgICAgICAgIG9uQ2hhbmdlPXsoZSkgPT4gc2V0Rm9ybSh7IC4uLmZvcm0sIGFkZHJlc3M6IGUudGFyZ2V0LnZhbHVlIH0pfQogICAgICAgICAgICAgICAgICBtYXhMZW5ndGg9ezUwMH0KICAgICAgICAgICAgICAgIC8+CiAgICAgICAgICAgICAgPC9GaWVsZD4KICAgICAgICAgICAgICA8ZGl2IGNsYXNzTmFtZT0iZ3JpZCBncmlkLWNvbHMtMiBnYXAtNCI+CiAgICAgICAgICAgICAgICA8RmllbGQgbGFiZWw9e28ucGhvbmV9IGVycm9yPXtmb3JtRXJyb3JzLnBob25lfT4KICAgICAgICAgICAgICAgICAgPElucHV0CiAgICAgICAgICAgICAgICAgICAgdmFsdWU9e2Zvcm0ucGhvbmV9CiAgICAgICAgICAgICAgICAgICAgb25DaGFuZ2U9eyhlKSA9PiBzZXRGb3JtKHsgLi4uZm9ybSwgcGhvbmU6IGUudGFyZ2V0LnZhbHVlIH0pfQogICAgICAgICAgICAgICAgICAgIG1heExlbmd0aD17MjR9CiAgICAgICAgICAgICAgICAgICAgaW5wdXRNb2RlPSJ0ZWwiCiAgICAgICAgICAgICAgICAgICAgZGlyPSJsdHIiCiAgICAgICAgICAgICAgICAgICAgYXJpYS1pbnZhbGlkPXtmb3JtRXJyb3JzLnBob25lID8gdHJ1ZSA6IHVuZGVmaW5lZH0KICAgICAgICAgICAgICAgICAgLz4KICAgICAgICAgICAgICAgIDwvRmllbGQ+CiAgICAgICAgICAgICAgICA8RmllbGQgbGFiZWw9e28uaG91cnN9IGhpbnQ9e28uaG91cnNIaW50fT4KICAgICAgICAgICAgICAgICAgPElucHV0CiAgICAgICAgICAgICAgICAgICAgdmFsdWU9e2Zvcm0ub3BlbmluZ0hvdXJzfQogICAgICAgICAgICAgICAgICAgIG9uQ2hhbmdlPXsoZSkgPT4gc2V0Rm9ybSh7IC4uLmZvcm0sIG9wZW5pbmdIb3VyczogZS50YXJnZXQudmFsdWUgfSl9CiAgICAgICAgICAgICAgICAgICAgbWF4TGVuZ3RoPXszMDB9CiAgICAgICAgICAgICAgICAgIC8+CiAgICAgICAgICAgICAgICA8L0ZpZWxkPgogICAgICAgICAgICAgIDwvZGl2PgogICAgICAgICAgICAgIDxGaWVsZCBsYWJlbD17by5hY3RpdmV9PgogICAgICAgICAgICAgICAgPGRpdiBjbGFzc05hbWU9ImZsZXggaXRlbXMtY2VudGVyIGdhcC0zIj4KICAgICAgICAgICAgICAgICAgPExhYmVsIGh0bWxGb3I9Im9mZmljZS1hY3RpdmUiIGNsYXNzTmFtZT0idGV4dC1zbSBmb250LW5vcm1hbCB0ZXh0LW11dGVkLWZvcmVncm91bmQiPgogICAgICAgICAgICAgICAgICAgIHtmb3JtLmFjdGl2ZSA/IHQuc2VsbGVyU2hpcHBpbmdWOC5kaWFsb2cub24gOiB0LnNlbGxlclNoaXBwaW5nVjguZGlhbG9nLm9mZn0KICAgICAgICAgICAgICAgICAgPC9MYWJlbD4KICAgICAgICAgICAgICAgICAgPFN3aXRjaAogICAgICAgICAgICAgICAgICAgIGlkPSJvZmZpY2UtYWN0aXZlIgogICAgICAgICAgICAgICAgICAgIGNoZWNrZWQ9e2Zvcm0uYWN0aXZlfQogICAgICAgICAgICAgICAgICAgIG9uQ2hlY2tlZENoYW5nZT17KHYpID0+IHNldEZvcm0oeyAuLi5mb3JtLCBhY3RpdmU6IHYgfSl9CiAgICAgICAgICAgICAgICAgIC8+CiAgICAgICAgICAgICAgICA8L2Rpdj4KICAgICAgICAgICAgICA8L0ZpZWxkPgogICAgICAgICAgICAgIHtzYXZlRXJyb3IgPyA8cCBjbGFzc05hbWU9InRleHQtc20gdGV4dC1kZXN0cnVjdGl2ZSI+e3NhdmVFcnJvcn08L3A+IDogbnVsbH0KICAgICAgICAgICAgPC9kaXY+CiAgICAgICAgICAgIDxEaWFsb2dGb290ZXI+CiAgICAgICAgICAgICAgPEJ1dHRvbiB2YXJpYW50PSJvdXRsaW5lIiBvbkNsaWNrPXsoKSA9PiBzZXREaWFsb2dPcGVuKGZhbHNlKX0+CiAgICAgICAgICAgICAgICB7by5jYW5jZWx9CiAgICAgICAgICAgICAgPC9CdXR0b24+CiAgICAgICAgICAgICAgPEJ1dHRvbiBkaXNhYmxlZD17IWNhblN1Ym1pdH0gb25DbGljaz17aGFuZGxlU2F2ZX0+CiAgICAgICAgICAgICAgICB7c2F2ZU11dGF0aW9uLmlzUGVuZGluZyA/IG8uc2F2aW5nIDogZWRpdGluZyA/IG8uc2F2ZSA6IG8uY3JlYXRlfQogICAgICAgICAgICAgIDwvQnV0dG9uPgogICAgICAgICAgICA8L0RpYWxvZ0Zvb3Rlcj4KICAgICAgICAgIDwvRGlhbG9nQ29udGVudD4KICAgICAgICA8L0RpYWxvZz4KCiAgICAgICAgPENvbmZpcm1EaWFsb2cKICAgICAgICAgIG9wZW49e2RlbGV0ZVRhcmdldCAhPT0gbnVsbH0KICAgICAgICAgIG9uT3BlbkNoYW5nZT17KG9wZW4pID0+IHsKICAgICAgICAgICAgaWYgKCFvcGVuKSBzZXREZWxldGVUYXJnZXQobnVsbCk7CiAgICAgICAgICB9fQogICAgICAgICAgdGl0bGU9e28uZGVsZXRlVGl0bGV9CiAgICAgICAgICBkZXNjcmlwdGlvbj17by5kZWxldGVUZXh0fQogICAgICAgICAgY29uZmlybUxhYmVsPXtvLmRlbGV0ZUNvbmZpcm19CiAgICAgICAgICBkYW5nZXIKICAgICAgICAgIG9uQ29uZmlybT17KCkgPT4gewogICAgICAgICAgICBpZiAoZGVsZXRlVGFyZ2V0KSBkZWxldGVNdXRhdGlvbi5tdXRhdGUoeyBpZDogZGVsZXRlVGFyZ2V0LmlkIH0pOwogICAgICAgICAgfX0KICAgICAgICAvPgogICAgICA8L1NlbGxlclNoZWxsPgogICAgPC9kaXY+CiAgKTsKfQo=
+import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Pencil, Plus } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  AdminCard,
+  ConfirmDialog,
+  EmptyState,
+  Field,
+  Stat,
+  TableSkeleton,
+} from "@/components/admin/ui";
+import { SellerShell } from "@/components/seller/SellerShell";
+import { RouteError } from "@/components/routing/route-states";
+import {
+  createSellerOffice,
+  deleteSellerOffice,
+  listSellerOffices,
+  updateSellerOffice,
+  type SellerOffice,
+} from "@/lib/seller-offices.functions";
+import { listShippingCommunes, listShippingWilayas } from "@/lib/seller-marketing.functions";
+import { getLocale, getTranslations, localeDirections } from "@/lib/i18n";
+
+export const Route = createFileRoute("/_authenticated/seller/offices")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined),
+  }),
+  errorComponent: ({ reset }) => (
+    <SellerShell eyebrow="Seller workspace" title="Delivery Offices">
+      <RouteError message="Your delivery offices could not be loaded. Check your connection and try again." reset={reset} />
+    </SellerShell>
+  ),
+  head: () => ({
+    meta: [
+      { name: "robots", content: "noindex,nofollow" },
+      { title: "Delivery Offices — Seller — Modalia" },
+      { name: "description", content: "Manage your delivery offices — the pickup points where customers collect orders." },
+    ],
+  }),
+  component: SellerOfficesPage,
+});
+
+function placeName(name: unknown, locale: string, fallback: string): string {
+  if (name && typeof name === "object") {
+    const n = name as Record<string, unknown>;
+    for (const key of [locale, "en", "fr", "ar"]) {
+      if (typeof n[key] === "string" && (n[key] as string).trim()) return n[key] as string;
+    }
+  }
+  return fallback;
+}
+
+type OfficeForm = {
+  name: string;
+  wilayaId: string;
+  communeId: string;
+  address: string;
+  phone: string;
+  openingHours: string;
+  active: boolean;
+};
+
+const EMPTY_OFFICE_FORM: OfficeForm = {
+  name: "",
+  wilayaId: "",
+  communeId: "all",
+  address: "",
+  phone: "",
+  openingHours: "",
+  active: true,
+};
+
+type OfficeFormErrors = {
+  name?: string;
+  wilayaId?: string;
+  phone?: string;
+};
+
+function SellerOfficesPage() {
+  const search = Route.useSearch() as unknown as { locale?: string };
+  // Defensive: the generated route tree may not yet include this path
+  // (TanStack codegen runs at build time); normalize through getLocale.
+  const locale = getLocale(search.locale);
+  const t = getTranslations(locale);
+  const o = t.sellerShippingV8.offices;
+  const navTitle = t.sellerDashboardV8.nav.offices;
+  const qc = useQueryClient();
+
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editing, setEditing] = useState<SellerOffice | null>(null);
+  const [form, setForm] = useState<OfficeForm>(EMPTY_OFFICE_FORM);
+  const [formErrors, setFormErrors] = useState<OfficeFormErrors>({});
+  const [deleteTarget, setDeleteTarget] = useState<SellerOffice | null>(null);
+
+  const officesQuery = useQuery({ queryKey: ["seller-offices"], queryFn: () => listSellerOffices() });
+  const offices = officesQuery.data?.offices ?? [];
+
+  const wilayasQuery = useQuery({ queryKey: ["seller-shipping-wilayas"], queryFn: () => listShippingWilayas() });
+  const wilayas = wilayasQuery.data?.wilayas ?? [];
+
+  const communesQuery = useQuery({
+    queryKey: ["seller-office-communes", form.wilayaId],
+    queryFn: () => listShippingCommunes({ data: { wilayaId: form.wilayaId } }),
+    enabled: dialogOpen && form.wilayaId !== "",
+  });
+  const communes = communesQuery.data?.communes ?? [];
+
+  const errMessage = (e: unknown) => (e instanceof Error ? e.message : String(e));
+
+  // ------------------------------------------------------------------
+  // Client-side validation: name >= 2 chars, wilaya required,
+  // phone must match the server schema when provided.
+  // ------------------------------------------------------------------
+  function validate(next: OfficeForm): OfficeFormErrors {
+    const errors: OfficeFormErrors = {};
+    if (next.name.trim().length < 2) errors.name = errName(next.name.trim().length === 0);
+    if (next.wilayaId === "") errors.wilayaId = errWilaya;
+    const phone = next.phone.trim();
+    if (phone !== "") {
+      if (phone.length < 6 || phone.length > 24 || !/^[+0-9][0-9\s\-/]*$/.test(phone)) {
+        errors.phone = errPhone;
+      }
+    }
+    return errors;
+  }
+
+  // Inline validation strings (trilingual).
+  const errName = (missing: boolean) =>
+    missing
+      ? locale === "ar"
+        ? "أدخل اسم المكتب."
+        : locale === "fr"
+          ? "Saisissez le nom du bureau."
+          : "Enter the office name."
+      : locale === "ar"
+        ? "الاسم يجب أن يحتوي على حرفين على الأقل."
+        : locale === "fr"
+          ? "Le nom doit contenir au moins 2 caractères."
+          : "Name needs at least 2 characters.";
+  const errWilaya =
+    locale === "ar"
+      ? "اختر الولاية."
+      : locale === "fr"
+        ? "Choisissez une wilaya."
+        : "Choose a wilaya.";
+  const errPhone =
+    locale === "ar"
+      ? "رقم الهاتف غير صالح."
+      : locale === "fr"
+        ? "Numéro de téléphone invalide."
+        : "Phone number looks invalid.";
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      const payload = {
+        name: form.name.trim(),
+        wilaya_id: form.wilayaId,
+        commune_id: form.communeId === "all" ? null : form.communeId,
+        address: form.address.trim() === "" ? null : form.address.trim(),
+        phone: form.phone.trim() === "" ? null : form.phone.trim(),
+        opening_hours: form.openingHours.trim() === "" ? null : form.openingHours.trim(),
+        active: form.active,
+      };
+      if (editing) {
+        await updateSellerOffice({ data: { ...payload, id: editing.id } });
+      } else {
+        await createSellerOffice({ data: payload });
+      }
+      return { ok: true as const };
+    },
+    onSuccess: () => {
+      toast.success(editing ? oSaved : oCreated);
+      setDialogOpen(false);
+      setEditing(null);
+      setForm(EMPTY_OFFICE_FORM);
+      setFormErrors({});
+      qc.invalidateQueries({ queryKey: ["seller-offices"] });
+    },
+    onError: (e) => toast.error(errMessage(e)),
+  });
+
+  const toggleMutation = useMutation({
+    mutationFn: (input: { id: string; active: boolean }) => updateSellerOffice({ data: input }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["seller-offices"] }),
+    onError: (e) => toast.error(errMessage(e)),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (input: { id: string }) => deleteSellerOffice({ data: input }),
+    onSuccess: () => {
+      toast.success(oDeleted);
+      setDeleteTarget(null);
+      qc.invalidateQueries({ queryKey: ["seller-offices"] });
+    },
+    onError: (e) => toast.error(errMessage(e)),
+  });
+
+  const oCreated =
+    locale === "ar" ? "تمت إضافة المكتب." : locale === "fr" ? "Bureau ajouté." : "Office added.";
+  const oSaved =
+    locale === "ar" ? "تم حفظ التغييرات." : locale === "fr" ? "Modifications enregistrées." : "Changes saved.";
+  const oDeleted =
+    locale === "ar" ? "تم حذف المكتب." : locale === "fr" ? "Bureau supprimé." : "Office deleted.";
+
+  const openCreate = () => {
+    setEditing(null);
+    setForm(EMPTY_OFFICE_FORM);
+    setFormErrors({});
+    setDialogOpen(true);
+  };
+
+  const openEdit = (office: SellerOffice) => {
+    setEditing(office);
+    setForm({
+      name: office.name,
+      wilayaId: office.wilaya_id,
+      communeId: office.commune_id ?? "all",
+      address: office.address ?? "",
+      phone: office.phone ?? "",
+      openingHours: office.opening_hours ?? "",
+      active: office.active,
+    });
+    setFormErrors({});
+    setDialogOpen(true);
+  };
+
+  const saveError = saveMutation.error instanceof Error ? saveMutation.error.message : null;
+  const canSubmit = !saveMutation.isPending;
+
+  const handleSave = () => {
+    const errors = validate(form);
+    setFormErrors(errors);
+    if (Object.keys(errors).length > 0) return;
+    saveMutation.mutate();
+  };
+
+  const activeCount = offices.filter((x) => x.active).length;
+  const loadError = officesQuery.error instanceof Error ? officesQuery.error.message : o.empty;
+
+  return (
+    <div dir={localeDirections[locale]} lang={locale}>
+      <SellerShell
+        eyebrow="Seller workspace"
+        title={navTitle}
+        actions={
+          <Button onClick={openCreate}>
+            <Plus className="me-2 h-4 w-4" />
+            {o.add}
+          </Button>
+        }
+      >
+        <p className="text-body text-muted-foreground">{o.hint}</p>
+
+        <div className="mt-4 grid gap-4 sm:grid-cols-3">
+          <Stat label={navTitle} value={offices.length} />
+          <Stat label={o.active} value={activeCount} />
+          <Stat
+            label={locale === "ar" ? "غير نشط" : locale === "fr" ? "Inactifs" : "Inactive"}
+            value={offices.length - activeCount}
+          />
+        </div>
+
+        <AdminCard title={o.title} subtitle={o.hint} className="mt-6">
+          {officesQuery.isPending ? (
+            <TableSkeleton rows={3} />
+          ) : officesQuery.isError ? (
+            <EmptyState
+              title={loadError}
+              action={
+                <Button variant="outline" onClick={() => officesQuery.refetch()}>
+                  {locale === "ar" ? "إعادة المحاولة" : locale === "fr" ? "Réessayer" : "Retry"}
+                </Button>
+              }
+            />
+          ) : offices.length === 0 ? (
+            <EmptyState title={o.empty} text={o.emptyText} action={<Button onClick={openCreate}>{o.add}</Button>} />
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{o.name}</TableHead>
+                    <TableHead>{o.wilaya}</TableHead>
+                    <TableHead>{o.address}</TableHead>
+                    <TableHead>{o.phone}</TableHead>
+                    <TableHead>{o.hours}</TableHead>
+                    <TableHead>{o.active}</TableHead>
+                    <TableHead className="text-end">
+                      {locale === "ar" ? "إجراءات" : locale === "fr" ? "Actions" : "Actions"}
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {offices.map((office) => (
+                    <TableRow key={office.id}>
+                      <TableCell className="font-medium">{office.name}</TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        {office.wilayas
+                          ? `${office.wilayas.code} · ${placeName(office.wilayas.name, locale, office.wilayas.code)}`
+                          : "—"}
+                        {office.communes && (
+                          <span className="block text-xs text-muted-foreground">
+                            {placeName(office.communes.name, locale, office.communes.code)}
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell className="max-w-52 truncate text-sm text-muted-foreground">
+                        {office.address ?? "—"}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap tabular-nums">{office.phone ?? "—"}</TableCell>
+                      <TableCell className="max-w-40 truncate text-sm text-muted-foreground">
+                        {office.opening_hours ?? "—"}
+                      </TableCell>
+                      <TableCell>
+                        <Switch
+                          checked={office.active}
+                          disabled={toggleMutation.isPending}
+                          onCheckedChange={(v) => toggleMutation.mutate({ id: office.id, active: v })}
+                          aria-label={office.active ? t.sellerShippingV8.dialog.off : t.sellerShippingV8.dialog.on}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex justify-end gap-1">
+                          <Button variant="ghost" size="sm" onClick={() => openEdit(office)}>
+                            <Pencil className="me-1 h-3.5 w-3.5" />
+                            {t.sellerShippingV8.rules.edit}
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(office)}>
+                            {t.sellerShippingV8.rules.delete}
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </AdminCard>
+
+        {/* Create / edit dialog */}
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle>{editing ? o.editTitle : o.newTitle}</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-2">
+              <Field label={o.name} error={formErrors.name}>
+                <Input
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  maxLength={120}
+                  aria-invalid={formErrors.name ? true : undefined}
+                />
+              </Field>
+              <div className="grid grid-cols-2 gap-4">
+                <Field label={o.wilaya} error={formErrors.wilayaId}>
+                  <Select
+                    value={form.wilayaId}
+                    onValueChange={(v) => setForm({ ...form, wilayaId: v, communeId: "all" })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={o.chooseWilaya} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {wilayas.map((w) => (
+                        <SelectItem key={w.id} value={w.id}>
+                          {w.code} · {placeName(w.name, locale, w.code)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+                <Field label={`${o.commune} (${o.communeOptional})`}>
+                  <Select
+                    value={form.communeId}
+                    onValueChange={(v) => setForm({ ...form, communeId: v })}
+                    disabled={form.wilayaId === ""}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{o.allCommunes}</SelectItem>
+                      {communes.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>
+                          {c.code} · {placeName(c.name, locale, c.code)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+              </div>
+              <Field label={o.address}>
+                <Input
+                  value={form.address}
+                  onChange={(e) => setForm({ ...form, address: e.target.value })}
+                  maxLength={500}
+                />
+              </Field>
+              <div className="grid grid-cols-2 gap-4">
+                <Field label={o.phone} error={formErrors.phone}>
+                  <Input
+                    value={form.phone}
+                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                    maxLength={24}
+                    inputMode="tel"
+                    dir="ltr"
+                    aria-invalid={formErrors.phone ? true : undefined}
+                  />
+                </Field>
+                <Field label={o.hours} hint={o.hoursHint}>
+                  <Input
+                    value={form.openingHours}
+                    onChange={(e) => setForm({ ...form, openingHours: e.target.value })}
+                    maxLength={300}
+                  />
+                </Field>
+              </div>
+              <Field label={o.active}>
+                <div className="flex items-center gap-3">
+                  <Label htmlFor="office-active" className="text-sm font-normal text-muted-foreground">
+                    {form.active ? t.sellerShippingV8.dialog.on : t.sellerShippingV8.dialog.off}
+                  </Label>
+                  <Switch
+                    id="office-active"
+                    checked={form.active}
+                    onCheckedChange={(v) => setForm({ ...form, active: v })}
+                  />
+                </div>
+              </Field>
+              {saveError ? <p className="text-sm text-destructive">{saveError}</p> : null}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDialogOpen(false)}>
+                {o.cancel}
+              </Button>
+              <Button disabled={!canSubmit} onClick={handleSave}>
+                {saveMutation.isPending ? o.saving : editing ? o.save : o.create}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <ConfirmDialog
+          open={deleteTarget !== null}
+          onOpenChange={(open) => {
+            if (!open) setDeleteTarget(null);
+          }}
+          title={o.deleteTitle}
+          description={o.deleteText}
+          confirmLabel={o.deleteConfirm}
+          danger
+          onConfirm={() => {
+            if (deleteTarget) deleteMutation.mutate({ id: deleteTarget.id });
+          }}
+        />
+      </SellerShell>
+    </div>
+  );
+}

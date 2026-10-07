@@ -1,1 +1,400 @@
-LyoqCiAqIE1PREFMSUEg4oCUIFNlbGxlciBpZGVudGl0eSBtb2RlbCAoU3BlYyBTZWN0aW9uIDgpLgogKgogKiBVc2VybmFtZS1iYXNlZCBzZWxsZXIgbG9naW4gd2l0aCByZWFsLWVtYWlsIHRyYW5zaXRpb246CiAqCiAqICAgMS4gQWRtaW4gcHJvdmlzaW9ucyBhIHNlbGxlciAtPiB0aGUgc3lzdGVtIGdlbmVyYXRlcyBhIGdsb2JhbGx5LXVuaXF1ZQogKiAgICAgIHVzZXJuYW1lIChgc2VsbGVyX2AgKyA1IHVuYW1iaWd1b3VzIGNoYXJzLCBlLmcuIGBzZWxsZXJfOEsyOVFgKSBhbmQgYQogKiAgICAgIHRlbXBvcmFyeSBwYXNzd29yZC4gVGhlIGFkbWluIGlzIE5PVCByZXF1aXJlZCB0byBlbnRlciB0aGUgc2VsbGVyJ3MKICogICAgICByZWFsIGVtYWlsLgogKiAgIDIuIEEgU3VwYWJhc2UgQXV0aCB1c2VyIGlzIGNyZWF0ZWQgd2l0aCB0aGUgU1lOVEhFVElDIGVtYWlsCiAqICAgICAgYHt1c2VybmFtZX1Ac2VsbGVyLm1vZGFsaWEuaW50ZXJuYWxgLiBUaGlzIGFkZHJlc3MgaXMgYW4gaW50ZXJuYWwKICogICAgICBpbXBsZW1lbnRhdGlvbiBkZXRhaWwg4oCUIGl0IGlzIG5ldmVyIHNob3duIHRvIHRoZSBzZWxsZXIuCiAqICAgMy4gVGhlIHNlbGxlciBsb2dzIGluIHdpdGggVVNFUk5BTUUgKyB0ZW1wIHBhc3N3b3JkLiBUaGUgbG9naW4gcGFnZSBtYXBzCiAqICAgICAgdGhlIHVzZXJuYW1lIHRvIHRoZSBzeW50aGV0aWMgYXV0aCBlbWFpbCBkZXRlcm1pbmlzdGljYWxseQogKiAgICAgIChyZXNvbHZlVXNlcm5hbWVUb0VtYWlsKSDigJQgbm8gc2VydmVyIHJvdW5kLXRyaXAsIG5vIGVudW1lcmF0aW9uCiAqICAgICAgYmV5b25kIHdoYXQgdGhlIGxvZ2luIGZvcm0gYWxyZWFkeSByZXZlYWxzLgogKiAgIDQuIEZpcnN0IGxvZ2luIGZvcmNlcyBhIHBhc3N3b3JkIGNoYW5nZSAoZXhpc3RpbmcgbXVzdF9jaGFuZ2VfcGFzc3dvcmQKICogICAgICBmbG93KSwgdGhlbiBvbmJvYXJkaW5nLiBUaGUgc2VsbGVyIHByb3ZpZGVzIGEgcmVhbCBlbWFpbCwgdmVyaWZpZXMKICogICAgICBpdCB0aHJvdWdoIHRoZSBTdXBhYmFzZSBBdXRoIGVtYWlsLWNoYW5nZSBmbG93CiAqICAgICAgKHRyYW5zaXRpb25Ub0VtYWlsTG9naW4pLCBhbmQgYHNlbGxlcl9hY2NvdW50cy5sb2dpbl9tZXRob2RgIGZsaXBzCiAqICAgICAgdG8gJ2VtYWlsJy4gVGhlIHVzZXJuYW1lIHN0YXlzIHJlc2VydmVkIGZvcmV2ZXIgKFVOSVFVRSwgbmV2ZXIKICogICAgICByZXVzZWQpLgogKgogKiBCYWNrd2FyZCBjb21wYXRpYmlsaXR5OiBzZWxsZXJzIHByb3Zpc2lvbmVkIGJlZm9yZSB0aGlzIG1vZGVsIGtlZXAgdGhlaXIKICogcmVhbC1lbWFpbCBBdXRoIHVzZXJzLiBUaGVpciBzZWxsZXJfYWNjb3VudHMgcm93cyAoYmFja2ZpbGxlZCBieSBtaWdyYXRpb24KICogMjAyNjEwMDcwMzAwMDApIHVzZSBsb2dpbl9tZXRob2Q9J2VtYWlsJywgc28gcmVzb2x2ZVVzZXJuYW1lVG9FbWFpbCBrZWVwcwogKiB3b3JraW5nIGZvciB0aGVtIHVuY2hhbmdlZC4KICoKICogU0VDVVJJVFk6CiAqIC0gVGhlIHRlbXBvcmFyeSBwYXNzd29yZCBpcyBnZW5lcmF0ZWQgc2VydmVyLXNpZGUsIHJldHVybmVkIE9OQ0UsIG5ldmVyCiAqICAgbG9nZ2VkLCBuZXZlciBzdG9yZWQgaW4gcGxhaW50ZXh0LgogKiAtIFRoZSBzeW50aGV0aWMgZG9tYWluIGlzIGludGVybmFsOyB0aGUgbG9naW4gVUkgb25seSBldmVyIHNob3dzIHRoZQogKiAgIHVzZXJuYW1lLiAoQSBkZXRlcm1pbmVkIG9ic2VydmVyIGNhbiBkZXJpdmUgdGhlIHBhdHRlcm4sIGJ1dCBpdCBncmFudHMKICogICBub3RoaW5nIHdpdGhvdXQgdGhlIHBhc3N3b3JkLCBhbmQgYnJ1dGUtZm9yY2UgaXMgcmF0ZS1saW1pdGVkLikKICogLSBzZWxsZXJzLmVtYWlsIGlzIE5FVkVSIHdyaXR0ZW4gaGVyZTsgZW1haWwgPC0+IEF1dGggc3luY2hyb25pemF0aW9uIGlzCiAqICAgb3duZWQgYnkgdGhlIFNlY3Rpb24gOSBjaGFuZ2VTZWxsZXJFbWFpbCgpIGhlbHBlci4KICovCgppbXBvcnQgeyBjcmVhdGVTZXJ2ZXJGbiB9IGZyb20gIkB0YW5zdGFjay9yZWFjdC1zdGFydCI7CmltcG9ydCB7IHogfSBmcm9tICJ6b2QiOwppbXBvcnQgeyByZXF1aXJlU3VwYWJhc2VBdXRoIH0gZnJvbSAiQC9pbnRlZ3JhdGlvbnMvc3VwYWJhc2UvYXV0aC1taWRkbGV3YXJlIjsKaW1wb3J0IHsgcmVxdWlyZVNlbGxlciB9IGZyb20gIkAvbGliL3NlbGxlci1hdXRoIjsKaW1wb3J0IHsgYXNzZXJ0QWRtaW5QZXJtaXNzaW9uIH0gZnJvbSAiQC9saWIvYWRtaW4tcGVybWlzc2lvbnMiOwppbXBvcnQgdHlwZSB7IHN1cGFiYXNlQWRtaW4gfSBmcm9tICJAL2ludGVncmF0aW9ucy9zdXBhYmFzZS9jbGllbnQuc2VydmVyIjsKCmNvbnN0IGFkbWluT25seSA9IFtyZXF1aXJlU3VwYWJhc2VBdXRoXSBhcyBjb25zdDsKCnR5cGUgU3VwYWJhc2VBZG1pbkNsaWVudCA9IHR5cGVvZiBzdXBhYmFzZUFkbWluOwoKLyogLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tICovCi8qIFB1cmUgaGVscGVycyAoY2xpZW50LXNhZmUpICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgKi8KLyogLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tICovCgovKiogSW50ZXJuYWwgYXV0aCBkb21haW4gZm9yIHN5bnRoZXRpYyBzZWxsZXIgZW1haWxzLiBOZXZlciBzaG93biB0byB1c2Vycy4gKi8KZXhwb3J0IGNvbnN0IFNFTExFUl9BVVRIX0RPTUFJTiA9ICJzZWxsZXIubW9kYWxpYS5pbnRlcm5hbCI7CgpleHBvcnQgY29uc3QgU0VMTEVSX1VTRVJOQU1FX1BSRUZJWCA9ICJzZWxsZXJfIjsKCi8qKgogKiBVbmFtYmlndW91cyBhbHBoYWJldDogbm8gMC9PLCBubyAxL0kvbCDigJQgc2FmZSB0byByZWFkIG92ZXIgdGhlIHBob25lLgogKiAzMiBjaGFycyAtPiA1IGNoYXJzID0gfjMzIGJpdHMgb2YgZW50cm9weSBwZXIgdXNlcm5hbWUuCiAqLwpjb25zdCBVU0VSTkFNRV9BTFBIQUJFVCA9ICJBQkNERUZHSEpLTU5QUVJTVFVWV1hZWjIzNDU2Nzg5IjsKY29uc3QgVVNFUk5BTUVfUkFORE9NX0xFTiA9IDU7CgovKioKICogQ2FzZS1pbnNlbnNpdGl2ZSAoYGlgIGZsYWcpOiBoZWxwZXJzIG5vcm1hbGl6ZSBpbnB1dCB3aXRoIHRvVXBwZXJDYXNlKCkKICogZmlyc3QsIHNvIGBTRUxMRVJfOEsyOVFgIG11c3QgbWF0Y2guIFRoZSBzdWZmaXggY2xhc3Mgc3RheXMgZXhwbGljaXQg4oCUCiAqIG5vIDAvTywgMS9JL2wuCiAqLwpleHBvcnQgY29uc3QgU0VMTEVSX1VTRVJOQU1FX1JFID0gL15zZWxsZXJfW0FCQ0RFRkdISktNTlBRUlNUVVZXWFlaMjM0NTY3ODldezV9JC9pOwoKLyoqIEdlbmVyYXRlIGEgY2FuZGlkYXRlIHVzZXJuYW1lLiBVbmlxdWVuZXNzIGlzIGVuZm9yY2VkIGJ5IHRoZSBEQiArIHJldHJ5LiAqLwpleHBvcnQgZnVuY3Rpb24gZ2VuZXJhdGVVc2VybmFtZSgpOiBzdHJpbmcgewogIGNvbnN0IGJ5dGVzID0gbmV3IFVpbnQzMkFycmF5KFVTRVJOQU1FX1JBTkRPTV9MRU4pOwogIGNyeXB0by5nZXRSYW5kb21WYWx1ZXMoYnl0ZXMpOwogIGxldCBzdWZmaXggPSAiIjsKICBmb3IgKGxldCBpID0gMDsgaSA8IFVTRVJOQU1FX1JBTkRPTV9MRU47IGkrKykgewogICAgc3VmZml4ICs9IFVTRVJOQU1FX0FMUEhBQkVUW2J5dGVzW2ldISAlIFVTRVJOQU1FX0FMUEhBQkVULmxlbmd0aF07CiAgfQogIHJldHVybiBTRUxMRVJfVVNFUk5BTUVfUFJFRklYICsgc3VmZml4Owp9CgpleHBvcnQgZnVuY3Rpb24gaXNTZWxsZXJVc2VybmFtZSh2YWx1ZTogc3RyaW5nKTogYm9vbGVhbiB7CiAgLy8gVXNlcm5hbWVzIGFyZSBhbHdheXMgZ2VuZXJhdGVkIHVwcGVyY2FzZTsgYWNjZXB0IGFueSBjYXNlIG9uIGlucHV0LgogIHJldHVybiBTRUxMRVJfVVNFUk5BTUVfUkUudGVzdCh2YWx1ZS50cmltKCkudG9VcHBlckNhc2UoKSk7Cn0KCi8qKiBEZXRlcm1pbmlzdGljIHN5bnRoZXRpYyBBdXRoIGVtYWlsIGZvciBhIHVzZXJuYW1lLiBUaHJvd3Mgb24gaW52YWxpZCBpbnB1dC4gKi8KZXhwb3J0IGZ1bmN0aW9uIHN5bnRoZXRpY0VtYWlsRm9yVXNlcm5hbWUodXNlcm5hbWU6IHN0cmluZyk6IHN0cmluZyB7CiAgY29uc3QgdSA9IHVzZXJuYW1lLnRyaW0oKS50b1VwcGVyQ2FzZSgpOwogIGlmICghU0VMTEVSX1VTRVJOQU1FX1JFLnRlc3QodSkpIHRocm93IG5ldyBFcnJvcigiSW52YWxpZCBzZWxsZXIgdXNlcm5hbWUuIik7CiAgcmV0dXJuIGAke3V9QCR7U0VMTEVSX0FVVEhfRE9NQUlOfWA7Cn0KCi8qKgogKiBSZXNvbHZlIGEgbG9naW4gaWRlbnRpZmllciB0byB0aGUgU3VwYWJhc2UgQXV0aCBlbWFpbC4KICogLSBDb250YWlucyAiQCIgIC0+IHRyZWF0ZWQgYXMgYSByZWFsIGVtYWlsIChub3JtYWxpemVkIHRvIGxvd2VyY2FzZSkuCiAqIC0gT3RoZXJ3aXNlICAgICAtPiB0cmVhdGVkIGFzIGEgc2VsbGVyIHVzZXJuYW1lIC0+IHN5bnRoZXRpYyBhdXRoIGVtYWlsLgogKgogKiBXb3JrcyBmb3IgYm90aCBpZGVudGl0eSBnZW5lcmF0aW9uczoKICogLSBuZXcgc2VsbGVyczogdXNlcm5hbWUgLT4gc3ludGhldGljIGVtYWlsOyByZWFsIGVtYWlsIGFmdGVyIHRyYW5zaXRpb24uCiAqIC0gbGVnYWN5IHNlbGxlcnM6IHJlYWwgZW1haWwgKHVuY2hhbmdlZCBiZWhhdmlvcikuCiAqLwpleHBvcnQgZnVuY3Rpb24gcmVzb2x2ZVVzZXJuYW1lVG9FbWFpbChpZGVudGlmaWVyOiBzdHJpbmcpOiBzdHJpbmcgewogIGNvbnN0IHYgPSBpZGVudGlmaWVyLnRyaW0oKTsKICBpZiAoIXYpIHRocm93IG5ldyBFcnJvcigiRW50ZXIgeW91ciB1c2VybmFtZSBvciBlbWFpbC4iKTsKICBpZiAodi5pbmNsdWRlcygiQCIpKSByZXR1cm4gdi50b0xvd2VyQ2FzZSgpOwogIHJldHVybiBzeW50aGV0aWNFbWFpbEZvclVzZXJuYW1lKHYpOwp9CgovKiAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0gKi8KLyogU2VydmVyLXNpZGUgcHJvdmlzaW9uaW5nIChzZXJ2aWNlIHJvbGUpICAgICAgICAgICAgICAgICAgICAgICAgICAgICAqLwovKiAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0gKi8KCmV4cG9ydCB0eXBlIFNlbGxlcklkZW50aXR5ID0gewogIHVzZXJuYW1lOiBzdHJpbmc7CiAgYXV0aFVzZXJJZDogc3RyaW5nOwogIGF1dGhFbWFpbDogc3RyaW5nOwp9OwoKY29uc3QgTUFYX1VTRVJOQU1FX0FUVEVNUFRTID0gODsKCi8qKgogKiBHZW5lcmF0ZSBhIHVzZXJuYW1lIHRoYXQgaXMgbm90IHRha2VuIGluIHNlbGxlcl9hY2NvdW50cyAoREItYmFja2VkIHJldHJ5KS4KICogU2VydmVyLW9ubHk6IG11c3QgYmUgY2FsbGVkIHdpdGggdGhlIHNlcnZpY2Utcm9sZSBjbGllbnQuCiAqLwpleHBvcnQgYXN5bmMgZnVuY3Rpb24gZ2VuZXJhdGVVbmlxdWVVc2VybmFtZShhZG1pbjogU3VwYWJhc2VBZG1pbkNsaWVudCk6IFByb21pc2U8c3RyaW5nPiB7CiAgZm9yIChsZXQgYXR0ZW1wdCA9IDA7IGF0dGVtcHQgPCBNQVhfVVNFUk5BTUVfQVRURU1QVFM7IGF0dGVtcHQrKykgewogICAgY29uc3QgdXNlcm5hbWUgPSBnZW5lcmF0ZVVzZXJuYW1lKCk7CiAgICBjb25zdCB7IGRhdGE6IGNsYXNoIH0gPSBhd2FpdCBhZG1pbgogICAgICAuZnJvbSgic2VsbGVyX2FjY291bnRzIikKICAgICAgLnNlbGVjdCgiaWQiKQogICAgICAuZXEoInVzZXJuYW1lIiwgdXNlcm5hbWUpCiAgICAgIC5tYXliZVNpbmdsZSgpOwogICAgaWYgKCFjbGFzaCkgcmV0dXJuIHVzZXJuYW1lOwogIH0KICB0aHJvdyBuZXcgRXJyb3IoIkNvdWxkIG5vdCBnZW5lcmF0ZSBhIHVuaXF1ZSB1c2VybmFtZS4gUGxlYXNlIHRyeSBhZ2Fpbi4iKTsKfQoKLyoqCiAqIENyZWF0ZSB0aGUgQXV0aCB1c2VyICsgc2VsbGVyX2FjY291bnRzIHJvdyBmb3IgYW4gRVhJU1RJTkcgc2VsbGVycyByb3cuCiAqCiAqIFNlcnZlci1vbmx5OiBtdXN0IGJlIGNhbGxlZCB3aXRoIHRoZSBzZXJ2aWNlLXJvbGUgY2xpZW50LiBHZW5lcmF0ZXMgYQogKiB1bmlxdWUgdXNlcm5hbWUsIGNyZWF0ZXMgdGhlIEF1dGggdXNlciB3aXRoIHRoZSBzeW50aGV0aWMgZW1haWwgKyB0aGUKICogZ2l2ZW4gdGVtcG9yYXJ5IHBhc3N3b3JkLCBhbmQgaW5zZXJ0cyB0aGUgc2VsbGVyX2FjY291bnRzIG1hcHBpbmcuIFRoZQogKiBjYWxsZXIgb3ducyBjb21wZW5zYXRpb24gKGRlbGV0ZSB0aGUgcm93L3VzZXIgb24gZmFpbHVyZSkuCiAqLwpleHBvcnQgYXN5bmMgZnVuY3Rpb24gY3JlYXRlU2VsbGVySWRlbnRpdHlSZWNvcmQoCiAgYWRtaW46IFN1cGFiYXNlQWRtaW5DbGllbnQsCiAgYXJnczogeyBzZWxsZXJJZDogc3RyaW5nOyB0ZW1wUGFzc3dvcmQ6IHN0cmluZyB9LAopOiBQcm9taXNlPFNlbGxlcklkZW50aXR5PiB7CiAgY29uc3QgeyBzZWxsZXJJZCwgdGVtcFBhc3N3b3JkIH0gPSBhcmdzOwoKICAvLyBUaGUgc2VsbGVyIG11c3QgZXhpc3QgYW5kIG5vdCBhbHJlYWR5IGhhdmUgYW4gaWRlbnRpdHkgcm93LgogIGNvbnN0IHsgZGF0YTogZXhpc3RpbmcsIGVycm9yOiBleGlzdGluZ0Vycm9yIH0gPSBhd2FpdCBhZG1pbgogICAgLmZyb20oInNlbGxlcl9hY2NvdW50cyIpCiAgICAuc2VsZWN0KCJpZCIpCiAgICAuZXEoInNlbGxlcl9pZCIsIHNlbGxlcklkKQogICAgLm1heWJlU2luZ2xlKCk7CiAgaWYgKGV4aXN0aW5nRXJyb3IpIHRocm93IG5ldyBFcnJvcihleGlzdGluZ0Vycm9yLm1lc3NhZ2UpOwogIGlmIChleGlzdGluZykgdGhyb3cgbmV3IEVycm9yKCJUaGlzIHNlbGxlciBhbHJlYWR5IGhhcyBhIGxvZ2luIGlkZW50aXR5LiIpOwoKICBjb25zdCB1c2VybmFtZSA9IGF3YWl0IGdlbmVyYXRlVW5pcXVlVXNlcm5hbWUoYWRtaW4pOwogIGNvbnN0IGF1dGhFbWFpbCA9IHN5bnRoZXRpY0VtYWlsRm9yVXNlcm5hbWUodXNlcm5hbWUpOwoKICBjb25zdCB7IGRhdGE6IGNyZWF0ZWQsIGVycm9yOiBjcmVhdGVFcnJvciB9ID0gYXdhaXQgYWRtaW4uYXV0aC5hZG1pbi5jcmVhdGVVc2VyKHsKICAgIGVtYWlsOiBhdXRoRW1haWwsCiAgICBwYXNzd29yZDogdGVtcFBhc3N3b3JkLAogICAgZW1haWxfY29uZmlybTogdHJ1ZSwKICAgIHVzZXJfbWV0YWRhdGE6IHsKICAgICAgc2VsbGVyX3VzZXJuYW1lOiB1c2VybmFtZSwKICAgICAgZm9yY2VfcGFzc3dvcmRfcmVzZXQ6IHRydWUsCiAgICAgIHByb3Zpc2lvbmVkX2J5OiAibW9kYWxpYS1hZG1pbiIsCiAgICB9LAogIH0pOwogIGlmIChjcmVhdGVFcnJvcikgdGhyb3cgbmV3IEVycm9yKGBDb3VsZCBub3QgY3JlYXRlIGxvZ2luOiAke2NyZWF0ZUVycm9yLm1lc3NhZ2V9YCk7CiAgY29uc3QgYXV0aFVzZXJJZCA9IGNyZWF0ZWQ/LnVzZXI/LmlkOwogIGlmICghYXV0aFVzZXJJZCkgdGhyb3cgbmV3IEVycm9yKCJDb3VsZCBub3QgY3JlYXRlIGxvZ2luLiIpOwoKICB0cnkgewogICAgY29uc3QgeyBlcnJvcjogcm93RXJyb3IgfSA9IGF3YWl0IGFkbWluLmZyb20oInNlbGxlcl9hY2NvdW50cyIpLmluc2VydCh7CiAgICAgIHNlbGxlcl9pZDogc2VsbGVySWQsCiAgICAgIHVzZXJuYW1lLAogICAgICBhdXRoX3VzZXJfaWQ6IGF1dGhVc2VySWQsCiAgICAgIGxvZ2luX21ldGhvZDogInVzZXJuYW1lIiwKICAgICAgZW1haWw6IG51bGwsCiAgICAgIGVtYWlsX3ZlcmlmaWVkX2F0OiBudWxsLAogICAgICBtdXN0X2NoYW5nZV9wYXNzd29yZDogdHJ1ZSwKICAgICAgc3RhdHVzOiAiYWN0aXZlIiwKICAgIH0pOwogICAgaWYgKHJvd0Vycm9yKSB0aHJvdyBuZXcgRXJyb3Iocm93RXJyb3IubWVzc2FnZSk7CiAgfSBjYXRjaCAoZXJyKSB7CiAgICAvLyBOZXZlciBsZWF2ZSBhbiBvcnBoYW5lZCBBdXRoIHVzZXIgYmVoaW5kLgogICAgYXdhaXQgYWRtaW4uYXV0aC5hZG1pbi5kZWxldGVVc2VyKGF1dGhVc2VySWQpLmNhdGNoKCgpID0+IHt9KTsKICAgIHRocm93IGVycjsKICB9CgogIHJldHVybiB7IHVzZXJuYW1lLCBhdXRoVXNlcklkLCBhdXRoRW1haWwgfTsKfQoKLyoqCiAqIFN0YW5kYWxvbmUgYWRtaW4gcHJvdmlzaW9uaW5nIG9mIGEgbG9naW4gaWRlbnRpdHkgZm9yIGFuIGV4aXN0aW5nIHNlbGxlcgogKiB0aGF0IGhhcyBub25lIChlLmcuIGxlZ2FjeSByb3dzIGNyZWF0ZWQgb3V0c2lkZSB0aGUgd2l6YXJkKS4gR2VuZXJhdGVzIHRoZQogKiB0ZW1wb3JhcnkgcGFzc3dvcmQgc2VydmVyLXNpZGUgYW5kIHJldHVybnMgaXQgT05DRS4KICovCmV4cG9ydCBjb25zdCBjcmVhdGVTZWxsZXJBY2NvdW50ID0gY3JlYXRlU2VydmVyRm4oeyBtZXRob2Q6ICJQT1NUIiB9KQogIC5taWRkbGV3YXJlKGFkbWluT25seSkKICAuaW5wdXRWYWxpZGF0b3IoKGRhdGEpID0+IHoub2JqZWN0KHsgc2VsbGVySWQ6IHouc3RyaW5nKCkudXVpZCgpIH0pLnBhcnNlKGRhdGEpKQogIC5oYW5kbGVyKGFzeW5jICh7IGRhdGEsIGNvbnRleHQgfSk6IFByb21pc2U8U2VsbGVySWRlbnRpdHkgJiB7IHRlbXBQYXNzd29yZDogc3RyaW5nIH0+ID0+IHsKICAgIGF3YWl0IGFzc2VydEFkbWluUGVybWlzc2lvbihjb250ZXh0LCAic2VsbGVycy5tYW5hZ2UiKTsKICAgIGNvbnN0IHsgc3VwYWJhc2VBZG1pbiB9ID0gYXdhaXQgaW1wb3J0KCJAL2ludGVncmF0aW9ucy9zdXBhYmFzZS9jbGllbnQuc2VydmVyIik7CgogICAgY29uc3QgeyBkYXRhOiBzZWxsZXIsIGVycm9yOiBzZWxsZXJFcnJvciB9ID0gYXdhaXQgc3VwYWJhc2VBZG1pbgogICAgICAuZnJvbSgic2VsbGVycyIpCiAgICAgIC5zZWxlY3QoImlkLGFjY291bnRfc3RhdHVzIikKICAgICAgLmVxKCJpZCIsIGRhdGEuc2VsbGVySWQpCiAgICAgIC5zaW5nbGUoKTsKICAgIGlmIChzZWxsZXJFcnJvciB8fCAhc2VsbGVyKSB0aHJvdyBuZXcgRXJyb3IoIlNlbGxlciBub3QgZm91bmQuIik7CiAgICBpZiAoc2VsbGVyLmFjY291bnRfc3RhdHVzICE9PSAiYWN0aXZlIikgewogICAgICB0aHJvdyBuZXcgRXJyb3IoIkxvZ2luIGlkZW50aXRpZXMgY2FuIG9ubHkgYmUgY3JlYXRlZCBmb3IgYWN0aXZlIHNlbGxlcnMuIik7CiAgICB9CgogICAgY29uc3QgdGVtcFBhc3N3b3JkID0gKGNyeXB0by5yYW5kb21VVUlEKCkgKyBjcnlwdG8ucmFuZG9tVVVJRCgpKS5zbGljZSgwLCAyMCk7CiAgICBjb25zdCBpZGVudGl0eSA9IGF3YWl0IGNyZWF0ZVNlbGxlcklkZW50aXR5UmVjb3JkKHN1cGFiYXNlQWRtaW4sIHsKICAgICAgc2VsbGVySWQ6IHNlbGxlci5pZCwKICAgICAgdGVtcFBhc3N3b3JkLAogICAgfSk7CgogICAgLy8gS2VlcCB0aGUgbGVnYWN5IG11c3QtcmVzZXQgZmxhZyBpbiBzeW5jIGZvciB0aGUgZXhpc3RpbmcgYXV0aCBnYXRlcy4KICAgIGF3YWl0IHN1cGFiYXNlQWRtaW4uZnJvbSgic2VsbGVycyIpLnVwZGF0ZSh7IG11c3RfcmVzZXRfcGFzc3dvcmQ6IHRydWUgfSkuZXEoImlkIiwgc2VsbGVyLmlkKTsKCiAgICBhd2FpdCBzdXBhYmFzZUFkbWluLmZyb20oImF1ZGl0X2xvZ3MiKS5pbnNlcnQoewogICAgICBhY3Rvcl9pZDogY29udGV4dC51c2VySWQsCiAgICAgIGFjdGlvbjogInNlbGxlcl9sb2dpbl9pZGVudGl0eV9jcmVhdGVkIiwKICAgICAgcmVzb3VyY2U6ICJzZWxsZXIiLAogICAgICByZXNvdXJjZV9pZDogc2VsbGVyLmlkLAogICAgICBtZXRhZGF0YTogeyB1c2VybmFtZTogaWRlbnRpdHkudXNlcm5hbWUsIHVzZXJfaWQ6IGlkZW50aXR5LmF1dGhVc2VySWQgfSwKICAgIH0pOwoKICAgIHJldHVybiB7IC4uLmlkZW50aXR5LCB0ZW1wUGFzc3dvcmQgfTsKICB9KTsKCi8qIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLSAqLwovKiBFbWFpbCB0cmFuc2l0aW9uIChzZWxsZXItaW5pdGlhdGVkKSAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICovCi8qIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLSAqLwoKY29uc3QgdHJhbnNpdGlvbklucHV0ID0gei5vYmplY3QoewogIGVtYWlsOiB6LnN0cmluZygpLnRyaW0oKS5lbWFpbCgpLm1heCgyNTUpLAp9KTsKCnR5cGUgU2VsbGVyQWNjb3VudHNSb3cgPSB7CiAgaWQ6IHN0cmluZzsKICBzZWxsZXJfaWQ6IHN0cmluZzsKICB1c2VybmFtZTogc3RyaW5nOwogIGF1dGhfdXNlcl9pZDogc3RyaW5nOwogIGxvZ2luX21ldGhvZDogc3RyaW5nOwogIGVtYWlsOiBzdHJpbmcgfCBudWxsOwogIGVtYWlsX3ZlcmlmaWVkX2F0OiBzdHJpbmcgfCBudWxsOwogIHN0YXR1czogc3RyaW5nOwp9OwoKYXN5bmMgZnVuY3Rpb24gbG9hZE93bklkZW50aXR5Um93KAogIGFkbWluOiBTdXBhYmFzZUFkbWluQ2xpZW50LAogIHNlbGxlcklkOiBzdHJpbmcsCik6IFByb21pc2U8U2VsbGVyQWNjb3VudHNSb3c+IHsKICBjb25zdCB7IGRhdGEsIGVycm9yIH0gPSBhd2FpdCBhZG1pbgogICAgLmZyb20oInNlbGxlcl9hY2NvdW50cyIpCiAgICAuc2VsZWN0KCJpZCxzZWxsZXJfaWQsdXNlcm5hbWUsYXV0aF91c2VyX2lkLGxvZ2luX21ldGhvZCxlbWFpbCxlbWFpbF92ZXJpZmllZF9hdCxzdGF0dXMiKQogICAgLmVxKCJzZWxsZXJfaWQiLCBzZWxsZXJJZCkKICAgIC5zaW5nbGUoKTsKICBpZiAoZXJyb3IgfHwgIWRhdGEpIHRocm93IG5ldyBFcnJvcigiTm8gbG9naW4gaWRlbnRpdHkgZm91bmQgZm9yIHRoaXMgc2VsbGVyLiIpOwogIHJldHVybiBkYXRhIGFzIFNlbGxlckFjY291bnRzUm93Owp9CgovKioKICogU2VsbGVyIHByb3ZpZGVzIGEgcmVhbCBlbWFpbCAtPiB2ZXJpZmllZCB2aWEgdGhlIFN1cGFiYXNlIEF1dGggZW1haWwtY2hhbmdlCiAqIGZsb3cgLT4gbG9naW5fbWV0aG9kIGZsaXBzIHRvICdlbWFpbCcuIFRoZSB1c2VybmFtZSBzdGF5cyByZXNlcnZlZCBmb3JldmVyLgogKgogKiBVc2VzIHRoZSBBZG1pbiBBUEkgc28gdGhlIGNoYW5nZSBpcyBzZXJ2ZXItYXV0aG9yaXRhdGl2ZTsgU3VwYWJhc2Ugc2VuZHMKICogdGhlIGNvbmZpcm1hdGlvbiBlbWFpbCB3aGVuICJTZWN1cmUgZW1haWwgY2hhbmdlIiBpcyBlbmFibGVkLiBVbnRpbCB0aGUKICogc2VsbGVyIGNvbmZpcm1zLCBsb2dpbl9tZXRob2Qgc3RheXMgJ3VzZXJuYW1lJyBhbmQgdGhlIHNlbGxlciBrZWVwcyBzaWduaW5nCiAqIGluIHdpdGggdGhlaXIgdXNlcm5hbWUgKHBhc3N3b3JkIHVuY2hhbmdlZCkuCiAqLwpleHBvcnQgY29uc3QgdHJhbnNpdGlvblRvRW1haWxMb2dpbiA9IGNyZWF0ZVNlcnZlckZuKHsgbWV0aG9kOiAiUE9TVCIgfSkKICAubWlkZGxld2FyZShbcmVxdWlyZVN1cGFiYXNlQXV0aF0pCiAgLmlucHV0VmFsaWRhdG9yKChkYXRhKSA9PiB0cmFuc2l0aW9uSW5wdXQucGFyc2UoZGF0YSkpCiAgLmhhbmRsZXIoYXN5bmMgKHsgZGF0YSwgY29udGV4dCB9KSA9PiB7CiAgICBjb25zdCBzZWxsZXIgPSBhd2FpdCByZXF1aXJlU2VsbGVyKHsKICAgICAgc3VwYWJhc2U6IGNvbnRleHQuc3VwYWJhc2UgYXMgdW5rbm93biBhcyBQYXJhbWV0ZXJzPHR5cGVvZiByZXF1aXJlU2VsbGVyPlswXVsic3VwYWJhc2UiXSwKICAgICAgdXNlcklkOiBjb250ZXh0LnVzZXJJZCwKICAgIH0pOwogICAgaWYgKCFzZWxsZXIuaXNPd25lcikgdGhyb3cgbmV3IEVycm9yKCJPbmx5IHRoZSBzdG9yZSBvd25lciBjYW4gY2hhbmdlIHRoZSBsb2dpbiBlbWFpbC4iKTsKCiAgICBjb25zdCB7IHN1cGFiYXNlQWRtaW4gfSA9IGF3YWl0IGltcG9ydCgiQC9pbnRlZ3JhdGlvbnMvc3VwYWJhc2UvY2xpZW50LnNlcnZlciIpOwogICAgY29uc3Qgcm93ID0gYXdhaXQgbG9hZE93bklkZW50aXR5Um93KHN1cGFiYXNlQWRtaW4sIHNlbGxlci5zZWxsZXJJZCk7CiAgICBpZiAocm93LnN0YXR1cyAhPT0gImFjdGl2ZSIpIHRocm93IG5ldyBFcnJvcigiVGhpcyBsb2dpbiBpZGVudGl0eSBpcyBub3QgYWN0aXZlLiIpOwogICAgaWYgKHJvdy5sb2dpbl9tZXRob2QgPT09ICJlbWFpbCIpIHsKICAgICAgcmV0dXJuIHsgYWxyZWFkeVRyYW5zaXRpb25lZDogdHJ1ZSBhcyBjb25zdCwgdmVyaWZpY2F0aW9uUGVuZGluZzogZmFsc2UsIGVtYWlsOiByb3cuZW1haWwgfTsKICAgIH0KCiAgICBjb25zdCBlbWFpbCA9IGRhdGEuZW1haWwudG9Mb3dlckNhc2UoKTsKCiAgICAvLyBGcmllbmRseSBkdXBsaWNhdGUgY2hlY2sgYWdhaW5zdCBvdGhlciBzZWxsZXIgaWRlbnRpdGllcy4gVGhlIEF1dGgKICAgIC8vIGxheWVyIGlzIHRoZSBmaW5hbCBhcmJpdGVyIChpdHMgZXJyb3IgaXMgbWFwcGVkIGJlbG93KS4KICAgIGNvbnN0IHsgZGF0YTogZHVwZSB9ID0gYXdhaXQgc3VwYWJhc2VBZG1pbgogICAgICAuZnJvbSgic2VsbGVyX2FjY291bnRzIikKICAgICAgLnNlbGVjdCgiaWQiKQogICAgICAuaWxpa2UoImVtYWlsIiwgZW1haWwpCiAgICAgIC5uZXEoImlkIiwgcm93LmlkKQogICAgICAubWF5YmVTaW5nbGUoKTsKICAgIGlmIChkdXBlKSB0aHJvdyBuZXcgRXJyb3IoIlRoaXMgZW1haWwgaXMgYWxyZWFkeSB1c2VkIGJ5IGFub3RoZXIgc2VsbGVyIGFjY291bnQuIik7CgogICAgY29uc3QgeyBkYXRhOiB1cGRhdGVkLCBlcnJvcjogdXBkYXRlRXJyb3IgfSA9IGF3YWl0IHN1cGFiYXNlQWRtaW4uYXV0aC5hZG1pbi51cGRhdGVVc2VyQnlJZCgKICAgICAgcm93LmF1dGhfdXNlcl9pZCwKICAgICAgeyBlbWFpbCB9LAogICAgKTsKICAgIGlmICh1cGRhdGVFcnJvcikgewogICAgICBpZiAoL2FscmVhZHkgYmVlbiByZWdpc3RlcmVkfGFscmVhZHkgZXhpc3RzfGR1cGxpY2F0ZS9pLnRlc3QodXBkYXRlRXJyb3IubWVzc2FnZSA/PyAiIikpIHsKICAgICAgICB0aHJvdyBuZXcgRXJyb3IoIlRoaXMgZW1haWwgaXMgYWxyZWFkeSB1c2VkIGJ5IGFub3RoZXIgYWNjb3VudC4iKTsKICAgICAgfQogICAgICB0aHJvdyBuZXcgRXJyb3IoYENvdWxkIG5vdCBjaGFuZ2UgbG9naW4gZW1haWw6ICR7dXBkYXRlRXJyb3IubWVzc2FnZX1gKTsKICAgIH0KCiAgICAvLyBEaWQgU3VwYWJhc2UgY29uZmlybSBpbW1lZGlhdGVseSwgb3IgaXMgdmVyaWZpY2F0aW9uIHBlbmRpbmc/CiAgICAvLyAoV2l0aCAiU2VjdXJlIGVtYWlsIGNoYW5nZSIgb24sIGEgY29uZmlybWF0aW9uIGVtYWlsIGlzIHNlbnQgYW5kIHRoZQogICAgLy8gIGFkZHJlc3Mgc3RheXMgdW5jb25maXJtZWQgdW50aWwgdGhlIHNlbGxlciBjbGlja3MgaXQuKQogICAgY29uc3QgY29uZmlybWVkID0KICAgICAgISF1cGRhdGVkPy51c2VyPy5lbWFpbF9jb25maXJtZWRfYXQgJiYKICAgICAgKHVwZGF0ZWQudXNlci5lbWFpbCA/PyAiIikudG9Mb3dlckNhc2UoKSA9PT0gZW1haWw7CiAgICBjb25zdCBub3cgPSBuZXcgRGF0ZSgpLnRvSVNPU3RyaW5nKCk7CgogICAgY29uc3QgeyBlcnJvcjogcm93RXJyb3IgfSA9IGF3YWl0IHN1cGFiYXNlQWRtaW4KICAgICAgLmZyb20oInNlbGxlcl9hY2NvdW50cyIpCiAgICAgIC51cGRhdGUoewogICAgICAgIGVtYWlsLAogICAgICAgIGVtYWlsX3ZlcmlmaWVkX2F0OiBjb25maXJtZWQgPyBub3cgOiBudWxsLAogICAgICAgIGxvZ2luX21ldGhvZDogY29uZmlybWVkID8gImVtYWlsIiA6ICJ1c2VybmFtZSIsCiAgICAgICAgdXBkYXRlZF9hdDogbm93LAogICAgICB9KQogICAgICAuZXEoImlkIiwgcm93LmlkKTsKICAgIGlmIChyb3dFcnJvcikgdGhyb3cgbmV3IEVycm9yKHJvd0Vycm9yLm1lc3NhZ2UpOwoKICAgIGF3YWl0IHN1cGFiYXNlQWRtaW4uZnJvbSgiYXVkaXRfbG9ncyIpLmluc2VydCh7CiAgICAgIGFjdG9yX2lkOiBjb250ZXh0LnVzZXJJZCwKICAgICAgYWN0aW9uOiAic2VsbGVyX2xvZ2luX2VtYWlsX2NoYW5nZWQiLAogICAgICByZXNvdXJjZTogInNlbGxlciIsCiAgICAgIHJlc291cmNlX2lkOiBzZWxsZXIuc2VsbGVySWQsCiAgICAgIG1ldGFkYXRhOiB7IHVzZXJuYW1lOiByb3cudXNlcm5hbWUsIGVtYWlsLCB2ZXJpZmljYXRpb25fcGVuZGluZzogIWNvbmZpcm1lZCB9LAogICAgfSk7CgogICAgcmV0dXJuIHsgYWxyZWFkeVRyYW5zaXRpb25lZDogZmFsc2UgYXMgY29uc3QsIHZlcmlmaWNhdGlvblBlbmRpbmc6ICFjb25maXJtZWQsIGVtYWlsIH07CiAgfSk7CgovKioKICogRmluYWxpemUgYSBwZW5kaW5nIGVtYWlsIHRyYW5zaXRpb24gYWZ0ZXIgdGhlIHNlbGxlciBjbGlja3MgdGhlIFN1cGFiYXNlCiAqIGNvbmZpcm1hdGlvbiBsaW5rLiBSZS1yZWFkcyB0aGUgQXV0aCB1c2VyOiB3aGVuIHRoZSBlbWFpbCBtYXRjaGVzIGFuZCBpcwogKiBjb25maXJtZWQsIGxvZ2luX21ldGhvZCBmbGlwcyB0byAnZW1haWwnLgogKi8KZXhwb3J0IGNvbnN0IHJlZnJlc2hTZWxsZXJFbWFpbFZlcmlmaWNhdGlvbiA9IGNyZWF0ZVNlcnZlckZuKHsgbWV0aG9kOiAiUE9TVCIgfSkKICAubWlkZGxld2FyZShbcmVxdWlyZVN1cGFiYXNlQXV0aF0pCiAgLmlucHV0VmFsaWRhdG9yKChkYXRhKSA9PiB6Lm9iamVjdCh7fSkucGFyc2UoZGF0YSkpCiAgLmhhbmRsZXIoYXN5bmMgKHsgY29udGV4dCB9KSA9PiB7CiAgICBjb25zdCBzZWxsZXIgPSBhd2FpdCByZXF1aXJlU2VsbGVyKHsKICAgICAgc3VwYWJhc2U6IGNvbnRleHQuc3VwYWJhc2UgYXMgdW5rbm93biBhcyBQYXJhbWV0ZXJzPHR5cGVvZiByZXF1aXJlU2VsbGVyPlswXVsic3VwYWJhc2UiXSwKICAgICAgdXNlcklkOiBjb250ZXh0LnVzZXJJZCwKICAgIH0pOwogICAgaWYgKCFzZWxsZXIuaXNPd25lcikgdGhyb3cgbmV3IEVycm9yKCJPbmx5IHRoZSBzdG9yZSBvd25lciBjYW4gdmVyaWZ5IHRoZSBsb2dpbiBlbWFpbC4iKTsKCiAgICBjb25zdCB7IHN1cGFiYXNlQWRtaW4gfSA9IGF3YWl0IGltcG9ydCgiQC9pbnRlZ3JhdGlvbnMvc3VwYWJhc2UvY2xpZW50LnNlcnZlciIpOwogICAgY29uc3Qgcm93ID0gYXdhaXQgbG9hZE93bklkZW50aXR5Um93KHN1cGFiYXNlQWRtaW4sIHNlbGxlci5zZWxsZXJJZCk7CiAgICBpZiAocm93LmxvZ2luX21ldGhvZCA9PT0gImVtYWlsIikgcmV0dXJuIHsgZG9uZTogdHJ1ZSBhcyBjb25zdCwgdmVyaWZpY2F0aW9uUGVuZGluZzogZmFsc2UgfTsKICAgIGlmICghcm93LmVtYWlsKSB0aHJvdyBuZXcgRXJyb3IoIk5vIGVtYWlsIGNoYW5nZSBpcyBwZW5kaW5nLiIpOwoKICAgIGNvbnN0IHsgZGF0YTogYXV0aFVzZXIsIGVycm9yOiBhdXRoRXJyb3IgfSA9IGF3YWl0IHN1cGFiYXNlQWRtaW4uYXV0aC5hZG1pbi5nZXRVc2VyQnlJZCgKICAgICAgcm93LmF1dGhfdXNlcl9pZCwKICAgICk7CiAgICBpZiAoYXV0aEVycm9yIHx8ICFhdXRoVXNlcj8udXNlcikgdGhyb3cgbmV3IEVycm9yKCJDb3VsZCBub3QgdmVyaWZ5IHRoZSBlbWFpbCBzdGF0dXMuIik7CgogICAgY29uc3QgbWF0Y2hlcyA9IChhdXRoVXNlci51c2VyLmVtYWlsID8/ICIiKS50b0xvd2VyQ2FzZSgpID09PSByb3cuZW1haWwudG9Mb3dlckNhc2UoKTsKICAgIGNvbnN0IGNvbmZpcm1lZCA9IG1hdGNoZXMgJiYgISFhdXRoVXNlci51c2VyLmVtYWlsX2NvbmZpcm1lZF9hdDsKICAgIGlmICghY29uZmlybWVkKSByZXR1cm4geyBkb25lOiBmYWxzZSBhcyBjb25zdCwgdmVyaWZpY2F0aW9uUGVuZGluZzogdHJ1ZSB9OwoKICAgIGNvbnN0IG5vdyA9IG5ldyBEYXRlKCkudG9JU09TdHJpbmcoKTsKICAgIGNvbnN0IHsgZXJyb3I6IHJvd0Vycm9yIH0gPSBhd2FpdCBzdXBhYmFzZUFkbWluCiAgICAgIC5mcm9tKCJzZWxsZXJfYWNjb3VudHMiKQogICAgICAudXBkYXRlKHsgbG9naW5fbWV0aG9kOiAiZW1haWwiLCBlbWFpbF92ZXJpZmllZF9hdDogbm93LCB1cGRhdGVkX2F0OiBub3cgfSkKICAgICAgLmVxKCJpZCIsIHJvdy5pZCk7CiAgICBpZiAocm93RXJyb3IpIHRocm93IG5ldyBFcnJvcihyb3dFcnJvci5tZXNzYWdlKTsKCiAgICBhd2FpdCBzdXBhYmFzZUFkbWluLmZyb20oImF1ZGl0X2xvZ3MiKS5pbnNlcnQoewogICAgICBhY3Rvcl9pZDogY29udGV4dC51c2VySWQsCiAgICAgIGFjdGlvbjogInNlbGxlcl9sb2dpbl9lbWFpbF92ZXJpZmllZCIsCiAgICAgIHJlc291cmNlOiAic2VsbGVyIiwKICAgICAgcmVzb3VyY2VfaWQ6IHNlbGxlci5zZWxsZXJJZCwKICAgICAgbWV0YWRhdGE6IHsgdXNlcm5hbWU6IHJvdy51c2VybmFtZSwgZW1haWw6IHJvdy5lbWFpbCB9LAogICAgfSk7CgogICAgcmV0dXJuIHsgZG9uZTogdHJ1ZSBhcyBjb25zdCwgdmVyaWZpY2F0aW9uUGVuZGluZzogZmFsc2UgfTsKICB9KTsK
+/**
+ * MODALIA — Seller identity model (Spec Section 8).
+ *
+ * Username-based seller login with real-email transition:
+ *
+ *   1. Admin provisions a seller -> the system generates a globally-unique
+ *      username (`seller_` + 5 unambiguous chars, e.g. `seller_8K29Q`) and a
+ *      temporary password. The admin is NOT required to enter the seller's
+ *      real email.
+ *   2. A Supabase Auth user is created with the SYNTHETIC email
+ *      `{username}@seller.modalia.internal`. This address is an internal
+ *      implementation detail — it is never shown to the seller.
+ *   3. The seller logs in with USERNAME + temp password. The login page maps
+ *      the username to the synthetic auth email deterministically
+ *      (resolveUsernameToEmail) — no server round-trip, no enumeration
+ *      beyond what the login form already reveals.
+ *   4. First login forces a password change (existing must_change_password
+ *      flow), then onboarding. The seller provides a real email, verifies
+ *      it through the Supabase Auth email-change flow
+ *      (transitionToEmailLogin), and `seller_accounts.login_method` flips
+ *      to 'email'. The username stays reserved forever (UNIQUE, never
+ *      reused).
+ *
+ * Backward compatibility: sellers provisioned before this model keep their
+ * real-email Auth users. Their seller_accounts rows (backfilled by migration
+ * 20261007030000) use login_method='email', so resolveUsernameToEmail keeps
+ * working for them unchanged.
+ *
+ * SECURITY:
+ * - The temporary password is generated server-side, returned ONCE, never
+ *   logged, never stored in plaintext.
+ * - The synthetic domain is internal; the login UI only ever shows the
+ *   username. (A determined observer can derive the pattern, but it grants
+ *   nothing without the password, and brute-force is rate-limited.)
+ * - sellers.email is NEVER written here; email <-> Auth synchronization is
+ *   owned by the Section 9 changeSellerEmail() helper.
+ */
+
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireSeller } from "@/lib/seller-auth";
+import { assertAdminPermission } from "@/lib/admin-permissions";
+import type { supabaseAdmin } from "@/integrations/supabase/client.server";
+
+const adminOnly = [requireSupabaseAuth] as const;
+
+type SupabaseAdminClient = typeof supabaseAdmin;
+
+/* ------------------------------------------------------------------ */
+/* Pure helpers (client-safe)                                          */
+/* ------------------------------------------------------------------ */
+
+/** Internal auth domain for synthetic seller emails. Never shown to users. */
+export const SELLER_AUTH_DOMAIN = "seller.modalia.internal";
+
+export const SELLER_USERNAME_PREFIX = "seller_";
+
+/**
+ * Unambiguous alphabet: no 0/O, no 1/I/l — safe to read over the phone.
+ * 32 chars -> 5 chars = ~33 bits of entropy per username.
+ */
+const USERNAME_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+const USERNAME_RANDOM_LEN = 5;
+
+/**
+ * Case-insensitive (`i` flag): helpers normalize input with toUpperCase()
+ * first, so `SELLER_8K29Q` must match. The suffix class stays explicit —
+ * no 0/O, 1/I/l.
+ */
+export const SELLER_USERNAME_RE = /^seller_[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{5}$/i;
+
+/** Generate a candidate username. Uniqueness is enforced by the DB + retry. */
+export function generateUsername(): string {
+  const bytes = new Uint32Array(USERNAME_RANDOM_LEN);
+  crypto.getRandomValues(bytes);
+  let suffix = "";
+  for (let i = 0; i < USERNAME_RANDOM_LEN; i++) {
+    suffix += USERNAME_ALPHABET[bytes[i]! % USERNAME_ALPHABET.length];
+  }
+  return SELLER_USERNAME_PREFIX + suffix;
+}
+
+export function isSellerUsername(value: string): boolean {
+  // Usernames are always generated uppercase; accept any case on input.
+  return SELLER_USERNAME_RE.test(value.trim().toUpperCase());
+}
+
+/** Deterministic synthetic Auth email for a username. Throws on invalid input. */
+export function syntheticEmailForUsername(username: string): string {
+  const u = username.trim().toUpperCase();
+  if (!SELLER_USERNAME_RE.test(u)) throw new Error("Invalid seller username.");
+  return `${u}@${SELLER_AUTH_DOMAIN}`;
+}
+
+/**
+ * Resolve a login identifier to the Supabase Auth email.
+ * - Contains "@"  -> treated as a real email (normalized to lowercase).
+ * - Otherwise     -> treated as a seller username -> synthetic auth email.
+ *
+ * Works for both identity generations:
+ * - new sellers: username -> synthetic email; real email after transition.
+ * - legacy sellers: real email (unchanged behavior).
+ */
+export function resolveUsernameToEmail(identifier: string): string {
+  const v = identifier.trim();
+  if (!v) throw new Error("Enter your username or email.");
+  if (v.includes("@")) return v.toLowerCase();
+  return syntheticEmailForUsername(v);
+}
+
+/* ------------------------------------------------------------------ */
+/* Server-side provisioning (service role)                             */
+/* ------------------------------------------------------------------ */
+
+export type SellerIdentity = {
+  username: string;
+  authUserId: string;
+  authEmail: string;
+};
+
+const MAX_USERNAME_ATTEMPTS = 8;
+
+/**
+ * Generate a username that is not taken in seller_accounts (DB-backed retry).
+ * Server-only: must be called with the service-role client.
+ */
+export async function generateUniqueUsername(admin: SupabaseAdminClient): Promise<string> {
+  for (let attempt = 0; attempt < MAX_USERNAME_ATTEMPTS; attempt++) {
+    const username = generateUsername();
+    const { data: clash } = await admin
+      .from("seller_accounts")
+      .select("id")
+      .eq("username", username)
+      .maybeSingle();
+    if (!clash) return username;
+  }
+  throw new Error("Could not generate a unique username. Please try again.");
+}
+
+/**
+ * Create the Auth user + seller_accounts row for an EXISTING sellers row.
+ *
+ * Server-only: must be called with the service-role client. Generates a
+ * unique username, creates the Auth user with the synthetic email + the
+ * given temporary password, and inserts the seller_accounts mapping. The
+ * caller owns compensation (delete the row/user on failure).
+ */
+export async function createSellerIdentityRecord(
+  admin: SupabaseAdminClient,
+  args: { sellerId: string; tempPassword: string },
+): Promise<SellerIdentity> {
+  const { sellerId, tempPassword } = args;
+
+  // The seller must exist and not already have an identity row.
+  const { data: existing, error: existingError } = await admin
+    .from("seller_accounts")
+    .select("id")
+    .eq("seller_id", sellerId)
+    .maybeSingle();
+  if (existingError) throw new Error(existingError.message);
+  if (existing) throw new Error("This seller already has a login identity.");
+
+  const username = await generateUniqueUsername(admin);
+  const authEmail = syntheticEmailForUsername(username);
+
+  const { data: created, error: createError } = await admin.auth.admin.createUser({
+    email: authEmail,
+    password: tempPassword,
+    email_confirm: true,
+    user_metadata: {
+      seller_username: username,
+      force_password_reset: true,
+      provisioned_by: "modalia-admin",
+    },
+  });
+  if (createError) throw new Error(`Could not create login: ${createError.message}`);
+  const authUserId = created?.user?.id;
+  if (!authUserId) throw new Error("Could not create login.");
+
+  try {
+    const { error: rowError } = await admin.from("seller_accounts").insert({
+      seller_id: sellerId,
+      username,
+      auth_user_id: authUserId,
+      login_method: "username",
+      email: null,
+      email_verified_at: null,
+      must_change_password: true,
+      status: "active",
+    });
+    if (rowError) throw new Error(rowError.message);
+  } catch (err) {
+    // Never leave an orphaned Auth user behind.
+    await admin.auth.admin.deleteUser(authUserId).catch(() => {});
+    throw err;
+  }
+
+  return { username, authUserId, authEmail };
+}
+
+/**
+ * Standalone admin provisioning of a login identity for an existing seller
+ * that has none (e.g. legacy rows created outside the wizard). Generates the
+ * temporary password server-side and returns it ONCE.
+ */
+export const createSellerAccount = createServerFn({ method: "POST" })
+  .middleware(adminOnly)
+  .inputValidator((data) => z.object({ sellerId: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }): Promise<SellerIdentity & { tempPassword: string }> => {
+    await assertAdminPermission(context, "sellers.manage");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: seller, error: sellerError } = await supabaseAdmin
+      .from("sellers")
+      .select("id,account_status")
+      .eq("id", data.sellerId)
+      .single();
+    if (sellerError || !seller) throw new Error("Seller not found.");
+    if (seller.account_status !== "active") {
+      throw new Error("Login identities can only be created for active sellers.");
+    }
+
+    const tempPassword = (crypto.randomUUID() + crypto.randomUUID()).slice(0, 20);
+    const identity = await createSellerIdentityRecord(supabaseAdmin, {
+      sellerId: seller.id,
+      tempPassword,
+    });
+
+    // Keep the legacy must-reset flag in sync for the existing auth gates.
+    await supabaseAdmin.from("sellers").update({ must_reset_password: true }).eq("id", seller.id);
+
+    await supabaseAdmin.from("audit_logs").insert({
+      actor_id: context.userId,
+      action: "seller_login_identity_created",
+      resource: "seller",
+      resource_id: seller.id,
+      metadata: { username: identity.username, user_id: identity.authUserId },
+    });
+
+    return { ...identity, tempPassword };
+  });
+
+/* ------------------------------------------------------------------ */
+/* Email transition (seller-initiated)                                 */
+/* ------------------------------------------------------------------ */
+
+const transitionInput = z.object({
+  email: z.string().trim().email().max(255),
+});
+
+type SellerAccountsRow = {
+  id: string;
+  seller_id: string;
+  username: string;
+  auth_user_id: string;
+  login_method: string;
+  email: string | null;
+  email_verified_at: string | null;
+  status: string;
+};
+
+async function loadOwnIdentityRow(
+  admin: SupabaseAdminClient,
+  sellerId: string,
+): Promise<SellerAccountsRow> {
+  const { data, error } = await admin
+    .from("seller_accounts")
+    .select("id,seller_id,username,auth_user_id,login_method,email,email_verified_at,status")
+    .eq("seller_id", sellerId)
+    .single();
+  if (error || !data) throw new Error("No login identity found for this seller.");
+  return data as SellerAccountsRow;
+}
+
+/**
+ * Seller provides a real email -> verified via the Supabase Auth email-change
+ * flow -> login_method flips to 'email'. The username stays reserved forever.
+ *
+ * Uses the Admin API so the change is server-authoritative; Supabase sends
+ * the confirmation email when "Secure email change" is enabled. Until the
+ * seller confirms, login_method stays 'username' and the seller keeps signing
+ * in with their username (password unchanged).
+ */
+export const transitionToEmailLogin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) => transitionInput.parse(data))
+  .handler(async ({ data, context }) => {
+    const seller = await requireSeller({
+      supabase: context.supabase as unknown as Parameters<typeof requireSeller>[0]["supabase"],
+      userId: context.userId,
+    });
+    if (!seller.isOwner) throw new Error("Only the store owner can change the login email.");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const row = await loadOwnIdentityRow(supabaseAdmin, seller.sellerId);
+    if (row.status !== "active") throw new Error("This login identity is not active.");
+    if (row.login_method === "email") {
+      return { alreadyTransitioned: true as const, verificationPending: false, email: row.email };
+    }
+
+    const email = data.email.toLowerCase();
+
+    // Friendly duplicate check against other seller identities. The Auth
+    // layer is the final arbiter (its error is mapped below).
+    const { data: dupe } = await supabaseAdmin
+      .from("seller_accounts")
+      .select("id")
+      .ilike("email", email)
+      .neq("id", row.id)
+      .maybeSingle();
+    if (dupe) throw new Error("This email is already used by another seller account.");
+
+    const { data: updated, error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
+      row.auth_user_id,
+      { email },
+    );
+    if (updateError) {
+      if (/already been registered|already exists|duplicate/i.test(updateError.message ?? "")) {
+        throw new Error("This email is already used by another account.");
+      }
+      throw new Error(`Could not change login email: ${updateError.message}`);
+    }
+
+    // Did Supabase confirm immediately, or is verification pending?
+    // (With "Secure email change" on, a confirmation email is sent and the
+    //  address stays unconfirmed until the seller clicks it.)
+    const confirmed =
+      !!updated?.user?.email_confirmed_at &&
+      (updated.user.email ?? "").toLowerCase() === email;
+    const now = new Date().toISOString();
+
+    const { error: rowError } = await supabaseAdmin
+      .from("seller_accounts")
+      .update({
+        email,
+        email_verified_at: confirmed ? now : null,
+        login_method: confirmed ? "email" : "username",
+        updated_at: now,
+      })
+      .eq("id", row.id);
+    if (rowError) throw new Error(rowError.message);
+
+    await supabaseAdmin.from("audit_logs").insert({
+      actor_id: context.userId,
+      action: "seller_login_email_changed",
+      resource: "seller",
+      resource_id: seller.sellerId,
+      metadata: { username: row.username, email, verification_pending: !confirmed },
+    });
+
+    return { alreadyTransitioned: false as const, verificationPending: !confirmed, email };
+  });
+
+/**
+ * Finalize a pending email transition after the seller clicks the Supabase
+ * confirmation link. Re-reads the Auth user: when the email matches and is
+ * confirmed, login_method flips to 'email'.
+ */
+export const refreshSellerEmailVerification = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) => z.object({}).parse(data))
+  .handler(async ({ context }) => {
+    const seller = await requireSeller({
+      supabase: context.supabase as unknown as Parameters<typeof requireSeller>[0]["supabase"],
+      userId: context.userId,
+    });
+    if (!seller.isOwner) throw new Error("Only the store owner can verify the login email.");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const row = await loadOwnIdentityRow(supabaseAdmin, seller.sellerId);
+    if (row.login_method === "email") return { done: true as const, verificationPending: false };
+    if (!row.email) throw new Error("No email change is pending.");
+
+    const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.getUserById(
+      row.auth_user_id,
+    );
+    if (authError || !authUser?.user) throw new Error("Could not verify the email status.");
+
+    const matches = (authUser.user.email ?? "").toLowerCase() === row.email.toLowerCase();
+    const confirmed = matches && !!authUser.user.email_confirmed_at;
+    if (!confirmed) return { done: false as const, verificationPending: true };
+
+    const now = new Date().toISOString();
+    const { error: rowError } = await supabaseAdmin
+      .from("seller_accounts")
+      .update({ login_method: "email", email_verified_at: now, updated_at: now })
+      .eq("id", row.id);
+    if (rowError) throw new Error(rowError.message);
+
+    await supabaseAdmin.from("audit_logs").insert({
+      actor_id: context.userId,
+      action: "seller_login_email_verified",
+      resource: "seller",
+      resource_id: seller.sellerId,
+      metadata: { username: row.username, email: row.email },
+    });
+
+    return { done: true as const, verificationPending: false };
+  });

@@ -1,1 +1,353 @@
-aW1wb3J0IHsgY3JlYXRlRmlsZVJvdXRlLCBMaW5rLCBPdXRsZXQsIHVzZU1hdGNoIH0gZnJvbSAiQHRhbnN0YWNrL3JlYWN0LXJvdXRlciI7CmltcG9ydCB7IHVzZVVybFN0YXRlLCB1c2VEZWJvdW5jZWRVcmxQYXJhbSwgdXNlQmFja1BhcmFtLCBudW1QYXJhbSwgc3RyUGFyYW0gfSBmcm9tICJAL2hvb2tzL3VzZS11cmwtc3RhdGUiOwppbXBvcnQgeyB1c2VFZmZlY3QsIHVzZVN0YXRlIH0gZnJvbSAicmVhY3QiOwppbXBvcnQgeyB1c2VNdXRhdGlvbiwgdXNlUXVlcnksIHVzZVF1ZXJ5Q2xpZW50IH0gZnJvbSAiQHRhbnN0YWNrL3JlYWN0LXF1ZXJ5IjsKaW1wb3J0IHsgU2VhcmNoLCBVc2VyUGx1cywgQmFuLCBQb3dlciwgUGVuY2lsIH0gZnJvbSAibHVjaWRlLXJlYWN0IjsKaW1wb3J0IHsgdG9hc3QgfSBmcm9tICJzb25uZXIiOwppbXBvcnQgeyBCdXR0b24gfSBmcm9tICJAL2NvbXBvbmVudHMvdWkvYnV0dG9uIjsKaW1wb3J0IHsgSW5wdXQgfSBmcm9tICJAL2NvbXBvbmVudHMvdWkvaW5wdXQiOwppbXBvcnQgewogIFNlbGVjdCwKICBTZWxlY3RDb250ZW50LAogIFNlbGVjdEl0ZW0sCiAgU2VsZWN0VHJpZ2dlciwKICBTZWxlY3RWYWx1ZSwKfSBmcm9tICJAL2NvbXBvbmVudHMvdWkvc2VsZWN0IjsKaW1wb3J0IHsgQWRtaW5HYXRlIH0gZnJvbSAiQC9jb21wb25lbnRzL2FkbWluL0FkbWluR2F0ZSI7CmltcG9ydCB7IEFkbWluU2hlbGwgfSBmcm9tICJAL2NvbXBvbmVudHMvYWRtaW4vQWRtaW5TaGVsbCI7CmltcG9ydCB7IFBhZ2VyIH0gZnJvbSAiLi9fc2hhcmVkIjsKaW1wb3J0IHsKICBBZG1pbkNhcmQsCiAgU3RhdHVzUGlsbCwKICBFbXB0eVN0YXRlLAogIFRhYmxlU2tlbGV0b24sCiAgQ29uZmlybURpYWxvZywKICBmbXRNb25leSwKICBmbXREYXRlVGltZSwKICB0aW1lQWdvLAp9IGZyb20gIkAvY29tcG9uZW50cy9hZG1pbi91aSI7CmltcG9ydCB7IHVzZUFkbWluTG9jYWxlIH0gZnJvbSAiQC9jb21wb25lbnRzL2FkbWluL3VzZUFkbWluTG9jYWxlIjsKaW1wb3J0IHsgZ2V0VHJhbnNsYXRpb25zIH0gZnJvbSAiQC9saWIvaTE4biI7CmltcG9ydCB7IGxpc3RTZWxsZXJzLCB1cGRhdGVTZWxsZXJTdGF0dXMgfSBmcm9tICJAL2xpYi9hZG1pbi1zZWxsZXJzLmZ1bmN0aW9ucyI7CmltcG9ydCB7IFNlbGxlck9uYm9hcmRpbmdXaXphcmQgfSBmcm9tICJAL2NvbXBvbmVudHMvYWRtaW4vU2VsbGVyT25ib2FyZGluZ1dpemFyZCI7CmltcG9ydCB7IEVkaXRTZWxsZXJEaWFsb2cgfSBmcm9tICJAL2NvbXBvbmVudHMvYWRtaW4vRWRpdFNlbGxlckRpYWxvZyI7CmltcG9ydCB7IHVzZUFkbWluVCB9IGZyb20gIkAvY29tcG9uZW50cy9hZG1pbi91c2UtYWRtaW4tdCI7CgpleHBvcnQgY29uc3QgUm91dGUgPSBjcmVhdGVGaWxlUm91dGUoIi9hZG1pbi9zZWxsZXJzIikoewogIHZhbGlkYXRlU2VhcmNoOiAoc2VhcmNoOiBSZWNvcmQ8c3RyaW5nLCB1bmtub3duPikgPT4gKHsKICAgIHE6IHN0clBhcmFtKHNlYXJjaFsicSJdKSwKICAgIHN0YXR1czogc3RyUGFyYW0oc2VhcmNoWyJzdGF0dXMiXSwgImFsbCIpLAogICAgcGFnZTogbnVtUGFyYW0oc2VhcmNoWyJwYWdlIl0sIDEpLAogICAgY3JlYXRlOiBzdHJQYXJhbShzZWFyY2hbImNyZWF0ZSJdKSwKICB9KSwKICBoZWFkOiAoKSA9PiAoewogICAgbWV0YTogW3sgbmFtZTogInJvYm90cyIsIGNvbnRlbnQ6ICJub2luZGV4LG5vZm9sbG93IiB9LCB7IHRpdGxlOiAiU2VsbGVycyDigJQgTW9kYWxpYSBBZG1pbiIgfV0sCiAgfSksCiAgY29tcG9uZW50OiBTZWxsZXJzUGFnZSwKfSk7Cgpjb25zdCBBQ0NPVU5UX1NUQVRVU19PUFRJT05TID0gWwogIHsgdmFsdWU6ICJhbGwiLCBsYWJlbDogIkFsbCBzdGF0dXNlcyIgfSwKICB7IHZhbHVlOiAicGVuZGluZyIsIGxhYmVsOiAiUGVuZGluZyIgfSwKICB7IHZhbHVlOiAiYWN0aXZlIiwgbGFiZWw6ICJBY3RpdmUiIH0sCiAgeyB2YWx1ZTogInN1c3BlbmRlZCIsIGxhYmVsOiAiU3VzcGVuZGVkIiB9LAogIHsgdmFsdWU6ICJkaXNhYmxlZCIsIGxhYmVsOiAiRGlzYWJsZWQiIH0sCl0gYXMgY29uc3Q7Cgp0eXBlIFN0YXR1c0FjdGlvbiA9ICJhY3RpdmUiIHwgInN1c3BlbmRlZCIgfCAiZGlzYWJsZWQiOwoKZnVuY3Rpb24gU2VsbGVyc1BhZ2UoKSB7CiAgLy8gQ2hpbGQgcm91dGUgKCRzZWxsZXJJZCkgcmVuZGVycyBpbiB0aGUgT3V0bGV0OyB0aGlzIHJvdXRlIHNob3dzIHRoZSB0YWJsZS4KICBjb25zdCBjaGlsZCA9IHVzZU1hdGNoKHsgZnJvbTogIi9hZG1pbi9zZWxsZXJzIiwgc3RyaWN0OiB0cnVlLCBzaG91bGRUaHJvdzogZmFsc2UgfSk7CiAgaWYgKCFjaGlsZCkgcmV0dXJuIDxPdXRsZXQgLz47CiAgcmV0dXJuIDxTZWxsZXJzTGlzdCAvPjsKfQoKZnVuY3Rpb24gU2VsbGVyc0xpc3QoKSB7CiAgY29uc3QgbG9jYWxlID0gdXNlQWRtaW5Mb2NhbGUoKTsKICBjb25zdCB0ID0gdXNlQWRtaW5UKCkuc2VsbGVyczsKICBjb25zdCBuYXYgPSBnZXRUcmFuc2xhdGlvbnMobG9jYWxlKS5hZG1pbk5hdi5pdGVtczsKICBjb25zdCB1cmwgPSB1c2VVcmxTdGF0ZSh7IHN0YXR1czogImFsbCIsIHBhZ2U6IDEgfSk7CiAgY29uc3QgYmFja1BhcmFtID0gdXNlQmFja1BhcmFtKCk7CiAgY29uc3QgcXVlcnlDbGllbnQgPSB1c2VRdWVyeUNsaWVudCgpOwogIGNvbnN0IFt3aXphcmRPcGVuLCBzZXRXaXphcmRPcGVuXSA9IHVzZVN0YXRlKGZhbHNlKTsKICBjb25zdCBbZWRpdGluZ0lkLCBzZXRFZGl0aW5nSWRdID0gdXNlU3RhdGU8c3RyaW5nIHwgbnVsbD4obnVsbCk7CiAgLy8gRGVlcCBsaW5rOiAvYWRtaW4vc2VsbGVycz9jcmVhdGU9c2VsbGVyIG9wZW5zIHRoZSBvbmJvYXJkaW5nIHdpemFyZAogIC8vICh0aGUgcmVhbCBmbG93IHRoYXQgY3JlYXRlcyBhIHNlbGxlciB0b2dldGhlciB3aXRoIHRoZWlyIHN0b3JlKS4KICB1c2VFZmZlY3QoKCkgPT4gewogICAgaWYgKHN0clBhcmFtKHVybC5zZWFyY2hbImNyZWF0ZSJdKSA9PT0gInNlbGxlciIpIHNldFdpemFyZE9wZW4odHJ1ZSk7CiAgfSwgW3VybC5zZWFyY2hbImNyZWF0ZSJdXSk7ICBjb25zdCBbY29uZmlybUFjdGlvbiwgc2V0Q29uZmlybUFjdGlvbl0gPSB1c2VTdGF0ZTx7CiAgICBzZWxsZXJJZDogc3RyaW5nOwogICAgYWNjb3VudFN0YXR1czogU3RhdHVzQWN0aW9uOwogIH0gfCBudWxsPihudWxsKTsKICBjb25zdCBwYWdlID0gbnVtUGFyYW0odXJsLnNlYXJjaFsicGFnZSJdLCAxKTsKICBjb25zdCBxID0gc3RyUGFyYW0odXJsLnNlYXJjaFsicSJdKTsKICBjb25zdCBhY2NvdW50U3RhdHVzRmlsdGVyID0gc3RyUGFyYW0odXJsLnNlYXJjaFsic3RhdHVzIl0sICJhbGwiKTsKICBjb25zdCBbc2VhcmNoSW5wdXQsIHNldFNlYXJjaElucHV0XSA9IHVzZURlYm91bmNlZFVybFBhcmFtKCJxIiwgIiIsIHsKICAgIG9uQ29tbWl0OiAoKSA9PiB1cmwuc2V0KHsgcGFnZTogMSB9KSwKICB9KTsKCiAgY29uc3Qgc2V0UGFnZSA9IChuZXh0OiBudW1iZXIpID0+IHVybC5zZXQoeyBwYWdlOiBuZXh0IH0sIHsgcHVzaDogdHJ1ZSB9KTsKICBjb25zdCBzZXRTdGF0dXNGaWx0ZXIgPSAobmV4dDogc3RyaW5nKSA9PiB1cmwuc2V0KHsgc3RhdHVzOiBuZXh0LCBwYWdlOiAxIH0pOwoKICBjb25zdCBhY2NvdW50U3RhdHVzID0KICAgIGFjY291bnRTdGF0dXNGaWx0ZXIgPT09ICJhbGwiCiAgICAgID8gdW5kZWZpbmVkCiAgICAgIDogKGFjY291bnRTdGF0dXNGaWx0ZXIgYXMgInBlbmRpbmciIHwgImFjdGl2ZSIgfCAic3VzcGVuZGVkIiB8ICJkaXNhYmxlZCIpOwoKICBjb25zdCB7IGRhdGEsIGlzTG9hZGluZywgaXNFcnJvciwgcmVmZXRjaCB9ID0gdXNlUXVlcnkoewogICAgcXVlcnlLZXk6IFsiYWRtaW4tc2VsbGVycyIsIGFjY291bnRTdGF0dXMgPz8gImFsbCIsIHEsIHBhZ2VdLAogICAgcXVlcnlGbjogKCkgPT4gbGlzdFNlbGxlcnMoeyBkYXRhOiB7IGFjY291bnRTdGF0dXMsIHE6IHEgfHwgdW5kZWZpbmVkLCBwYWdlIH0gfSksCiAgfSk7CgogIGNvbnN0IHJlZnJlc2ggPSAoKSA9PiBxdWVyeUNsaWVudC5pbnZhbGlkYXRlUXVlcmllcyh7IHF1ZXJ5S2V5OiBbImFkbWluLXNlbGxlcnMiXSB9KTsKCiAgY29uc3Qgc3RhdHVzTXV0YXRpb24gPSB1c2VNdXRhdGlvbih7CiAgICBtdXRhdGlvbkZuOiAoaW5wdXQ6IHsgc2VsbGVySWQ6IHN0cmluZzsgYWNjb3VudFN0YXR1czogU3RhdHVzQWN0aW9uIH0pID0+CiAgICAgIHVwZGF0ZVNlbGxlclN0YXR1cyh7IGRhdGE6IGlucHV0IH0pLAogICAgb25TdWNjZXNzOiAocmVzKSA9PiB7CiAgICAgIHRvYXN0LnN1Y2Nlc3ModC5zdGF0dXNVcGRhdGVkKHJlcy5hY2NvdW50U3RhdHVzKSk7CiAgICAgIHNldENvbmZpcm1BY3Rpb24obnVsbCk7CiAgICAgIHJlZnJlc2goKTsKICAgIH0sCiAgICBvbkVycm9yOiAoZXJyOiBFcnJvcikgPT4gewogICAgICBzZXRDb25maXJtQWN0aW9uKG51bGwpOwogICAgICB0b2FzdC5lcnJvcihlcnIubWVzc2FnZSk7CiAgICB9LAogIH0pOwoKICBjb25zdCBpdGVtcyA9IGRhdGE/Lml0ZW1zID8/IFtdOwogIGNvbnN0IHRvdGFsID0gZGF0YT8udG90YWwgPz8gMDsKICBjb25zdCBzdGF0cyA9IGRhdGE/LnN0YXRzID8/IHt9OwogIGNvbnN0IGVkaXRpbmdTZWxsZXIgPSBlZGl0aW5nSWQgPyBpdGVtcy5maW5kKChzKSA9PiBzLmlkID09PSBlZGl0aW5nSWQpIDogbnVsbDsKCiAgY29uc3QgY29uZmlybU1ldGEgPSBjb25maXJtQWN0aW9uCiAgICA/IGNvbmZpcm1BY3Rpb24uYWNjb3VudFN0YXR1cyA9PT0gInN1c3BlbmRlZCIKICAgICAgPyB7IHRpdGxlOiB0LmNvbmZpcm1TdXNwZW5kVGl0bGUsIGRlc2NyaXB0aW9uOiB0LmNvbmZpcm1TdXNwZW5kRGVzYywgbGFiZWw6IHQuc3VzcGVuZCwgZGFuZ2VyOiBmYWxzZSB9CiAgICAgIDogY29uZmlybUFjdGlvbi5hY2NvdW50U3RhdHVzID09PSAiZGlzYWJsZWQiCiAgICAgICAgPyB7IHRpdGxlOiB0LmNvbmZpcm1EZWFjdGl2YXRlVGl0bGUsIGRlc2NyaXB0aW9uOiB0LmNvbmZpcm1EZWFjdGl2YXRlRGVzYywgbGFiZWw6IHQuZGVhY3RpdmF0ZSwgZGFuZ2VyOiB0cnVlIH0KICAgICAgICA6IHsgdGl0bGU6IHQuY29uZmlybVJlYWN0aXZhdGVUaXRsZSwgZGVzY3JpcHRpb246IHQuY29uZmlybVJlYWN0aXZhdGVEZXNjLCBsYWJlbDogdC5yZWFjdGl2YXRlLCBkYW5nZXI6IGZhbHNlIH0KICAgIDogbnVsbDsKCiAgcmV0dXJuICgKICAgIDxBZG1pbkdhdGU+CiAgICAgIDxBZG1pblNoZWxsCiAgICAgICAgdGl0bGU9IlNlbGxlcnMiCiAgICAgICAgc3VidGl0bGU9Ik1hbmFnZSBzZWxsZXIgYWNjb3VudHMsIHN0b3JlcywgdmVyaWZpY2F0aW9uLCBhbmQgY29tbWlzc2lvbnMuIgogICAgICAgIGJyZWFkY3J1bWJzPXtbeyBsYWJlbDogbmF2LnNlbGxlcnMgfV19CiAgICAgID4KICAgICAgICA8QWRtaW5DYXJkCiAgICAgICAgICB0aXRsZT0iU2VsbGVycyIKICAgICAgICAgIHN1YnRpdGxlPXtgJHt0b3RhbH0gdG90YWxgfQogICAgICAgICAgYWN0aW9ucz17CiAgICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPSJmbGV4IGZsZXgtd3JhcCBpdGVtcy1jZW50ZXIgZ2FwLTIiPgogICAgICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPSJyZWxhdGl2ZSI+CiAgICAgICAgICAgICAgICA8U2VhcmNoIGNsYXNzTmFtZT0icG9pbnRlci1ldmVudHMtbm9uZSBhYnNvbHV0ZSBzdGFydC0yLjUgdG9wLTEvMiBzaXplLTQgLXRyYW5zbGF0ZS15LTEvMiBvcGFjaXR5LTUwIiAvPgogICAgICAgICAgICAgICAgPElucHV0CiAgICAgICAgICAgICAgICAgIHZhbHVlPXtzZWFyY2hJbnB1dH0KICAgICAgICAgICAgICAgICAgb25DaGFuZ2U9eyhlKSA9PiBzZXRTZWFyY2hJbnB1dChlLnRhcmdldC52YWx1ZSl9CiAgICAgICAgICAgICAgICAgIHBsYWNlaG9sZGVyPSJTZWFyY2ggbmFtZSwgZW1haWwsIHBob25lLCBzdG9yZeKApiIKICAgICAgICAgICAgICAgICAgY2xhc3NOYW1lPSJ3LTY0IHBzLTgiCiAgICAgICAgICAgICAgICAvPgogICAgICAgICAgICAgIDwvZGl2PgogICAgICAgICAgICAgIDxTZWxlY3QKICAgICAgICAgICAgICAgIHZhbHVlPXthY2NvdW50U3RhdHVzRmlsdGVyfQogICAgICAgICAgICAgICAgb25WYWx1ZUNoYW5nZT17KHYpID0+IHNldFN0YXR1c0ZpbHRlcih2KX0KICAgICAgICAgICAgICA+CiAgICAgICAgICAgICAgICA8U2VsZWN0VHJpZ2dlciBjbGFzc05hbWU9InctNDQiPgogICAgICAgICAgICAgICAgICA8U2VsZWN0VmFsdWUgcGxhY2Vob2xkZXI9IkFjY291bnQgc3RhdHVzIiAvPgogICAgICAgICAgICAgICAgPC9TZWxlY3RUcmlnZ2VyPgogICAgICAgICAgICAgICAgPFNlbGVjdENvbnRlbnQ+CiAgICAgICAgICAgICAgICAgIHtBQ0NPVU5UX1NUQVRVU19PUFRJT05TLm1hcCgobykgPT4gKAogICAgICAgICAgICAgICAgICAgIDxTZWxlY3RJdGVtIGtleT17by52YWx1ZX0gdmFsdWU9e28udmFsdWV9PgogICAgICAgICAgICAgICAgICAgICAge28ubGFiZWx9CiAgICAgICAgICAgICAgICAgICAgPC9TZWxlY3RJdGVtPgogICAgICAgICAgICAgICAgICApKX0KICAgICAgICAgICAgICAgIDwvU2VsZWN0Q29udGVudD4KICAgICAgICAgICAgICA8L1NlbGVjdD4KICAgICAgICAgICAgICA8QnV0dG9uIG9uQ2xpY2s9eygpID0+IHNldFdpemFyZE9wZW4odHJ1ZSl9PgogICAgICAgICAgICAgICAgPFVzZXJQbHVzIGNsYXNzTmFtZT0ic2l6ZS00IG1lLTEuNSIgLz4KICAgICAgICAgICAgICAgIENyZWF0ZSBzZWxsZXIgJmFtcDsgc3RvcmUKICAgICAgICAgICAgICA8L0J1dHRvbj4KICAgICAgICAgICAgPC9kaXY+CiAgICAgICAgICB9CiAgICAgICAgPgogICAgICAgICAge2lzTG9hZGluZyA/ICgKICAgICAgICAgICAgPFRhYmxlU2tlbGV0b24gcm93cz17OH0gLz4KICAgICAgICAgICkgOiBpc0Vycm9yID8gKAogICAgICAgICAgICA8RW1wdHlTdGF0ZQogICAgICAgICAgICAgIHRpdGxlPSJDb3VsZCBub3QgbG9hZCBzZWxsZXJzIgogICAgICAgICAgICAgIHRleHQ9IlNvbWV0aGluZyB3ZW50IHdyb25nIHdoaWxlIGZldGNoaW5nIHRoZSBzZWxsZXJzLiIKICAgICAgICAgICAgICBhY3Rpb249ewogICAgICAgICAgICAgICAgPEJ1dHRvbiB2YXJpYW50PSJvdXRsaW5lIiBzaXplPSJzbSIgb25DbGljaz17KCkgPT4gcmVmZXRjaCgpfT4KICAgICAgICAgICAgICAgICAgUmV0cnkKICAgICAgICAgICAgICAgIDwvQnV0dG9uPgogICAgICAgICAgICAgIH0KICAgICAgICAgICAgLz4KICAgICAgICAgICkgOiBpdGVtcy5sZW5ndGggPT09IDAgPyAoCiAgICAgICAgICAgIDxFbXB0eVN0YXRlIHRpdGxlPXt0Lm5vU2VsbGVyc30gdGV4dD17dC5hZGp1c3RGaWx0ZXJzfSAvPgogICAgICAgICAgKSA6ICgKICAgICAgICAgICAgPGRpdiBjbGFzc05hbWU9Im92ZXJmbG93LXgtYXV0byI+CiAgICAgICAgICAgICAgPHRhYmxlIGNsYXNzTmFtZT0idy1mdWxsIG1pbi13LVsxMTAwcHhdIHRleHQtc20iPgogICAgICAgICAgICAgICAgPHRoZWFkPgogICAgICAgICAgICAgICAgICA8dHIgY2xhc3NOYW1lPSJib3JkZXItYiB0ZXh0LXhzIHVwcGVyY2FzZSB0cmFja2luZy13aWRlIHRleHQtbXV0ZWQtZm9yZWdyb3VuZCI+CiAgICAgICAgICAgICAgICAgICAgPHRoIGNsYXNzTmFtZT0icHktMiBwZS00IHRleHQtc3RhcnQgZm9udC1tZWRpdW0iPnt0LmNvbE5hbWV9PC90aD4KICAgICAgICAgICAgICAgICAgICA8dGggY2xhc3NOYW1lPSJweS0yIHBlLTQgdGV4dC1zdGFydCBmb250LW1lZGl1bSI+e3QuY29sU3RvcmV9PC90aD4KICAgICAgICAgICAgICAgICAgICA8dGggY2xhc3NOYW1lPSJweS0yIHBlLTQgdGV4dC1zdGFydCBmb250LW1lZGl1bSI+e3QuY29sU3RhdHVzfTwvdGg+CiAgICAgICAgICAgICAgICAgICAgPHRoIGNsYXNzTmFtZT0icHktMiBwZS00IHRleHQtZW5kIGZvbnQtbWVkaXVtIj57dC5wcm9kdWN0c308L3RoPgogICAgICAgICAgICAgICAgICAgIDx0aCBjbGFzc05hbWU9InB5LTIgcGUtNCB0ZXh0LWVuZCBmb250LW1lZGl1bSI+e3Qub3JkZXJzfTwvdGg+CiAgICAgICAgICAgICAgICAgICAgPHRoIGNsYXNzTmFtZT0icHktMiBwZS00IHRleHQtZW5kIGZvbnQtbWVkaXVtIj57dC5zYWxlc308L3RoPgogICAgICAgICAgICAgICAgICAgIDx0aCBjbGFzc05hbWU9InB5LTIgcGUtNCB0ZXh0LWVuZCBmb250LW1lZGl1bSI+e3QuY29sQ29tbWlzc2lvbn08L3RoPgogICAgICAgICAgICAgICAgICAgIDx0aCBjbGFzc05hbWU9InB5LTIgcGUtNCB0ZXh0LXN0YXJ0IGZvbnQtbWVkaXVtIj57dC5jb2xDcmVhdGVkfTwvdGg+CiAgICAgICAgICAgICAgICAgICAgPHRoIGNsYXNzTmFtZT0icHktMiB0ZXh0LWVuZCBmb250LW1lZGl1bSI+e3QuY29sQWN0aW9uc308L3RoPgogICAgICAgICAgICAgICAgICA8L3RyPgogICAgICAgICAgICAgICAgPC90aGVhZD4KICAgICAgICAgICAgICAgIDx0Ym9keT4KICAgICAgICAgICAgICAgICAge2l0ZW1zLm1hcCgoc2VsbGVyKSA9PiB7CiAgICAgICAgICAgICAgICAgICAgY29uc3Qgc3RvcmUgPSBBcnJheS5pc0FycmF5KHNlbGxlci5zdG9yZXMpID8gc2VsbGVyLnN0b3Jlc1swXSA6IG51bGw7CiAgICAgICAgICAgICAgICAgICAgY29uc3QgcyA9IHN0YXRzW3NlbGxlci5pZF0gPz8geyBwcm9kdWN0Q291bnQ6IDAsIG9yZGVyQ291bnQ6IDAsIHNhbGVzVG90YWw6IDAgfTsKICAgICAgICAgICAgICAgICAgICByZXR1cm4gKAogICAgICAgICAgICAgICAgICAgICAgPHRyIGtleT17c2VsbGVyLmlkfSBjbGFzc05hbWU9ImJvcmRlci1iIGxhc3Q6Ym9yZGVyLTAgaG92ZXI6YmctbXV0ZWQvNTAiPgogICAgICAgICAgICAgICAgICAgICAgICA8dGQgY2xhc3NOYW1lPSJweS0zIHBlLTQiPgogICAgICAgICAgICAgICAgICAgICAgICAgIDxMaW5rCiAgICAgICAgICAgICAgICAgICAgICAgICAgICB0bz0iL2FkbWluL3NlbGxlcnMvJHNlbGxlcklkIgogICAgICAgICAgICAgICAgICAgICAgICAgICAgcGFyYW1zPXt7IHNlbGxlcklkOiBzZWxsZXIuaWQgfX0KICAgICAgICAgICAgICAgICAgICAgICAgICAgIHNlYXJjaD17eyBiYWNrOiBiYWNrUGFyYW0sIHRhYjogIm92ZXJ2aWV3IiwgcSwgc3RhdHVzOiBhY2NvdW50U3RhdHVzRmlsdGVyLCBwYWdlLCBjcmVhdGU6ICIiIH19CiAgICAgICAgICAgICAgICAgICAgICAgICAgICBjbGFzc05hbWU9ImZvbnQtbWVkaXVtIHRleHQtcHJpbWFyeSBob3Zlcjp1bmRlcmxpbmUiCiAgICAgICAgICAgICAgICAgICAgICAgICAgPgogICAgICAgICAgICAgICAgICAgICAgICAgICAge3NlbGxlci5sZWdhbF9uYW1lfQogICAgICAgICAgICAgICAgICAgICAgICAgIDwvTGluaz4KICAgICAgICAgICAgICAgICAgICAgICAgICA8cCBjbGFzc05hbWU9Im1heC13LTUyIHRydW5jYXRlIHRleHQteHMgdGV4dC1tdXRlZC1mb3JlZ3JvdW5kIj4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIHtzZWxsZXIuZW1haWwgPz8gIuKAlCJ9CiAgICAgICAgICAgICAgICAgICAgICAgICAgPC9wPgogICAgICAgICAgICAgICAgICAgICAgICA8L3RkPgogICAgICAgICAgICAgICAgICAgICAgICA8dGQgY2xhc3NOYW1lPSJweS0zIHBlLTQiPgogICAgICAgICAgICAgICAgICAgICAgICAgIHtzdG9yZSA/ICgKICAgICAgICAgICAgICAgICAgICAgICAgICAgIDw+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxzcGFuIGNsYXNzTmFtZT0iZm9udC1tZWRpdW0iPntzdG9yZS5uYW1lfTwvc3Bhbj4KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPHAgY2xhc3NOYW1lPSJ0ZXh0LXhzIHRleHQtbXV0ZWQtZm9yZWdyb3VuZCIgZGlyPSJsdHIiPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIC97c3RvcmUuc2x1Z30KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPC9wPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgICA8cCBjbGFzc05hbWU9Im10LTEiPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxTdGF0dXNQaWxsIHN0YXR1cz17c3RvcmUudmVyaWZpY2F0aW9uX3N0YXR1c30gLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPC9wPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPC8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgKSA6ICgKICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxzcGFuIGNsYXNzTmFtZT0idGV4dC1tdXRlZC1mb3JlZ3JvdW5kIj7igJQ8L3NwYW4+CiAgICAgICAgICAgICAgICAgICAgICAgICAgKX0KICAgICAgICAgICAgICAgICAgICAgICAgPC90ZD4KICAgICAgICAgICAgICAgICAgICAgICAgPHRkIGNsYXNzTmFtZT0icHktMyBwZS00Ij4KICAgICAgICAgICAgICAgICAgICAgICAgICA8U3RhdHVzUGlsbCBzdGF0dXM9e3NlbGxlci5hY2NvdW50X3N0YXR1c30gLz4KICAgICAgICAgICAgICAgICAgICAgICAgPC90ZD4KICAgICAgICAgICAgICAgICAgICAgICAgPHRkIGNsYXNzTmFtZT0icHktMyBwZS00IHRleHQtZW5kIHRhYnVsYXItbnVtcyI+e3MucHJvZHVjdENvdW50fTwvdGQ+CiAgICAgICAgICAgICAgICAgICAgICAgIDx0ZCBjbGFzc05hbWU9InB5LTMgcGUtNCB0ZXh0LWVuZCB0YWJ1bGFyLW51bXMiPntzLm9yZGVyQ291bnR9PC90ZD4KICAgICAgICAgICAgICAgICAgICAgICAgPHRkIGNsYXNzTmFtZT0icHktMyBwZS00IHRleHQtZW5kIHRhYnVsYXItbnVtcyB3aGl0ZXNwYWNlLW5vd3JhcCI+CiAgICAgICAgICAgICAgICAgICAgICAgICAge2ZtdE1vbmV5KHMuc2FsZXNUb3RhbCwgIkRaRCIsIGxvY2FsZSl9CiAgICAgICAgICAgICAgICAgICAgICAgIDwvdGQ+CiAgICAgICAgICAgICAgICAgICAgICAgIDx0ZCBjbGFzc05hbWU9InB5LTMgcGUtNCB0ZXh0LWVuZCB0YWJ1bGFyLW51bXMgd2hpdGVzcGFjZS1ub3dyYXAiPgogICAgICAgICAgICAgICAgICAgICAgICAgIHsoTnVtYmVyKHNlbGxlci5jb21taXNzaW9uX3JhdGUpICogMTAwKS50b0ZpeGVkKDEpfSUKICAgICAgICAgICAgICAgICAgICAgICAgPC90ZD4KICAgICAgICAgICAgICAgICAgICAgICAgPHRkCiAgICAgICAgICAgICAgICAgICAgICAgICAgY2xhc3NOYW1lPSJweS0zIHBlLTQgd2hpdGVzcGFjZS1ub3dyYXAgdGV4dC1tdXRlZC1mb3JlZ3JvdW5kIgogICAgICAgICAgICAgICAgICAgICAgICAgIHRpdGxlPXtmbXREYXRlVGltZShzZWxsZXIuY3JlYXRlZF9hdCwgbG9jYWxlKX0KICAgICAgICAgICAgICAgICAgICAgICAgPgogICAgICAgICAgICAgICAgICAgICAgICAgIHt0aW1lQWdvKHNlbGxlci5jcmVhdGVkX2F0LCBsb2NhbGUpfQogICAgICAgICAgICAgICAgICAgICAgICA8L3RkPgogICAgICAgICAgICAgICAgICAgICAgICA8dGQgY2xhc3NOYW1lPSJweS0zIj4KICAgICAgICAgICAgICAgICAgICAgICAgICA8ZGl2IGNsYXNzTmFtZT0iZmxleCBmbGV4LXdyYXAganVzdGlmeS1lbmQgZ2FwLTEuNSI+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8QnV0dG9uIHNpemU9InNtIiB2YXJpYW50PSJnaG9zdCIgYXNDaGlsZD4KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPExpbmsKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICB0bz0iL2FkbWluL3NlbGxlcnMvJHNlbGxlcklkIgogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIHBhcmFtcz17eyBzZWxsZXJJZDogc2VsbGVyLmlkIH19CiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgc2VhcmNoPXt7IGJhY2s6IGJhY2tQYXJhbSwgdGFiOiAib3ZlcnZpZXciLCBxLCBzdGF0dXM6IGFjY291bnRTdGF0dXNGaWx0ZXIsIHBhZ2UsIGNyZWF0ZTogIiIgfX0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIHt0Lm9wZW59CiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDwvTGluaz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDwvQnV0dG9uPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPEJ1dHRvbiBzaXplPSJzbSIgdmFyaWFudD0iZ2hvc3QiIG9uQ2xpY2s9eygpID0+IHNldEVkaXRpbmdJZChzZWxsZXIuaWQpfT4KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPFBlbmNpbCBjbGFzc05hbWU9InNpemUtMy41IiAvPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgICB7dC5lZGl0fQogICAgICAgICAgICAgICAgICAgICAgICAgICAgPC9CdXR0b24+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICB7c2VsbGVyLmFjY291bnRfc3RhdHVzID09PSAiYWN0aXZlIiA/ICgKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPD4KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA8QnV0dG9uCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBzaXplPSJzbSIKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIHZhcmlhbnQ9Im91dGxpbmUiCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBvbkNsaWNrPXsoKSA9PiBzZXRDb25maXJtQWN0aW9uKHsgc2VsbGVySWQ6IHNlbGxlci5pZCwgYWNjb3VudFN0YXR1czogInN1c3BlbmRlZCIgfSl9CiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPEJhbiBjbGFzc05hbWU9InNpemUtMy41IG1lLTEiIC8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICB7dC5zdXNwZW5kfQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDwvQnV0dG9uPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxCdXR0b24KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIHNpemU9InNtIgogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgdmFyaWFudD0iZGVzdHJ1Y3RpdmUiCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBvbkNsaWNrPXsoKSA9PiBzZXRDb25maXJtQWN0aW9uKHsgc2VsbGVySWQ6IHNlbGxlci5pZCwgYWNjb3VudFN0YXR1czogImRpc2FibGVkIiB9KX0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICB7dC5kZWFjdGl2YXRlfQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDwvQnV0dG9uPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Lz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgICkgOiAoCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxCdXR0b24KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBzaXplPSJzbSIKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICB2YXJpYW50PSJvdXRsaW5lIgogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIG9uQ2xpY2s9eygpID0+IHNldENvbmZpcm1BY3Rpb24oeyBzZWxsZXJJZDogc2VsbGVyLmlkLCBhY2NvdW50U3RhdHVzOiAiYWN0aXZlIiB9KX0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBkaXNhYmxlZD17c3RhdHVzTXV0YXRpb24uaXNQZW5kaW5nfQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICA+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPFBvd2VyIGNsYXNzTmFtZT0ic2l6ZS0zLjUgbWUtMSIgLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICB7dC5yZWFjdGl2YXRlfQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICA8L0J1dHRvbj4KICAgICAgICAgICAgICAgICAgICAgICAgICAgICl9CiAgICAgICAgICAgICAgICAgICAgICAgICAgPC9kaXY+CiAgICAgICAgICAgICAgICAgICAgICAgIDwvdGQ+CiAgICAgICAgICAgICAgICAgICAgICA8L3RyPgogICAgICAgICAgICAgICAgICAgICk7CiAgICAgICAgICAgICAgICAgIH0pfQogICAgICAgICAgICAgICAgPC90Ym9keT4KICAgICAgICAgICAgICA8L3RhYmxlPgogICAgICAgICAgICA8L2Rpdj4KICAgICAgICAgICl9CiAgICAgICAgICB7dG90YWwgPiAwICYmICgKICAgICAgICAgICAgPGRpdiBjbGFzc05hbWU9Im10LTQiPgogICAgICAgICAgICAgIDxQYWdlciBwYWdlPXtwYWdlfSB0b3RhbD17dG90YWx9IHBhZ2VTaXplPXtkYXRhPy5wYWdlU2l6ZSA/PyAyNX0gb25QYWdlPXsocCkgPT4gc2V0UGFnZShwKX0gLz4KICAgICAgICAgICAgPC9kaXY+CiAgICAgICAgICApfQogICAgICAgIDwvQWRtaW5DYXJkPgogICAgICAgIDxTZWxsZXJPbmJvYXJkaW5nV2l6YXJkCiAgICAgICAgICBvcGVuPXt3aXphcmRPcGVufQogICAgICAgICAgb25PcGVuQ2hhbmdlPXsob3BlbikgPT4gewogICAgICAgICAgICBzZXRXaXphcmRPcGVuKG9wZW4pOwogICAgICAgICAgICBpZiAoIW9wZW4pIHVybC5zZXQoeyBjcmVhdGU6IHVuZGVmaW5lZCB9KTsKICAgICAgICAgIH19CiAgICAgICAgICBvbkNyZWF0ZWQ9eygpID0+IHsKICAgICAgICAgICAgcXVlcnlDbGllbnQuaW52YWxpZGF0ZVF1ZXJpZXMoeyBxdWVyeUtleTogWyJhZG1pbi1zZWxsZXJzIl0gfSk7CiAgICAgICAgICB9fQogICAgICAgIC8+CiAgICAgICAge2VkaXRpbmdTZWxsZXIgPyAoCiAgICAgICAgICA8RWRpdFNlbGxlckRpYWxvZwogICAgICAgICAgICBzZWxsZXJJZD17ZWRpdGluZ1NlbGxlci5pZH0KICAgICAgICAgICAgaW5pdGlhbD17ewogICAgICAgICAgICAgIGxlZ2FsX25hbWU6IGVkaXRpbmdTZWxsZXIubGVnYWxfbmFtZSwKICAgICAgICAgICAgICBmaXJzdF9uYW1lOiBlZGl0aW5nU2VsbGVyLmZpcnN0X25hbWUsCiAgICAgICAgICAgICAgbGFzdF9uYW1lOiBlZGl0aW5nU2VsbGVyLmxhc3RfbmFtZSwKICAgICAgICAgICAgICBwaG9uZTogZWRpdGluZ1NlbGxlci5waG9uZSwKICAgICAgICAgICAgICBlbWFpbDogZWRpdGluZ1NlbGxlci5lbWFpbCwKICAgICAgICAgICAgfX0KICAgICAgICAgICAgb25DbG9zZT17KCkgPT4gc2V0RWRpdGluZ0lkKG51bGwpfQogICAgICAgICAgICBvblNhdmVkPXtyZWZyZXNofQogICAgICAgICAgLz4KICAgICAgICApIDogbnVsbH0KICAgICAgICA8Q29uZmlybURpYWxvZwogICAgICAgICAgb3Blbj17Y29uZmlybUFjdGlvbiAhPT0gbnVsbH0KICAgICAgICAgIG9uT3BlbkNoYW5nZT17KG9wZW4pID0+IHsgaWYgKCFvcGVuKSBzZXRDb25maXJtQWN0aW9uKG51bGwpOyB9fQogICAgICAgICAgdGl0bGU9e2NvbmZpcm1NZXRhPy50aXRsZSA/PyAiIn0KICAgICAgICAgIGRlc2NyaXB0aW9uPXtjb25maXJtTWV0YT8uZGVzY3JpcHRpb24gPz8gIiJ9CiAgICAgICAgICBjb25maXJtTGFiZWw9e2NvbmZpcm1NZXRhPy5sYWJlbH0KICAgICAgICAgIGRhbmdlcj17Y29uZmlybU1ldGE/LmRhbmdlcn0KICAgICAgICAgIG9uQ29uZmlybT17KCkgPT4gewogICAgICAgICAgICBpZiAoY29uZmlybUFjdGlvbikgc3RhdHVzTXV0YXRpb24ubXV0YXRlKGNvbmZpcm1BY3Rpb24pOwogICAgICAgICAgfX0KICAgICAgICAvPgogICAgICA8L0FkbWluU2hlbGw+CiAgICA8L0FkbWluR2F0ZT4KICApOwp9Cg==
+import { createFileRoute, Link, Outlet, useMatch } from "@tanstack/react-router";
+import { useUrlState, useDebouncedUrlParam, useBackParam, numParam, strParam } from "@/hooks/use-url-state";
+import { useEffect, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Search, UserPlus, Ban, Power, Pencil } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { AdminGate } from "@/components/admin/AdminGate";
+import { AdminShell } from "@/components/admin/AdminShell";
+import { Pager } from "./_shared";
+import {
+  AdminCard,
+  StatusPill,
+  EmptyState,
+  TableSkeleton,
+  ConfirmDialog,
+  fmtMoney,
+  fmtDateTime,
+  timeAgo,
+} from "@/components/admin/ui";
+import { useAdminLocale } from "@/components/admin/useAdminLocale";
+import { getTranslations } from "@/lib/i18n";
+import { listSellers, updateSellerStatus } from "@/lib/admin-sellers.functions";
+import { SellerOnboardingWizard } from "@/components/admin/SellerOnboardingWizard";
+import { EditSellerDialog } from "@/components/admin/EditSellerDialog";
+import { useAdminT } from "@/components/admin/use-admin-t";
+
+export const Route = createFileRoute("/admin/sellers")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    q: strParam(search["q"]),
+    status: strParam(search["status"], "all"),
+    page: numParam(search["page"], 1),
+    create: strParam(search["create"]),
+  }),
+  head: () => ({
+    meta: [{ name: "robots", content: "noindex,nofollow" }, { title: "Sellers — Modalia Admin" }],
+  }),
+  component: SellersPage,
+});
+
+const ACCOUNT_STATUS_OPTIONS = [
+  { value: "all", label: "All statuses" },
+  { value: "pending", label: "Pending" },
+  { value: "active", label: "Active" },
+  { value: "suspended", label: "Suspended" },
+  { value: "disabled", label: "Disabled" },
+] as const;
+
+type StatusAction = "active" | "suspended" | "disabled";
+
+function SellersPage() {
+  // Child route ($sellerId) renders in the Outlet; this route shows the table.
+  const child = useMatch({ from: "/admin/sellers", strict: true, shouldThrow: false });
+  if (!child) return <Outlet />;
+  return <SellersList />;
+}
+
+function SellersList() {
+  const locale = useAdminLocale();
+  const t = useAdminT().sellers;
+  const nav = getTranslations(locale).adminNav.items;
+  const url = useUrlState({ status: "all", page: 1 });
+  const backParam = useBackParam();
+  const queryClient = useQueryClient();
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  // Deep link: /admin/sellers?create=seller opens the onboarding wizard
+  // (the real flow that creates a seller together with their store).
+  useEffect(() => {
+    if (strParam(url.search["create"]) === "seller") setWizardOpen(true);
+  }, [url.search["create"]]);  const [confirmAction, setConfirmAction] = useState<{
+    sellerId: string;
+    accountStatus: StatusAction;
+  } | null>(null);
+  const page = numParam(url.search["page"], 1);
+  const q = strParam(url.search["q"]);
+  const accountStatusFilter = strParam(url.search["status"], "all");
+  const [searchInput, setSearchInput] = useDebouncedUrlParam("q", "", {
+    onCommit: () => url.set({ page: 1 }),
+  });
+
+  const setPage = (next: number) => url.set({ page: next }, { push: true });
+  const setStatusFilter = (next: string) => url.set({ status: next, page: 1 });
+
+  const accountStatus =
+    accountStatusFilter === "all"
+      ? undefined
+      : (accountStatusFilter as "pending" | "active" | "suspended" | "disabled");
+
+  const { data, isLoading, isError, refetch } = useQuery({
+    queryKey: ["admin-sellers", accountStatus ?? "all", q, page],
+    queryFn: () => listSellers({ data: { accountStatus, q: q || undefined, page } }),
+  });
+
+  const refresh = () => queryClient.invalidateQueries({ queryKey: ["admin-sellers"] });
+
+  const statusMutation = useMutation({
+    mutationFn: (input: { sellerId: string; accountStatus: StatusAction }) =>
+      updateSellerStatus({ data: input }),
+    onSuccess: (res) => {
+      toast.success(t.statusUpdated(res.accountStatus));
+      setConfirmAction(null);
+      refresh();
+    },
+    onError: (err: Error) => {
+      setConfirmAction(null);
+      toast.error(err.message);
+    },
+  });
+
+  const items = data?.items ?? [];
+  const total = data?.total ?? 0;
+  const stats = data?.stats ?? {};
+  const editingSeller = editingId ? items.find((s) => s.id === editingId) : null;
+
+  const confirmMeta = confirmAction
+    ? confirmAction.accountStatus === "suspended"
+      ? { title: t.confirmSuspendTitle, description: t.confirmSuspendDesc, label: t.suspend, danger: false }
+      : confirmAction.accountStatus === "disabled"
+        ? { title: t.confirmDeactivateTitle, description: t.confirmDeactivateDesc, label: t.deactivate, danger: true }
+        : { title: t.confirmReactivateTitle, description: t.confirmReactivateDesc, label: t.reactivate, danger: false }
+    : null;
+
+  return (
+    <AdminGate>
+      <AdminShell
+        title="Sellers"
+        subtitle="Manage seller accounts, stores, verification, and commissions."
+        breadcrumbs={[{ label: nav.sellers }]}
+      >
+        <AdminCard
+          title="Sellers"
+          subtitle={`${total} total`}
+          actions={
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="relative">
+                <Search className="pointer-events-none absolute start-2.5 top-1/2 size-4 -translate-y-1/2 opacity-50" />
+                <Input
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  placeholder="Search name, email, phone, store…"
+                  className="w-64 ps-8"
+                />
+              </div>
+              <Select
+                value={accountStatusFilter}
+                onValueChange={(v) => setStatusFilter(v)}
+              >
+                <SelectTrigger className="w-44">
+                  <SelectValue placeholder="Account status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {ACCOUNT_STATUS_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button onClick={() => setWizardOpen(true)}>
+                <UserPlus className="size-4 me-1.5" />
+                Create seller &amp; store
+              </Button>
+            </div>
+          }
+        >
+          {isLoading ? (
+            <TableSkeleton rows={8} />
+          ) : isError ? (
+            <EmptyState
+              title="Could not load sellers"
+              text="Something went wrong while fetching the sellers."
+              action={
+                <Button variant="outline" size="sm" onClick={() => refetch()}>
+                  Retry
+                </Button>
+              }
+            />
+          ) : items.length === 0 ? (
+            <EmptyState title={t.noSellers} text={t.adjustFilters} />
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[1100px] text-sm">
+                <thead>
+                  <tr className="border-b text-xs uppercase tracking-wide text-muted-foreground">
+                    <th className="py-2 pe-4 text-start font-medium">{t.colName}</th>
+                    <th className="py-2 pe-4 text-start font-medium">{t.colStore}</th>
+                    <th className="py-2 pe-4 text-start font-medium">{t.colStatus}</th>
+                    <th className="py-2 pe-4 text-end font-medium">{t.products}</th>
+                    <th className="py-2 pe-4 text-end font-medium">{t.orders}</th>
+                    <th className="py-2 pe-4 text-end font-medium">{t.sales}</th>
+                    <th className="py-2 pe-4 text-end font-medium">{t.colCommission}</th>
+                    <th className="py-2 pe-4 text-start font-medium">{t.colCreated}</th>
+                    <th className="py-2 text-end font-medium">{t.colActions}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((seller) => {
+                    const store = Array.isArray(seller.stores) ? seller.stores[0] : null;
+                    const s = stats[seller.id] ?? { productCount: 0, orderCount: 0, salesTotal: 0 };
+                    return (
+                      <tr key={seller.id} className="border-b last:border-0 hover:bg-muted/50">
+                        <td className="py-3 pe-4">
+                          <Link
+                            to="/admin/sellers/$sellerId"
+                            params={{ sellerId: seller.id }}
+                            search={{ back: backParam, tab: "overview", q, status: accountStatusFilter, page, create: "" }}
+                            className="font-medium text-primary hover:underline"
+                          >
+                            {seller.legal_name}
+                          </Link>
+                          <p className="max-w-52 truncate text-xs text-muted-foreground">
+                            {seller.email ?? "—"}
+                          </p>
+                        </td>
+                        <td className="py-3 pe-4">
+                          {store ? (
+                            <>
+                              <span className="font-medium">{store.name}</span>
+                              <p className="text-xs text-muted-foreground" dir="ltr">
+                                /{store.slug}
+                              </p>
+                              <p className="mt-1">
+                                <StatusPill status={store.verification_status} />
+                              </p>
+                            </>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </td>
+                        <td className="py-3 pe-4">
+                          <StatusPill status={seller.account_status} />
+                        </td>
+                        <td className="py-3 pe-4 text-end tabular-nums">{s.productCount}</td>
+                        <td className="py-3 pe-4 text-end tabular-nums">{s.orderCount}</td>
+                        <td className="py-3 pe-4 text-end tabular-nums whitespace-nowrap">
+                          {fmtMoney(s.salesTotal, "DZD", locale)}
+                        </td>
+                        <td className="py-3 pe-4 text-end tabular-nums whitespace-nowrap">
+                          {(Number(seller.commission_rate) * 100).toFixed(1)}%
+                        </td>
+                        <td
+                          className="py-3 pe-4 whitespace-nowrap text-muted-foreground"
+                          title={fmtDateTime(seller.created_at, locale)}
+                        >
+                          {timeAgo(seller.created_at, locale)}
+                        </td>
+                        <td className="py-3">
+                          <div className="flex flex-wrap justify-end gap-1.5">
+                            <Button size="sm" variant="ghost" asChild>
+                              <Link
+                                to="/admin/sellers/$sellerId"
+                                params={{ sellerId: seller.id }}
+                                search={{ back: backParam, tab: "overview", q, status: accountStatusFilter, page, create: "" }}
+                              >
+                                {t.open}
+                              </Link>
+                            </Button>
+                            <Button size="sm" variant="ghost" onClick={() => setEditingId(seller.id)}>
+                              <Pencil className="size-3.5" />
+                              {t.edit}
+                            </Button>
+                            {seller.account_status === "active" ? (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setConfirmAction({ sellerId: seller.id, accountStatus: "suspended" })}
+                                >
+                                  <Ban className="size-3.5 me-1" />
+                                  {t.suspend}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => setConfirmAction({ sellerId: seller.id, accountStatus: "disabled" })}
+                                >
+                                  {t.deactivate}
+                                </Button>
+                              </>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setConfirmAction({ sellerId: seller.id, accountStatus: "active" })}
+                                disabled={statusMutation.isPending}
+                              >
+                                <Power className="size-3.5 me-1" />
+                                {t.reactivate}
+                              </Button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+          {total > 0 && (
+            <div className="mt-4">
+              <Pager page={page} total={total} pageSize={data?.pageSize ?? 25} onPage={(p) => setPage(p)} />
+            </div>
+          )}
+        </AdminCard>
+        <SellerOnboardingWizard
+          open={wizardOpen}
+          onOpenChange={(open) => {
+            setWizardOpen(open);
+            if (!open) url.set({ create: undefined });
+          }}
+          onCreated={() => {
+            queryClient.invalidateQueries({ queryKey: ["admin-sellers"] });
+          }}
+        />
+        {editingSeller ? (
+          <EditSellerDialog
+            sellerId={editingSeller.id}
+            initial={{
+              legal_name: editingSeller.legal_name,
+              first_name: editingSeller.first_name,
+              last_name: editingSeller.last_name,
+              phone: editingSeller.phone,
+              email: editingSeller.email,
+            }}
+            onClose={() => setEditingId(null)}
+            onSaved={refresh}
+          />
+        ) : null}
+        <ConfirmDialog
+          open={confirmAction !== null}
+          onOpenChange={(open) => { if (!open) setConfirmAction(null); }}
+          title={confirmMeta?.title ?? ""}
+          description={confirmMeta?.description ?? ""}
+          confirmLabel={confirmMeta?.label}
+          danger={confirmMeta?.danger}
+          onConfirm={() => {
+            if (confirmAction) statusMutation.mutate(confirmAction);
+          }}
+        />
+      </AdminShell>
+    </AdminGate>
+  );
+}

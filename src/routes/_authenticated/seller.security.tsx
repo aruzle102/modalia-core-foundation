@@ -1,1 +1,235 @@
-aW1wb3J0IHsgY3JlYXRlRmlsZVJvdXRlLCBMaW5rLCB1c2VOYXZpZ2F0ZSB9IGZyb20gIkB0YW5zdGFjay9yZWFjdC1yb3V0ZXIiOwppbXBvcnQgeyB1c2VNdXRhdGlvbiwgdXNlUXVlcnkgfSBmcm9tICJAdGFuc3RhY2svcmVhY3QtcXVlcnkiOwppbXBvcnQgeyBBbGVydFRyaWFuZ2xlLCBLZXlSb3VuZCwgTG9nT3V0LCBNYWlsQ2hlY2ssIE1haWxXYXJuaW5nLCBTaGllbGRDaGVjaywgVXNlckNoZWNrIH0gZnJvbSAibHVjaWRlLXJlYWN0IjsKaW1wb3J0IHsgQnV0dG9uIH0gZnJvbSAiQC9jb21wb25lbnRzL3VpL2J1dHRvbiI7CmltcG9ydCB7IEFkbWluQ2FyZCwgRW1wdHlTdGF0ZSwgVGFibGVTa2VsZXRvbiwgZm10RGF0ZVRpbWUgfSBmcm9tICJAL2NvbXBvbmVudHMvYWRtaW4vdWkiOwppbXBvcnQgeyBTZWxsZXJTaGVsbCB9IGZyb20gIkAvY29tcG9uZW50cy9zZWxsZXIvU2VsbGVyU2hlbGwiOwppbXBvcnQgeyB1c2VTZWxsZXJTZXNzaW9uIH0gZnJvbSAiQC9jb21wb25lbnRzL3NlbGxlci91aSI7CmltcG9ydCB7IFJvdXRlRXJyb3IsIFJvdXRlUGVuZGluZyB9IGZyb20gIkAvY29tcG9uZW50cy9yb3V0aW5nL3JvdXRlLXN0YXRlcyI7CmltcG9ydCB7IHN1cGFiYXNlIH0gZnJvbSAiQC9pbnRlZ3JhdGlvbnMvc3VwYWJhc2UvY2xpZW50IjsKaW1wb3J0IHsgZ2V0TG9jYWxlLCBnZXRUcmFuc2xhdGlvbnMgfSBmcm9tICJAL2xpYi9pMThuIjsKaW1wb3J0IHsgZXJyTXNnIH0gZnJvbSAiLi4vYWRtaW4vX3NoYXJlZCI7CgpleHBvcnQgY29uc3QgUm91dGUgPSBjcmVhdGVGaWxlUm91dGUoIi9fYXV0aGVudGljYXRlZC9zZWxsZXIvc2VjdXJpdHkiKSh7CiAgdmFsaWRhdGVTZWFyY2g6IChzZWFyY2g6IFJlY29yZDxzdHJpbmcsIHVua25vd24+KSA9PiAoewogICAgbG9jYWxlOiBnZXRMb2NhbGUodHlwZW9mIHNlYXJjaFsibG9jYWxlIl0gPT09ICJzdHJpbmciID8gc2VhcmNoWyJsb2NhbGUiXSA6IHVuZGVmaW5lZCksCiAgfSksCiAgcGVuZGluZ0NvbXBvbmVudDogKCkgPT4gPFJvdXRlUGVuZGluZyBsYWJlbD0iTG9hZGluZyBzZWN1cml0eSBzZXR0aW5nc+KApiIgLz4sCiAgZXJyb3JDb21wb25lbnQ6ICh7IHJlc2V0IH0pID0+ICgKICAgIDxTZWxsZXJTaGVsbCBleWVicm93PSJTZWxsZXIgd29ya3NwYWNlIiB0aXRsZT0iU2VjdXJpdHkiPgogICAgICA8Um91dGVFcnJvcgogICAgICAgIG1lc3NhZ2U9IlNlY3VyaXR5IHNldHRpbmdzIGNvdWxkIG5vdCBiZSBsb2FkZWQuIENoZWNrIHlvdXIgY29ubmVjdGlvbiBhbmQgdHJ5IGFnYWluLiIKICAgICAgICByZXNldD17cmVzZXR9CiAgICAgIC8+CiAgICA8L1NlbGxlclNoZWxsPgogICksCiAgaGVhZDogKCkgPT4gKHsKICAgIG1ldGE6IFsKICAgICAgeyBuYW1lOiAicm9ib3RzIiwgY29udGVudDogIm5vaW5kZXgsbm9mb2xsb3ciIH0sCiAgICAgIHsgdGl0bGU6ICJTZWN1cml0eSDigJQgU2VsbGVyIOKAlCBNb2RhbGlhIiB9LAogICAgICB7IG5hbWU6ICJkZXNjcmlwdGlvbiIsIGNvbnRlbnQ6ICJQYXNzd29yZCwgZW1haWwgdmVyaWZpY2F0aW9uIGFuZCBzaWduLWluIHNlY3VyaXR5IGZvciB5b3VyIHNlbGxlciBhY2NvdW50LiIgfSwKICAgIF0sCiAgfSksCiAgY29tcG9uZW50OiBTZWxsZXJTZWN1cml0eVBhZ2UsCn0pOwoKZnVuY3Rpb24gU2VsbGVyU2VjdXJpdHlQYWdlKCkgewogIGNvbnN0IHsgbG9jYWxlIH0gPSBSb3V0ZS51c2VTZWFyY2goKTsKICBjb25zdCBuYXYgPSB1c2VOYXZpZ2F0ZSgpOwogIGNvbnN0IHRpdGxlID0gZ2V0VHJhbnNsYXRpb25zKGxvY2FsZSkuc2VsbGVyRGFzaGJvYXJkVjgubmF2LnNlY3VyaXR5OwogIGNvbnN0IHsgc2VsbGVyLCB1c2VyRW1haWwgfSA9IHVzZVNlbGxlclNlc3Npb24oKTsKCiAgLy8gUmVhbCBhdXRoIGRhdGEgb25seSDigJQgbmV2ZXIgaW52ZW50ZWQuIGVtYWlsX2NvbmZpcm1lZF9hdCBhbmQgbGFzdF9zaWduX2luX2F0CiAgLy8gY29tZSBzdHJhaWdodCBmcm9tIHRoZSBzaWduZWQtaW4gU3VwYWJhc2UgdXNlci4KICBjb25zdCBhdXRoUXVlcnkgPSB1c2VRdWVyeSh7CiAgICBxdWVyeUtleTogWyJzZWxsZXItc2VjdXJpdHktYXV0aC11c2VyIl0sCiAgICBxdWVyeUZuOiBhc3luYyAoKSA9PiB7CiAgICAgIGNvbnN0IHsgZGF0YSwgZXJyb3IgfSA9IGF3YWl0IHN1cGFiYXNlLmF1dGguZ2V0VXNlcigpOwogICAgICBpZiAoZXJyb3IpIHRocm93IGVycm9yOwogICAgICByZXR1cm4gZGF0YS51c2VyOwogICAgfSwKICAgIHJldHJ5OiBmYWxzZSwKICB9KTsKCiAgY29uc3Qgc2lnbk91dCA9IHVzZU11dGF0aW9uKHsKICAgIG11dGF0aW9uRm46IGFzeW5jICgpID0+IHsKICAgICAgLy8gc2NvcGUgImdsb2JhbCIgZW5kcyBldmVyeSBzZXNzaW9uIG9uIGV2ZXJ5IGRldmljZSwgbm90IGp1c3QgdGhpcyBvbmUuCiAgICAgIGNvbnN0IHsgZXJyb3IgfSA9IGF3YWl0IHN1cGFiYXNlLmF1dGguc2lnbk91dCh7IHNjb3BlOiAiZ2xvYmFsIiB9KTsKICAgICAgaWYgKGVycm9yKSB0aHJvdyBlcnJvcjsKICAgIH0sCiAgICBvblN1Y2Nlc3M6ICgpID0+IHsKICAgICAgdm9pZCBuYXYoeyB0bzogIi9zZWxsZXIvbG9naW4iLCBzZWFyY2g6IHsgbG9jYWxlIH0sIHJlcGxhY2U6IHRydWUgfSk7CiAgICB9LAogIH0pOwoKICBjb25zdCBtdXN0UmVzZXRQYXNzd29yZCA9IHNlbGxlcj8ubXVzdFJlc2V0UGFzc3dvcmQgPT09IHRydWU7CiAgY29uc3QgZW1haWxWZXJpZmllZCA9ICEhYXV0aFF1ZXJ5LmRhdGE/LmVtYWlsX2NvbmZpcm1lZF9hdDsKICBjb25zdCBsYXN0U2lnbkluQXQgPSBhdXRoUXVlcnkuZGF0YT8ubGFzdF9zaWduX2luX2F0ID8/IG51bGw7CgogIHJldHVybiAoCiAgICA8U2VsbGVyU2hlbGwgZXllYnJvdz0iU2VsbGVyIHdvcmtzcGFjZSIgdGl0bGU9e3RpdGxlfT4KICAgICAgPHAgY2xhc3NOYW1lPSJ0ZXh0LWJvZHkgdGV4dC1tdXRlZC1mb3JlZ3JvdW5kIj4KICAgICAgICAiUmV2aWV3IGFuZCBtYW5hZ2UgeW91ciBhY2NvdW50J3Mgc2lnbi1pbiBzZWN1cml0eSDigJQgeW91ciBwYXNzd29yZCwgeW91ciBlbWFpbCB2ZXJpZmljYXRpb24sIGFuZCB5b3VyIHNlc3Npb25zLiIKICAgICAgPC9wPgoKICAgICAgey8qIENsZWFyIHdhcm5pbmcgd2hpbGUgYSB0ZW1wb3JhcnkgcGFzc3dvcmQgaXMgc3RpbGwgYWN0aXZlLiAqL30KICAgICAge211c3RSZXNldFBhc3N3b3JkID8gKAogICAgICAgIDxkaXYKICAgICAgICAgIHJvbGU9ImFsZXJ0IgogICAgICAgICAgY2xhc3NOYW1lPSJtdC02IGZsZXggZmxleC1jb2wgZ2FwLTMgcm91bmRlZC14bCBib3JkZXIgYm9yZGVyLWFtYmVyLTUwMC80MCBiZy1hbWJlci01MDAvMTAgcC00IHNtOmZsZXgtcm93IHNtOml0ZW1zLWNlbnRlciIKICAgICAgICA+CiAgICAgICAgICA8ZGl2IGNsYXNzTmFtZT0iZmxleCBpdGVtcy1zdGFydCBnYXAtMyI+CiAgICAgICAgICAgIDxBbGVydFRyaWFuZ2xlIGNsYXNzTmFtZT0ibXQtMC41IHNpemUtNSBzaHJpbmstMCB0ZXh0LWFtYmVyLTYwMCBkYXJrOnRleHQtYW1iZXItNDAwIiAvPgogICAgICAgICAgICA8ZGl2PgogICAgICAgICAgICAgIDxwIGNsYXNzTmFtZT0idGV4dC1zbSBmb250LXNlbWlib2xkIj5UZW1wb3JhcnkgcGFzc3dvcmQgc3RpbGwgYWN0aXZlPC9wPgogICAgICAgICAgICAgIDxwIGNsYXNzTmFtZT0ibXQtMSB0ZXh0LXNtIHRleHQtbXV0ZWQtZm9yZWdyb3VuZCI+CiAgICAgICAgICAgICAgICAiWW91ciBhY2NvdW50IGlzIHN0aWxsIHVzaW5nIHRoZSB0ZW1wb3JhcnkgcGFzc3dvcmQgY3JlYXRlZCBieSB0aGUgcGxhdGZvcm0gdGVhbS4gQ2hhbmdlIGl0IHRvIGEgcGFzc3dvcmQgb25seSB5b3Uga25vdyBiZWZvcmUgZG9pbmcgYW55dGhpbmcgZWxzZS4iCiAgICAgICAgICAgICAgPC9wPgogICAgICAgICAgICA8L2Rpdj4KICAgICAgICAgIDwvZGl2PgogICAgICAgICAgPGRpdiBjbGFzc05hbWU9InNtOm1zLWF1dG8gc206c2hyaW5rLTAiPgogICAgICAgICAgICA8QnV0dG9uIHR5cGU9ImJ1dHRvbiIgc2l6ZT0ic20iIGFzQ2hpbGQ+CiAgICAgICAgICAgICAgPExpbmsgdG89Ii9zZWxsZXIvY2hhbmdlLXBhc3N3b3JkIiBzZWFyY2g9e3sgbG9jYWxlIH19PgogICAgICAgICAgICAgICAgQ2hhbmdlIHBhc3N3b3JkIG5vdwogICAgICAgICAgICAgIDwvTGluaz4KICAgICAgICAgICAgPC9CdXR0b24+CiAgICAgICAgICA8L2Rpdj4KICAgICAgICA8L2Rpdj4KICAgICAgKSA6IG51bGx9CgogICAgICA8ZGl2IGNsYXNzTmFtZT0ibXQtNiI+CiAgICAgICAge2F1dGhRdWVyeS5pc0xvYWRpbmcgPyAoCiAgICAgICAgICA8VGFibGVTa2VsZXRvbiByb3dzPXszfSAvPgogICAgICAgICkgOiBhdXRoUXVlcnkuaXNFcnJvciA/ICgKICAgICAgICAgIDxBZG1pbkNhcmQ+CiAgICAgICAgICAgIDxFbXB0eVN0YXRlCiAgICAgICAgICAgICAgdGl0bGU9IkFjY291bnQgZGV0YWlscyBjb3VsZCBub3QgYmUgbG9hZGVkIgogICAgICAgICAgICAgIHRleHQ9e2Vyck1zZyhhdXRoUXVlcnkuZXJyb3IpfQogICAgICAgICAgICAgIGFjdGlvbj17CiAgICAgICAgICAgICAgICA8QnV0dG9uIHR5cGU9ImJ1dHRvbiIgdmFyaWFudD0ib3V0bGluZSIgc2l6ZT0ic20iIG9uQ2xpY2s9eygpID0+IGF1dGhRdWVyeS5yZWZldGNoKCl9PgogICAgICAgICAgICAgICAgICBUcnkgYWdhaW4KICAgICAgICAgICAgICAgIDwvQnV0dG9uPgogICAgICAgICAgICAgIH0KICAgICAgICAgICAgLz4KICAgICAgICAgIDwvQWRtaW5DYXJkPgogICAgICAgICkgOiAoCiAgICAgICAgICA8ZGl2IGNsYXNzTmFtZT0iZ3JpZCBnYXAtNCBtZDpncmlkLWNvbHMtMiI+CiAgICAgICAgICAgIHsvKiBQYXNzd29yZCAqL30KICAgICAgICAgICAgPEFkbWluQ2FyZAogICAgICAgICAgICAgIHRpdGxlPSJQYXNzd29yZCIKICAgICAgICAgICAgICBhY3Rpb25zPXs8S2V5Um91bmQgY2xhc3NOYW1lPSJzaXplLTUgdGV4dC1tdXRlZC1mb3JlZ3JvdW5kIiBhcmlhLWhpZGRlbj0idHJ1ZSIgLz59CiAgICAgICAgICAgID4KICAgICAgICAgICAgICA8U3RhdHVzUm93CiAgICAgICAgICAgICAgICBvaz17IW11c3RSZXNldFBhc3N3b3JkfQogICAgICAgICAgICAgICAgb2tUZXh0PXttdXN0UmVzZXRQYXNzd29yZCA/ICJUZW1wb3JhcnkgcGFzc3dvcmQgaW4gdXNlIiA6ICJQZXJzb25hbCBwYXNzd29yZCBzZXQifQogICAgICAgICAgICAgICAgaGludD17CiAgICAgICAgICAgICAgICAgIG11c3RSZXNldFBhc3N3b3JkCiAgICAgICAgICAgICAgICAgICAgPyAiQ3JlYXRlZCBieSB0aGUgcGxhdGZvcm0gdGVhbSDigJQgY2hhbmdlIGl0IG5vdy4iCiAgICAgICAgICAgICAgICAgICAgOiAiTGFzdCBjaGFuZ2VkIGJ5IHlvdS4gQ2hhbmdlIGl0IGFueSB0aW1lIHlvdSBzdXNwZWN0IGl0IG1heSBiZSBrbm93bi4iCiAgICAgICAgICAgICAgICB9CiAgICAgICAgICAgICAgLz4KICAgICAgICAgICAgICA8ZGl2IGNsYXNzTmFtZT0ibXQtNCI+CiAgICAgICAgICAgICAgICA8QnV0dG9uIHR5cGU9ImJ1dHRvbiIgdmFyaWFudD17bXVzdFJlc2V0UGFzc3dvcmQgPyAiZGVmYXVsdCIgOiAib3V0bGluZSJ9IHNpemU9InNtIiBhc0NoaWxkPgogICAgICAgICAgICAgICAgICA8TGluayB0bz0iL3NlbGxlci9jaGFuZ2UtcGFzc3dvcmQiIHNlYXJjaD17eyBsb2NhbGUgfX0+CiAgICAgICAgICAgICAgICAgICAgQ2hhbmdlIHBhc3N3b3JkCiAgICAgICAgICAgICAgICAgIDwvTGluaz4KICAgICAgICAgICAgICAgIDwvQnV0dG9uPgogICAgICAgICAgICAgIDwvZGl2PgogICAgICAgICAgICA8L0FkbWluQ2FyZD4KCiAgICAgICAgICAgIHsvKiBFbWFpbCB2ZXJpZmljYXRpb24g4oCUIHJlYWwgc3RhdHVzIGZyb20gdGhlIGF1dGggdXNlciwgbm90aGluZyBpbnZlbnRlZCAqL30KICAgICAgICAgICAgPEFkbWluQ2FyZAogICAgICAgICAgICAgIHRpdGxlPSJFbWFpbCB2ZXJpZmljYXRpb24iCiAgICAgICAgICAgICAgYWN0aW9ucz17CiAgICAgICAgICAgICAgICBlbWFpbFZlcmlmaWVkID8gKAogICAgICAgICAgICAgICAgICA8TWFpbENoZWNrIGNsYXNzTmFtZT0ic2l6ZS01IHRleHQtbXV0ZWQtZm9yZWdyb3VuZCIgYXJpYS1oaWRkZW49InRydWUiIC8+CiAgICAgICAgICAgICAgICApIDogKAogICAgICAgICAgICAgICAgICA8TWFpbFdhcm5pbmcgY2xhc3NOYW1lPSJzaXplLTUgdGV4dC1hbWJlci02MDAgZGFyazp0ZXh0LWFtYmVyLTQwMCIgYXJpYS1oaWRkZW49InRydWUiIC8+CiAgICAgICAgICAgICAgICApCiAgICAgICAgICAgICAgfQogICAgICAgICAgICA+CiAgICAgICAgICAgICAgPFN0YXR1c1JvdwogICAgICAgICAgICAgICAgb2s9e2VtYWlsVmVyaWZpZWR9CiAgICAgICAgICAgICAgICBva1RleHQ9e2VtYWlsVmVyaWZpZWQgPyAiRW1haWwgdmVyaWZpZWQiIDogIkVtYWlsIG5vdCB2ZXJpZmllZCJ9CiAgICAgICAgICAgICAgICBoaW50PXt1c2VyRW1haWwgPz8gIk5vIHNpZ24taW4gZW1haWwgZm91bmQgb24gdGhpcyBzZXNzaW9uLiJ9CiAgICAgICAgICAgICAgLz4KICAgICAgICAgICAgICB7IWVtYWlsVmVyaWZpZWQgPyAoCiAgICAgICAgICAgICAgICA8cCBjbGFzc05hbWU9Im10LTMgdGV4dC1zbSB0ZXh0LW11dGVkLWZvcmVncm91bmQiPgogICAgICAgICAgICAgICAgICAiUGFzc3dvcmQgcmVjb3ZlcnkgZ29lcyB0aHJvdWdoIHRoaXMgZW1haWwg4oCUIHZlcmlmeSBpdCBpbiB5b3VyIGluYm94IG9yIGFzayB0aGUgcGxhdGZvcm0gdGVhbSB0byByZXNlbmQgdGhlIHZlcmlmaWNhdGlvbiBsaW5rLiIKICAgICAgICAgICAgICAgIDwvcD4KICAgICAgICAgICAgICApIDogbnVsbH0KICAgICAgICAgICAgPC9BZG1pbkNhcmQ+CgogICAgICAgICAgICB7LyogU2Vzc2lvbiBpbmZvIOKAlCBvbmx5IHdoYXQgdGhlIGNsaWVudCBjYW4gYWN0dWFsbHkga25vdyAqL30KICAgICAgICAgICAgPEFkbWluQ2FyZAogICAgICAgICAgICAgIHRpdGxlPSJDdXJyZW50IHNlc3Npb24iCiAgICAgICAgICAgICAgYWN0aW9ucz17PFVzZXJDaGVjayBjbGFzc05hbWU9InNpemUtNSB0ZXh0LW11dGVkLWZvcmVncm91bmQiIGFyaWEtaGlkZGVuPSJ0cnVlIiAvPn0KICAgICAgICAgICAgPgogICAgICAgICAgICAgIDxkbCBjbGFzc05hbWU9InNwYWNlLXktMi41IHRleHQtc20iPgogICAgICAgICAgICAgICAgPGRpdiBjbGFzc05hbWU9ImZsZXggZmxleC13cmFwIGp1c3RpZnktYmV0d2VlbiBnYXAtMiI+CiAgICAgICAgICAgICAgICAgIDxkdCBjbGFzc05hbWU9InRleHQtbXV0ZWQtZm9yZWdyb3VuZCI+U2lnbmVkIGluIGFzPC9kdD4KICAgICAgICAgICAgICAgICAgPGRkIGNsYXNzTmFtZT0iZm9udC1tZWRpdW0gYnJlYWstYWxsIj57dXNlckVtYWlsID8/ICLigJQifTwvZGQ+CiAgICAgICAgICAgICAgICA8L2Rpdj4KICAgICAgICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPSJmbGV4IGZsZXgtd3JhcCBqdXN0aWZ5LWJldHdlZW4gZ2FwLTIiPgogICAgICAgICAgICAgICAgICA8ZHQgY2xhc3NOYW1lPSJ0ZXh0LW11dGVkLWZvcmVncm91bmQiPkxhc3Qgc2lnbi1pbjwvZHQ+CiAgICAgICAgICAgICAgICAgIDxkZCBjbGFzc05hbWU9ImZvbnQtbWVkaXVtIj57Zm10RGF0ZVRpbWUobGFzdFNpZ25JbkF0LCBsb2NhbGUpfTwvZGQ+CiAgICAgICAgICAgICAgICA8L2Rpdj4KICAgICAgICAgICAgICA8L2RsPgogICAgICAgICAgICAgIDxwIGNsYXNzTmFtZT0ibXQtMyB0ZXh0LXhzIHRleHQtbXV0ZWQtZm9yZWdyb3VuZCI+CiAgICAgICAgICAgICAgICAiRGV0YWlsZWQgZGV2aWNlIGFuZCBsb2NhdGlvbiBoaXN0b3J5IGlzbid0IHRyYWNrZWQgZm9yIHNlbGxlciBhY2NvdW50cyDigJQgb25seSB5b3VyIGN1cnJlbnQgc2lnbi1pbiBpcyBzaG93biBoZXJlLiIKICAgICAgICAgICAgICA8L3A+CiAgICAgICAgICAgIDwvQWRtaW5DYXJkPgoKICAgICAgICAgICAgey8qIFNpZ24gb3V0IGV2ZXJ5d2hlcmUgKi99CiAgICAgICAgICAgIDxBZG1pbkNhcmQKICAgICAgICAgICAgICB0aXRsZT0iU2lnbiBvdXQiCiAgICAgICAgICAgICAgYWN0aW9ucz17PFNoaWVsZENoZWNrIGNsYXNzTmFtZT0ic2l6ZS01IHRleHQtbXV0ZWQtZm9yZWdyb3VuZCIgYXJpYS1oaWRkZW49InRydWUiIC8+fQogICAgICAgICAgICA+CiAgICAgICAgICAgICAgPHAgY2xhc3NOYW1lPSJ0ZXh0LXNtIHRleHQtbXV0ZWQtZm9yZWdyb3VuZCI+CiAgICAgICAgICAgICAgICAiRW5kcyB5b3VyIHNlc3Npb24gb24gdGhpcyBkZXZpY2UgYW5kIGV2ZXJ5IG90aGVyIGRldmljZSwgaW4gY2FzZSBhIHNlc3Npb24gd2FzIGxlZnQgb3BlbiBzb21ld2hlcmUuIgogICAgICAgICAgICAgIDwvcD4KICAgICAgICAgICAgICA8ZGl2IGNsYXNzTmFtZT0ibXQtNCI+CiAgICAgICAgICAgICAgICA8QnV0dG9uCiAgICAgICAgICAgICAgICAgIHR5cGU9ImJ1dHRvbiIKICAgICAgICAgICAgICAgICAgdmFyaWFudD0iZGVzdHJ1Y3RpdmUiCiAgICAgICAgICAgICAgICAgIHNpemU9InNtIgogICAgICAgICAgICAgICAgICBkaXNhYmxlZD17c2lnbk91dC5pc1BlbmRpbmd9CiAgICAgICAgICAgICAgICAgIG9uQ2xpY2s9eygpID0+IHNpZ25PdXQubXV0YXRlKCl9CiAgICAgICAgICAgICAgICA+CiAgICAgICAgICAgICAgICAgIDxMb2dPdXQgY2xhc3NOYW1lPSJzaXplLTQiIC8+CiAgICAgICAgICAgICAgICAgIHtzaWduT3V0LmlzUGVuZGluZyA/ICJTaWduaW5nIG91dOKApiIgOiAiU2lnbiBvdXQgZXZlcnl3aGVyZSJ9CiAgICAgICAgICAgICAgICA8L0J1dHRvbj4KICAgICAgICAgICAgICAgIHtzaWduT3V0LmlzRXJyb3IgPyAoCiAgICAgICAgICAgICAgICAgIDxwIHJvbGU9ImFsZXJ0IiBjbGFzc05hbWU9Im10LTIgdGV4dC1zbSB0ZXh0LWRlc3RydWN0aXZlIj4KICAgICAgICAgICAgICAgICAgICB7ZXJyTXNnKHNpZ25PdXQuZXJyb3IpfQogICAgICAgICAgICAgICAgICA8L3A+CiAgICAgICAgICAgICAgICApIDogbnVsbH0KICAgICAgICAgICAgICA8L2Rpdj4KICAgICAgICAgICAgPC9BZG1pbkNhcmQ+CiAgICAgICAgICA8L2Rpdj4KICAgICAgICApfQogICAgICA8L2Rpdj4KICAgIDwvU2VsbGVyU2hlbGw+CiAgKTsKfQoKZnVuY3Rpb24gU3RhdHVzUm93KHsgb2ssIG9rVGV4dCwgaGludCB9OiB7IG9rOiBib29sZWFuOyBva1RleHQ6IHN0cmluZzsgaGludDogc3RyaW5nIH0pIHsKICByZXR1cm4gKAogICAgPGRpdiBjbGFzc05hbWU9ImZsZXggaXRlbXMtc3RhcnQgZ2FwLTMiPgogICAgICA8c3BhbgogICAgICAgIGNsYXNzTmFtZT17CiAgICAgICAgICBvawogICAgICAgICAgICA/ICJtdC0wLjUgaW5saW5lLWZsZXggaC02IHctNiBzaHJpbmstMCBpdGVtcy1jZW50ZXIganVzdGlmeS1jZW50ZXIgcm91bmRlZC1mdWxsIGJnLWdyZWVuLTUwMC8xNSB0ZXh0LWdyZWVuLTcwMCBkYXJrOnRleHQtZ3JlZW4tNDAwIgogICAgICAgICAgICA6ICJtdC0wLjUgaW5saW5lLWZsZXggaC02IHctNiBzaHJpbmstMCBpdGVtcy1jZW50ZXIganVzdGlmeS1jZW50ZXIgcm91bmRlZC1mdWxsIGJnLWFtYmVyLTUwMC8xNSB0ZXh0LWFtYmVyLTcwMCBkYXJrOnRleHQtYW1iZXItNDAwIgogICAgICAgIH0KICAgICAgICBhcmlhLWxhYmVsPXtvayA/ICJPSyIgOiAiTmVlZHMgYXR0ZW50aW9uIn0KICAgICAgPgogICAgICAgIHtvayA/IDxTaGllbGRDaGVjayBjbGFzc05hbWU9InNpemUtMy41IiAvPiA6IDxBbGVydFRyaWFuZ2xlIGNsYXNzTmFtZT0ic2l6ZS0zLjUiIC8+fQogICAgICA8L3NwYW4+CiAgICAgIDxkaXY+CiAgICAgICAgPHAgY2xhc3NOYW1lPSJ0ZXh0LXNtIGZvbnQtc2VtaWJvbGQiPntva1RleHR9PC9wPgogICAgICAgIDxwIGNsYXNzTmFtZT0ibXQtMSB0ZXh0LXNtIHRleHQtbXV0ZWQtZm9yZWdyb3VuZCI+e2hpbnR9PC9wPgogICAgICA8L2Rpdj4KICAgIDwvZGl2PgogICk7Cn0K
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { AlertTriangle, KeyRound, LogOut, MailCheck, MailWarning, ShieldCheck, UserCheck } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { AdminCard, EmptyState, TableSkeleton, fmtDateTime } from "@/components/admin/ui";
+import { SellerShell } from "@/components/seller/SellerShell";
+import { useSellerSession } from "@/components/seller/ui";
+import { RouteError, RoutePending } from "@/components/routing/route-states";
+import { supabase } from "@/integrations/supabase/client";
+import { getLocale, getTranslations } from "@/lib/i18n";
+import { errMsg } from "../admin/_shared";
+
+export const Route = createFileRoute("/_authenticated/seller/security")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined),
+  }),
+  pendingComponent: () => <RoutePending label="Loading security settings…" />,
+  errorComponent: ({ reset }) => (
+    <SellerShell eyebrow="Seller workspace" title="Security">
+      <RouteError
+        message="Security settings could not be loaded. Check your connection and try again."
+        reset={reset}
+      />
+    </SellerShell>
+  ),
+  head: () => ({
+    meta: [
+      { name: "robots", content: "noindex,nofollow" },
+      { title: "Security — Seller — Modalia" },
+      { name: "description", content: "Password, email verification and sign-in security for your seller account." },
+    ],
+  }),
+  component: SellerSecurityPage,
+});
+
+function SellerSecurityPage() {
+  const { locale } = Route.useSearch();
+  const nav = useNavigate();
+  const title = getTranslations(locale).sellerDashboardV8.nav.security;
+  const { seller, userEmail } = useSellerSession();
+
+  // Real auth data only — never invented. email_confirmed_at and last_sign_in_at
+  // come straight from the signed-in Supabase user.
+  const authQuery = useQuery({
+    queryKey: ["seller-security-auth-user"],
+    queryFn: async () => {
+      const { data, error } = await supabase.auth.getUser();
+      if (error) throw error;
+      return data.user;
+    },
+    retry: false,
+  });
+
+  const signOut = useMutation({
+    mutationFn: async () => {
+      // scope "global" ends every session on every device, not just this one.
+      const { error } = await supabase.auth.signOut({ scope: "global" });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      void nav({ to: "/seller/login", search: { locale }, replace: true });
+    },
+  });
+
+  const mustResetPassword = seller?.mustResetPassword === true;
+  const emailVerified = !!authQuery.data?.email_confirmed_at;
+  const lastSignInAt = authQuery.data?.last_sign_in_at ?? null;
+
+  return (
+    <SellerShell eyebrow="Seller workspace" title={title}>
+      <p className="text-body text-muted-foreground">
+        "Review and manage your account's sign-in security — your password, your email verification, and your sessions."
+      </p>
+
+      {/* Clear warning while a temporary password is still active. */}
+      {mustResetPassword ? (
+        <div
+          role="alert"
+          className="mt-6 flex flex-col gap-3 rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 sm:flex-row sm:items-center"
+        >
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="mt-0.5 size-5 shrink-0 text-amber-600 dark:text-amber-400" />
+            <div>
+              <p className="text-sm font-semibold">Temporary password still active</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                "Your account is still using the temporary password created by the platform team. Change it to a password only you know before doing anything else."
+              </p>
+            </div>
+          </div>
+          <div className="sm:ms-auto sm:shrink-0">
+            <Button type="button" size="sm" asChild>
+              <Link to="/seller/change-password" search={{ locale }}>
+                Change password now
+              </Link>
+            </Button>
+          </div>
+        </div>
+      ) : null}
+
+      <div className="mt-6">
+        {authQuery.isLoading ? (
+          <TableSkeleton rows={3} />
+        ) : authQuery.isError ? (
+          <AdminCard>
+            <EmptyState
+              title="Account details could not be loaded"
+              text={errMsg(authQuery.error)}
+              action={
+                <Button type="button" variant="outline" size="sm" onClick={() => authQuery.refetch()}>
+                  Try again
+                </Button>
+              }
+            />
+          </AdminCard>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2">
+            {/* Password */}
+            <AdminCard
+              title="Password"
+              actions={<KeyRound className="size-5 text-muted-foreground" aria-hidden="true" />}
+            >
+              <StatusRow
+                ok={!mustResetPassword}
+                okText={mustResetPassword ? "Temporary password in use" : "Personal password set"}
+                hint={
+                  mustResetPassword
+                    ? "Created by the platform team — change it now."
+                    : "Last changed by you. Change it any time you suspect it may be known."
+                }
+              />
+              <div className="mt-4">
+                <Button type="button" variant={mustResetPassword ? "default" : "outline"} size="sm" asChild>
+                  <Link to="/seller/change-password" search={{ locale }}>
+                    Change password
+                  </Link>
+                </Button>
+              </div>
+            </AdminCard>
+
+            {/* Email verification — real status from the auth user, nothing invented */}
+            <AdminCard
+              title="Email verification"
+              actions={
+                emailVerified ? (
+                  <MailCheck className="size-5 text-muted-foreground" aria-hidden="true" />
+                ) : (
+                  <MailWarning className="size-5 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+                )
+              }
+            >
+              <StatusRow
+                ok={emailVerified}
+                okText={emailVerified ? "Email verified" : "Email not verified"}
+                hint={userEmail ?? "No sign-in email found on this session."}
+              />
+              {!emailVerified ? (
+                <p className="mt-3 text-sm text-muted-foreground">
+                  "Password recovery goes through this email — verify it in your inbox or ask the platform team to resend the verification link."
+                </p>
+              ) : null}
+            </AdminCard>
+
+            {/* Session info — only what the client can actually know */}
+            <AdminCard
+              title="Current session"
+              actions={<UserCheck className="size-5 text-muted-foreground" aria-hidden="true" />}
+            >
+              <dl className="space-y-2.5 text-sm">
+                <div className="flex flex-wrap justify-between gap-2">
+                  <dt className="text-muted-foreground">Signed in as</dt>
+                  <dd className="font-medium break-all">{userEmail ?? "—"}</dd>
+                </div>
+                <div className="flex flex-wrap justify-between gap-2">
+                  <dt className="text-muted-foreground">Last sign-in</dt>
+                  <dd className="font-medium">{fmtDateTime(lastSignInAt, locale)}</dd>
+                </div>
+              </dl>
+              <p className="mt-3 text-xs text-muted-foreground">
+                "Detailed device and location history isn't tracked for seller accounts — only your current sign-in is shown here."
+              </p>
+            </AdminCard>
+
+            {/* Sign out everywhere */}
+            <AdminCard
+              title="Sign out"
+              actions={<ShieldCheck className="size-5 text-muted-foreground" aria-hidden="true" />}
+            >
+              <p className="text-sm text-muted-foreground">
+                "Ends your session on this device and every other device, in case a session was left open somewhere."
+              </p>
+              <div className="mt-4">
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  disabled={signOut.isPending}
+                  onClick={() => signOut.mutate()}
+                >
+                  <LogOut className="size-4" />
+                  {signOut.isPending ? "Signing out…" : "Sign out everywhere"}
+                </Button>
+                {signOut.isError ? (
+                  <p role="alert" className="mt-2 text-sm text-destructive">
+                    {errMsg(signOut.error)}
+                  </p>
+                ) : null}
+              </div>
+            </AdminCard>
+          </div>
+        )}
+      </div>
+    </SellerShell>
+  );
+}
+
+function StatusRow({ ok, okText, hint }: { ok: boolean; okText: string; hint: string }) {
+  return (
+    <div className="flex items-start gap-3">
+      <span
+        className={
+          ok
+            ? "mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-green-500/15 text-green-700 dark:text-green-400"
+            : "mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-400"
+        }
+        aria-label={ok ? "OK" : "Needs attention"}
+      >
+        {ok ? <ShieldCheck className="size-3.5" /> : <AlertTriangle className="size-3.5" />}
+      </span>
+      <div>
+        <p className="text-sm font-semibold">{okText}</p>
+        <p className="mt-1 text-sm text-muted-foreground">{hint}</p>
+      </div>
+    </div>
+  );
+}

@@ -71,16 +71,20 @@ import { Route as AuthenticatedSellerAiRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedSellerAnalyticsRouteImport } from './routes/_authenticated/seller.analytics'
 import { Route as AuthenticatedSellerAppearanceRouteImport } from './routes/_authenticated/seller.appearance'
 import { Route as AuthenticatedSellerBundlesRouteImport } from './routes/_authenticated/seller.bundles'
+import { Route as AuthenticatedSellerCategoriesRouteImport } from './routes/_authenticated/seller.categories'
 import { Route as AuthenticatedSellerCommissionRouteImport } from './routes/_authenticated/seller.commission'
 import { Route as AuthenticatedSellerCouponsRouteImport } from './routes/_authenticated/seller.coupons'
 import { Route as AuthenticatedSellerCustomersRouteImport } from './routes/_authenticated/seller.customers'
 import { Route as AuthenticatedSellerInventoryRouteImport } from './routes/_authenticated/seller.inventory'
 import { Route as AuthenticatedSellerNotificationsRouteImport } from './routes/_authenticated/seller.notifications'
+import { Route as AuthenticatedSellerOfficesRouteImport } from './routes/_authenticated/seller.offices'
 import { Route as AuthenticatedSellerOnboardingRouteImport } from './routes/_authenticated/seller.onboarding'
 import { Route as AuthenticatedSellerOrdersRouteImport } from './routes/_authenticated/seller.orders'
+import { Route as AuthenticatedSellerPermissionsRouteImport } from './routes/_authenticated/seller.permissions'
 import { Route as AuthenticatedSellerProductsRouteImport } from './routes/_authenticated/seller.products'
 import { Route as AuthenticatedSellerPromotionsRouteImport } from './routes/_authenticated/seller.promotions'
 import { Route as AuthenticatedSellerReviewsRouteImport } from './routes/_authenticated/seller.reviews'
+import { Route as AuthenticatedSellerSecurityRouteImport } from './routes/_authenticated/seller.security'
 import { Route as AuthenticatedSellerSettingsRouteImport } from './routes/_authenticated/seller.settings'
 import { Route as AuthenticatedSellerSettlementsRouteImport } from './routes/_authenticated/seller.settlements'
 import { Route as AuthenticatedSellerShippingRouteImport } from './routes/_authenticated/seller.shipping'
@@ -414,6 +418,12 @@ const AuthenticatedSellerBundlesRoute =
     path: '/bundles',
     getParentRoute: () => AuthenticatedSellerRoute,
   } as any)
+const AuthenticatedSellerCategoriesRoute =
+  AuthenticatedSellerCategoriesRouteImport.update({
+    id: '/categories',
+    path: '/categories',
+    getParentRoute: () => AuthenticatedSellerRoute,
+  } as any)
 const AuthenticatedSellerCommissionRoute =
   AuthenticatedSellerCommissionRouteImport.update({
     id: '/commission',
@@ -444,6 +454,12 @@ const AuthenticatedSellerNotificationsRoute =
     path: '/notifications',
     getParentRoute: () => AuthenticatedSellerRoute,
   } as any)
+const AuthenticatedSellerOfficesRoute =
+  AuthenticatedSellerOfficesRouteImport.update({
+    id: '/offices',
+    path: '/offices',
+    getParentRoute: () => AuthenticatedSellerRoute,
+  } as any)
 const AuthenticatedSellerOnboardingRoute =
   AuthenticatedSellerOnboardingRouteImport.update({
     id: '/onboarding',
@@ -454,6 +470,12 @@ const AuthenticatedSellerOrdersRoute =
   AuthenticatedSellerOrdersRouteImport.update({
     id: '/orders',
     path: '/orders',
+    getParentRoute: () => AuthenticatedSellerRoute,
+  } as any)
+const AuthenticatedSellerPermissionsRoute =
+  AuthenticatedSellerPermissionsRouteImport.update({
+    id: '/permissions',
+    path: '/permissions',
     getParentRoute: () => AuthenticatedSellerRoute,
   } as any)
 const AuthenticatedSellerProductsRoute =
@@ -472,6 +494,12 @@ const AuthenticatedSellerReviewsRoute =
   AuthenticatedSellerReviewsRouteImport.update({
     id: '/reviews',
     path: '/reviews',
+    getParentRoute: () => AuthenticatedSellerRoute,
+  } as any)
+const AuthenticatedSellerSecurityRoute =
+  AuthenticatedSellerSecurityRouteImport.update({
+    id: '/security',
+    path: '/security',
     getParentRoute: () => AuthenticatedSellerRoute,
   } as any)
 const AuthenticatedSellerSettingsRoute =
@@ -633,16 +661,20 @@ export interface FileRoutesByFullPath {
   '/seller/analytics': typeof AuthenticatedSellerAnalyticsRoute
   '/seller/appearance': typeof AuthenticatedSellerAppearanceRoute
   '/seller/bundles': typeof AuthenticatedSellerBundlesRoute
+  '/seller/categories': typeof AuthenticatedSellerCategoriesRoute
   '/seller/commission': typeof AuthenticatedSellerCommissionRoute
   '/seller/coupons': typeof AuthenticatedSellerCouponsRoute
   '/seller/customers': typeof AuthenticatedSellerCustomersRoute
   '/seller/inventory': typeof AuthenticatedSellerInventoryRoute
   '/seller/notifications': typeof AuthenticatedSellerNotificationsRouteWithChildren
+  '/seller/offices': typeof AuthenticatedSellerOfficesRoute
   '/seller/onboarding': typeof AuthenticatedSellerOnboardingRoute
   '/seller/orders': typeof AuthenticatedSellerOrdersRouteWithChildren
+  '/seller/permissions': typeof AuthenticatedSellerPermissionsRoute
   '/seller/products': typeof AuthenticatedSellerProductsRouteWithChildren
   '/seller/promotions': typeof AuthenticatedSellerPromotionsRoute
   '/seller/reviews': typeof AuthenticatedSellerReviewsRoute
+  '/seller/security': typeof AuthenticatedSellerSecurityRoute
   '/seller/settings': typeof AuthenticatedSellerSettingsRoute
   '/seller/settlements': typeof AuthenticatedSellerSettlementsRoute
   '/seller/shipping': typeof AuthenticatedSellerShippingRoute
@@ -723,16 +755,20 @@ export interface FileRoutesByTo {
   '/seller/analytics': typeof AuthenticatedSellerAnalyticsRoute
   '/seller/appearance': typeof AuthenticatedSellerAppearanceRoute
   '/seller/bundles': typeof AuthenticatedSellerBundlesRoute
+  '/seller/categories': typeof AuthenticatedSellerCategoriesRoute
   '/seller/commission': typeof AuthenticatedSellerCommissionRoute
   '/seller/coupons': typeof AuthenticatedSellerCouponsRoute
   '/seller/customers': typeof AuthenticatedSellerCustomersRoute
   '/seller/inventory': typeof AuthenticatedSellerInventoryRoute
   '/seller/notifications': typeof AuthenticatedSellerNotificationsRouteWithChildren
+  '/seller/offices': typeof AuthenticatedSellerOfficesRoute
   '/seller/onboarding': typeof AuthenticatedSellerOnboardingRoute
   '/seller/orders': typeof AuthenticatedSellerOrdersRouteWithChildren
+  '/seller/permissions': typeof AuthenticatedSellerPermissionsRoute
   '/seller/products': typeof AuthenticatedSellerProductsRouteWithChildren
   '/seller/promotions': typeof AuthenticatedSellerPromotionsRoute
   '/seller/reviews': typeof AuthenticatedSellerReviewsRoute
+  '/seller/security': typeof AuthenticatedSellerSecurityRoute
   '/seller/settings': typeof AuthenticatedSellerSettingsRoute
   '/seller/settlements': typeof AuthenticatedSellerSettlementsRoute
   '/seller/shipping': typeof AuthenticatedSellerShippingRoute
@@ -815,16 +851,20 @@ export interface FileRoutesById {
   '/_authenticated/seller/analytics': typeof AuthenticatedSellerAnalyticsRoute
   '/_authenticated/seller/appearance': typeof AuthenticatedSellerAppearanceRoute
   '/_authenticated/seller/bundles': typeof AuthenticatedSellerBundlesRoute
+  '/_authenticated/seller/categories': typeof AuthenticatedSellerCategoriesRoute
   '/_authenticated/seller/commission': typeof AuthenticatedSellerCommissionRoute
   '/_authenticated/seller/coupons': typeof AuthenticatedSellerCouponsRoute
   '/_authenticated/seller/customers': typeof AuthenticatedSellerCustomersRoute
   '/_authenticated/seller/inventory': typeof AuthenticatedSellerInventoryRoute
   '/_authenticated/seller/notifications': typeof AuthenticatedSellerNotificationsRouteWithChildren
+  '/_authenticated/seller/offices': typeof AuthenticatedSellerOfficesRoute
   '/_authenticated/seller/onboarding': typeof AuthenticatedSellerOnboardingRoute
   '/_authenticated/seller/orders': typeof AuthenticatedSellerOrdersRouteWithChildren
+  '/_authenticated/seller/permissions': typeof AuthenticatedSellerPermissionsRoute
   '/_authenticated/seller/products': typeof AuthenticatedSellerProductsRouteWithChildren
   '/_authenticated/seller/promotions': typeof AuthenticatedSellerPromotionsRoute
   '/_authenticated/seller/reviews': typeof AuthenticatedSellerReviewsRoute
+  '/_authenticated/seller/security': typeof AuthenticatedSellerSecurityRoute
   '/_authenticated/seller/settings': typeof AuthenticatedSellerSettingsRoute
   '/_authenticated/seller/settlements': typeof AuthenticatedSellerSettlementsRoute
   '/_authenticated/seller/shipping': typeof AuthenticatedSellerShippingRoute
@@ -907,16 +947,20 @@ export interface FileRouteTypes {
     | '/seller/analytics'
     | '/seller/appearance'
     | '/seller/bundles'
+    | '/seller/categories'
     | '/seller/commission'
     | '/seller/coupons'
     | '/seller/customers'
     | '/seller/inventory'
     | '/seller/notifications'
+    | '/seller/offices'
     | '/seller/onboarding'
     | '/seller/orders'
+    | '/seller/permissions'
     | '/seller/products'
     | '/seller/promotions'
     | '/seller/reviews'
+    | '/seller/security'
     | '/seller/settings'
     | '/seller/settlements'
     | '/seller/shipping'
@@ -997,16 +1041,20 @@ export interface FileRouteTypes {
     | '/seller/analytics'
     | '/seller/appearance'
     | '/seller/bundles'
+    | '/seller/categories'
     | '/seller/commission'
     | '/seller/coupons'
     | '/seller/customers'
     | '/seller/inventory'
     | '/seller/notifications'
+    | '/seller/offices'
     | '/seller/onboarding'
     | '/seller/orders'
+    | '/seller/permissions'
     | '/seller/products'
     | '/seller/promotions'
     | '/seller/reviews'
+    | '/seller/security'
     | '/seller/settings'
     | '/seller/settlements'
     | '/seller/shipping'
@@ -1088,16 +1136,20 @@ export interface FileRouteTypes {
     | '/_authenticated/seller/analytics'
     | '/_authenticated/seller/appearance'
     | '/_authenticated/seller/bundles'
+    | '/_authenticated/seller/categories'
     | '/_authenticated/seller/commission'
     | '/_authenticated/seller/coupons'
     | '/_authenticated/seller/customers'
     | '/_authenticated/seller/inventory'
     | '/_authenticated/seller/notifications'
+    | '/_authenticated/seller/offices'
     | '/_authenticated/seller/onboarding'
     | '/_authenticated/seller/orders'
+    | '/_authenticated/seller/permissions'
     | '/_authenticated/seller/products'
     | '/_authenticated/seller/promotions'
     | '/_authenticated/seller/reviews'
+    | '/_authenticated/seller/security'
     | '/_authenticated/seller/settings'
     | '/_authenticated/seller/settlements'
     | '/_authenticated/seller/shipping'
@@ -1610,6 +1662,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSellerBundlesRouteImport
       parentRoute: typeof AuthenticatedSellerRoute
     }
+    '/_authenticated/seller/categories': {
+      id: '/_authenticated/seller/categories'
+      path: '/categories'
+      fullPath: '/seller/categories'
+      preLoaderRoute: typeof AuthenticatedSellerCategoriesRouteImport
+      parentRoute: typeof AuthenticatedSellerRoute
+    }
     '/_authenticated/seller/commission': {
       id: '/_authenticated/seller/commission'
       path: '/commission'
@@ -1645,6 +1704,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSellerNotificationsRouteImport
       parentRoute: typeof AuthenticatedSellerRoute
     }
+    '/_authenticated/seller/offices': {
+      id: '/_authenticated/seller/offices'
+      path: '/offices'
+      fullPath: '/seller/offices'
+      preLoaderRoute: typeof AuthenticatedSellerOfficesRouteImport
+      parentRoute: typeof AuthenticatedSellerRoute
+    }
     '/_authenticated/seller/onboarding': {
       id: '/_authenticated/seller/onboarding'
       path: '/onboarding'
@@ -1657,6 +1723,13 @@ declare module '@tanstack/react-router' {
       path: '/orders'
       fullPath: '/seller/orders'
       preLoaderRoute: typeof AuthenticatedSellerOrdersRouteImport
+      parentRoute: typeof AuthenticatedSellerRoute
+    }
+    '/_authenticated/seller/permissions': {
+      id: '/_authenticated/seller/permissions'
+      path: '/permissions'
+      fullPath: '/seller/permissions'
+      preLoaderRoute: typeof AuthenticatedSellerPermissionsRouteImport
       parentRoute: typeof AuthenticatedSellerRoute
     }
     '/_authenticated/seller/products': {
@@ -1678,6 +1751,13 @@ declare module '@tanstack/react-router' {
       path: '/reviews'
       fullPath: '/seller/reviews'
       preLoaderRoute: typeof AuthenticatedSellerReviewsRouteImport
+      parentRoute: typeof AuthenticatedSellerRoute
+    }
+    '/_authenticated/seller/security': {
+      id: '/_authenticated/seller/security'
+      path: '/security'
+      fullPath: '/seller/security'
+      preLoaderRoute: typeof AuthenticatedSellerSecurityRouteImport
       parentRoute: typeof AuthenticatedSellerRoute
     }
     '/_authenticated/seller/settings': {
@@ -1869,16 +1949,20 @@ interface AuthenticatedSellerRouteChildren {
   AuthenticatedSellerAnalyticsRoute: typeof AuthenticatedSellerAnalyticsRoute
   AuthenticatedSellerAppearanceRoute: typeof AuthenticatedSellerAppearanceRoute
   AuthenticatedSellerBundlesRoute: typeof AuthenticatedSellerBundlesRoute
+  AuthenticatedSellerCategoriesRoute: typeof AuthenticatedSellerCategoriesRoute
   AuthenticatedSellerCommissionRoute: typeof AuthenticatedSellerCommissionRoute
   AuthenticatedSellerCouponsRoute: typeof AuthenticatedSellerCouponsRoute
   AuthenticatedSellerCustomersRoute: typeof AuthenticatedSellerCustomersRoute
   AuthenticatedSellerInventoryRoute: typeof AuthenticatedSellerInventoryRoute
   AuthenticatedSellerNotificationsRoute: typeof AuthenticatedSellerNotificationsRouteWithChildren
+  AuthenticatedSellerOfficesRoute: typeof AuthenticatedSellerOfficesRoute
   AuthenticatedSellerOnboardingRoute: typeof AuthenticatedSellerOnboardingRoute
   AuthenticatedSellerOrdersRoute: typeof AuthenticatedSellerOrdersRouteWithChildren
+  AuthenticatedSellerPermissionsRoute: typeof AuthenticatedSellerPermissionsRoute
   AuthenticatedSellerProductsRoute: typeof AuthenticatedSellerProductsRouteWithChildren
   AuthenticatedSellerPromotionsRoute: typeof AuthenticatedSellerPromotionsRoute
   AuthenticatedSellerReviewsRoute: typeof AuthenticatedSellerReviewsRoute
+  AuthenticatedSellerSecurityRoute: typeof AuthenticatedSellerSecurityRoute
   AuthenticatedSellerSettingsRoute: typeof AuthenticatedSellerSettingsRoute
   AuthenticatedSellerSettlementsRoute: typeof AuthenticatedSellerSettlementsRoute
   AuthenticatedSellerShippingRoute: typeof AuthenticatedSellerShippingRoute
@@ -1892,18 +1976,22 @@ const AuthenticatedSellerRouteChildren: AuthenticatedSellerRouteChildren = {
   AuthenticatedSellerAnalyticsRoute: AuthenticatedSellerAnalyticsRoute,
   AuthenticatedSellerAppearanceRoute: AuthenticatedSellerAppearanceRoute,
   AuthenticatedSellerBundlesRoute: AuthenticatedSellerBundlesRoute,
+  AuthenticatedSellerCategoriesRoute: AuthenticatedSellerCategoriesRoute,
   AuthenticatedSellerCommissionRoute: AuthenticatedSellerCommissionRoute,
   AuthenticatedSellerCouponsRoute: AuthenticatedSellerCouponsRoute,
   AuthenticatedSellerCustomersRoute: AuthenticatedSellerCustomersRoute,
   AuthenticatedSellerInventoryRoute: AuthenticatedSellerInventoryRoute,
   AuthenticatedSellerNotificationsRoute:
     AuthenticatedSellerNotificationsRouteWithChildren,
+  AuthenticatedSellerOfficesRoute: AuthenticatedSellerOfficesRoute,
   AuthenticatedSellerOnboardingRoute: AuthenticatedSellerOnboardingRoute,
   AuthenticatedSellerOrdersRoute: AuthenticatedSellerOrdersRouteWithChildren,
+  AuthenticatedSellerPermissionsRoute: AuthenticatedSellerPermissionsRoute,
   AuthenticatedSellerProductsRoute:
     AuthenticatedSellerProductsRouteWithChildren,
   AuthenticatedSellerPromotionsRoute: AuthenticatedSellerPromotionsRoute,
   AuthenticatedSellerReviewsRoute: AuthenticatedSellerReviewsRoute,
+  AuthenticatedSellerSecurityRoute: AuthenticatedSellerSecurityRoute,
   AuthenticatedSellerSettingsRoute: AuthenticatedSellerSettingsRoute,
   AuthenticatedSellerSettlementsRoute: AuthenticatedSellerSettlementsRoute,
   AuthenticatedSellerShippingRoute: AuthenticatedSellerShippingRoute,

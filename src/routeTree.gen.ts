@@ -49,6 +49,7 @@ import { Route as AdminMediaRouteImport } from './routes/admin/media'
 import { Route as AdminNotificationsRouteImport } from './routes/admin/notifications'
 import { Route as AdminOfficialStoreRouteImport } from './routes/admin/official-store'
 import { Route as AdminOrdersRouteImport } from './routes/admin/orders'
+import { Route as AdminPartnerBannersRouteImport } from './routes/admin/partner-banners'
 import { Route as AdminPartnershipsRouteImport } from './routes/admin/partnerships'
 import { Route as AdminProductsRouteImport } from './routes/admin/products'
 import { Route as AdminReportsRouteImport } from './routes/admin/reports'
@@ -306,6 +307,11 @@ const AdminOfficialStoreRoute = AdminOfficialStoreRouteImport.update({
 const AdminOrdersRoute = AdminOrdersRouteImport.update({
   id: '/admin/orders',
   path: '/admin/orders',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminPartnerBannersRoute = AdminPartnerBannersRouteImport.update({
+  id: '/admin/partner-banners',
+  path: '/admin/partner-banners',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminPartnershipsRoute = AdminPartnershipsRouteImport.update({
@@ -668,6 +674,7 @@ export interface FileRoutesByFullPath {
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/official-store': typeof AdminOfficialStoreRoute
   '/admin/orders': typeof AdminOrdersRouteWithChildren
+  '/admin/partner-banners': typeof AdminPartnerBannersRoute
   '/admin/partnerships': typeof AdminPartnershipsRoute
   '/admin/products': typeof AdminProductsRouteWithChildren
   '/admin/reports': typeof AdminReportsRoute
@@ -767,6 +774,7 @@ export interface FileRoutesByTo {
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/official-store': typeof AdminOfficialStoreRoute
   '/admin/orders': typeof AdminOrdersRouteWithChildren
+  '/admin/partner-banners': typeof AdminPartnerBannersRoute
   '/admin/partnerships': typeof AdminPartnershipsRoute
   '/admin/products': typeof AdminProductsRouteWithChildren
   '/admin/reports': typeof AdminReportsRoute
@@ -868,6 +876,7 @@ export interface FileRoutesById {
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/official-store': typeof AdminOfficialStoreRoute
   '/admin/orders': typeof AdminOrdersRouteWithChildren
+  '/admin/partner-banners': typeof AdminPartnerBannersRoute
   '/admin/partnerships': typeof AdminPartnershipsRoute
   '/admin/products': typeof AdminProductsRouteWithChildren
   '/admin/reports': typeof AdminReportsRoute
@@ -969,6 +978,7 @@ export interface FileRouteTypes {
     | '/admin/notifications'
     | '/admin/official-store'
     | '/admin/orders'
+    | '/admin/partner-banners'
     | '/admin/partnerships'
     | '/admin/products'
     | '/admin/reports'
@@ -1068,6 +1078,7 @@ export interface FileRouteTypes {
     | '/admin/notifications'
     | '/admin/official-store'
     | '/admin/orders'
+    | '/admin/partner-banners'
     | '/admin/partnerships'
     | '/admin/products'
     | '/admin/reports'
@@ -1168,6 +1179,7 @@ export interface FileRouteTypes {
     | '/admin/notifications'
     | '/admin/official-store'
     | '/admin/orders'
+    | '/admin/partner-banners'
     | '/admin/partnerships'
     | '/admin/products'
     | '/admin/reports'
@@ -1267,6 +1279,7 @@ export interface RootRouteChildren {
   AdminNotificationsRoute: typeof AdminNotificationsRoute
   AdminOfficialStoreRoute: typeof AdminOfficialStoreRoute
   AdminOrdersRoute: typeof AdminOrdersRouteWithChildren
+  AdminPartnerBannersRoute: typeof AdminPartnerBannersRoute
   AdminPartnershipsRoute: typeof AdminPartnershipsRoute
   AdminProductsRoute: typeof AdminProductsRouteWithChildren
   AdminReportsRoute: typeof AdminReportsRoute
@@ -1571,6 +1584,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/orders'
       fullPath: '/admin/orders'
       preLoaderRoute: typeof AdminOrdersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/partner-banners': {
+      id: '/admin/partner-banners'
+      path: '/admin/partner-banners'
+      fullPath: '/admin/partner-banners'
+      preLoaderRoute: typeof AdminPartnerBannersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/partnerships': {
@@ -2233,6 +2253,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminNotificationsRoute: AdminNotificationsRoute,
   AdminOfficialStoreRoute: AdminOfficialStoreRoute,
   AdminOrdersRoute: AdminOrdersRouteWithChildren,
+  AdminPartnerBannersRoute: AdminPartnerBannersRoute,
   AdminPartnershipsRoute: AdminPartnershipsRoute,
   AdminProductsRoute: AdminProductsRouteWithChildren,
   AdminReportsRoute: AdminReportsRoute,

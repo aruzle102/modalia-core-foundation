@@ -211,27 +211,23 @@ async function searchAssistantCatalog(
   }
   const query = queryBits.join(" ").slice(0, 80);
   try {
-    const { data: payload, error } = await supabase.rpc("search_products_fts", {
+    const rpcArgs: Record<string, string | number | boolean | string[]> = {
       p_query: query,
-      p_category_slug: intent.categorySlug ?? undefined,
-      p_brand_slugs: intent.brandSlug ? [intent.brandSlug] : undefined,
-      p_store_slugs: intent.storeSlug ? [intent.storeSlug] : undefined,
-      p_min_price: intent.minPrice ?? undefined,
-      p_max_price: intent.maxPrice ?? undefined,
-      p_color_slugs: intent.colors.length ? intent.colors : undefined,
-      p_size_values: intent.sizes.length ? intent.sizes : undefined,
-      // V8 #180: the parsed gender reaches the DB as a structured filter
-      // (category or ancestor chain carries the gender). If the migration
-      // adding the 14-arg overload isn't applied yet, this RPC errors and
-      // searchAssistantCatalog returns null — the caller then uses the
-      // bounded legacy fallback, so nothing breaks.
-      p_gender: intent.genders[0] ?? undefined,
       p_in_stock: false,
       p_on_sale: false,
       p_sort: intent.sort,
       p_limit: 24,
       p_offset: 0,
-    });
+    };
+    if (intent.categorySlug) rpcArgs["p_category_slug"] = intent.categorySlug;
+    if (intent.brandSlug) rpcArgs["p_brand_slugs"] = [intent.brandSlug];
+    if (intent.storeSlug) rpcArgs["p_store_slugs"] = [intent.storeSlug];
+    if (intent.minPrice !== null) rpcArgs["p_min_price"] = intent.minPrice;
+    if (intent.maxPrice !== null) rpcArgs["p_max_price"] = intent.maxPrice;
+    if (intent.colors.length) rpcArgs["p_color_slugs"] = intent.colors;
+    if (intent.sizes.length) rpcArgs["p_size_values"] = intent.sizes;
+    if (intent.genders[0]) rpcArgs["p_gender"] = intent.genders[0];
+    const { data: payload, error } = await supabase.rpc("search_products_fts", rpcArgs as never);
     if (error) return null;
     const ids = (payload as unknown as { ids?: unknown })?.ids;
     const idList = Array.isArray(ids) ? ids.filter((id): id is string => typeof id === "string") : [];

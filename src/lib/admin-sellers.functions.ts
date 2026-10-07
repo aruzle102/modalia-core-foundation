@@ -170,7 +170,7 @@ export const reviewApplication = createServerFn({ method: "POST" })
       return { ok: true as const, status: "under_review" as const };
     }
 
-    if (application.status !== "pending" && application.status !== "under_review") {
+    if (application.status !== "pending" && (application.status as string) !== "under_review") {
       throw new Error("Only pending or under-review applications can be decided.");
     }
 
@@ -663,7 +663,7 @@ export const provisionSeller = createServerFn({ method: "POST" })
       if (application) {
         const { error: applicationUpdateError } = await supabaseAdmin
           .from("seller_applications")
-          .update({ seller_id: seller.id, status: "converted" })
+          .update({ seller_id: seller.id, status: "converted" as Database["public"]["Enums"]["seller_application_status"] })
           .eq("id", application.id);
         if (applicationUpdateError) throw new Error(applicationUpdateError.message);
       }

@@ -767,6 +767,8 @@ export function SiteFooter({ locale, t }: { locale: SupportedLocale; t: Translat
             links={[
               { to: "/about", search: { locale }, label: t.footer.links.about },
               { to: "/contact", search: { locale }, label: t.footer.links.contact },
+              { to: "/partnership", search: { locale }, label: "Partnership" },
+              { to: "/report-problem", search: { locale }, label: "Report a problem" },
             ]}
           />
           <FooterColumn

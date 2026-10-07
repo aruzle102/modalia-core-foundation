@@ -49,6 +49,8 @@ export function useAdminSession(): AdminSession {
     queryFn: () => checkAdminAccess(),
     enabled: signedIn,
     retry: false,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 
   const queryErrorMessage =
@@ -63,7 +65,8 @@ export function useAdminSession(): AdminSession {
     status = "checking";
   } else if (!session) {
     status = "signed-out";
-  } else if (access.isPending || access.isFetching) {
+  } else if (access.isPending) {
+    // Only block on initial load, not background refetches
     status = "checking";
   } else if (access.isError) {
     status = queryErrorMessage?.includes("Forbidden") ? "denied" : "error";

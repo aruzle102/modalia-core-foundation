@@ -1,1 +1,182 @@
-LyoqCiAqIE1PREFMSUEg4oCUIFZlcmlmaWVkIHNlbGxlciBlbWFpbCBjaGFuZ2UgZmxvdyAoU2VjdGlvbiA5KS4KICoKICogU0VSVkVSLVNJREUgT05MWS4gTmV2ZXIgaW1wb3J0IGZyb20gY2xpZW50IGNvbXBvbmVudHMg4oCUIHRoaXMgbW9kdWxlIHVzZXMKICogdGhlIHNlcnZpY2Utcm9sZSBhZG1pbiBjbGllbnQgYW5kIG11c3QgbmV2ZXIgcmVhY2ggdGhlIGJyb3dzZXIuCiAqCiAqIFRoZSBjcml0aWNhbCBpbnZhcmlhbnQ6IHNlbGxlcnMuZW1haWwgbXVzdCBBTFdBWVMgZXF1YWwgYXV0aC51c2Vycy5lbWFpbAogKiBmb3IgdGhlIHNlbGxlcidzIG93bmVyLiBEaXJlY3Qgd3JpdGVzIHRvIHNlbGxlcnMuZW1haWwgYXJlIGZvcmJpZGRlbjsKICogZXZlcnkgZW1haWwgY2hhbmdlIGdvZXMgdGhyb3VnaCBjaGFuZ2VTZWxsZXJFbWFpbCgpLCB3aGljaDoKICoKICogICAxLiBWYWxpZGF0ZXMgdGhlIG5ldyBlbWFpbCAoem9kKS4KICogICAyLiBWZXJpZmllcyBhdXRob3JpemF0aW9uIGlzIGFscmVhZHkgZXN0YWJsaXNoZWQgYnkgdGhlIGNhbGxlcgogKiAgICAgIChzZWxsZXIgb3duZXIgZm9yIG93biBhY2NvdW50LCBvciBhZG1pbiB3aXRoIHNlbGxlcnMubWFuYWdlKS4KICogICAzLiBSZWplY3RzIGR1cGxpY2F0ZXMgKGFub3RoZXIgc2VsbGVyIHJvdywgb3IgYW4gZXhpc3RpbmcgYXV0aCB1c2VyKS4KICogICA0LiBDYWxscyBzdXBhYmFzZUFkbWluLmF1dGguYWRtaW4udXBkYXRlVXNlckJ5SWQoKSDigJQgdGhlIHByb3BlciBTdXBhYmFzZQogKiAgICAgIEF1dGggZW1haWwtY2hhbmdlIGZsb3csIHdoaWNoIHNlbmRzIHRoZSB2ZXJpZmljYXRpb24gZW1haWwuCiAqICAgNS4gUmVhZHMgdGhlIGF1dGhvcml0YXRpdmUgZW1haWwgYmFjayBmcm9tIEF1dGggYW5kIHdyaXRlcyBUSEFUIHZhbHVlCiAqICAgICAgaW50byBzZWxsZXJzLmVtYWlsIChBdXRoIGlzIHRoZSBzb3VyY2Ugb2YgdHJ1dGgpLgogKiAgIDYuIFJlc2V0cyBzZWxsZXJzLmVtYWlsX3ZlcmlmaWVkX2F0IHRvIE5VTEwgdW50aWwgcmUtdmVyaWZpZWQsIHRoZW4KICogICAgICBzeW5jcyBpdCBmcm9tIGF1dGgudXNlcnMuZW1haWxfY29uZmlybWVkX2F0IHdoZW4gdmVyaWZpZWQuCiAqICAgNy4gQXVkaXRzIHRoZSBjaGFuZ2UuCiAqLwoKaW1wb3J0IHsgeiB9IGZyb20gInpvZCI7Cgpjb25zdCBlbWFpbFNjaGVtYSA9IHouc3RyaW5nKCkudHJpbSgpLmVtYWlsKCkubWF4KDI1NSk7CgpleHBvcnQgaW50ZXJmYWNlIENoYW5nZVNlbGxlckVtYWlsUGFyYW1zIHsKICAvKiogU2VydmljZS1yb2xlIGFkbWluIGNsaWVudCAoc2VydmVyLXNpZGUgb25seSkuICovCiAgc3VwYWJhc2VBZG1pbjogYW55OwogIC8qKiBzZWxsZXJzLmlkICovCiAgc2VsbGVySWQ6IHN0cmluZzsKICAvKiogc2VsbGVycy5vd25lcl9pZCDigJQgdGhlIFN1cGFiYXNlIEF1dGggdXNlciBpZC4gTmV2ZXIgY2hhbmdlcy4gKi8KICBhdXRoVXNlcklkOiBzdHJpbmc7CiAgLyoqIFRoZSByZXF1ZXN0ZWQgbmV3IGVtYWlsIChyYXcsIHdpbGwgYmUgbm9ybWFsaXplZCkuICovCiAgbmV3RW1haWw6IHN0cmluZzsKICAvKiogQWN0b3IgcGVyZm9ybWluZyB0aGUgY2hhbmdlIChzZWxsZXIgdXNlciBpZCBvciBhZG1pbiB1c2VyIGlkKS4gKi8KICBhY3RvcklkOiBzdHJpbmc7CiAgLyoqIFdobyBpcyBwZXJmb3JtaW5nIHRoZSBjaGFuZ2UsIGZvciBhdWRpdCBjbGFyaXR5LiAqLwogIGFjdG9yVHlwZTogInNlbGxlciIgfCAiYWRtaW4iOwp9CgpleHBvcnQgaW50ZXJmYWNlIENoYW5nZVNlbGxlckVtYWlsUmVzdWx0IHsKICBjaGFuZ2VkOiBib29sZWFuOwogIC8qKiBUaGUgYXV0aG9yaXRhdGl2ZSBlbWFpbCBub3cgc3RvcmVkIGluIGJvdGggYXV0aC51c2VycyBhbmQgc2VsbGVycy4gKi8KICBlbWFpbDogc3RyaW5nOwogIC8qKiBUcnVlIHdoZW4gU3VwYWJhc2UgcmVwb3J0cyB0aGUgZW1haWwgYXMgYWxyZWFkeSBjb25maXJtZWQuICovCiAgdmVyaWZpZWQ6IGJvb2xlYW47Cn0KCi8qKgogKiBFeGVjdXRlIGEgdmVyaWZpZWQgc2VsbGVyIGVtYWlsIGNoYW5nZS4gVGhyb3dzIG9uIHZhbGlkYXRpb24sIGR1cGxpY2F0ZSwKICogb3IgQXV0aCBlcnJvcnMuIE5ldmVyIHN0b3JlcyBvciBsb2dzIHRoZSBwYXNzd29yZCAobm8gcGFzc3dvcmQgaW52b2x2ZWQpLgogKi8KZXhwb3J0IGFzeW5jIGZ1bmN0aW9uIGNoYW5nZVNlbGxlckVtYWlsKAogIHBhcmFtczogQ2hhbmdlU2VsbGVyRW1haWxQYXJhbXMsCik6IFByb21pc2U8Q2hhbmdlU2VsbGVyRW1haWxSZXN1bHQ+IHsKICBjb25zdCB7IHN1cGFiYXNlQWRtaW4sIHNlbGxlcklkLCBhdXRoVXNlcklkLCBhY3RvcklkLCBhY3RvclR5cGUgfSA9IHBhcmFtczsKICBjb25zdCBub3JtYWxpemVkID0gZW1haWxTY2hlbWEucGFyc2UocGFyYW1zLm5ld0VtYWlsKS50b0xvd2VyQ2FzZSgpOwoKICAvLyBDdXJyZW50IHNlbGxlciByb3cgKGF1dGhvcml0YXRpdmUgZm9yIG93bmVyIGxpbmsgKyBjdXJyZW50IGVtYWlsKS4KICBjb25zdCB7IGRhdGE6IHNlbGxlciwgZXJyb3I6IHNlbGxlckVycm9yIH0gPSBhd2FpdCBzdXBhYmFzZUFkbWluCiAgICAuZnJvbSgic2VsbGVycyIpCiAgICAuc2VsZWN0KCJpZCwgb3duZXJfaWQsIGVtYWlsIikKICAgIC5lcSgiaWQiLCBzZWxsZXJJZCkKICAgIC5zaW5nbGUoKTsKICBpZiAoc2VsbGVyRXJyb3IgfHwgIXNlbGxlcikgdGhyb3cgbmV3IEVycm9yKCJTZWxsZXIgbm90IGZvdW5kLiIpOwogIGlmIChzZWxsZXIub3duZXJfaWQgIT09IGF1dGhVc2VySWQpIHsKICAgIHRocm93IG5ldyBFcnJvcigiU2VsbGVyIGlkZW50aXR5IG1pc21hdGNoOiBvd25lcl9pZCBkb2VzIG5vdCBtYXRjaCB0aGUgYXV0aCB1c2VyLiIpOwogIH0KCiAgY29uc3QgY3VycmVudEVtYWlsID0gKHNlbGxlci5lbWFpbCBhcyBzdHJpbmcgfCBudWxsKT8udG9Mb3dlckNhc2UoKSA/PyBudWxsOwogIGlmIChjdXJyZW50RW1haWwgPT09IG5vcm1hbGl6ZWQpIHsKICAgIHJldHVybiB7IGNoYW5nZWQ6IGZhbHNlLCBlbWFpbDogc2VsbGVyLmVtYWlsIGFzIHN0cmluZywgdmVyaWZpZWQ6IGZhbHNlIH07CiAgfQoKICAvLyBEdXBsaWNhdGUgZ3VhcmQgMTogYW5vdGhlciBzZWxsZXIgcm93IGFscmVhZHkgdXNlcyB0aGlzIGVtYWlsLgogIGNvbnN0IHsgZGF0YTogY2xhc2ggfSA9IGF3YWl0IHN1cGFiYXNlQWRtaW4KICAgIC5mcm9tKCJzZWxsZXJzIikKICAgIC5zZWxlY3QoImlkIikKICAgIC5pbGlrZSgiZW1haWwiLCBub3JtYWxpemVkKQogICAgLm5lcSgiaWQiLCBzZWxsZXJJZCkKICAgIC5saW1pdCgxKTsKICBpZiAoY2xhc2ggJiYgY2xhc2gubGVuZ3RoID4gMCkgewogICAgdGhyb3cgbmV3IEVycm9yKCJUaGlzIGVtYWlsIGFkZHJlc3MgaXMgYWxyZWFkeSB1c2VkIGJ5IGFub3RoZXIgc2VsbGVyLiIpOwogIH0KCiAgLy8gVGhlIHByb3BlciBTdXBhYmFzZSBBdXRoIGVtYWlsLWNoYW5nZSBmbG93LiBTdXBhYmFzZSBzZW5kcyB0aGUKICAvLyB2ZXJpZmljYXRpb24gZW1haWwgdG8gdGhlIG5ldyBhZGRyZXNzICh3aGVuIGVtYWlsIGNvbmZpcm1hdGlvbiBpcwogIC8vIGVuYWJsZWQpIGFuZCBrZWVwcyBhdXRoLnVzZXJzIGFzIHRoZSBzb3VyY2Ugb2YgdHJ1dGguCiAgY29uc3QgeyBkYXRhOiB1cGRhdGVkLCBlcnJvcjogYXV0aEVycm9yIH0gPSBhd2FpdCBzdXBhYmFzZUFkbWluLmF1dGguYWRtaW4udXBkYXRlVXNlckJ5SWQoCiAgICBhdXRoVXNlcklkLAogICAgeyBlbWFpbDogbm9ybWFsaXplZCB9LAogICk7CiAgaWYgKGF1dGhFcnJvcikgewogICAgY29uc3QgbXNnID0gKGF1dGhFcnJvci5tZXNzYWdlID8/ICIiKS50b0xvd2VyQ2FzZSgpOwogICAgaWYgKG1zZy5pbmNsdWRlcygiYWxyZWFkeSIpICYmIChtc2cuaW5jbHVkZXMoImV4aXN0cyIpIHx8IG1zZy5pbmNsdWRlcygicmVnaXN0ZXJlZCIpIHx8IG1zZy5pbmNsdWRlcygidGFrZW4iKSkpIHsKICAgICAgdGhyb3cgbmV3IEVycm9yKCJUaGlzIGVtYWlsIGFkZHJlc3MgaXMgYWxyZWFkeSByZWdpc3RlcmVkLiIpOwogICAgfQogICAgdGhyb3cgbmV3IEVycm9yKGBFbWFpbCBjaGFuZ2UgZmFpbGVkOiAke2F1dGhFcnJvci5tZXNzYWdlfWApOwogIH0KICBjb25zdCBhdXRoVXNlciA9ICh1cGRhdGVkIGFzIGFueSk/LnVzZXI7CiAgaWYgKCFhdXRoVXNlcj8uaWQpIHRocm93IG5ldyBFcnJvcigiRW1haWwgY2hhbmdlIGZhaWxlZDogbm8gdXNlciByZXR1cm5lZC4iKTsKCiAgLy8gQXV0aCBpcyB0aGUgc291cmNlIG9mIHRydXRoOiBzeW5jIHNlbGxlcnMuZW1haWwgdG8gZXhhY3RseSB3aGF0IEF1dGgKICAvLyBub3cgaG9sZHMgKG5ldmVyIHRoZSByYXcgaW5wdXQpLCBhbmQgbWlycm9yIHRoZSB2ZXJpZmljYXRpb24gc3RhdGUuCiAgY29uc3QgYXV0aEVtYWlsID0gU3RyaW5nKGF1dGhVc2VyLmVtYWlsID8/IG5vcm1hbGl6ZWQpLnRvTG93ZXJDYXNlKCk7CiAgY29uc3QgY29uZmlybWVkQXQgPSAoYXV0aFVzZXIuZW1haWxfY29uZmlybWVkX2F0IGFzIHN0cmluZyB8IG51bGwpID8/IG51bGw7CgogIGNvbnN0IHsgZXJyb3I6IHN5bmNFcnJvciB9ID0gYXdhaXQgc3VwYWJhc2VBZG1pbgogICAgLmZyb20oInNlbGxlcnMiKQogICAgLnVwZGF0ZSh7CiAgICAgIGVtYWlsOiBhdXRoRW1haWwsCiAgICAgIGVtYWlsX3ZlcmlmaWVkX2F0OiBjb25maXJtZWRBdCwKICAgICAgdXBkYXRlZF9hdDogbmV3IERhdGUoKS50b0lTT1N0cmluZygpLAogICAgfSkKICAgIC5lcSgiaWQiLCBzZWxsZXJJZCk7CiAgaWYgKHN5bmNFcnJvcikgdGhyb3cgbmV3IEVycm9yKGBGYWlsZWQgdG8gc3luY2hyb25pemUgc2VsbGVyIGVtYWlsOiAke3N5bmNFcnJvci5tZXNzYWdlfWApOwoKICAvLyBBdWRpdCAobmV2ZXIgbG9nIHNlY3JldHM7IGVtYWlsIGFkZHJlc3NlcyBhcmUgYnVzaW5lc3MgaWRlbnRpZmllcnMpLgogIGF3YWl0IHN1cGFiYXNlQWRtaW4uZnJvbSgiYXVkaXRfbG9ncyIpLmluc2VydCh7CiAgICBhY3Rvcl9pZDogYWN0b3JJZCwKICAgIGFjdGlvbjogYWN0b3JUeXBlID09PSAiYWRtaW4iID8gImFkbWluX3NlbGxlcl9lbWFpbF9jaGFuZ2VkIiA6ICJzZWxsZXJfZW1haWxfY2hhbmdlZCIsCiAgICByZXNvdXJjZTogInNlbGxlciIsCiAgICByZXNvdXJjZV9pZDogc2VsbGVySWQsCiAgICBtZXRhZGF0YTogewogICAgICBmcm9tOiBzZWxsZXIuZW1haWwgPz8gbnVsbCwKICAgICAgdG86IGF1dGhFbWFpbCwKICAgICAgdmVyaWZpZWQ6IGNvbmZpcm1lZEF0ICE9PSBudWxsLAogICAgICB2ZXJpZmljYXRpb25fcGVuZGluZzogY29uZmlybWVkQXQgPT09IG51bGwsCiAgICB9LAogIH0pOwoKICByZXR1cm4geyBjaGFuZ2VkOiB0cnVlLCBlbWFpbDogYXV0aEVtYWlsLCB2ZXJpZmllZDogY29uZmlybWVkQXQgIT09IG51bGwgfTsKfQoKLyoqCiAqIEJlc3QtZWZmb3J0IHZlcmlmaWNhdGlvbiBzeW5jOiBpZiBTdXBhYmFzZSBBdXRoIG5vdyByZXBvcnRzIHRoZSBzZWxsZXIncwogKiBlbWFpbCBhcyBjb25maXJtZWQsIG1pcnJvciB0aGF0IGludG8gc2VsbGVycy5lbWFpbF92ZXJpZmllZF9hdC4KICogU2FmZSB0byBjYWxsIG9uIHByb2ZpbGUgcmVhZHM7IG5ldmVyIHRocm93cy4KICovCmV4cG9ydCBhc3luYyBmdW5jdGlvbiBzeW5jRW1haWxWZXJpZmljYXRpb25TdGF0ZSgKICBzdXBhYmFzZUFkbWluOiBhbnksCiAgc2VsbGVySWQ6IHN0cmluZywKICBhdXRoVXNlcklkOiBzdHJpbmcsCik6IFByb21pc2U8dm9pZD4gewogIHRyeSB7CiAgICBjb25zdCB7IGRhdGEsIGVycm9yIH0gPSBhd2FpdCBzdXBhYmFzZUFkbWluLmF1dGguYWRtaW4uZ2V0VXNlckJ5SWQoYXV0aFVzZXJJZCk7CiAgICBpZiAoZXJyb3IgfHwgIWRhdGE/LnVzZXIpIHJldHVybjsKICAgIGNvbnN0IGF1dGhVc2VyID0gZGF0YS51c2VyIGFzIGFueTsKICAgIGNvbnN0IGNvbmZpcm1lZEF0ID0gKGF1dGhVc2VyLmVtYWlsX2NvbmZpcm1lZF9hdCBhcyBzdHJpbmcgfCBudWxsKSA/PyBudWxsOwogICAgY29uc3QgYXV0aEVtYWlsID0gU3RyaW5nKGF1dGhVc2VyLmVtYWlsID8/ICIiKS50b0xvd2VyQ2FzZSgpOwogICAgaWYgKCFhdXRoRW1haWwpIHJldHVybjsKCiAgICBjb25zdCB7IGRhdGE6IHNlbGxlciB9ID0gYXdhaXQgc3VwYWJhc2VBZG1pbgogICAgICAuZnJvbSgic2VsbGVycyIpCiAgICAgIC5zZWxlY3QoImlkLCBlbWFpbCwgZW1haWxfdmVyaWZpZWRfYXQiKQogICAgICAuZXEoImlkIiwgc2VsbGVySWQpCiAgICAgIC5tYXliZVNpbmdsZSgpOwogICAgaWYgKCFzZWxsZXIpIHJldHVybjsKCiAgICBjb25zdCBzZWxsZXJFbWFpbCA9IFN0cmluZygoc2VsbGVyIGFzIGFueSkuZW1haWwgPz8gIiIpLnRvTG93ZXJDYXNlKCk7CiAgICAvLyBLZWVwIHRoZSBpbnZhcmlhbnQ6IHNlbGxlcnMuZW1haWwgbXVzdCBlcXVhbCBhdXRoLnVzZXJzLmVtYWlsLgogICAgLy8gSWYgdGhleSBkcmlmdGVkIChsZWdhY3kgZGF0YSksIGhlYWwgc2VsbGVycy5lbWFpbCB0b3dhcmQgQXV0aC4KICAgIGNvbnN0IG5lZWRzRW1haWxGaXggPSBzZWxsZXJFbWFpbCAhPT0gYXV0aEVtYWlsOwogICAgY29uc3QgbmVlZHNWZXJpZmllZFN5bmMgPQogICAgICBjb25maXJtZWRBdCAhPT0gbnVsbCAmJiAoc2VsbGVyIGFzIGFueSkuZW1haWxfdmVyaWZpZWRfYXQgIT09IGNvbmZpcm1lZEF0OwoKICAgIGlmIChuZWVkc0VtYWlsRml4IHx8IG5lZWRzVmVyaWZpZWRTeW5jKSB7CiAgICAgIGNvbnN0IHBhdGNoOiBSZWNvcmQ8c3RyaW5nLCB1bmtub3duPiA9IHsgdXBkYXRlZF9hdDogbmV3IERhdGUoKS50b0lTT1N0cmluZygpIH07CiAgICAgIGlmIChuZWVkc0VtYWlsRml4KSB7CiAgICAgICAgcGF0Y2hbImVtYWlsIl0gPSBhdXRoRW1haWw7CiAgICAgICAgcGF0Y2hbImVtYWlsX3ZlcmlmaWVkX2F0Il0gPSBjb25maXJtZWRBdDsKICAgICAgfSBlbHNlIGlmIChuZWVkc1ZlcmlmaWVkU3luYykgewogICAgICAgIHBhdGNoWyJlbWFpbF92ZXJpZmllZF9hdCJdID0gY29uZmlybWVkQXQ7CiAgICAgIH0KICAgICAgYXdhaXQgc3VwYWJhc2VBZG1pbi5mcm9tKCJzZWxsZXJzIikudXBkYXRlKHBhdGNoKS5lcSgiaWQiLCBzZWxsZXJJZCk7CiAgICB9CiAgfSBjYXRjaCB7CiAgICAvKiB2ZXJpZmljYXRpb24gc3luYyBpcyBiZXN0LWVmZm9ydCAqLwogIH0KfQo=
+/**
+ * MODALIA — Verified seller email change flow (Section 9).
+ *
+ * SERVER-SIDE ONLY. Never import from client components — this module uses
+ * the service-role admin client and must never reach the browser.
+ *
+ * The critical invariant: sellers.email must ALWAYS equal auth.users.email
+ * for the seller's owner. Direct writes to sellers.email are forbidden;
+ * every email change goes through changeSellerEmail(), which:
+ *
+ *   1. Validates the new email (zod).
+ *   2. Verifies authorization is already established by the caller
+ *      (seller owner for own account, or admin with sellers.manage).
+ *   3. Rejects duplicates (another seller row, or an existing auth user).
+ *   4. Calls supabaseAdmin.auth.admin.updateUserById() — the proper Supabase
+ *      Auth email-change flow, which sends the verification email.
+ *   5. Reads the authoritative email back from Auth and writes THAT value
+ *      into sellers.email (Auth is the source of truth).
+ *   6. Resets sellers.email_verified_at to NULL until re-verified, then
+ *      syncs it from auth.users.email_confirmed_at when verified.
+ *   7. Audits the change.
+ */
+
+import { z } from "zod";
+
+const emailSchema = z.string().trim().email().max(255);
+
+export interface ChangeSellerEmailParams {
+  /** Service-role admin client (server-side only). */
+  supabaseAdmin: any;
+  /** sellers.id */
+  sellerId: string;
+  /** sellers.owner_id — the Supabase Auth user id. Never changes. */
+  authUserId: string;
+  /** The requested new email (raw, will be normalized). */
+  newEmail: string;
+  /** Actor performing the change (seller user id or admin user id). */
+  actorId: string;
+  /** Who is performing the change, for audit clarity. */
+  actorType: "seller" | "admin";
+}
+
+export interface ChangeSellerEmailResult {
+  changed: boolean;
+  /** The authoritative email now stored in both auth.users and sellers. */
+  email: string;
+  /** True when Supabase reports the email as already confirmed. */
+  verified: boolean;
+}
+
+/**
+ * Execute a verified seller email change. Throws on validation, duplicate,
+ * or Auth errors. Never stores or logs the password (no password involved).
+ */
+export async function changeSellerEmail(
+  params: ChangeSellerEmailParams,
+): Promise<ChangeSellerEmailResult> {
+  const { supabaseAdmin, sellerId, authUserId, actorId, actorType } = params;
+  const normalized = emailSchema.parse(params.newEmail).toLowerCase();
+
+  // Current seller row (authoritative for owner link + current email).
+  const { data: seller, error: sellerError } = await supabaseAdmin
+    .from("sellers")
+    .select("id, owner_id, email")
+    .eq("id", sellerId)
+    .single();
+  if (sellerError || !seller) throw new Error("Seller not found.");
+  if (seller.owner_id !== authUserId) {
+    throw new Error("Seller identity mismatch: owner_id does not match the auth user.");
+  }
+
+  const currentEmail = (seller.email as string | null)?.toLowerCase() ?? null;
+  if (currentEmail === normalized) {
+    return { changed: false, email: seller.email as string, verified: false };
+  }
+
+  // Duplicate guard 1: another seller row already uses this email.
+  const { data: clash } = await supabaseAdmin
+    .from("sellers")
+    .select("id")
+    .ilike("email", normalized)
+    .neq("id", sellerId)
+    .limit(1);
+  if (clash && clash.length > 0) {
+    throw new Error("This email address is already used by another seller.");
+  }
+
+  // The proper Supabase Auth email-change flow. Supabase sends the
+  // verification email to the new address (when email confirmation is
+  // enabled) and keeps auth.users as the source of truth.
+  const { data: updated, error: authError } = await supabaseAdmin.auth.admin.updateUserById(
+    authUserId,
+    { email: normalized },
+  );
+  if (authError) {
+    const msg = (authError.message ?? "").toLowerCase();
+    if (msg.includes("already") && (msg.includes("exists") || msg.includes("registered") || msg.includes("taken"))) {
+      throw new Error("This email address is already registered.");
+    }
+    throw new Error(`Email change failed: ${authError.message}`);
+  }
+  const authUser = (updated as any)?.user;
+  if (!authUser?.id) throw new Error("Email change failed: no user returned.");
+
+  // Auth is the source of truth: sync sellers.email to exactly what Auth
+  // now holds (never the raw input), and mirror the verification state.
+  const authEmail = String(authUser.email ?? normalized).toLowerCase();
+  const confirmedAt = (authUser.email_confirmed_at as string | null) ?? null;
+
+  const { error: syncError } = await supabaseAdmin
+    .from("sellers")
+    .update({
+      email: authEmail,
+      email_verified_at: confirmedAt,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", sellerId);
+  if (syncError) throw new Error(`Failed to synchronize seller email: ${syncError.message}`);
+
+  // Audit (never log secrets; email addresses are business identifiers).
+  await supabaseAdmin.from("audit_logs").insert({
+    actor_id: actorId,
+    action: actorType === "admin" ? "admin_seller_email_changed" : "seller_email_changed",
+    resource: "seller",
+    resource_id: sellerId,
+    metadata: {
+      from: seller.email ?? null,
+      to: authEmail,
+      verified: confirmedAt !== null,
+      verification_pending: confirmedAt === null,
+    },
+  });
+
+  return { changed: true, email: authEmail, verified: confirmedAt !== null };
+}
+
+/**
+ * Best-effort verification sync: if Supabase Auth now reports the seller's
+ * email as confirmed, mirror that into sellers.email_verified_at.
+ * Safe to call on profile reads; never throws.
+ */
+export async function syncEmailVerificationState(
+  supabaseAdmin: any,
+  sellerId: string,
+  authUserId: string,
+): Promise<void> {
+  try {
+    const { data, error } = await supabaseAdmin.auth.admin.getUserById(authUserId);
+    if (error || !data?.user) return;
+    const authUser = data.user as any;
+    const confirmedAt = (authUser.email_confirmed_at as string | null) ?? null;
+    const authEmail = String(authUser.email ?? "").toLowerCase();
+    if (!authEmail) return;
+
+    const { data: seller } = await supabaseAdmin
+      .from("sellers")
+      .select("id, email, email_verified_at")
+      .eq("id", sellerId)
+      .maybeSingle();
+    if (!seller) return;
+
+    const sellerEmail = String((seller as any).email ?? "").toLowerCase();
+    // Keep the invariant: sellers.email must equal auth.users.email.
+    // If they drifted (legacy data), heal sellers.email toward Auth.
+    const needsEmailFix = sellerEmail !== authEmail;
+    const needsVerifiedSync =
+      confirmedAt !== null && (seller as any).email_verified_at !== confirmedAt;
+
+    if (needsEmailFix || needsVerifiedSync) {
+      const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+      if (needsEmailFix) {
+        patch["email"] = authEmail;
+        patch["email_verified_at"] = confirmedAt;
+      } else if (needsVerifiedSync) {
+        patch["email_verified_at"] = confirmedAt;
+      }
+      await supabaseAdmin.from("sellers").update(patch).eq("id", sellerId);
+    }
+  } catch {
+    /* verification sync is best-effort */
+  }
+}

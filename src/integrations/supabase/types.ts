@@ -3104,6 +3104,8 @@ export type Database = {
         | "approved"
         | "rejected"
         | "suspended"
+        | "under_review"
+        | "converted"
       seller_order_status:
         | "pending"
         | "accepted"
@@ -3317,6 +3319,8 @@ export const Constants = {
         "approved",
         "rejected",
         "suspended",
+        "under_review",
+        "converted",
       ],
       seller_order_status: [
         "pending",

@@ -70,31 +70,6 @@ export function ProductCard({
     storeName: product.storeName,
   };
 
-  /**
-   * Explicit BUY NOW: never touches the cart. The BuyNowHost opens the
-   * variant sheet when the product has required options, or creates the
-   * direct isolated intent otherwise.
-   */
-  const handleBuyNow = (event: MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    if (soldOut) return;
-    startBuyNow(locale, buyNowProduct, { mode: "buy", quantity: 1 });
-  };
-
-  /**
-   * Quick add goes through the same intent system. CatalogProduct carries no
-   * variant/option data, so every quick-add is resolved server-side: the
-   * host adds the CORRECT default variant directly when no choice is
-   * required, and opens the variant sheet when options are required —
-   * instead of adding `variantId: product.id`, which is wrong for products
-   * with variants. The host confirms with a toast on success.
-   */
-  const handleQuickAdd = (event: MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    if (soldOut) return;
-    startBuyNow(locale, buyNowProduct, { mode: "add", quantity: 1 });
-  };
-
   return (
     <article className="group relative min-w-0 overflow-hidden rounded-2xl border border-border/60 bg-card shadow-[0_1px_3px_rgba(0,0,0,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_32px_rgba(0,0,0,0.12)]">
       {/* Image — 4:5 with premium hover zoom */}
@@ -170,37 +145,8 @@ export function ProductCard({
           />
         </button>
 
-        {/* Commerce actions — full-bleed split bar fading in on hover/focus,
-            always on touch. BUY NOW is primary; Add to bag secondary.
-            Sibling buttons, never nested in the image link. */}
-        <div className="card-action absolute inset-x-0 bottom-0 z-10">
-          {soldOut ? (
-            <div className="flex h-11 w-full items-center justify-center bg-background/95 text-sm font-medium text-muted-foreground backdrop-blur-sm">
-              {t.soldOut}
-            </div>
-          ) : (
-            <div className="flex divide-x divide-border">
-              <button
-                type="button"
-                onClick={handleBuyNow}
-                aria-label={`${t.buyNow} — ${product.name}`}
-                className="flex h-11 min-w-0 flex-1 items-center justify-center gap-2 bg-primary px-2 text-sm font-semibold text-primary-foreground backdrop-blur-sm transition-colors hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-              >
-                <Zap className="size-4 shrink-0" aria-hidden="true" />
-                <span className="truncate">{t.buyNow}</span>
-              </button>
-              <button
-                type="button"
-                onClick={handleQuickAdd}
-                aria-label={`${t.addToBag} — ${product.name}`}
-                className="flex h-11 min-w-0 flex-1 items-center justify-center gap-2 bg-background/95 px-2 text-sm font-medium text-foreground backdrop-blur-sm transition-colors hover:bg-background focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-              >
-                <ShoppingBag className="size-4 shrink-0" aria-hidden="true" />
-                <span className="truncate">{t.addToBag}</span>
-              </button>
-            </div>
-          )}
-        </div>
+        {/* Commerce actions — REMOVED per V10: homepage is discovery only.
+            Product page handles Buy Now / Add to Cart. Card click opens product. */}
       </div>
 
       {/* Info — premium spacing and hierarchy */}

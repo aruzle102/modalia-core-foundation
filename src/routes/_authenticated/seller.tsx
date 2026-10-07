@@ -1,8 +1,10 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
-import { AlertTriangle, ArrowRight, Wallet } from "lucide-react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { queryOptions, useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { AlertTriangle, ArrowRight, LogIn, RefreshCw, ShieldAlert, Store as StoreIcon, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SellerShell } from "@/components/seller/SellerShell";
+import { SellerGateCard, SellerShellSkeleton, useSellerSession } from "@/components/seller/ui";
 import { getLocale, getTranslations } from "@/lib/i18n";
 import { localeTag } from "@/lib/i18n/format";
 import { AdminCard, EmptyState, Stat, StatusPill, fmtDate, fmtMoney } from "@/components/admin/ui";
@@ -18,38 +20,20 @@ import {
   getSellerTopProducts,
 } from "@/lib/seller-dashboard.functions";
 
-const overviewQuery = queryOptions({ queryKey: ["seller-overview"], queryFn: () => getSellerOverview() });
-const todayQuery = queryOptions({ queryKey: ["seller-today-stats"], queryFn: () => getSellerTodayStats() });
-const seriesQuery = queryOptions({ queryKey: ["seller-series", 30], queryFn: () => getSellerSalesSeries({ data: { days: 30 } }) });
-const topProductsQuery = queryOptions({
-  queryKey: ["seller-top-products", 5],
-  queryFn: () => getSellerTopProducts({ data: { limit: 5 } }),
-});
-const breakdownQuery = queryOptions({ queryKey: ["seller-status-breakdown"], queryFn: () => getSellerOrderStatusBreakdown() });
-const recentQuery = queryOptions({
-  queryKey: ["seller-recent-orders", 8],
-  queryFn: () => getSellerRecentOrders({ data: { limit: 8 } }),
+// Only the essential seller identity + KPIs are preloaded in the route loader.
+// Secondary widgets load progressively with their own skeletons.
+const overviewQuery = queryOptions({
+  queryKey: ["seller-overview"],
+  queryFn: () => getSellerOverview(),
+  staleTime: 60 * 1000,
+  gcTime: 5 * 60 * 1000,
 });
 
 export const Route = createFileRoute("/_authenticated/seller")({
   validateSearch: (search: Record<string, unknown>) => ({ locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined) }),
-  loader: ({ context }) =>
-    Promise.allSettled([
-      context.queryClient.ensureQueryData(overviewQuery),
-      context.queryClient.ensureQueryData(todayQuery),
-      context.queryClient.ensureQueryData(seriesQuery),
-      context.queryClient.ensureQueryData(topProductsQuery),
-      context.queryClient.ensureQueryData(breakdownQuery),
-      context.queryClient.ensureQueryData(recentQuery),
-    ]),
-  pendingComponent: () => <div className="px-6 py-24 text-center text-muted-foreground">Loading seller overview…</div>,
-  errorComponent: ({ error }) => (
-    <div role="alert" className="px-6 py-24 text-center text-muted-foreground">
-      <p>Seller overview could not be loaded.</p>
-      <p className="mt-2 text-sm opacity-70">{error instanceof Error ? error.message : "Unknown error"}</p>
-      <p className="mt-4 text-sm">Please make sure you are logged in as a seller, then try again.</p>
-    </div>
-  ),
+  // Do NOT block the route on dashboard data. The component handles
+  // session states (signed-out, not-seller, suspended, must-reset-password)
+  // and loads data progressively.
   head: () => ({
     meta: [
       { name: "robots", content: "noindex,nofollow" },
@@ -67,18 +51,143 @@ export const Route = createFileRoute("/_authenticated/seller")({
 
 function SellerOverviewPage() {
   const { locale } = Route.useSearch();
-  const { data: overview } = useSuspenseQuery(overviewQuery);
-  const { data: today } = useSuspenseQuery(todayQuery);
-  const { data: series } = useSuspenseQuery(seriesQuery);
-  const { data: topProducts } = useSuspenseQuery(topProductsQuery);
-  const { data: breakdown } = useSuspenseQuery(breakdownQuery);
-  const { data: recent } = useSuspenseQuery(recentQuery);
+  const navigate = useNavigate();
+  const session = useSellerSession();
 
+  // Temp password → redirect to password change
+  useEffect(() => {
+    if (session.status === "ready" && session.seller?.mustResetPassword) {
+      void navigate({ to: "/seller/change-password", search: { locale } as any });
+    }
+  }, [session.status, session.seller, navigate, locale]);
+
+  // --- Session gates ---
+  if (session.status === "checking") {
+    return <SellerShellSkeleton />;
+  }
+  if (session.status === "signed-out") {
+    return (
+      <SellerGateCard
+        icon={<LogIn className="h-6 w-6" />}
+        title="Sign in to your seller workspace"
+        description="You need to sign in with your seller account to access the dashboard."
+      >
+        <Button asChild>
+          <Link to="/seller/login" search={{ locale, redirect: "/seller" } as any}>Sign in</Link>
+        </Button>
+      </SellerGateCard>
+    );
+  }
+  if (session.status === "suspended") {
+    return (
+      <SellerGateCard
+        icon={<ShieldAlert className="h-6 w-6" />}
+        title="Account suspended"
+        description={
+          session.suspendedReason === "pending"
+            ? "Your seller application is still under review."
+            : "Your seller account has been suspended. Please contact support."
+        }
+      />
+    );
+  }
+  if (session.status === "not-seller") {
+    return (
+      <SellerGateCard
+        icon={<StoreIcon className="h-6 w-6" />}
+        title="No seller account"
+        description="This account is not registered as a seller. Apply to start selling on Modalia."
+      >
+        <Button asChild>
+          <Link to="/become-a-seller" search={{ locale } as any}>Become a seller</Link>
+        </Button>
+      </SellerGateCard>
+    );
+  }
+  if (session.status === "error") {
+    return (
+      <SellerGateCard
+        icon={<AlertTriangle className="h-6 w-6" />}
+        title="Could not load seller session"
+        description={session.error ?? "An unexpected error occurred."}
+      >
+        <Button variant="outline" onClick={session.retry}>
+          <RefreshCw className="mr-2 h-4 w-4" /> Retry
+        </Button>
+      </SellerGateCard>
+    );
+  }
+
+  // Session ready → load dashboard progressively
+  return <DashboardContent locale={locale} />;
+}
+
+function DashboardContent({ locale }: { locale: "fr" | "en" | "ar" }) {
+  const { data: overview, isPending: overviewPending, isError: overviewError, refetch } = useQuery(overviewQuery);
+
+  if (overviewPending) {
+    return <SellerShellSkeleton />;
+  }
+  if (overviewError || !overview) {
+    return (
+      <SellerGateCard
+        icon={<AlertTriangle className="h-6 w-6" />}
+        title="Seller overview could not be loaded"
+        description="Please try again. If the problem persists, contact support."
+      >
+        <Button variant="outline" onClick={() => void refetch()}>
+          <RefreshCw className="mr-2 h-4 w-4" /> Retry
+        </Button>
+      </SellerGateCard>
+    );
+  }
+
+  return <DashboardWidgets overview={overview} locale={locale} />;
+}
+
+function DashboardWidgets({
+  overview,
+  locale,
+}: {
+  overview: Awaited<ReturnType<typeof getSellerOverview>>;
+  locale: "fr" | "en" | "ar";
+}) {
   const t = getTranslations(locale).sellerDashboardV8;
   const tag = localeTag(locale);
-
   const { kpis, currency, lowStockAlerts } = overview;
   const stockIssues = kpis.lowStockCount + kpis.outOfStockCount;
+
+  // Secondary widgets: independent queries, own skeletons, never block the page
+  const today = useQuery({
+    queryKey: ["seller-today-stats"],
+    queryFn: () => getSellerTodayStats(),
+    staleTime: 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+  });
+  const series = useQuery({
+    queryKey: ["seller-series", 30],
+    queryFn: () => getSellerSalesSeries({ data: { days: 30 } }),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+  });
+  const topProducts = useQuery({
+    queryKey: ["seller-top-products", 5],
+    queryFn: () => getSellerTopProducts({ data: { limit: 5 } }),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+  });
+  const breakdown = useQuery({
+    queryKey: ["seller-status-breakdown"],
+    queryFn: () => getSellerOrderStatusBreakdown(),
+    staleTime: 2 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+  });
+  const recent = useQuery({
+    queryKey: ["seller-recent-orders", 8],
+    queryFn: () => getSellerRecentOrders({ data: { limit: 8 } }),
+    staleTime: 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+  });
 
   return (
     <SellerShell
@@ -98,14 +207,13 @@ function SellerOverviewPage() {
         </>
       }
     >
-      {/* Onboarding nudge (Worker A) — only until the seller is onboarded */}
       {!overview.onboarded ? (
         <div className="mb-6">
           <OnboardingNudge locale={locale} />
         </div>
       ) : null}
 
-      {/* KPI grid — every figure computed from real rows, see seller-dashboard.functions.ts */}
+      {/* KPIs — from overview (already loaded) */}
       <section aria-label="Key metrics" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Stat label="Net earnings" value={fmtMoney(kpis.netEarnings, currency, locale)} hint="Delivered sales minus commission payable" />
         <Stat
@@ -133,62 +241,39 @@ function SellerOverviewPage() {
         <Stat label="Settled to date" value={fmtMoney(kpis.settledAmount, currency, locale)} hint="Approved / paid settlements" />
       </section>
 
-      {/* Today — real rows only. View cards show an honest "not tracked yet"
-          state when the analytics pipeline has nothing for this store;
-          conversion is omitted unless views are measurable. */}
+      {/* Today — progressive */}
       <AdminCard title={t.today.title} subtitle={t.today.subtitle} className="mt-6">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
-          <Stat
-            label={t.today.sales}
-            value={
-              <>
-                <CountUp value={today.todaySales} locale={tag} formatOptions={{ maximumFractionDigits: 2 }} />{" "}
-                {currency}
-              </>
-            }
-            hint={t.today.salesHint}
-          />
-          <Stat
-            label={t.today.orders}
-            value={<CountUp value={today.todayOrdersCount} locale={tag} />}
-            hint={t.today.ordersHint}
-          />
-          <Stat
-            label={t.today.storeViews}
-            value={
-              today.viewsMeasurable && today.storeViews != null ? (
-                <CountUp value={today.storeViews} locale={tag} />
-              ) : (
-                t.today.viewsNotTracked
-              )
-            }
-            hint={today.viewsMeasurable ? undefined : t.today.viewsNotTrackedHint}
-          />
-          <Stat
-            label={t.today.productViews}
-            value={
-              today.viewsMeasurable && today.productViews != null ? (
-                <CountUp value={today.productViews} locale={tag} />
-              ) : (
-                t.today.viewsNotTracked
-              )
-            }
-            hint={today.viewsMeasurable ? undefined : t.today.viewsNotTrackedHint}
-          />
-          {today.conversionRate != null ? (
+        {today.isPending ? (
+          <WidgetSkeleton />
+        ) : today.isError ? (
+          <WidgetError onRetry={() => void today.refetch()} />
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
             <Stat
-              label={t.today.conversion}
-              value={
-                <CountUp
-                  value={today.conversionRate / 100}
-                  locale={tag}
-                  formatOptions={{ style: "percent", maximumFractionDigits: 1 }}
-                />
-              }
-              hint={t.today.conversionHint}
+              label={t.today.sales}
+              value={<><CountUp value={today.data.todaySales} locale={tag} formatOptions={{ maximumFractionDigits: 2 }} /> {currency}</>}
+              hint={t.today.salesHint}
             />
-          ) : null}
-        </div>
+            <Stat label={t.today.orders} value={<CountUp value={today.data.todayOrdersCount} locale={tag} />} hint={t.today.ordersHint} />
+            <Stat
+              label={t.today.storeViews}
+              value={today.data.viewsMeasurable && today.data.storeViews != null ? <CountUp value={today.data.storeViews} locale={tag} /> : t.today.viewsNotTracked}
+              hint={today.data.viewsMeasurable ? undefined : t.today.viewsNotTrackedHint}
+            />
+            <Stat
+              label={t.today.productViews}
+              value={today.data.viewsMeasurable && today.data.productViews != null ? <CountUp value={today.data.productViews} locale={tag} /> : t.today.viewsNotTracked}
+              hint={today.data.viewsMeasurable ? undefined : t.today.viewsNotTrackedHint}
+            />
+            {today.data.conversionRate != null ? (
+              <Stat
+                label={t.today.conversion}
+                value={<CountUp value={today.data.conversionRate / 100} locale={tag} formatOptions={{ style: "percent", maximumFractionDigits: 1 }} />}
+                hint={t.today.conversionHint}
+              />
+            ) : null}
+          </div>
+        )}
       </AdminCard>
 
       {/* Settlement nudge */}
@@ -199,9 +284,7 @@ function SellerOverviewPage() {
           </span>
           <div className="min-w-0 flex-1">
             <p className="text-small font-semibold">{fmtMoney(kpis.pendingSettlementAmount, currency, locale)} is queued for payout</p>
-            <p className="mt-0.5 text-small text-white/55">
-              Settlements are processed by the platform team. Track payout history in Analytics.
-            </p>
+            <p className="mt-0.5 text-small text-white/55">Settlements are processed by the platform team. Track payout history in Analytics.</p>
           </div>
           <Button asChild variant="secondary" size="sm">
             <Link to="/seller/analytics" search={{ locale, days: 30 }}>
@@ -211,13 +294,19 @@ function SellerOverviewPage() {
         </div>
       ) : null}
 
-      {/* Charts */}
+      {/* Charts — progressive */}
       <section className="mt-8 grid gap-6 lg:grid-cols-3">
         <AdminCard title="Sales — last 30 days" subtitle="Delivered sales and order counts per day" className="lg:col-span-2">
-          <SalesLine data={series} />
+          {series.isPending ? <WidgetSkeleton /> : series.isError ? <WidgetError onRetry={() => void series.refetch()} /> : <SalesLine data={series.data} />}
         </AdminCard>
         <AdminCard title="Order statuses" subtitle="Your orders by current status">
-          <Donut data={breakdown.map((b) => ({ label: b.status, value: b.count }))} centerLabel="orders" />
+          {breakdown.isPending ? (
+            <WidgetSkeleton />
+          ) : breakdown.isError ? (
+            <WidgetError onRetry={() => void breakdown.refetch()} />
+          ) : (
+            <Donut data={breakdown.data.map((b) => ({ label: b.status, value: b.count }))} centerLabel="orders" />
+          )}
         </AdminCard>
       </section>
 
@@ -234,13 +323,19 @@ function SellerOverviewPage() {
             </Button>
           }
         >
-          <TopList
-            rows={topProducts.map((p) => ({
-              label: p.name,
-              value: fmtMoney(p.revenue, currency, locale),
-              hint: `${p.units} ${p.units === 1 ? "unit" : "units"} sold`,
-            }))}
-          />
+          {topProducts.isPending ? (
+            <WidgetSkeleton />
+          ) : topProducts.isError ? (
+            <WidgetError onRetry={() => void topProducts.refetch()} />
+          ) : (
+            <TopList
+              rows={topProducts.data.map((p) => ({
+                label: p.name,
+                value: fmtMoney(p.revenue, currency, locale),
+                hint: `${p.units} ${p.units === 1 ? "unit" : "units"} sold`,
+              }))}
+            />
+          )}
         </AdminCard>
         <AdminCard
           title="Stock alerts"
@@ -274,7 +369,7 @@ function SellerOverviewPage() {
         </AdminCard>
       </section>
 
-      {/* Recent orders */}
+      {/* Recent orders — progressive */}
       <AdminCard
         title="Recent orders"
         subtitle="Latest orders across your store"
@@ -287,7 +382,11 @@ function SellerOverviewPage() {
           </Button>
         }
       >
-        {recent.length > 0 ? (
+        {recent.isPending ? (
+          <WidgetSkeleton />
+        ) : recent.isError ? (
+          <WidgetError onRetry={() => void recent.refetch()} />
+        ) : recent.data.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-small">
               <thead>
@@ -300,13 +399,11 @@ function SellerOverviewPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {recent.map((o) => (
+                {recent.data.map((o) => (
                   <tr key={o.id}>
                     <td className="py-3 pe-4 font-medium tabular-nums">{o.orderNumber}</td>
                     <td className="py-3 pe-4 text-muted-foreground">{o.customer}</td>
-                    <td className="py-3 pe-4">
-                      <StatusPill status={o.status} />
-                    </td>
+                    <td className="py-3 pe-4"><StatusPill status={o.status} /></td>
                     <td className="py-3 pe-4 text-muted-foreground">{fmtDate(o.createdAt, locale)}</td>
                     <td className="py-3 text-end font-medium tabular-nums">{fmtMoney(o.total, currency, locale)}</td>
                   </tr>
@@ -327,5 +424,26 @@ function SellerOverviewPage() {
         )}
       </AdminCard>
     </SellerShell>
+  );
+}
+
+function WidgetSkeleton() {
+  return (
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" aria-hidden="true">
+      {[0, 1, 2, 3].map((i) => (
+        <div key={i} className="h-16 animate-pulse rounded-lg bg-muted/60" />
+      ))}
+    </div>
+  );
+}
+
+function WidgetError({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div className="flex items-center justify-between gap-4 rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
+      <span>Could not load this widget.</span>
+      <Button variant="ghost" size="sm" onClick={onRetry}>
+        <RefreshCw className="mr-1 h-3 w-3" /> Retry
+      </Button>
+    </div>
   );
 }

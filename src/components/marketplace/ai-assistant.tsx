@@ -7,7 +7,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Bot, Loader2, SendHorizonal, Sparkles } from "lucide-react";
+import { Bot, Loader2, SendHorizonal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -23,6 +23,7 @@ import { aiChat, type AiChatProduct } from "@/lib/ai.functions";
 import { getPublicIntelligenceConfig } from "@/lib/intelligence-settings.functions";
 import { answerSupportQuestion } from "@/lib/support-knowledge";
 import { cn } from "@/lib/utils";
+import { ModaliaIntelligenceIcon } from "@/components/marketplace/ModaliaIntelligenceIcon";
 
 type ChatMessage = {
   id: number;
@@ -130,7 +131,7 @@ function ProductCard({ product, locale, t }: { product: AiChatProduct; locale: S
         />
       ) : (
         <div className="grid size-12 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground">
-          <Sparkles className="size-5" />
+          <ModaliaIntelligenceIcon size={20} />
         </div>
       )}
       <div className="min-w-0 flex-1">
@@ -263,7 +264,7 @@ export function AiAssistantDrawer({
         <SheetHeader className="border-b border-border px-5 py-4 text-start">
           <SheetTitle className="flex items-center gap-2 text-lg">
             <span className="grid size-9 place-items-center rounded-xl bg-primary text-primary-foreground">
-              <Sparkles className="size-4.5" />
+              <ModaliaIntelligenceIcon size={18} />
             </span>
             {t.assistant.title}
           </SheetTitle>
@@ -280,7 +281,7 @@ export function AiAssistantDrawer({
           {messages.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center gap-4 text-center">
               <span className="grid size-14 place-items-center rounded-2xl bg-muted">
-                <Sparkles className="size-6 text-muted-foreground" />
+                <ModaliaIntelligenceIcon size={24} className="text-muted-foreground" />
               </span>
               <p className="max-w-xs text-sm text-muted-foreground">
                 {intel?.welcome_message || t.assistant.empty}
@@ -387,7 +388,7 @@ export function AiAssistantButton({
 }) {
   return (
     <Button variant="ghost" size="icon" onClick={onOpen} aria-label={t.assistant.open} title={t.assistant.open}>
-      <Sparkles />
+      <ModaliaIntelligenceIcon size={16} />
     </Button>
   );
 }

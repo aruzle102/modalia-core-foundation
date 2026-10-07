@@ -1,1 +1,228 @@
-LyoqCiAqIE1PREFMSUEg4oCUIFN0b3JlIHZlcmlmaWNhdGlvbiByZXF1ZXN0IHN5c3RlbS4KICoKICogQ29uZGl0aW9ucyBmb3IgZWxpZ2liaWxpdHk6CiAqICAtIDUwKyBkZWxpdmVyZWQvcGFpZCBzYWxlcyBpbiB0aGUgbGFzdCAzMCBkYXlzCiAqICAtIDUwMDArIHVuaXF1ZSBzdG9yZSB2aWV3cyAoZGVkdXBsaWNhdGVkIGJ5IGRldmljZSkKICoKICogRmxvdzoKICogIDEuIFNlbGxlciB2aWV3cyBlbGlnaWJpbGl0eSAoc2FsZXMgY291bnQsIHZpZXdzIGNvdW50LCBwcm9ncmVzcykKICogIDIuIEVsaWdpYmxlIHNlbGxlciBjbGlja3MgIlJlcXVlc3QgdmVyaWZpY2F0aW9uIgogKiAgMy4gQWRtaW4gcmV2aWV3cyBpbiAvYWRtaW4vdmVyaWZpY2F0aW9ucyDigJQgYXBwcm92ZSBvciByZWplY3QKICogIDQuIEFwcHJvdmVkIOKGkiBzdG9yZS52ZXJpZmljYXRpb25fc3RhdHVzID0gJ3ZlcmlmaWVkJwogKi8KaW1wb3J0IHsgY3JlYXRlU2VydmVyRm4gfSBmcm9tICJAdGFuc3RhY2svcmVhY3Qtc3RhcnQiOwppbXBvcnQgeyB6IH0gZnJvbSAiem9kIjsKaW1wb3J0IHsgcmVxdWlyZVN1cGFiYXNlQXV0aCB9IGZyb20gIkAvaW50ZWdyYXRpb25zL3N1cGFiYXNlL2F1dGgtbWlkZGxld2FyZSI7CmltcG9ydCB7IHJlcXVpcmVTZWxsZXIgfSBmcm9tICJAL2xpYi9zZWxsZXItYXV0aCI7CmltcG9ydCB7IGFzc2VydEFkbWluIH0gZnJvbSAiQC9saWIvYWRtaW4tYXV0aCI7Cgpjb25zdCBzZWxsZXJPbmx5ID0gW3JlcXVpcmVTdXBhYmFzZUF1dGhdIGFzIGNvbnN0Owpjb25zdCBhZG1pbk9ubHkgPSBbcmVxdWlyZVN1cGFiYXNlQXV0aF0gYXMgY29uc3Q7CgpleHBvcnQgdHlwZSBWZXJpZmljYXRpb25FbGlnaWJpbGl0eSA9IHsKICBzYWxlczMwZDogbnVtYmVyOwogIHVuaXF1ZVZpZXdzOiBudW1iZXI7CiAgc2FsZXNSZXF1aXJlZDogbnVtYmVyOwogIHZpZXdzUmVxdWlyZWQ6IG51bWJlcjsKICBlbGlnaWJsZTogYm9vbGVhbjsKICByZXF1ZXN0U3RhdHVzOiAibm9uZSIgfCAicGVuZGluZyIgfCAiYXBwcm92ZWQiIHwgInJlamVjdGVkIjsKICB2ZXJpZmljYXRpb25TdGF0dXM6IHN0cmluZzsKfTsKCmFzeW5jIGZ1bmN0aW9uIGdldFNlbGxlclN0b3JlKHN1cGFiYXNlOiBhbnksIHNlbGxlcklkOiBzdHJpbmcpIHsKICBjb25zdCB7IGRhdGEsIGVycm9yIH0gPSBhd2FpdCBzdXBhYmFzZQogICAgLmZyb20oInN0b3JlcyIpCiAgICAuc2VsZWN0KCJpZCwgdmVyaWZpY2F0aW9uX3N0YXR1cyIpCiAgICAuZXEoInNlbGxlcl9pZCIsIHNlbGxlcklkKQogICAgLm1heWJlU2luZ2xlKCk7CiAgaWYgKGVycm9yKSB0aHJvdyBuZXcgRXJyb3IoZXJyb3IubWVzc2FnZSk7CiAgcmV0dXJuIGRhdGE7Cn0KCi8qKiBTZWxsZXI6IGdldCB2ZXJpZmljYXRpb24gZWxpZ2liaWxpdHkgKyBjdXJyZW50IHJlcXVlc3Qgc3RhdHVzLiAqLwpleHBvcnQgY29uc3QgZ2V0VmVyaWZpY2F0aW9uU3RhdHVzID0gY3JlYXRlU2VydmVyRm4oeyBtZXRob2Q6ICJHRVQiIH0pCiAgLm1pZGRsZXdhcmUoc2VsbGVyT25seSkKICAuaGFuZGxlcihhc3luYyAoeyBjb250ZXh0IH0pOiBQcm9taXNlPFZlcmlmaWNhdGlvbkVsaWdpYmlsaXR5PiA9PiB7CiAgICBjb25zdCB1c2VySWQgPSAoY29udGV4dCBhcyBhbnkpPy51c2VySWQgYXMgc3RyaW5nOwogICAgaWYgKCF1c2VySWQpIHRocm93IG5ldyBFcnJvcigiVW5hdXRob3JpemVkIik7CiAgICBjb25zdCBzZWxsZXIgPSBhd2FpdCByZXF1aXJlU2VsbGVyKHsgc3VwYWJhc2U6IChjb250ZXh0IGFzIGFueSkuc3VwYWJhc2UsIHVzZXJJZCB9LCAic3RvcmUubWFuYWdlIik7CiAgICBjb25zdCBzdXBhYmFzZSA9IChjb250ZXh0IGFzIGFueSkuc3VwYWJhc2U7CgogICAgY29uc3Qgc3RvcmUgPSBhd2FpdCBnZXRTZWxsZXJTdG9yZShzdXBhYmFzZSwgc2VsbGVyLnNlbGxlcklkKTsKICAgIGlmICghc3RvcmUpIHRocm93IG5ldyBFcnJvcigiTm8gc3RvcmUgZm91bmQiKTsKCiAgICAvLyBHZXQgZWxpZ2liaWxpdHkgZnJvbSBSUEMKICAgIGNvbnN0IHsgZGF0YTogZWxpZywgZXJyb3I6IGVsaWdFcnJvciB9ID0gYXdhaXQgc3VwYWJhc2UucnBjKCJnZXRfc3RvcmVfdmVyaWZpY2F0aW9uX2VsaWdpYmlsaXR5IiwgewogICAgICBwX3N0b3JlX2lkOiBzdG9yZS5pZCwKICAgIH0pOwogICAgaWYgKGVsaWdFcnJvcikgdGhyb3cgbmV3IEVycm9yKGVsaWdFcnJvci5tZXNzYWdlKTsKICAgIGNvbnN0IHJvdyA9IEFycmF5LmlzQXJyYXkoZWxpZykgPyBlbGlnWzBdIDogZWxpZzsKCiAgICAvLyBHZXQgY3VycmVudCByZXF1ZXN0IHN0YXR1cwogICAgY29uc3QgeyBkYXRhOiByZXEgfSA9IGF3YWl0IHN1cGFiYXNlCiAgICAgIC5mcm9tKCJ2ZXJpZmljYXRpb25fcmVxdWVzdHMiKQogICAgICAuc2VsZWN0KCJzdGF0dXMiKQogICAgICAuZXEoInN0b3JlX2lkIiwgc3RvcmUuaWQpCiAgICAgIC5vcmRlcigicmVxdWVzdGVkX2F0IiwgeyBhc2NlbmRpbmc6IGZhbHNlIH0pCiAgICAgIC5saW1pdCgxKQogICAgICAubWF5YmVTaW5nbGUoKTsKCiAgICByZXR1cm4gewogICAgICBzYWxlczMwZDogTnVtYmVyKHJvdz8uc2FsZXNfMzBkID8/IDApLAogICAgICB1bmlxdWVWaWV3czogTnVtYmVyKHJvdz8udW5pcXVlX3ZpZXdzID8/IDApLAogICAgICBzYWxlc1JlcXVpcmVkOiA1MCwKICAgICAgdmlld3NSZXF1aXJlZDogNTAwMCwKICAgICAgZWxpZ2libGU6IEJvb2xlYW4ocm93Py5lbGlnaWJsZSksCiAgICAgIHJlcXVlc3RTdGF0dXM6IChyZXE/LnN0YXR1cyBhcyBWZXJpZmljYXRpb25FbGlnaWJpbGl0eVsicmVxdWVzdFN0YXR1cyJdKSA/PyAibm9uZSIsCiAgICAgIHZlcmlmaWNhdGlvblN0YXR1czogc3RvcmUudmVyaWZpY2F0aW9uX3N0YXR1cyA/PyAidW52ZXJpZmllZCIsCiAgICB9OwogIH0pOwoKLyoqIFNlbGxlcjogc3VibWl0IGEgdmVyaWZpY2F0aW9uIHJlcXVlc3QgKG9ubHkgaWYgZWxpZ2libGUpLiAqLwpleHBvcnQgY29uc3QgcmVxdWVzdFZlcmlmaWNhdGlvbiA9IGNyZWF0ZVNlcnZlckZuKHsgbWV0aG9kOiAiUE9TVCIgfSkKICAubWlkZGxld2FyZShzZWxsZXJPbmx5KQogIC5oYW5kbGVyKGFzeW5jICh7IGNvbnRleHQgfSk6IFByb21pc2U8eyBvazogYm9vbGVhbjsgbWVzc2FnZTogc3RyaW5nIH0+ID0+IHsKICAgIGNvbnN0IHVzZXJJZCA9IChjb250ZXh0IGFzIGFueSk/LnVzZXJJZCBhcyBzdHJpbmc7CiAgICBpZiAoIXVzZXJJZCkgdGhyb3cgbmV3IEVycm9yKCJVbmF1dGhvcml6ZWQiKTsKICAgIGNvbnN0IHNlbGxlciA9IGF3YWl0IHJlcXVpcmVTZWxsZXIoeyBzdXBhYmFzZTogKGNvbnRleHQgYXMgYW55KS5zdXBhYmFzZSwgdXNlcklkIH0sICJzdG9yZS5tYW5hZ2UiKTsKICAgIGNvbnN0IHN1cGFiYXNlID0gKGNvbnRleHQgYXMgYW55KS5zdXBhYmFzZTsKCiAgICBjb25zdCBzdG9yZSA9IGF3YWl0IGdldFNlbGxlclN0b3JlKHN1cGFiYXNlLCBzZWxsZXIuc2VsbGVySWQpOwogICAgaWYgKCFzdG9yZSkgdGhyb3cgbmV3IEVycm9yKCJObyBzdG9yZSBmb3VuZCIpOwogICAgaWYgKHN0b3JlLnZlcmlmaWNhdGlvbl9zdGF0dXMgPT09ICJ2ZXJpZmllZCIpIHsKICAgICAgcmV0dXJuIHsgb2s6IGZhbHNlLCBtZXNzYWdlOiAiU3RvcmUgaXMgYWxyZWFkeSB2ZXJpZmllZCIgfTsKICAgIH0KCiAgICAvLyBDaGVjayBlbGlnaWJpbGl0eQogICAgY29uc3QgeyBkYXRhOiBlbGlnIH0gPSBhd2FpdCBzdXBhYmFzZS5ycGMoImdldF9zdG9yZV92ZXJpZmljYXRpb25fZWxpZ2liaWxpdHkiLCB7CiAgICAgIHBfc3RvcmVfaWQ6IHN0b3JlLmlkLAogICAgfSk7CiAgICBjb25zdCByb3cgPSBBcnJheS5pc0FycmF5KGVsaWcpID8gZWxpZ1swXSA6IGVsaWc7CiAgICBpZiAoIXJvdz8uZWxpZ2libGUpIHsKICAgICAgcmV0dXJuIHsKICAgICAgICBvazogZmFsc2UsCiAgICAgICAgbWVzc2FnZTogYE5vdCB5ZXQgZWxpZ2libGU6ICR7cm93Py5zYWxlc18zMGQgPz8gMH0vNTAgc2FsZXMsICR7cm93Py51bmlxdWVfdmlld3MgPz8gMH0vNTAwMCB2aWV3c2AsCiAgICAgIH07CiAgICB9CgogICAgLy8gQ2hlY2sgZm9yIGV4aXN0aW5nIHBlbmRpbmcgcmVxdWVzdAogICAgY29uc3QgeyBkYXRhOiBleGlzdGluZyB9ID0gYXdhaXQgc3VwYWJhc2UKICAgICAgLmZyb20oInZlcmlmaWNhdGlvbl9yZXF1ZXN0cyIpCiAgICAgIC5zZWxlY3QoImlkIikKICAgICAgLmVxKCJzdG9yZV9pZCIsIHN0b3JlLmlkKQogICAgICAuZXEoInN0YXR1cyIsICJwZW5kaW5nIikKICAgICAgLm1heWJlU2luZ2xlKCk7CiAgICBpZiAoZXhpc3RpbmcpIHsKICAgICAgcmV0dXJuIHsgb2s6IGZhbHNlLCBtZXNzYWdlOiAiQSB2ZXJpZmljYXRpb24gcmVxdWVzdCBpcyBhbHJlYWR5IHBlbmRpbmciIH07CiAgICB9CgogICAgY29uc3QgeyBlcnJvciB9ID0gYXdhaXQgc3VwYWJhc2UuZnJvbSgidmVyaWZpY2F0aW9uX3JlcXVlc3RzIikuaW5zZXJ0KHsKICAgICAgc3RvcmVfaWQ6IHN0b3JlLmlkLAogICAgICBzZWxsZXJfaWQ6IHNlbGxlci5zZWxsZXJJZCwKICAgICAgc2FsZXNfMzBkOiBOdW1iZXIocm93LnNhbGVzXzMwZCksCiAgICAgIHVuaXF1ZV92aWV3czogTnVtYmVyKHJvdy51bmlxdWVfdmlld3MpLAogICAgfSk7CiAgICBpZiAoZXJyb3IpIHRocm93IG5ldyBFcnJvcihlcnJvci5tZXNzYWdlKTsKICAgIHJldHVybiB7IG9rOiB0cnVlLCBtZXNzYWdlOiAiVmVyaWZpY2F0aW9uIHJlcXVlc3Qgc3VibWl0dGVkIiB9OwogIH0pOwoKLyoqIFB1YmxpYzogcmVjb3JkIGEgc3RvcmUgdmlldyAoZGVkdXBsaWNhdGVkIGJ5IGRldmljZSBoYXNoKS4gKi8KZXhwb3J0IGNvbnN0IHJlY29yZFN0b3JlVmlldyA9IGNyZWF0ZVNlcnZlckZuKHsgbWV0aG9kOiAiUE9TVCIgfSkKICAudmFsaWRhdG9yKChkKSA9PiB6Lm9iamVjdCh7IHN0b3JlSWQ6IHouc3RyaW5nKCkudXVpZCgpLCBkZXZpY2VIYXNoOiB6LnN0cmluZygpLm1pbig4KS5tYXgoMTI4KSB9KS5wYXJzZShkKSkKICAuaGFuZGxlcihhc3luYyAoeyBkYXRhLCBjb250ZXh0IH0pOiBQcm9taXNlPHsgY291bnRlZDogYm9vbGVhbiB9PiA9PiB7CiAgICBjb25zdCBzdXBhYmFzZSA9IChjb250ZXh0IGFzIGFueSkuc3VwYWJhc2U7CiAgICBjb25zdCB7IGRhdGE6IHJlc3VsdCwgZXJyb3IgfSA9IGF3YWl0IHN1cGFiYXNlLnJwYygicmVjb3JkX3N0b3JlX3ZpZXciLCB7CiAgICAgIHBfc3RvcmVfaWQ6IGRhdGEuc3RvcmVJZCwKICAgICAgcF9kZXZpY2VfaGFzaDogZGF0YS5kZXZpY2VIYXNoLAogICAgfSk7CiAgICBpZiAoZXJyb3IpIHRocm93IG5ldyBFcnJvcihlcnJvci5tZXNzYWdlKTsKICAgIHJldHVybiB7IGNvdW50ZWQ6IEJvb2xlYW4ocmVzdWx0KSB9OwogIH0pOwoKLy8g4pSA4pSAIEFkbWluIOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgAoKZXhwb3J0IHR5cGUgVmVyaWZpY2F0aW9uUmVxdWVzdFJvdyA9IHsKICBpZDogc3RyaW5nOwogIHN0b3JlX2lkOiBzdHJpbmc7CiAgc3RvcmVOYW1lOiBzdHJpbmc7CiAgc2VsbGVyTmFtZTogc3RyaW5nOwogIHN0YXR1czogc3RyaW5nOwogIHNhbGVzXzMwZDogbnVtYmVyOwogIHVuaXF1ZV92aWV3czogbnVtYmVyOwogIHJlcXVlc3RlZF9hdDogc3RyaW5nOwp9OwoKLyoqIEFkbWluOiBsaXN0IHZlcmlmaWNhdGlvbiByZXF1ZXN0cy4gKi8KZXhwb3J0IGNvbnN0IGxpc3RWZXJpZmljYXRpb25SZXF1ZXN0cyA9IGNyZWF0ZVNlcnZlckZuKHsgbWV0aG9kOiAiR0VUIiB9KQogIC5taWRkbGV3YXJlKGFkbWluT25seSkKICAudmFsaWRhdG9yKChkKSA9PiB6Lm9iamVjdCh7IHN0YXR1czogei5zdHJpbmcoKS5vcHRpb25hbCgpIH0pLnBhcnNlKGQpKQogIC5oYW5kbGVyKGFzeW5jICh7IGRhdGEsIGNvbnRleHQgfSk6IFByb21pc2U8VmVyaWZpY2F0aW9uUmVxdWVzdFJvd1tdPiA9PiB7CiAgICBhd2FpdCBhc3NlcnRBZG1pbigoY29udGV4dCBhcyBhbnkpKTsKICAgIGNvbnN0IHN1cGFiYXNlID0gKGNvbnRleHQgYXMgYW55KS5zdXBhYmFzZTsKCiAgICBsZXQgcSA9IHN1cGFiYXNlCiAgICAgIC5mcm9tKCJ2ZXJpZmljYXRpb25fcmVxdWVzdHMiKQogICAgICAuc2VsZWN0KCJpZCwgc3RvcmVfaWQsIHN0YXR1cywgc2FsZXNfMzBkLCB1bmlxdWVfdmlld3MsIHJlcXVlc3RlZF9hdCwgc3RvcmVzIWlubmVyKG5hbWUpLCBzZWxsZXJzIWlubmVyKGxlZ2FsX25hbWUpIikKICAgICAgLm9yZGVyKCJyZXF1ZXN0ZWRfYXQiLCB7IGFzY2VuZGluZzogZmFsc2UgfSk7CiAgICBpZiAoZGF0YS5zdGF0dXMgJiYgZGF0YS5zdGF0dXMgIT09ICJhbGwiKSBxID0gcS5lcSgic3RhdHVzIiwgZGF0YS5zdGF0dXMpOwoKICAgIGNvbnN0IHsgZGF0YTogcm93cywgZXJyb3IgfSA9IGF3YWl0IHE7CiAgICBpZiAoZXJyb3IpIHRocm93IG5ldyBFcnJvcihlcnJvci5tZXNzYWdlKTsKICAgIHJldHVybiAocm93cyA/PyBbXSkubWFwKChyOiBhbnkpID0+ICh7CiAgICAgIGlkOiByLmlkLAogICAgICBzdG9yZV9pZDogci5zdG9yZV9pZCwKICAgICAgc3RvcmVOYW1lOiByLnN0b3Jlcz8ubmFtZSA/PyAi4oCUIiwKICAgICAgc2VsbGVyTmFtZTogci5zZWxsZXJzPy5sZWdhbF9uYW1lID8/ICLigJQiLAogICAgICBzdGF0dXM6IHIuc3RhdHVzLAogICAgICBzYWxlc18zMGQ6IHIuc2FsZXNfMzBkLAogICAgICB1bmlxdWVfdmlld3M6IHIudW5pcXVlX3ZpZXdzLAogICAgICByZXF1ZXN0ZWRfYXQ6IHIucmVxdWVzdGVkX2F0LAogICAgfSkpOwogIH0pOwoKLyoqIEFkbWluOiBhcHByb3ZlIG9yIHJlamVjdCBhIHZlcmlmaWNhdGlvbiByZXF1ZXN0LiAqLwpleHBvcnQgY29uc3QgcmV2aWV3VmVyaWZpY2F0aW9uUmVxdWVzdCA9IGNyZWF0ZVNlcnZlckZuKHsgbWV0aG9kOiAiUE9TVCIgfSkKICAubWlkZGxld2FyZShhZG1pbk9ubHkpCiAgLnZhbGlkYXRvcigoZCkgPT4KICAgIHoKICAgICAgLm9iamVjdCh7CiAgICAgICAgcmVxdWVzdElkOiB6LnN0cmluZygpLnV1aWQoKSwKICAgICAgICBkZWNpc2lvbjogei5lbnVtKFsiYXBwcm92ZWQiLCAicmVqZWN0ZWQiXSksCiAgICAgICAgbm90ZXM6IHouc3RyaW5nKCkubWF4KDEwMDApLm9wdGlvbmFsKCksCiAgICAgIH0pCiAgICAgIC5wYXJzZShkKQogICkKICAuaGFuZGxlcihhc3luYyAoeyBkYXRhLCBjb250ZXh0IH0pOiBQcm9taXNlPHsgb2s6IGJvb2xlYW4gfT4gPT4gewogICAgYXdhaXQgYXNzZXJ0QWRtaW4oKGNvbnRleHQgYXMgYW55KSk7CiAgICBjb25zdCB1c2VySWQgPSAoY29udGV4dCBhcyBhbnkpPy51c2VySWQgYXMgc3RyaW5nOwogICAgY29uc3Qgc3VwYWJhc2UgPSAoY29udGV4dCBhcyBhbnkpLnN1cGFiYXNlOwoKICAgIGNvbnN0IHsgZGF0YTogcmVxLCBlcnJvcjogcmVxRXJyb3IgfSA9IGF3YWl0IHN1cGFiYXNlCiAgICAgIC5mcm9tKCJ2ZXJpZmljYXRpb25fcmVxdWVzdHMiKQogICAgICAuc2VsZWN0KCJpZCwgc3RvcmVfaWQsIHN0YXR1cyIpCiAgICAgIC5lcSgiaWQiLCBkYXRhLnJlcXVlc3RJZCkKICAgICAgLnNpbmdsZSgpOwogICAgaWYgKHJlcUVycm9yIHx8ICFyZXEpIHRocm93IG5ldyBFcnJvcigiUmVxdWVzdCBub3QgZm91bmQiKTsKICAgIGlmIChyZXEuc3RhdHVzICE9PSAicGVuZGluZyIpIHRocm93IG5ldyBFcnJvcigiUmVxdWVzdCBhbHJlYWR5IHJldmlld2VkIik7CgogICAgY29uc3QgeyBlcnJvcjogdXBkRXJyb3IgfSA9IGF3YWl0IHN1cGFiYXNlCiAgICAgIC5mcm9tKCJ2ZXJpZmljYXRpb25fcmVxdWVzdHMiKQogICAgICAudXBkYXRlKHsKICAgICAgICBzdGF0dXM6IGRhdGEuZGVjaXNpb24sCiAgICAgICAgcmV2aWV3ZWRfYXQ6IG5ldyBEYXRlKCkudG9JU09TdHJpbmcoKSwKICAgICAgICByZXZpZXdlZF9ieTogdXNlcklkLAogICAgICAgIHJldmlld19ub3RlczogZGF0YS5ub3RlcyA/PyBudWxsLAogICAgICB9KQogICAgICAuZXEoImlkIiwgZGF0YS5yZXF1ZXN0SWQpOwogICAgaWYgKHVwZEVycm9yKSB0aHJvdyBuZXcgRXJyb3IodXBkRXJyb3IubWVzc2FnZSk7CgogICAgaWYgKGRhdGEuZGVjaXNpb24gPT09ICJhcHByb3ZlZCIpIHsKICAgICAgY29uc3QgeyBlcnJvcjogc3RvcmVFcnJvciB9ID0gYXdhaXQgc3VwYWJhc2UKICAgICAgICAuZnJvbSgic3RvcmVzIikKICAgICAgICAudXBkYXRlKHsgdmVyaWZpY2F0aW9uX3N0YXR1czogInZlcmlmaWVkIiB9KQogICAgICAgIC5lcSgiaWQiLCByZXEuc3RvcmVfaWQpOwogICAgICBpZiAoc3RvcmVFcnJvcikgdGhyb3cgbmV3IEVycm9yKHN0b3JlRXJyb3IubWVzc2FnZSk7CiAgICB9CiAgICByZXR1cm4geyBvazogdHJ1ZSB9OwogIH0pOwo=
+/**
+ * MODALIA — Store verification request system.
+ *
+ * Conditions for eligibility:
+ *  - 50+ delivered/paid sales in the last 30 days
+ *  - 5000+ unique store views (deduplicated by device)
+ *
+ * Flow:
+ *  1. Seller views eligibility (sales count, views count, progress)
+ *  2. Eligible seller clicks "Request verification"
+ *  3. Admin reviews in /admin/verifications — approve or reject
+ *  4. Approved → store.verification_status = 'verified'
+ */
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireSeller } from "@/lib/seller-auth";
+import { assertAdmin } from "@/lib/admin-auth";
+
+const sellerOnly = [requireSupabaseAuth] as const;
+const adminOnly = [requireSupabaseAuth] as const;
+
+export type VerificationEligibility = {
+  sales30d: number;
+  uniqueViews: number;
+  salesRequired: number;
+  viewsRequired: number;
+  eligible: boolean;
+  requestStatus: "none" | "pending" | "approved" | "rejected";
+  verificationStatus: string;
+};
+
+async function getSellerStore(supabase: any, sellerId: string) {
+  const { data, error } = await supabase
+    .from("stores")
+    .select("id, verification_status")
+    .eq("seller_id", sellerId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+/** Seller: get verification eligibility + current request status. */
+export const getVerificationStatus = createServerFn({ method: "GET" })
+  .middleware(sellerOnly)
+  .handler(async ({ context }): Promise<VerificationEligibility> => {
+    const userId = (context as any)?.userId as string;
+    if (!userId) throw new Error("Unauthorized");
+    const seller = await requireSeller({ supabase: (context as any).supabase, userId }, "store.manage");
+    const supabase = (context as any).supabase;
+
+    const store = await getSellerStore(supabase, seller.sellerId);
+    if (!store) throw new Error("No store found");
+
+    // Get eligibility from RPC
+    const { data: elig, error: eligError } = await supabase.rpc("get_store_verification_eligibility", {
+      p_store_id: store.id,
+    });
+    if (eligError) throw new Error(eligError.message);
+    const row = Array.isArray(elig) ? elig[0] : elig;
+
+    // Get current request status
+    const { data: req } = await supabase
+      .from("verification_requests")
+      .select("status")
+      .eq("store_id", store.id)
+      .order("requested_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    return {
+      sales30d: Number(row?.sales_30d ?? 0),
+      uniqueViews: Number(row?.unique_views ?? 0),
+      salesRequired: 50,
+      viewsRequired: 5000,
+      eligible: Boolean(row?.eligible),
+      requestStatus: (req?.status as VerificationEligibility["requestStatus"]) ?? "none",
+      verificationStatus: store.verification_status ?? "unverified",
+    };
+  });
+
+/** Seller: submit a verification request (only if eligible). */
+export const requestVerification = createServerFn({ method: "POST" })
+  .middleware(sellerOnly)
+  .handler(async ({ context }): Promise<{ ok: boolean; message: string }> => {
+    const userId = (context as any)?.userId as string;
+    if (!userId) throw new Error("Unauthorized");
+    const seller = await requireSeller({ supabase: (context as any).supabase, userId }, "store.manage");
+    const supabase = (context as any).supabase;
+
+    const store = await getSellerStore(supabase, seller.sellerId);
+    if (!store) throw new Error("No store found");
+    if (store.verification_status === "verified") {
+      return { ok: false, message: "Store is already verified" };
+    }
+
+    // Check eligibility
+    const { data: elig } = await supabase.rpc("get_store_verification_eligibility", {
+      p_store_id: store.id,
+    });
+    const row = Array.isArray(elig) ? elig[0] : elig;
+    if (!row?.eligible) {
+      return {
+        ok: false,
+        message: `Not yet eligible: ${row?.sales_30d ?? 0}/50 sales, ${row?.unique_views ?? 0}/5000 views`,
+      };
+    }
+
+    // Check for existing pending request
+    const { data: existing } = await supabase
+      .from("verification_requests")
+      .select("id")
+      .eq("store_id", store.id)
+      .eq("status", "pending")
+      .maybeSingle();
+    if (existing) {
+      return { ok: false, message: "A verification request is already pending" };
+    }
+
+    const { error } = await supabase.from("verification_requests").insert({
+      store_id: store.id,
+      seller_id: seller.sellerId,
+      sales_30d: Number(row.sales_30d),
+      unique_views: Number(row.unique_views),
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true, message: "Verification request submitted" };
+  });
+
+/** Public: record a store view (deduplicated by device hash). */
+export const recordStoreView = createServerFn({ method: "POST" })
+  .validator((d) => z.object({ storeId: z.string().uuid(), deviceHash: z.string().min(8).max(128) }).parse(d))
+  .handler(async ({ data, context }): Promise<{ counted: boolean }> => {
+    const supabase = (context as any).supabase;
+    const { data: result, error } = await supabase.rpc("record_store_view", {
+      p_store_id: data.storeId,
+      p_device_hash: data.deviceHash,
+    });
+    if (error) throw new Error(error.message);
+    return { counted: Boolean(result) };
+  });
+
+// ── Admin ──────────────────────────────────────────────────────────
+
+export type VerificationRequestRow = {
+  id: string;
+  store_id: string;
+  storeName: string;
+  sellerName: string;
+  status: string;
+  sales_30d: number;
+  unique_views: number;
+  requested_at: string;
+};
+
+/** Admin: list verification requests. */
+export const listVerificationRequests = createServerFn({ method: "GET" })
+  .middleware(adminOnly)
+  .validator((d) => z.object({ status: z.string().optional() }).parse(d))
+  .handler(async ({ data, context }): Promise<VerificationRequestRow[]> => {
+    await assertAdmin((context as any));
+    const supabase = (context as any).supabase;
+
+    let q = supabase
+      .from("verification_requests")
+      .select("id, store_id, status, sales_30d, unique_views, requested_at, stores!inner(name), sellers!inner(legal_name)")
+      .order("requested_at", { ascending: false });
+    if (data.status && data.status !== "all") q = q.eq("status", data.status);
+
+    const { data: rows, error } = await q;
+    if (error) throw new Error(error.message);
+    return (rows ?? []).map((r: any) => ({
+      id: r.id,
+      store_id: r.store_id,
+      storeName: r.stores?.name ?? "—",
+      sellerName: r.sellers?.legal_name ?? "—",
+      status: r.status,
+      sales_30d: r.sales_30d,
+      unique_views: r.unique_views,
+      requested_at: r.requested_at,
+    }));
+  });
+
+/** Admin: approve or reject a verification request. */
+export const reviewVerificationRequest = createServerFn({ method: "POST" })
+  .middleware(adminOnly)
+  .validator((d) =>
+    z
+      .object({
+        requestId: z.string().uuid(),
+        decision: z.enum(["approved", "rejected"]),
+        notes: z.string().max(1000).optional(),
+      })
+      .parse(d)
+  )
+  .handler(async ({ data, context }): Promise<{ ok: boolean }> => {
+    await assertAdmin((context as any));
+    const userId = (context as any)?.userId as string;
+    const supabase = (context as any).supabase;
+
+    const { data: req, error: reqError } = await supabase
+      .from("verification_requests")
+      .select("id, store_id, status")
+      .eq("id", data.requestId)
+      .single();
+    if (reqError || !req) throw new Error("Request not found");
+    if (req.status !== "pending") throw new Error("Request already reviewed");
+
+    const { error: updError } = await supabase
+      .from("verification_requests")
+      .update({
+        status: data.decision,
+        reviewed_at: new Date().toISOString(),
+        reviewed_by: userId,
+        review_notes: data.notes ?? null,
+      })
+      .eq("id", data.requestId);
+    if (updError) throw new Error(updError.message);
+
+    if (data.decision === "approved") {
+      const { error: storeError } = await supabase
+        .from("stores")
+        .update({ verification_status: "verified" })
+        .eq("id", req.store_id);
+      if (storeError) throw new Error(storeError.message);
+    }
+    return { ok: true };
+  });

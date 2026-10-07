@@ -1,3 +1,4 @@
+# Seller authorization must keep request and privileged support-grant access in `*.server.ts` helpers; browser-reachable modules export only safe types, constants, and server-function entrypoints.
 <!-- LOVABLE:BEGIN -->
 > [!IMPORTANT]
 > This project is connected to [Lovable](https://lovable.dev). Avoid rewriting

@@ -1,1 +1,175 @@
-aW1wb3J0IHsgY3JlYXRlRmlsZVJvdXRlIH0gZnJvbSAiQHRhbnN0YWNrL3JlYWN0LXJvdXRlciI7CmltcG9ydCB7IHVzZVF1ZXJ5IH0gZnJvbSAiQHRhbnN0YWNrL3JlYWN0LXF1ZXJ5IjsKaW1wb3J0IHsgU2VsbGVyU2hlbGwgfSBmcm9tICJAL2NvbXBvbmVudHMvc2VsbGVyL1NlbGxlclNoZWxsIjsKaW1wb3J0IHsgQWRtaW5DYXJkLCBFbXB0eVN0YXRlLCBUYWJsZVNrZWxldG9uIH0gZnJvbSAiQC9jb21wb25lbnRzL2FkbWluL3VpIjsKaW1wb3J0IHsgbGlzdFNlbGxlclByb2R1Y3RzIH0gZnJvbSAiQC9saWIvc2VsbGVyLXByb2R1Y3RzLmZ1bmN0aW9ucyI7CmltcG9ydCB7IGdldExvY2FsZSB9IGZyb20gIkAvbGliL2kxOG4iOwppbXBvcnQgeyBlcnJNc2cgfSBmcm9tICIuLi9hZG1pbi9fc2hhcmVkIjsKCmV4cG9ydCBjb25zdCBSb3V0ZSA9IGNyZWF0ZUZpbGVSb3V0ZSgiL19hdXRoZW50aWNhdGVkL3NlbGxlci9jYXRlZ29yaWVzIikoewogIHZhbGlkYXRlU2VhcmNoOiAoc2VhcmNoOiBSZWNvcmQ8c3RyaW5nLCB1bmtub3duPikgPT4gKHsKICAgIGxvY2FsZTogZ2V0TG9jYWxlKHR5cGVvZiBzZWFyY2hbImxvY2FsZSJdID09PSAic3RyaW5nIiA/IHNlYXJjaFsibG9jYWxlIl0gOiB1bmRlZmluZWQpLAogIH0pLAogIGhlYWQ6ICgpID0+ICh7CiAgICBtZXRhOiBbCiAgICAgIHsgbmFtZTogInJvYm90cyIsIGNvbnRlbnQ6ICJub2luZGV4LG5vZm9sbG93IiB9LAogICAgICB7IHRpdGxlOiAiQ2F0ZWdvcmllcyDigJQgU2VsbGVyIOKAlCBNb2RhbGlhIiB9LAogICAgICB7IG5hbWU6ICJkZXNjcmlwdGlvbiIsIGNvbnRlbnQ6ICJDYXRlZ29yaWVzIHlvdXIgcHJvZHVjdHMgYXJlIGxpc3RlZCBpbi4iIH0sCiAgICBdLAogIH0pLAogIGNvbXBvbmVudDogU2VsbGVyQ2F0ZWdvcmllc1BhZ2UsCn0pOwoKY29uc3QgVCA9IHsKICBlbjogewogICAgdGl0bGU6ICJDYXRlZ29yaWVzIiwKICAgIGludHJvOiAiVGhlIGNhdGVnb3JpZXMgeW91ciBvd24gcHJvZHVjdHMgYXJlIGxpc3RlZCBpbiwgd2l0aCB0aGUgbnVtYmVyIG9mIHByb2R1Y3RzIGluIGVhY2guIiwKICAgIGNvbENhdGVnb3J5OiAiQ2F0ZWdvcnkiLAogICAgY29sUHJvZHVjdHM6ICJQcm9kdWN0cyIsCiAgICB1bmNhdGVnb3JpemVkOiAiVW5jYXRlZ29yaXplZCIsCiAgICB0b3RhbFJvdzogIlRvdGFsIiwKICAgIGxvYWRpbmc6ICJMb2FkaW5nIHlvdXIgY2F0ZWdvcmllc+KApiIsCiAgICBlbXB0eVRpdGxlOiAiTm8gY2F0ZWdvcmllcyB5ZXQiLAogICAgZW1wdHlUZXh0OiAiQ2F0ZWdvcmllcyBhcHBlYXIgaGVyZSBvbmNlIHlvdSBhZGQgcHJvZHVjdHMgYW5kIGFzc2lnbiB0aGVtIHRvIGNhdGVnb3JpZXMuIiwKICAgIGVycm9yVGl0bGU6ICJDYXRlZ29yaWVzIGNvdWxkIG5vdCBiZSBsb2FkZWQiLAogIH0sCiAgZnI6IHsKICAgIHRpdGxlOiAiQ2F0w6lnb3JpZXMiLAogICAgaW50cm86ICJMZXMgY2F0w6lnb3JpZXMgZGFucyBsZXNxdWVsbGVzIHZvcyBwcm9wcmVzIHByb2R1aXRzIHNvbnQgcsOpcGVydG9yacOpcywgYXZlYyBsZSBub21icmUgZGUgcHJvZHVpdHMgZGFucyBjaGFjdW5lLiIsCiAgICBjb2xDYXRlZ29yeTogIkNhdMOpZ29yaWUiLAogICAgY29sUHJvZHVjdHM6ICJQcm9kdWl0cyIsCiAgICB1bmNhdGVnb3JpemVkOiAiTm9uIGNhdMOpZ29yaXPDqSIsCiAgICB0b3RhbFJvdzogIlRvdGFsIiwKICAgIGxvYWRpbmc6ICJDaGFyZ2VtZW50IGRlIHZvcyBjYXTDqWdvcmllc+KApiIsCiAgICBlbXB0eVRpdGxlOiAiQXVjdW5lIGNhdMOpZ29yaWUgcG91ciBsZSBtb21lbnQiLAogICAgZW1wdHlUZXh0OiAiTGVzIGNhdMOpZ29yaWVzIGFwcGFyYcOudHJvbnQgaWNpIHVuZSBmb2lzIHF1ZSB2b3VzIGF1cmV6IGFqb3V0w6kgZGVzIHByb2R1aXRzIGV0IGxlcyBhdXJleiBhc3NpZ27DqXMgw6AgZGVzIGNhdMOpZ29yaWVzLiIsCiAgICBlcnJvclRpdGxlOiAiTGVzIGNhdMOpZ29yaWVzIG4nb250IHBhcyBwdSDDqnRyZSBjaGFyZ8OpZXMiLAogIH0sCiAgYXI6IHsKICAgIHRpdGxlOiAi2KfZhNmB2KbYp9iqIiwKICAgIGludHJvOiAi2KfZhNmB2KbYp9iqINin2YTYqtmKINiq2Y/Yr9ix2Kwg2YHZitmH2Kcg2YXZhtiq2KzYp9iq2YPYjCDZhdi5INi52K/YryDYp9mE2YXZhtiq2KzYp9iqINmB2Yog2YPZhCDZgdim2KkuIiwKICAgIGNvbENhdGVnb3J5OiAi2KfZhNmB2KbYqSIsCiAgICBjb2xQcm9kdWN0czogItin2YTZhdmG2KrYrNin2KoiLAogICAgdW5jYXRlZ29yaXplZDogItio2K/ZiNmGINmB2KbYqSIsCiAgICB0b3RhbFJvdzogItin2YTZhdis2YXZiNi5IiwKICAgIGxvYWRpbmc6ICLYrNin2LHZjSDYqtit2YXZitmEINin2YTZgdim2KfYquKApiIsCiAgICBlbXB0eVRpdGxlOiAi2YTYpyDYqtmI2KzYryDZgdim2KfYqiDYqNi52K8iLAogICAgZW1wdHlUZXh0OiAi2LPYqti42YfYsSDYp9mE2YHYptin2Kog2YfZhtinINio2YXYrNix2K8g2KXYttin2YHYqSDZhdmG2KrYrNin2Kog2YjYqti52YrZitmG2YfYpyDYpdmE2Ykg2YHYptin2KouIiwKICAgIGVycm9yVGl0bGU6ICLYqti52LDZkdixINiq2K3ZhdmK2YQg2KfZhNmB2KbYp9iqIiwKICB9LAp9IGFzIGNvbnN0OwoKdHlwZSBMb2NhbGUgPSBrZXlvZiB0eXBlb2YgVDsKCmZ1bmN0aW9uIGNhdE5hbWUobmFtZTogdW5rbm93biwgbG9jYWxlOiBMb2NhbGUpOiBzdHJpbmcgfCBudWxsIHsKICBpZiAobmFtZSAmJiB0eXBlb2YgbmFtZSA9PT0gIm9iamVjdCIgJiYgIUFycmF5LmlzQXJyYXkobmFtZSkpIHsKICAgIGNvbnN0IG4gPSBuYW1lIGFzIFJlY29yZDxzdHJpbmcsIHVua25vd24+OwogICAgZm9yIChjb25zdCBrIG9mIFtsb2NhbGUsICJlbiIsICJmciIsICJhciJdKSB7CiAgICAgIGlmICh0eXBlb2YgbltrXSA9PT0gInN0cmluZyIgJiYgbltrXSkgcmV0dXJuIG5ba10gYXMgc3RyaW5nOwogICAgfQogIH0KICByZXR1cm4gbnVsbDsKfQoKaW50ZXJmYWNlIENhdGVnb3J5Um93IHsKICBrZXk6IHN0cmluZzsKICBuYW1lOiBzdHJpbmc7CiAgY291bnQ6IG51bWJlcjsKfQoKLyoqIEFnZ3JlZ2F0ZSB0aGUgc2VsbGVyJ3MgcmVhbCBwZXItY2F0ZWdvcnkgcHJvZHVjdCBjb3VudHMgYnkgcGFnaW5nIHRocm91Z2ggdGhlaXIgb3duIGNhdGFsb2cuICovCmFzeW5jIGZ1bmN0aW9uIGZldGNoQ2F0ZWdvcnlDb3VudHMobG9jYWxlOiBMb2NhbGUpOiBQcm9taXNlPHsgcm93czogQ2F0ZWdvcnlSb3dbXTsgdG90YWw6IG51bWJlciB9PiB7CiAgY29uc3QgY291bnRzID0gbmV3IE1hcDxzdHJpbmcsIHsgbmFtZTogc3RyaW5nOyBjb3VudDogbnVtYmVyIH0+KCk7CiAgbGV0IHBhZ2UgPSAxOwogIGxldCB0b3RhbFByb2R1Y3RzID0gMDsKICAvLyBlc2xpbnQtZGlzYWJsZS1uZXh0LWxpbmUgbm8tY29uc3RhbnQtY29uZGl0aW9uCiAgd2hpbGUgKHRydWUpIHsKICAgIGNvbnN0IHJlcyA9IGF3YWl0IGxpc3RTZWxsZXJQcm9kdWN0cyh7IGRhdGE6IHsgcGFnZSB9IH0pOwogICAgY29uc3QgcHJvZHVjdHMgPSByZXMucHJvZHVjdHMgPz8gW107CiAgICBpZiAocGFnZSA9PT0gMSkgdG90YWxQcm9kdWN0cyA9IHJlcy50b3RhbCA/PyAwOwogICAgaWYgKHByb2R1Y3RzLmxlbmd0aCA9PT0gMCkgYnJlYWs7CiAgICBmb3IgKGNvbnN0IHAgb2YgcHJvZHVjdHMpIHsKICAgICAgY29uc3Qgcm93ID0gcCBhcyB7IGNhdGVnb3JpZXM/OiB7IG5hbWU/OiB1bmtub3duIH0gfCBudWxsIH07CiAgICAgIGNvbnN0IGtleSA9IHJvdy5jYXRlZ29yaWVzID8gSlNPTi5zdHJpbmdpZnkocm93LmNhdGVnb3JpZXMubmFtZSA/PyBudWxsKSA6ICJfX25vbmVfXyI7CiAgICAgIGNvbnN0IGV4aXN0aW5nID0gY291bnRzLmdldChrZXkpOwogICAgICBpZiAoZXhpc3RpbmcpIHsKICAgICAgICBleGlzdGluZy5jb3VudCArPSAxOwogICAgICB9IGVsc2UgewogICAgICAgIGNvdW50cy5zZXQoa2V5LCB7CiAgICAgICAgICBuYW1lOiBjYXROYW1lKHJvdy5jYXRlZ29yaWVzPy5uYW1lLCBsb2NhbGUpID8/ICIiLAogICAgICAgICAgY291bnQ6IDEsCiAgICAgICAgfSk7CiAgICAgIH0KICAgIH0KICAgIGNvbnN0IGZldGNoZWQgPSBwYWdlICogKHJlcy5wYWdlU2l6ZSA/PyBwcm9kdWN0cy5sZW5ndGgpOwogICAgaWYgKHByb2R1Y3RzLmxlbmd0aCA8IChyZXMucGFnZVNpemUgPz8gcHJvZHVjdHMubGVuZ3RoKSB8fCBmZXRjaGVkID49IHRvdGFsUHJvZHVjdHMpIGJyZWFrOwogICAgcGFnZSArPSAxOwogIH0KICBjb25zdCByb3dzOiBDYXRlZ29yeVJvd1tdID0gWy4uLmNvdW50cy5lbnRyaWVzKCldLm1hcCgoW2tleSwgdl0pID0+ICh7CiAgICBrZXksCiAgICBuYW1lOiB2Lm5hbWUgfHwga2V5LAogICAgY291bnQ6IHYuY291bnQsCiAgfSkpOwogIHJvd3Muc29ydCgoYSwgYikgPT4gYi5jb3VudCAtIGEuY291bnQgfHwgYS5uYW1lLmxvY2FsZUNvbXBhcmUoYi5uYW1lKSk7CiAgcmV0dXJuIHsgcm93cywgdG90YWw6IHJvd3MucmVkdWNlKChzLCByKSA9PiBzICsgci5jb3VudCwgMCkgfTsKfQoKZnVuY3Rpb24gU2VsbGVyQ2F0ZWdvcmllc1BhZ2UoKSB7CiAgY29uc3QgeyBsb2NhbGUgfSA9IFJvdXRlLnVzZVNlYXJjaCgpOwogIGNvbnN0IHQgPSBUWyhsb2NhbGUgYXMgTG9jYWxlKSBpbiBUID8gKGxvY2FsZSBhcyBMb2NhbGUpIDogImVuIl07CgogIGNvbnN0IGNhdGVnb3JpZXNRdWVyeSA9IHVzZVF1ZXJ5KHsKICAgIHF1ZXJ5S2V5OiBbInNlbGxlci1jYXRlZ29yaWVzLW92ZXJ2aWV3IiwgbG9jYWxlXSwKICAgIHF1ZXJ5Rm46ICgpID0+IGZldGNoQ2F0ZWdvcnlDb3VudHMobG9jYWxlIGFzIExvY2FsZSksCiAgICByZXRyeTogZmFsc2UsCiAgfSk7CgogIGNvbnN0IHJvd3MgPSBjYXRlZ29yaWVzUXVlcnkuZGF0YT8ucm93cyA/PyBbXTsKCiAgcmV0dXJuICgKICAgIDxTZWxsZXJTaGVsbCBleWVicm93PSJTZWxsZXIgd29ya3NwYWNlIiB0aXRsZT17dC50aXRsZX0+CiAgICAgIDxwIGNsYXNzTmFtZT0idGV4dC1ib2R5IHRleHQtbXV0ZWQtZm9yZWdyb3VuZCI+e3QuaW50cm99PC9wPgoKICAgICAgPGRpdiBjbGFzc05hbWU9Im10LTYiPgogICAgICAgIHtjYXRlZ29yaWVzUXVlcnkuaXNMb2FkaW5nID8gKAogICAgICAgICAgPFRhYmxlU2tlbGV0b24gcm93cz17NH0gLz4KICAgICAgICApIDogY2F0ZWdvcmllc1F1ZXJ5LmlzRXJyb3IgPyAoCiAgICAgICAgICA8QWRtaW5DYXJkPgogICAgICAgICAgICA8RW1wdHlTdGF0ZSB0aXRsZT17dC5lcnJvclRpdGxlfSB0ZXh0PXtlcnJNc2coY2F0ZWdvcmllc1F1ZXJ5LmVycm9yKX0gLz4KICAgICAgICAgIDwvQWRtaW5DYXJkPgogICAgICAgICkgOiByb3dzLmxlbmd0aCA9PT0gMCA/ICgKICAgICAgICAgIDxBZG1pbkNhcmQ+CiAgICAgICAgICAgIDxFbXB0eVN0YXRlIHRpdGxlPXt0LmVtcHR5VGl0bGV9IHRleHQ9e3QuZW1wdHlUZXh0fSAvPgogICAgICAgICAgPC9BZG1pbkNhcmQ+CiAgICAgICAgKSA6ICgKICAgICAgICAgIDxBZG1pbkNhcmQ+CiAgICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPSJvdmVyZmxvdy14LWF1dG8iPgogICAgICAgICAgICAgIDx0YWJsZSBjbGFzc05hbWU9InctZnVsbCB0ZXh0LXNtIj4KICAgICAgICAgICAgICAgIDx0aGVhZD4KICAgICAgICAgICAgICAgICAgPHRyIGNsYXNzTmFtZT0iYm9yZGVyLWIgdGV4dC1sZWZ0IHRleHQteHMgdXBwZXJjYXNlIHRyYWNraW5nLXdpZGUgdGV4dC1tdXRlZC1mb3JlZ3JvdW5kIj4KICAgICAgICAgICAgICAgICAgICA8dGggY2xhc3NOYW1lPSJweC00IHB5LTMgZm9udC1tZWRpdW0iPnt0LmNvbENhdGVnb3J5fTwvdGg+CiAgICAgICAgICAgICAgICAgICAgPHRoIGNsYXNzTmFtZT0icHgtNCBweS0zIHRleHQtcmlnaHQgZm9udC1tZWRpdW0iPnt0LmNvbFByb2R1Y3RzfTwvdGg+CiAgICAgICAgICAgICAgICAgIDwvdHI+CiAgICAgICAgICAgICAgICA8L3RoZWFkPgogICAgICAgICAgICAgICAgPHRib2R5PgogICAgICAgICAgICAgICAgICB7cm93cy5tYXAoKHJvdykgPT4gKAogICAgICAgICAgICAgICAgICAgIDx0ciBrZXk9e3Jvdy5rZXl9IGNsYXNzTmFtZT0iYm9yZGVyLWIgbGFzdDpib3JkZXItMCI+CiAgICAgICAgICAgICAgICAgICAgICA8dGQgY2xhc3NOYW1lPSJweC00IHB5LTMgZm9udC1tZWRpdW0iPgogICAgICAgICAgICAgICAgICAgICAgICB7cm93LmtleSA9PT0gIl9fbm9uZV9fIiA/IHQudW5jYXRlZ29yaXplZCA6IHJvdy5uYW1lfQogICAgICAgICAgICAgICAgICAgICAgPC90ZD4KICAgICAgICAgICAgICAgICAgICAgIDx0ZCBjbGFzc05hbWU9InB4LTQgcHktMyB0ZXh0LXJpZ2h0IHRhYnVsYXItbnVtcyB0ZXh0LW11dGVkLWZvcmVncm91bmQiPntyb3cuY291bnR9PC90ZD4KICAgICAgICAgICAgICAgICAgICA8L3RyPgogICAgICAgICAgICAgICAgICApKX0KICAgICAgICAgICAgICAgICAgPHRyIGNsYXNzTmFtZT0iZm9udC1zZW1pYm9sZCI+CiAgICAgICAgICAgICAgICAgICAgPHRkIGNsYXNzTmFtZT0icHgtNCBweS0zIj57dC50b3RhbFJvd308L3RkPgogICAgICAgICAgICAgICAgICAgIDx0ZCBjbGFzc05hbWU9InB4LTQgcHktMyB0ZXh0LXJpZ2h0IHRhYnVsYXItbnVtcyI+e2NhdGVnb3JpZXNRdWVyeS5kYXRhPy50b3RhbCA/PyAwfTwvdGQ+CiAgICAgICAgICAgICAgICAgIDwvdHI+CiAgICAgICAgICAgICAgICA8L3Rib2R5PgogICAgICAgICAgICAgIDwvdGFibGU+CiAgICAgICAgICAgIDwvZGl2PgogICAgICAgICAgPC9BZG1pbkNhcmQ+CiAgICAgICAgKX0KICAgICAgPC9kaXY+CiAgICA8L1NlbGxlclNoZWxsPgogICk7Cn0K
+import { createFileRoute } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { SellerShell } from "@/components/seller/SellerShell";
+import { AdminCard, EmptyState, TableSkeleton } from "@/components/admin/ui";
+import { listSellerProducts } from "@/lib/seller-products.functions";
+import { getLocale } from "@/lib/i18n";
+import { errMsg } from "../admin/_shared";
+
+export const Route = createFileRoute("/_authenticated/seller/categories")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined),
+  }),
+  head: () => ({
+    meta: [
+      { name: "robots", content: "noindex,nofollow" },
+      { title: "Categories — Seller — Modalia" },
+      { name: "description", content: "Categories your products are listed in." },
+    ],
+  }),
+  component: SellerCategoriesPage,
+});
+
+const T = {
+  en: {
+    title: "Categories",
+    intro: "The categories your own products are listed in, with the number of products in each.",
+    colCategory: "Category",
+    colProducts: "Products",
+    uncategorized: "Uncategorized",
+    totalRow: "Total",
+    loading: "Loading your categories…",
+    emptyTitle: "No categories yet",
+    emptyText: "Categories appear here once you add products and assign them to categories.",
+    errorTitle: "Categories could not be loaded",
+  },
+  fr: {
+    title: "Catégories",
+    intro: "Les catégories dans lesquelles vos propres produits sont répertoriés, avec le nombre de produits dans chacune.",
+    colCategory: "Catégorie",
+    colProducts: "Produits",
+    uncategorized: "Non catégorisé",
+    totalRow: "Total",
+    loading: "Chargement de vos catégories…",
+    emptyTitle: "Aucune catégorie pour le moment",
+    emptyText: "Les catégories apparaîtront ici une fois que vous aurez ajouté des produits et les aurez assignés à des catégories.",
+    errorTitle: "Les catégories n'ont pas pu être chargées",
+  },
+  ar: {
+    title: "الفئات",
+    intro: "الفئات التي تُدرج فيها منتجاتك، مع عدد المنتجات في كل فئة.",
+    colCategory: "الفئة",
+    colProducts: "المنتجات",
+    uncategorized: "بدون فئة",
+    totalRow: "المجموع",
+    loading: "جارٍ تحميل الفئات…",
+    emptyTitle: "لا توجد فئات بعد",
+    emptyText: "ستظهر الفئات هنا بمجرد إضافة منتجات وتعيينها إلى فئات.",
+    errorTitle: "تعذّر تحميل الفئات",
+  },
+} as const;
+
+type Locale = keyof typeof T;
+
+function catName(name: unknown, locale: Locale): string | null {
+  if (name && typeof name === "object" && !Array.isArray(name)) {
+    const n = name as Record<string, unknown>;
+    for (const k of [locale, "en", "fr", "ar"]) {
+      if (typeof n[k] === "string" && n[k]) return n[k] as string;
+    }
+  }
+  return null;
+}
+
+interface CategoryRow {
+  key: string;
+  name: string;
+  count: number;
+}
+
+/** Aggregate the seller's real per-category product counts by paging through their own catalog. */
+async function fetchCategoryCounts(locale: Locale): Promise<{ rows: CategoryRow[]; total: number }> {
+  const counts = new Map<string, { name: string; count: number }>();
+  let page = 1;
+  let totalProducts = 0;
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const res = await listSellerProducts({ data: { page } });
+    const products = res.products ?? [];
+    if (page === 1) totalProducts = res.total ?? 0;
+    if (products.length === 0) break;
+    for (const p of products) {
+      const row = p as { categories?: { name?: unknown } | null };
+      const key = row.categories ? JSON.stringify(row.categories.name ?? null) : "__none__";
+      const existing = counts.get(key);
+      if (existing) {
+        existing.count += 1;
+      } else {
+        counts.set(key, {
+          name: catName(row.categories?.name, locale) ?? "",
+          count: 1,
+        });
+      }
+    }
+    const fetched = page * (res.pageSize ?? products.length);
+    if (products.length < (res.pageSize ?? products.length) || fetched >= totalProducts) break;
+    page += 1;
+  }
+  const rows: CategoryRow[] = [...counts.entries()].map(([key, v]) => ({
+    key,
+    name: v.name || key,
+    count: v.count,
+  }));
+  rows.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+  return { rows, total: rows.reduce((s, r) => s + r.count, 0) };
+}
+
+function SellerCategoriesPage() {
+  const { locale } = Route.useSearch();
+  const t = T[(locale as Locale) in T ? (locale as Locale) : "en"];
+
+  const categoriesQuery = useQuery({
+    queryKey: ["seller-categories-overview", locale],
+    queryFn: () => fetchCategoryCounts(locale as Locale),
+    retry: false,
+  });
+
+  const rows = categoriesQuery.data?.rows ?? [];
+
+  return (
+    <SellerShell eyebrow="Seller workspace" title={t.title}>
+      <p className="text-body text-muted-foreground">{t.intro}</p>
+
+      <div className="mt-6">
+        {categoriesQuery.isLoading ? (
+          <TableSkeleton rows={4} />
+        ) : categoriesQuery.isError ? (
+          <AdminCard>
+            <EmptyState title={t.errorTitle} text={errMsg(categoriesQuery.error)} />
+          </AdminCard>
+        ) : rows.length === 0 ? (
+          <AdminCard>
+            <EmptyState title={t.emptyTitle} text={t.emptyText} />
+          </AdminCard>
+        ) : (
+          <AdminCard>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b text-left text-xs uppercase tracking-wide text-muted-foreground">
+                    <th className="px-4 py-3 font-medium">{t.colCategory}</th>
+                    <th className="px-4 py-3 text-right font-medium">{t.colProducts}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((row) => (
+                    <tr key={row.key} className="border-b last:border-0">
+                      <td className="px-4 py-3 font-medium">
+                        {row.key === "__none__" ? t.uncategorized : row.name}
+                      </td>
+                      <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">{row.count}</td>
+                    </tr>
+                  ))}
+                  <tr className="font-semibold">
+                    <td className="px-4 py-3">{t.totalRow}</td>
+                    <td className="px-4 py-3 text-right tabular-nums">{categoriesQuery.data?.total ?? 0}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </AdminCard>
+        )}
+      </div>
+    </SellerShell>
+  );
+}

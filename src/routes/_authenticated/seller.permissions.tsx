@@ -1,1 +1,266 @@
-aW1wb3J0IHsgY3JlYXRlRmlsZVJvdXRlIH0gZnJvbSAiQHRhbnN0YWNrL3JlYWN0LXJvdXRlciI7CmltcG9ydCB7IENoZWNrLCBDcm93biwgRXllT2ZmLCBLZXlSb3VuZCwgVXNlckNoZWNrIH0gZnJvbSAibHVjaWRlLXJlYWN0IjsKaW1wb3J0IHsgQWRtaW5DYXJkLCBFbXB0eVN0YXRlLCBUYWJsZVNrZWxldG9uIH0gZnJvbSAiQC9jb21wb25lbnRzL2FkbWluL3VpIjsKaW1wb3J0IHsgU2VsbGVyU2hlbGwgfSBmcm9tICJAL2NvbXBvbmVudHMvc2VsbGVyL1NlbGxlclNoZWxsIjsKaW1wb3J0IHsgdXNlU2VsbGVyU2Vzc2lvbiB9IGZyb20gIkAvY29tcG9uZW50cy9zZWxsZXIvdWkiOwppbXBvcnQgeyBSb3V0ZUVycm9yIH0gZnJvbSAiQC9jb21wb25lbnRzL3JvdXRpbmcvcm91dGUtc3RhdGVzIjsKaW1wb3J0IHsgZ2V0TG9jYWxlLCBnZXRUcmFuc2xhdGlvbnMsIHR5cGUgU3VwcG9ydGVkTG9jYWxlIH0gZnJvbSAiQC9saWIvaTE4biI7CmltcG9ydCB7IGNuIH0gZnJvbSAiQC9saWIvdXRpbHMiOwppbXBvcnQgeyBBTExfU0VMTEVSX1BFUk1JU1NJT05TLCB0eXBlIFNlbGxlclBlcm1pc3Npb24gfSBmcm9tICJAL2xpYi9zZWxsZXItYXV0aCI7CgpleHBvcnQgY29uc3QgUm91dGUgPSBjcmVhdGVGaWxlUm91dGUoIi9fYXV0aGVudGljYXRlZC9zZWxsZXIvcGVybWlzc2lvbnMiKSh7CiAgdmFsaWRhdGVTZWFyY2g6IChzZWFyY2g6IFJlY29yZDxzdHJpbmcsIHVua25vd24+KSA9PiAoewogICAgbG9jYWxlOiBnZXRMb2NhbGUodHlwZW9mIHNlYXJjaFsibG9jYWxlIl0gPT09ICJzdHJpbmciID8gc2VhcmNoWyJsb2NhbGUiXSA6IHVuZGVmaW5lZCksCiAgfSksCiAgZXJyb3JDb21wb25lbnQ6IFBlcm1pc3Npb25zUm91dGVFcnJvciwKICBoZWFkOiAoKSA9PiAoewogICAgbWV0YTogWwogICAgICB7IG5hbWU6ICJyb2JvdHMiLCBjb250ZW50OiAibm9pbmRleCxub2ZvbGxvdyIgfSwKICAgICAgeyB0aXRsZTogIlBlcm1pc3Npb25zIOKAlCBTZWxsZXIg4oCUIE1vZGFsaWEiIH0sCiAgICAgIHsgbmFtZTogImRlc2NyaXB0aW9uIiwgY29udGVudDogIllvdXIgc2VsbGVyIHBlcm1pc3Npb25zLiBSZWFkLW9ubHkgb3ZlcnZpZXcuIiB9LAogICAgXSwKICB9KSwKICBjb21wb25lbnQ6IFNlbGxlclBlcm1pc3Npb25zUGFnZSwKfSk7CgppbnRlcmZhY2UgUGVybWlzc2lvblN0cmluZ3MgewogIGV5ZWJyb3c6IHN0cmluZzsKICBpbnRybzogc3RyaW5nOwogIHJvbGVMYWJlbDogc3RyaW5nOwogIG93bmVyOiBzdHJpbmc7CiAgc3RhZmY6IHN0cmluZzsKICBzdXBwb3J0TW9kZU5vdGU6IHN0cmluZzsKICBncmFudGVkVGl0bGU6IChuOiBudW1iZXIpID0+IHN0cmluZzsKICBub3RHcmFudGVkVGl0bGU6IChuOiBudW1iZXIpID0+IHN0cmluZzsKICBlbXB0eVRpdGxlOiBzdHJpbmc7CiAgZW1wdHlUZXh0OiBzdHJpbmc7CiAgbG9hZEVycm9yOiBzdHJpbmc7CiAgZGVzY3JpcHRpb25zOiBSZWNvcmQ8U2VsbGVyUGVybWlzc2lvbiwgc3RyaW5nPjsKfQoKLyoqCiAqIExvY2FsIHRyaWxpbmd1YWwgc3RyaW5ncyAoa2VwdCBpbiB0aGlzIGZpbGUgc28gbm8gb3RoZXIgZmlsZSBpcyB0b3VjaGVkKS4KICogVGhlIHBhZ2UgdGl0bGUgaXRzZWxmIGNvbWVzIGZyb20gdGhlIGV4aXN0aW5nIG5hdiBrZXkKICogYHNlbGxlckRhc2hib2FyZFY4Lm5hdi5wZXJtaXNzaW9uc2AgKCJQZXJtaXNzaW9ucyIgLyAiUGVybWlzc2lvbnMiIC8KICogItin2YTYtdmE2KfYrdmK2KfYqiIpLgogKi8KY29uc3QgU1RSSU5HUzogUmVjb3JkPFN1cHBvcnRlZExvY2FsZSwgUGVybWlzc2lvblN0cmluZ3M+ID0gewogIGVuOiB7CiAgICBleWVicm93OiAiU2VsbGVyIHdvcmtzcGFjZSIsCiAgICBpbnRybzoKICAgICAgIllvdXIgY3VycmVudCByb2xlIGFuZCB3aGF0IHlvdSBjYW4gZG8uIFRoaXMgcGFnZSBpcyByZWFkLW9ubHkg4oCUIHBlcm1pc3Npb25zIGFyZSBhc3NpZ25lZCBvbiB0aGUgU3RhZmYgcGFnZS4iLAogICAgcm9sZUxhYmVsOiAiWW91ciByb2xlIiwKICAgIG93bmVyOiAiT3duZXIiLAogICAgc3RhZmY6ICJTdGFmZiIsCiAgICBzdXBwb3J0TW9kZU5vdGU6ICJBZG1pbiBzdXBwb3J0IHNlc3Npb24g4oCUIHJlYWQtb25seSBhY2Nlc3MuIiwKICAgIGdyYW50ZWRUaXRsZTogKG4pID0+IGBHcmFudGVkICgke259KWAsCiAgICBub3RHcmFudGVkVGl0bGU6IChuKSA9PiBgTm90IGdyYW50ZWQgKCR7bn0pYCwKICAgIGVtcHR5VGl0bGU6ICJObyBwZXJtaXNzaW9uIGRhdGEiLAogICAgZW1wdHlUZXh0OgogICAgICAiV2UgY291bGRuJ3QgZmluZCBhbnkgcGVybWlzc2lvbnMgZm9yIHlvdXIgYWNjb3VudC4gSWYgeW91IGJlbGlldmUgdGhpcyBpcyBhIG1pc3Rha2UsIGNvbnRhY3QgdGhlIHN0b3JlIG93bmVyLiIsCiAgICBsb2FkRXJyb3I6ICJQZXJtaXNzaW9ucyBjb3VsZCBub3QgYmUgbG9hZGVkLiIsCiAgICBkZXNjcmlwdGlvbnM6IHsKICAgICAgInByb2R1Y3RzLnZpZXciOiAiVmlldyBwcm9kdWN0cyIsCiAgICAgICJwcm9kdWN0cy5lZGl0IjogIkNyZWF0ZSBhbmQgZWRpdCBwcm9kdWN0cyIsCiAgICAgICJwcm9kdWN0cy5wdWJsaXNoIjogIlB1Ymxpc2ggYW5kIHVucHVibGlzaCBwcm9kdWN0cyIsCiAgICAgICJvcmRlcnMudmlldyI6ICJWaWV3IG9yZGVycyIsCiAgICAgICJvcmRlcnMudXBkYXRlIjogIlVwZGF0ZSBvcmRlciBzdGF0dXMgKGZ1bGZpbGwsIGNhbmNlbCkiLAogICAgICAiaW52ZW50b3J5Lm1hbmFnZSI6ICJNYW5hZ2UgaW52ZW50b3J5IGFuZCBzdG9jayBsZXZlbHMiLAogICAgICAiY291cG9ucy5tYW5hZ2UiOiAiQ3JlYXRlIGFuZCBtYW5hZ2UgY291cG9ucyIsCiAgICAgICJwcm9tb3Rpb25zLm1hbmFnZSI6ICJDcmVhdGUgYW5kIG1hbmFnZSBwcm9tb3Rpb25zIiwKICAgICAgImJ1bmRsZXMubWFuYWdlIjogIkNyZWF0ZSBhbmQgbWFuYWdlIHByb2R1Y3QgYnVuZGxlcyIsCiAgICAgICJhbmFseXRpY3MudmlldyI6ICJWaWV3IHNhbGVzIGFuYWx5dGljcyIsCiAgICAgICJzdG9yZS5tYW5hZ2UiOiAiTWFuYWdlIHRoZSBzdG9yZSBwcm9maWxlIGFuZCBhcHBlYXJhbmNlIiwKICAgICAgImN1c3RvbWVycy52aWV3IjogIlZpZXcgY3VzdG9tZXJzIiwKICAgICAgInJldmlld3MubWFuYWdlIjogIk1hbmFnZSBwcm9kdWN0IHJldmlld3MiLAogICAgICAic3RhZmYubWFuYWdlIjogIk1hbmFnZSBzdGFmZiBtZW1iZXJzIGFuZCB0aGVpciBwZXJtaXNzaW9ucyIsCiAgICAgICJmaW5hbmNlLnZpZXciOiAiVmlldyBwYXlvdXRzIGFuZCBmaW5hbmNpYWwgcmVwb3J0cyIsCiAgICAgICJzZXR0aW5ncy5tYW5hZ2UiOiAiTWFuYWdlIHN0b3JlIHNldHRpbmdzIiwKICAgICAgInN1cHBvcnQubWFuYWdlIjogIk1hbmFnZSBjdXN0b21lciBzdXBwb3J0IHRpY2tldHMiLAogICAgfSwKICB9LAogIGZyOiB7CiAgICBleWVicm93OiAiRXNwYWNlIHZlbmRldXIiLAogICAgaW50cm86CiAgICAgICJWb3RyZSByw7RsZSBhY3R1ZWwgZXQgY2UgcXVlIHZvdXMgcG91dmV6IGZhaXJlLiBDZXR0ZSBwYWdlIGVzdCBlbiBsZWN0dXJlIHNldWxlIOKAlCBsZXMgcGVybWlzc2lvbnMgc29udCBhdHRyaWJ1w6llcyBzdXIgbGEgcGFnZSDDiXF1aXBlLiIsCiAgICByb2xlTGFiZWw6ICJWb3RyZSByw7RsZSIsCiAgICBvd25lcjogIlByb3ByacOpdGFpcmUiLAogICAgc3RhZmY6ICLDiXF1aXBlIiwKICAgIHN1cHBvcnRNb2RlTm90ZTogIlNlc3Npb24gZGUgc3VwcG9ydCBhZG1pbiDigJQgYWNjw6hzIGVuIGxlY3R1cmUgc2V1bGUuIiwKICAgIGdyYW50ZWRUaXRsZTogKG4pID0+IGBBY2NvcmTDqWVzICgke259KWAsCiAgICBub3RHcmFudGVkVGl0bGU6IChuKSA9PiBgTm9uIGFjY29yZMOpZXMgKCR7bn0pYCwKICAgIGVtcHR5VGl0bGU6ICJBdWN1bmUgZG9ubsOpZSBkZSBwZXJtaXNzaW9uIiwKICAgIGVtcHR5VGV4dDoKICAgICAgIk5vdXMgbidhdm9ucyB0cm91dsOpIGF1Y3VuZSBwZXJtaXNzaW9uIHBvdXIgdm90cmUgY29tcHRlLiBTaSB2b3VzIHBlbnNleiBxdSdpbCBzJ2FnaXQgZCd1bmUgZXJyZXVyLCBjb250YWN0ZXogbGUgcHJvcHJpw6l0YWlyZSBkZSBsYSBib3V0aXF1ZS4iLAogICAgbG9hZEVycm9yOiAiSW1wb3NzaWJsZSBkZSBjaGFyZ2VyIGxlcyBwZXJtaXNzaW9ucy4iLAogICAgZGVzY3JpcHRpb25zOiB7CiAgICAgICJwcm9kdWN0cy52aWV3IjogIlZvaXIgbGVzIHByb2R1aXRzIiwKICAgICAgInByb2R1Y3RzLmVkaXQiOiAiQ3LDqWVyIGV0IG1vZGlmaWVyIGxlcyBwcm9kdWl0cyIsCiAgICAgICJwcm9kdWN0cy5wdWJsaXNoIjogIlB1YmxpZXIgZXQgZMOpcHVibGllciBsZXMgcHJvZHVpdHMiLAogICAgICAib3JkZXJzLnZpZXciOiAiVm9pciBsZXMgY29tbWFuZGVzIiwKICAgICAgIm9yZGVycy51cGRhdGUiOiAiTWV0dHJlIMOgIGpvdXIgbGUgc3RhdHV0IGRlcyBjb21tYW5kZXMgKGV4cMOpZGl0aW9uLCBhbm51bGF0aW9uKSIsCiAgICAgICJpbnZlbnRvcnkubWFuYWdlIjogIkfDqXJlciBsZSBzdG9jayIsCiAgICAgICJjb3Vwb25zLm1hbmFnZSI6ICJDcsOpZXIgZXQgZ8OpcmVyIGxlcyBjb3Vwb25zIiwKICAgICAgInByb21vdGlvbnMubWFuYWdlIjogIkNyw6llciBldCBnw6lyZXIgbGVzIHByb21vdGlvbnMiLAogICAgICAiYnVuZGxlcy5tYW5hZ2UiOiAiQ3LDqWVyIGV0IGfDqXJlciBsZXMgcGFja3MgZGUgcHJvZHVpdHMiLAogICAgICAiYW5hbHl0aWNzLnZpZXciOiAiVm9pciBsZXMgc3RhdGlzdGlxdWVzIGRlIHZlbnRlIiwKICAgICAgInN0b3JlLm1hbmFnZSI6ICJHw6lyZXIgbGUgcHJvZmlsIGV0IGwnYXBwYXJlbmNlIGRlIGxhIGJvdXRpcXVlIiwKICAgICAgImN1c3RvbWVycy52aWV3IjogIlZvaXIgbGVzIGNsaWVudHMiLAogICAgICAicmV2aWV3cy5tYW5hZ2UiOiAiR8OpcmVyIGxlcyBhdmlzIHByb2R1aXRzIiwKICAgICAgInN0YWZmLm1hbmFnZSI6ICJHw6lyZXIgbGVzIG1lbWJyZXMgZGUgbCfDqXF1aXBlIGV0IGxldXJzIHBlcm1pc3Npb25zIiwKICAgICAgImZpbmFuY2UudmlldyI6ICJWb2lyIGxlcyBwYWllbWVudHMgZXQgbGVzIHJhcHBvcnRzIGZpbmFuY2llcnMiLAogICAgICAic2V0dGluZ3MubWFuYWdlIjogIkfDqXJlciBsZXMgcGFyYW3DqHRyZXMgZGUgbGEgYm91dGlxdWUiLAogICAgICAic3VwcG9ydC5tYW5hZ2UiOiAiR8OpcmVyIGxlcyB0aWNrZXRzIGRlIHN1cHBvcnQgY2xpZW50IiwKICAgIH0sCiAgfSwKICBhcjogewogICAgZXllYnJvdzogItmF2LPYp9it2Kkg2KfZhNio2KfYpti5IiwKICAgIGludHJvOiAi2K/ZiNix2YMg2KfZhNit2KfZhNmKINmI2YXYpyDZitmF2YPZhtmDINmB2LnZhNmHLiDZh9iw2Ycg2KfZhNi12YHYrdipINmE2YTZgtix2KfYodipINmB2YLYtyDigJQg2KrZj9mF2YbYrSDYp9mE2LXZhNin2K3Zitin2Kog2YXZhiDYtdmB2K3YqSDYp9mE2YHYsdmK2YIuIiwKICAgIHJvbGVMYWJlbDogItiv2YjYsdmDIiwKICAgIG93bmVyOiAi2KfZhNmF2KfZhNmDIiwKICAgIHN0YWZmOiAi2LnYttmIINmB2LHZitmCIiwKICAgIHN1cHBvcnRNb2RlTm90ZTogItis2YTYs9ipINiv2LnZhSDYpdiv2KfYsdmK2Kkg4oCUINmI2LXZiNmEINmE2YTZgtix2KfYodipINmB2YLYty4iLAogICAgZ3JhbnRlZFRpdGxlOiAobikgPT4gYNin2YTZhdmF2YbZiNit2KkgKCR7bn0pYCwKICAgIG5vdEdyYW50ZWRUaXRsZTogKG4pID0+IGDYutmK2LEg2KfZhNmF2YXZhtmI2K3YqSAoJHtufSlgLAogICAgZW1wdHlUaXRsZTogItmE2Kcg2KrZiNis2K8g2KjZitin2YbYp9iqINi12YTYp9it2YrYp9iqIiwKICAgIGVtcHR5VGV4dDogItmE2YUg2YbYudir2LEg2LnZhNmJINij2Yog2LXZhNin2K3Zitin2Kog2YTYrdiz2KfYqNmDLiDYpdiw2Kcg2YPZhtiqINiq2LnYqtmC2K8g2KPZhiDZh9iw2Kcg2K7Yt9ij2Iwg2KrZiNin2LXZhCDZhdi5INmF2KfZhNmDINin2YTZhdiq2KzYsS4iLAogICAgbG9hZEVycm9yOiAi2KrYudiw2ZHYsSDYqtit2YXZitmEINin2YTYtdmE2KfYrdmK2KfYqi4iLAogICAgZGVzY3JpcHRpb25zOiB7CiAgICAgICJwcm9kdWN0cy52aWV3IjogIti52LHYtiDYp9mE2YXZhtiq2KzYp9iqIiwKICAgICAgInByb2R1Y3RzLmVkaXQiOiAi2KXZhti02KfYoSDYp9mE2YXZhtiq2KzYp9iqINmI2KrYudiv2YrZhNmH2KciLAogICAgICAicHJvZHVjdHMucHVibGlzaCI6ICLZhti02LEg2KfZhNmF2YbYqtis2KfYqiDZiNil2YTYutin2KEg2YbYtNix2YfYpyIsCiAgICAgICJvcmRlcnMudmlldyI6ICLYudix2LYg2KfZhNi32YTYqNin2KoiLAogICAgICAib3JkZXJzLnVwZGF0ZSI6ICLYqtit2K/ZitirINit2KfZhNipINin2YTYt9mE2KjYp9iqICjYqtmG2YHZitiw2Iwg2KXZhNi62KfYoSkiLAogICAgICAiaW52ZW50b3J5Lm1hbmFnZSI6ICLYpdiv2KfYsdipINin2YTZhdiu2LLZiNmGIiwKICAgICAgImNvdXBvbnMubWFuYWdlIjogItil2YbYtNin2KEg2KfZhNmD2YjYqNmI2YbYp9iqINmI2KXYr9in2LHYqtmH2KciLAogICAgICAicHJvbW90aW9ucy5tYW5hZ2UiOiAi2KXZhti02KfYoSDYp9mE2LnYsdmI2LYg2YjYpdiv2KfYsdiq2YfYpyIsCiAgICAgICJidW5kbGVzLm1hbmFnZSI6ICLYpdmG2LTYp9ihINit2LLZhSDYp9mE2YXZhtiq2KzYp9iqINmI2KXYr9in2LHYqtmH2KciLAogICAgICAiYW5hbHl0aWNzLnZpZXciOiAi2LnYsdi2INil2K3Ytdin2KbZitin2Kog2KfZhNmF2KjZiti52KfYqiIsCiAgICAgICJzdG9yZS5tYW5hZ2UiOiAi2KXYr9in2LHYqSDYp9mE2YXZhNmBINin2YTYqtis2KfYsdmKINmI2YXYuNmH2LEg2KfZhNmF2KrYrNixIiwKICAgICAgImN1c3RvbWVycy52aWV3IjogIti52LHYtiDYp9mE2LnZhdmE2KfYoSIsCiAgICAgICJyZXZpZXdzLm1hbmFnZSI6ICLYpdiv2KfYsdipINiq2YLZitmK2YXYp9iqINin2YTZhdmG2KrYrNin2KoiLAogICAgICAic3RhZmYubWFuYWdlIjogItil2K/Yp9ix2Kkg2KPYudi22KfYoSDYp9mE2YHYsdmK2YIg2YjYtdmE2KfYrdmK2KfYqtmH2YUiLAogICAgICAiZmluYW5jZS52aWV3IjogIti52LHYtiDYp9mE2YXYr9mB2YjYudin2Kog2YjYp9mE2KrZgtin2LHZitixINin2YTZhdin2YTZitipIiwKICAgICAgInNldHRpbmdzLm1hbmFnZSI6ICLYpdiv2KfYsdipINil2LnYr9in2K/Yp9iqINin2YTZhdiq2KzYsSIsCiAgICAgICJzdXBwb3J0Lm1hbmFnZSI6ICLYpdiv2KfYsdipINiq2LDYp9mD2LEg2K/YudmFINin2YTYudmF2YTYp9ihIiwKICAgIH0sCiAgfSwKfTsKCmZ1bmN0aW9uIFBlcm1pc3Npb25zUm91dGVFcnJvcih7IHJlc2V0IH06IHsgcmVzZXQ6ICgpID0+IHZvaWQgfSkgewogIGNvbnN0IGxvY2FsZSA9IGdldExvY2FsZSh1bmRlZmluZWQpOwogIGNvbnN0IHRpdGxlID0gZ2V0VHJhbnNsYXRpb25zKGxvY2FsZSkuc2VsbGVyRGFzaGJvYXJkVjgubmF2LnBlcm1pc3Npb25zOwogIGNvbnN0IHQgPSBTVFJJTkdTW2xvY2FsZV07CiAgcmV0dXJuICgKICAgIDxTZWxsZXJTaGVsbCBleWVicm93PXt0LmV5ZWJyb3d9IHRpdGxlPXt0aXRsZX0+CiAgICAgIDxSb3V0ZUVycm9yIG1lc3NhZ2U9e3QubG9hZEVycm9yfSByZXNldD17cmVzZXR9IC8+CiAgICA8L1NlbGxlclNoZWxsPgogICk7Cn0KCmZ1bmN0aW9uIFNlbGxlclBlcm1pc3Npb25zUGFnZSgpIHsKICBjb25zdCB7IGxvY2FsZSB9ID0gUm91dGUudXNlU2VhcmNoKCk7CiAgY29uc3QgdGl0bGUgPSBnZXRUcmFuc2xhdGlvbnMobG9jYWxlKS5zZWxsZXJEYXNoYm9hcmRWOC5uYXYucGVybWlzc2lvbnM7CiAgY29uc3QgdCA9IFNUUklOR1NbbG9jYWxlXTsKICBjb25zdCB7IHN0YXR1cywgZXJyb3IsIHNlbGxlciwgcmV0cnkgfSA9IHVzZVNlbGxlclNlc3Npb24oKTsKCiAgcmV0dXJuICgKICAgIDxTZWxsZXJTaGVsbCBleWVicm93PXt0LmV5ZWJyb3d9IHRpdGxlPXt0aXRsZX0+CiAgICAgIDxwIGNsYXNzTmFtZT0idGV4dC1ib2R5IHRleHQtbXV0ZWQtZm9yZWdyb3VuZCI+e3QuaW50cm99PC9wPgoKICAgICAgPGRpdiBjbGFzc05hbWU9Im10LTYiPgogICAgICAgIHtzdGF0dXMgPT09ICJjaGVja2luZyIgPyAoCiAgICAgICAgICA8VGFibGVTa2VsZXRvbiByb3dzPXs2fSAvPgogICAgICAgICkgOiBzdGF0dXMgPT09ICJlcnJvciIgPyAoCiAgICAgICAgICA8Um91dGVFcnJvciBtZXNzYWdlPXtlcnJvciA/PyB0LmxvYWRFcnJvcn0gcmVzZXQ9e3JldHJ5fSAvPgogICAgICAgICkgOiAhc2VsbGVyIHx8ICFBcnJheS5pc0FycmF5KHNlbGxlci5wZXJtaXNzaW9ucykgfHwgc2VsbGVyLnBlcm1pc3Npb25zLmxlbmd0aCA9PT0gMCA/ICgKICAgICAgICAgIDxBZG1pbkNhcmQ+CiAgICAgICAgICAgIDxFbXB0eVN0YXRlCiAgICAgICAgICAgICAgdGl0bGU9e3QuZW1wdHlUaXRsZX0KICAgICAgICAgICAgICB0ZXh0PXt0LmVtcHR5VGV4dH0KICAgICAgICAgICAgICBpY29uPXs8S2V5Um91bmQgY2xhc3NOYW1lPSJzaXplLTUgdGV4dC1tdXRlZC1mb3JlZ3JvdW5kIiAvPn0KICAgICAgICAgICAgLz4KICAgICAgICAgIDwvQWRtaW5DYXJkPgogICAgICAgICkgOiAoCiAgICAgICAgICA8UGVybWlzc2lvbnNCb2R5IHNlbGxlcj17c2VsbGVyfSB0PXt0fSAvPgogICAgICAgICl9CiAgICAgIDwvZGl2PgogICAgPC9TZWxsZXJTaGVsbD4KICApOwp9CgpmdW5jdGlvbiBQZXJtaXNzaW9uc0JvZHkoewogIHNlbGxlciwKICB0LAp9OiB7CiAgc2VsbGVyOiBOb25OdWxsYWJsZTxSZXR1cm5UeXBlPHR5cGVvZiB1c2VTZWxsZXJTZXNzaW9uPlsic2VsbGVyIl0+OwogIHQ6IFBlcm1pc3Npb25TdHJpbmdzOwp9KSB7CiAgY29uc3QgZ3JhbnRlZCA9IEFMTF9TRUxMRVJfUEVSTUlTU0lPTlMuZmlsdGVyKChwKSA9PiBzZWxsZXIucGVybWlzc2lvbnMuaW5jbHVkZXMocCkpOwogIGNvbnN0IG5vdEdyYW50ZWQgPSBBTExfU0VMTEVSX1BFUk1JU1NJT05TLmZpbHRlcigocCkgPT4gIXNlbGxlci5wZXJtaXNzaW9ucy5pbmNsdWRlcyhwKSk7CgogIHJldHVybiAoCiAgICA8ZGl2IGNsYXNzTmFtZT0ic3BhY2UteS02Ij4KICAgICAgPEFkbWluQ2FyZCB0aXRsZT17dC5yb2xlTGFiZWx9PgogICAgICAgIDxkaXYgY2xhc3NOYW1lPSJmbGV4IGZsZXgtd3JhcCBpdGVtcy1jZW50ZXIgZ2FwLTMiPgogICAgICAgICAge3NlbGxlci5pc093bmVyID8gKAogICAgICAgICAgICA8Q3Jvd24gY2xhc3NOYW1lPSJzaXplLTUgc2hyaW5rLTAgdGV4dC1hbWJlci01MDAiIGFyaWEtaGlkZGVuIC8+CiAgICAgICAgICApIDogKAogICAgICAgICAgICA8VXNlckNoZWNrIGNsYXNzTmFtZT0ic2l6ZS01IHNocmluay0wIHRleHQtbXV0ZWQtZm9yZWdyb3VuZCIgYXJpYS1oaWRkZW4gLz4KICAgICAgICAgICl9CiAgICAgICAgICA8ZGl2IGNsYXNzTmFtZT0ibWluLXctMCI+CiAgICAgICAgICAgIDxwIGNsYXNzTmFtZT0idGV4dC1zbSBmb250LXNlbWlib2xkIj57c2VsbGVyLmlzT3duZXIgPyB0Lm93bmVyIDogdC5zdGFmZn08L3A+CiAgICAgICAgICAgIDxwIGNsYXNzTmFtZT0idHJ1bmNhdGUgdGV4dC14cyB0ZXh0LW11dGVkLWZvcmVncm91bmQiPntzZWxsZXIubGVnYWxOYW1lfTwvcD4KICAgICAgICAgICAge3NlbGxlci5zdXBwb3J0TW9kZSA/ICgKICAgICAgICAgICAgICA8cCBjbGFzc05hbWU9Im10LTAuNSB0ZXh0LXhzIGZvbnQtbWVkaXVtIHRleHQtYW1iZXItNzAwIGRhcms6dGV4dC1hbWJlci00MDAiPgogICAgICAgICAgICAgICAge3Quc3VwcG9ydE1vZGVOb3RlfQogICAgICAgICAgICAgIDwvcD4KICAgICAgICAgICAgKSA6IG51bGx9CiAgICAgICAgICA8L2Rpdj4KICAgICAgICA8L2Rpdj4KICAgICAgPC9BZG1pbkNhcmQ+CgogICAgICA8QWRtaW5DYXJkIHRpdGxlPXt0LmdyYW50ZWRUaXRsZShncmFudGVkLmxlbmd0aCl9PgogICAgICAgIDx1bCBjbGFzc05hbWU9ImRpdmlkZS15IGRpdmlkZS1ib3JkZXIiPgogICAgICAgICAge2dyYW50ZWQubWFwKChwKSA9PiAoCiAgICAgICAgICAgIDxQZXJtaXNzaW9uUm93IGtleT17cH0gcGVybWlzc2lvbj17cH0gZGVzY3JpcHRpb249e3QuZGVzY3JpcHRpb25zW3BdfSBncmFudGVkIC8+CiAgICAgICAgICApKX0KICAgICAgICA8L3VsPgogICAgICA8L0FkbWluQ2FyZD4KCiAgICAgIHtub3RHcmFudGVkLmxlbmd0aCA+IDAgPyAoCiAgICAgICAgPEFkbWluQ2FyZCB0aXRsZT17dC5ub3RHcmFudGVkVGl0bGUobm90R3JhbnRlZC5sZW5ndGgpfT4KICAgICAgICAgIDx1bCBjbGFzc05hbWU9ImRpdmlkZS15IGRpdmlkZS1ib3JkZXIiPgogICAgICAgICAgICB7bm90R3JhbnRlZC5tYXAoKHApID0+ICgKICAgICAgICAgICAgICA8UGVybWlzc2lvblJvdyBrZXk9e3B9IHBlcm1pc3Npb249e3B9IGRlc2NyaXB0aW9uPXt0LmRlc2NyaXB0aW9uc1twXX0gZ3JhbnRlZD17ZmFsc2V9IC8+CiAgICAgICAgICAgICkpfQogICAgICAgICAgPC91bD4KICAgICAgICA8L0FkbWluQ2FyZD4KICAgICAgKSA6IG51bGx9CiAgICA8L2Rpdj4KICApOwp9CgpmdW5jdGlvbiBQZXJtaXNzaW9uUm93KHsKICBwZXJtaXNzaW9uLAogIGRlc2NyaXB0aW9uLAogIGdyYW50ZWQsCn06IHsKICBwZXJtaXNzaW9uOiBTZWxsZXJQZXJtaXNzaW9uOwogIGRlc2NyaXB0aW9uOiBzdHJpbmc7CiAgZ3JhbnRlZDogYm9vbGVhbjsKfSkgewogIHJldHVybiAoCiAgICA8bGkgY2xhc3NOYW1lPXtjbigiZmxleCBpdGVtcy1zdGFydCBnYXAtMyBweS0zIiwgIWdyYW50ZWQgJiYgIm9wYWNpdHktNTAiKX0+CiAgICAgIHtncmFudGVkID8gKAogICAgICAgIDxDaGVjayBjbGFzc05hbWU9Im10LTAuNSBzaXplLTQgc2hyaW5rLTAgdGV4dC1ncmVlbi02MDAgZGFyazp0ZXh0LWdyZWVuLTQwMCIgYXJpYS1oaWRkZW4gLz4KICAgICAgKSA6ICgKICAgICAgICA8RXllT2ZmIGNsYXNzTmFtZT0ibXQtMC41IHNpemUtNCBzaHJpbmstMCB0ZXh0LW11dGVkLWZvcmVncm91bmQiIGFyaWEtaGlkZGVuIC8+CiAgICAgICl9CiAgICAgIDxkaXYgY2xhc3NOYW1lPSJtaW4tdy0wIj4KICAgICAgICA8cCBjbGFzc05hbWU9ImZvbnQtbW9ubyB0ZXh0LXhzIGZvbnQtbWVkaXVtIj57cGVybWlzc2lvbn08L3A+CiAgICAgICAgPHAgY2xhc3NOYW1lPSJtdC0wLjUgdGV4dC1zbSB0ZXh0LW11dGVkLWZvcmVncm91bmQiPntkZXNjcmlwdGlvbn08L3A+CiAgICAgIDwvZGl2PgogICAgPC9saT4KICApOwp9Cg==
+import { createFileRoute } from "@tanstack/react-router";
+import { Check, Crown, EyeOff, KeyRound, UserCheck } from "lucide-react";
+import { AdminCard, EmptyState, TableSkeleton } from "@/components/admin/ui";
+import { SellerShell } from "@/components/seller/SellerShell";
+import { useSellerSession } from "@/components/seller/ui";
+import { RouteError } from "@/components/routing/route-states";
+import { getLocale, getTranslations, type SupportedLocale } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
+import { ALL_SELLER_PERMISSIONS, type SellerPermission } from "@/lib/seller-auth";
+
+export const Route = createFileRoute("/_authenticated/seller/permissions")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined),
+  }),
+  errorComponent: PermissionsRouteError,
+  head: () => ({
+    meta: [
+      { name: "robots", content: "noindex,nofollow" },
+      { title: "Permissions — Seller — Modalia" },
+      { name: "description", content: "Your seller permissions. Read-only overview." },
+    ],
+  }),
+  component: SellerPermissionsPage,
+});
+
+interface PermissionStrings {
+  eyebrow: string;
+  intro: string;
+  roleLabel: string;
+  owner: string;
+  staff: string;
+  supportModeNote: string;
+  grantedTitle: (n: number) => string;
+  notGrantedTitle: (n: number) => string;
+  emptyTitle: string;
+  emptyText: string;
+  loadError: string;
+  descriptions: Record<SellerPermission, string>;
+}
+
+/**
+ * Local trilingual strings (kept in this file so no other file is touched).
+ * The page title itself comes from the existing nav key
+ * `sellerDashboardV8.nav.permissions` ("Permissions" / "Permissions" /
+ * "الصلاحيات").
+ */
+const STRINGS: Record<SupportedLocale, PermissionStrings> = {
+  en: {
+    eyebrow: "Seller workspace",
+    intro:
+      "Your current role and what you can do. This page is read-only — permissions are assigned on the Staff page.",
+    roleLabel: "Your role",
+    owner: "Owner",
+    staff: "Staff",
+    supportModeNote: "Admin support session — read-only access.",
+    grantedTitle: (n) => `Granted (${n})`,
+    notGrantedTitle: (n) => `Not granted (${n})`,
+    emptyTitle: "No permission data",
+    emptyText:
+      "We couldn't find any permissions for your account. If you believe this is a mistake, contact the store owner.",
+    loadError: "Permissions could not be loaded.",
+    descriptions: {
+      "products.view": "View products",
+      "products.edit": "Create and edit products",
+      "products.publish": "Publish and unpublish products",
+      "orders.view": "View orders",
+      "orders.update": "Update order status (fulfill, cancel)",
+      "inventory.manage": "Manage inventory and stock levels",
+      "coupons.manage": "Create and manage coupons",
+      "promotions.manage": "Create and manage promotions",
+      "bundles.manage": "Create and manage product bundles",
+      "analytics.view": "View sales analytics",
+      "store.manage": "Manage the store profile and appearance",
+      "customers.view": "View customers",
+      "reviews.manage": "Manage product reviews",
+      "staff.manage": "Manage staff members and their permissions",
+      "finance.view": "View payouts and financial reports",
+      "settings.manage": "Manage store settings",
+      "support.manage": "Manage customer support tickets",
+    },
+  },
+  fr: {
+    eyebrow: "Espace vendeur",
+    intro:
+      "Votre rôle actuel et ce que vous pouvez faire. Cette page est en lecture seule — les permissions sont attribuées sur la page Équipe.",
+    roleLabel: "Votre rôle",
+    owner: "Propriétaire",
+    staff: "Équipe",
+    supportModeNote: "Session de support admin — accès en lecture seule.",
+    grantedTitle: (n) => `Accordées (${n})`,
+    notGrantedTitle: (n) => `Non accordées (${n})`,
+    emptyTitle: "Aucune donnée de permission",
+    emptyText:
+      "Nous n'avons trouvé aucune permission pour votre compte. Si vous pensez qu'il s'agit d'une erreur, contactez le propriétaire de la boutique.",
+    loadError: "Impossible de charger les permissions.",
+    descriptions: {
+      "products.view": "Voir les produits",
+      "products.edit": "Créer et modifier les produits",
+      "products.publish": "Publier et dépublier les produits",
+      "orders.view": "Voir les commandes",
+      "orders.update": "Mettre à jour le statut des commandes (expédition, annulation)",
+      "inventory.manage": "Gérer le stock",
+      "coupons.manage": "Créer et gérer les coupons",
+      "promotions.manage": "Créer et gérer les promotions",
+      "bundles.manage": "Créer et gérer les packs de produits",
+      "analytics.view": "Voir les statistiques de vente",
+      "store.manage": "Gérer le profil et l'apparence de la boutique",
+      "customers.view": "Voir les clients",
+      "reviews.manage": "Gérer les avis produits",
+      "staff.manage": "Gérer les membres de l'équipe et leurs permissions",
+      "finance.view": "Voir les paiements et les rapports financiers",
+      "settings.manage": "Gérer les paramètres de la boutique",
+      "support.manage": "Gérer les tickets de support client",
+    },
+  },
+  ar: {
+    eyebrow: "مساحة البائع",
+    intro: "دورك الحالي وما يمكنك فعله. هذه الصفحة للقراءة فقط — تُمنح الصلاحيات من صفحة الفريق.",
+    roleLabel: "دورك",
+    owner: "المالك",
+    staff: "عضو فريق",
+    supportModeNote: "جلسة دعم إدارية — وصول للقراءة فقط.",
+    grantedTitle: (n) => `الممنوحة (${n})`,
+    notGrantedTitle: (n) => `غير الممنوحة (${n})`,
+    emptyTitle: "لا توجد بيانات صلاحيات",
+    emptyText: "لم نعثر على أي صلاحيات لحسابك. إذا كنت تعتقد أن هذا خطأ، تواصل مع مالك المتجر.",
+    loadError: "تعذّر تحميل الصلاحيات.",
+    descriptions: {
+      "products.view": "عرض المنتجات",
+      "products.edit": "إنشاء المنتجات وتعديلها",
+      "products.publish": "نشر المنتجات وإلغاء نشرها",
+      "orders.view": "عرض الطلبات",
+      "orders.update": "تحديث حالة الطلبات (تنفيذ، إلغاء)",
+      "inventory.manage": "إدارة المخزون",
+      "coupons.manage": "إنشاء الكوبونات وإدارتها",
+      "promotions.manage": "إنشاء العروض وإدارتها",
+      "bundles.manage": "إنشاء حزم المنتجات وإدارتها",
+      "analytics.view": "عرض إحصائيات المبيعات",
+      "store.manage": "إدارة الملف التجاري ومظهر المتجر",
+      "customers.view": "عرض العملاء",
+      "reviews.manage": "إدارة تقييمات المنتجات",
+      "staff.manage": "إدارة أعضاء الفريق وصلاحياتهم",
+      "finance.view": "عرض المدفوعات والتقارير المالية",
+      "settings.manage": "إدارة إعدادات المتجر",
+      "support.manage": "إدارة تذاكر دعم العملاء",
+    },
+  },
+};
+
+function PermissionsRouteError({ reset }: { reset: () => void }) {
+  const locale = getLocale(undefined);
+  const title = getTranslations(locale).sellerDashboardV8.nav.permissions;
+  const t = STRINGS[locale];
+  return (
+    <SellerShell eyebrow={t.eyebrow} title={title}>
+      <RouteError message={t.loadError} reset={reset} />
+    </SellerShell>
+  );
+}
+
+function SellerPermissionsPage() {
+  const { locale } = Route.useSearch();
+  const title = getTranslations(locale).sellerDashboardV8.nav.permissions;
+  const t = STRINGS[locale];
+  const { status, error, seller, retry } = useSellerSession();
+
+  return (
+    <SellerShell eyebrow={t.eyebrow} title={title}>
+      <p className="text-body text-muted-foreground">{t.intro}</p>
+
+      <div className="mt-6">
+        {status === "checking" ? (
+          <TableSkeleton rows={6} />
+        ) : status === "error" ? (
+          <RouteError message={error ?? t.loadError} reset={retry} />
+        ) : !seller || !Array.isArray(seller.permissions) || seller.permissions.length === 0 ? (
+          <AdminCard>
+            <EmptyState
+              title={t.emptyTitle}
+              text={t.emptyText}
+              icon={<KeyRound className="size-5 text-muted-foreground" />}
+            />
+          </AdminCard>
+        ) : (
+          <PermissionsBody seller={seller} t={t} />
+        )}
+      </div>
+    </SellerShell>
+  );
+}
+
+function PermissionsBody({
+  seller,
+  t,
+}: {
+  seller: NonNullable<ReturnType<typeof useSellerSession>["seller"]>;
+  t: PermissionStrings;
+}) {
+  const granted = ALL_SELLER_PERMISSIONS.filter((p) => seller.permissions.includes(p));
+  const notGranted = ALL_SELLER_PERMISSIONS.filter((p) => !seller.permissions.includes(p));
+
+  return (
+    <div className="space-y-6">
+      <AdminCard title={t.roleLabel}>
+        <div className="flex flex-wrap items-center gap-3">
+          {seller.isOwner ? (
+            <Crown className="size-5 shrink-0 text-amber-500" aria-hidden />
+          ) : (
+            <UserCheck className="size-5 shrink-0 text-muted-foreground" aria-hidden />
+          )}
+          <div className="min-w-0">
+            <p className="text-sm font-semibold">{seller.isOwner ? t.owner : t.staff}</p>
+            <p className="truncate text-xs text-muted-foreground">{seller.legalName}</p>
+            {seller.supportMode ? (
+              <p className="mt-0.5 text-xs font-medium text-amber-700 dark:text-amber-400">
+                {t.supportModeNote}
+              </p>
+            ) : null}
+          </div>
+        </div>
+      </AdminCard>
+
+      <AdminCard title={t.grantedTitle(granted.length)}>
+        <ul className="divide-y divide-border">
+          {granted.map((p) => (
+            <PermissionRow key={p} permission={p} description={t.descriptions[p]} granted />
+          ))}
+        </ul>
+      </AdminCard>
+
+      {notGranted.length > 0 ? (
+        <AdminCard title={t.notGrantedTitle(notGranted.length)}>
+          <ul className="divide-y divide-border">
+            {notGranted.map((p) => (
+              <PermissionRow key={p} permission={p} description={t.descriptions[p]} granted={false} />
+            ))}
+          </ul>
+        </AdminCard>
+      ) : null}
+    </div>
+  );
+}
+
+function PermissionRow({
+  permission,
+  description,
+  granted,
+}: {
+  permission: SellerPermission;
+  description: string;
+  granted: boolean;
+}) {
+  return (
+    <li className={cn("flex items-start gap-3 py-3", !granted && "opacity-50")}>
+      {granted ? (
+        <Check className="mt-0.5 size-4 shrink-0 text-green-600 dark:text-green-400" aria-hidden />
+      ) : (
+        <EyeOff className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
+      )}
+      <div className="min-w-0">
+        <p className="font-mono text-xs font-medium">{permission}</p>
+        <p className="mt-0.5 text-sm text-muted-foreground">{description}</p>
+      </div>
+    </li>
+  );
+}

@@ -1,1 +1,185 @@
-aW1wb3J0IHsgY3JlYXRlU2VydmVyRm4gfSBmcm9tICJAdGFuc3RhY2svcmVhY3Qtc3RhcnQiOwppbXBvcnQgeyB6IH0gZnJvbSAiem9kIjsKaW1wb3J0IHsgcmVxdWlyZVN1cGFiYXNlQXV0aCB9IGZyb20gIkAvaW50ZWdyYXRpb25zL3N1cGFiYXNlL2F1dGgtbWlkZGxld2FyZSI7CmltcG9ydCB7IGFzc2VydEFkbWluIH0gZnJvbSAiQC9saWIvYWRtaW4tYXV0aCI7CmltcG9ydCB7IHBpY2tMb2NhbGl6ZWROYW1lIH0gZnJvbSAiQC9saWIvbmFtZXMiOwoKY29uc3QgYWRtaW5Pbmx5ID0gW3JlcXVpcmVTdXBhYmFzZUF1dGhdIGFzIGNvbnN0OwoKYXN5bmMgZnVuY3Rpb24gYWRtaW5DbGllbnQoKSB7CiAgY29uc3QgeyBzdXBhYmFzZUFkbWluIH0gPSBhd2FpdCBpbXBvcnQoIkAvaW50ZWdyYXRpb25zL3N1cGFiYXNlL2NsaWVudC5zZXJ2ZXIiKTsKICByZXR1cm4gc3VwYWJhc2VBZG1pbjsKfQoKdHlwZSBPcmRlclJvdyA9IHsgaWQ6IHN0cmluZzsgb3JkZXJfbnVtYmVyOiBzdHJpbmc7IGZpcnN0X25hbWU6IHN0cmluZyB8IG51bGw7IGxhc3RfbmFtZTogc3RyaW5nIHwgbnVsbDsgZ3JhbmRfdG90YWw6IG51bWJlcjsgc3RhdHVzOiBzdHJpbmcgfTsKdHlwZSBTZWxsZXJSb3cgPSB7IGlkOiBzdHJpbmc7IGxlZ2FsX25hbWU6IHN0cmluZzsgZW1haWw6IHN0cmluZyB8IG51bGw7IGFjY291bnRfc3RhdHVzOiBzdHJpbmcgfTsKdHlwZSBQcm9kdWN0Um93ID0geyBpZDogc3RyaW5nOyBzbHVnOiBzdHJpbmc7IG5hbWU6IHVua25vd247IGJhc2VfcHJpY2U6IG51bWJlcjsgc3RhdHVzOiBzdHJpbmcgfTsKdHlwZSBTdG9yZVJvdyA9IHsgaWQ6IHN0cmluZzsgbmFtZTogc3RyaW5nOyBzbHVnOiBzdHJpbmcgfTsKdHlwZSBDYXRlZ29yeVJvdyA9IHsgaWQ6IHN0cmluZzsgbmFtZTogdW5rbm93bjsgc2x1Zzogc3RyaW5nOyBzdGF0dXM6IHN0cmluZyB9Owp0eXBlIENvdXBvblJvdyA9IHsgaWQ6IHN0cmluZzsgY29kZTogc3RyaW5nOyBkaXNjb3VudF90eXBlOiBzdHJpbmc7IGRpc2NvdW50X3ZhbHVlOiBudW1iZXI7IHN0YXR1czogc3RyaW5nIH07CnR5cGUgQWNjb3VudFJvdyA9IHsKICBzZWxsZXJfaWQ6IHN0cmluZzsKICB1c2VybmFtZTogc3RyaW5nOwogIHNlbGxlcnM6IHsgbGVnYWxfbmFtZTogc3RyaW5nIHwgbnVsbCB9IHwgeyBsZWdhbF9uYW1lOiBzdHJpbmcgfCBudWxsIH1bXSB8IG51bGw7Cn07CnR5cGUgQ3VzdG9tZXJSb3cgPSB7CiAgaWQ6IHN0cmluZzsKICBlbWFpbDogc3RyaW5nIHwgbnVsbDsKICBwaG9uZTogc3RyaW5nIHwgbnVsbDsKICBwcm9maWxlczogeyBkaXNwbGF5X25hbWU6IHN0cmluZyB8IG51bGwgfSB8IHsgZGlzcGxheV9uYW1lOiBzdHJpbmcgfCBudWxsIH1bXSB8IG51bGw7Cn07Cgphc3luYyBmdW5jdGlvbiBydW5TZWFyY2g8VD4ocXVlcnk6IGFueSk6IFByb21pc2U8VFtdPiB7CiAgdHJ5IHsKICAgIGNvbnN0IHsgZGF0YSwgZXJyb3IgfSA9IGF3YWl0IHF1ZXJ5OwogICAgaWYgKGVycm9yKSByZXR1cm4gW107CiAgICByZXR1cm4gKGRhdGEgPz8gW10pIGFzIFRbXTsKICB9IGNhdGNoIHsKICAgIHJldHVybiBbXTsKICB9Cn0KCi8qKgogKiBBZG1pbi1vbmx5IGdsb2JhbCBzZWFyY2ggYWNyb3NzIG9yZGVycywgc2VsbGVycywgcHJvZHVjdHMsIHN0b3JlcywKICogY3VzdG9tZXJzLCBjYXRlZ29yaWVzLCBjb3Vwb25zIGFuZCBzZWxsZXIgdXNlcm5hbWVzLgogKiBPbmUgZmFpbGluZyB0YWJsZSBuZXZlciB0YWtlcyBkb3duIHRoZSB3aG9sZSBzZWFyY2gg4oCUIGl0IHJlc29sdmVzIHRvIGFuCiAqIGVtcHR5IGdyb3VwIGluc3RlYWQuCiAqLwpleHBvcnQgY29uc3QgYWRtaW5HbG9iYWxTZWFyY2ggPSBjcmVhdGVTZXJ2ZXJGbih7IG1ldGhvZDogIkdFVCIgfSkKICAubWlkZGxld2FyZShhZG1pbk9ubHkpCiAgLmlucHV0VmFsaWRhdG9yKChkYXRhKSA9PiB6Lm9iamVjdCh7IHE6IHouc3RyaW5nKCkubWluKDIpLm1heCg2MCkgfSkucGFyc2UoZGF0YSkpCiAgLmhhbmRsZXIoYXN5bmMgKHsgZGF0YSwgY29udGV4dCB9KSA9PiB7CiAgICBhd2FpdCBhc3NlcnRBZG1pbihjb250ZXh0KTsKICAgIC8vIFN0cmlwIGNoYXJhY3RlcnMgdGhhdCB3b3VsZCBicmVhayBQb3N0Z1JFU1QncyAub3IoKSBsaXN0IHN5bnRheC4KICAgIGNvbnN0IHEgPSBkYXRhLnEudHJpbSgpLnJlcGxhY2UoL1ssKCldL2csICIiKTsKICAgIGlmIChxLmxlbmd0aCA8IDIpIHRocm93IG5ldyBFcnJvcigiU2VhcmNoIHF1ZXJ5IHRvbyBzaG9ydC4iKTsKICAgIGNvbnN0IGxpa2UgPSBgJSR7cX0lYDsKICAgIGNvbnN0IHN1cGFiYXNlID0gY29udGV4dC5zdXBhYmFzZTsKICAgIC8vIGN1c3RvbWVycyBSTFMgb25seSBhbGxvd3MgdGhlIGN1c3RvbWVyIHRoZW1zZWx2ZXMsIHNvIHRoZSBjdXN0b21lcgogICAgLy8gZ3JvdXAgaXMgcmVhZCB0aHJvdWdoIHRoZSBzZXJ2aWNlLXJvbGUgY2xpZW50IChhZG1pbi1vbmx5IGZ1bmN0aW9uKS4KICAgIGNvbnN0IHN1cGFiYXNlQWRtaW4gPSBhd2FpdCBhZG1pbkNsaWVudCgpOwoKICAgIGNvbnN0IFtvcmRlcnMsIHNlbGxlcnMsIHByb2R1Y3RzLCBzdG9yZXMsIGN1c3RvbWVycywgY2F0ZWdvcmllcywgY291cG9ucywgYWNjb3VudHNdID0gYXdhaXQgUHJvbWlzZS5hbGwoWwogICAgICBydW5TZWFyY2g8T3JkZXJSb3c+KAogICAgICAgIHN1cGFiYXNlCiAgICAgICAgICAuZnJvbSgib3JkZXJzIikKICAgICAgICAgIC5zZWxlY3QoImlkLG9yZGVyX251bWJlcixmaXJzdF9uYW1lLGxhc3RfbmFtZSxncmFuZF90b3RhbCxzdGF0dXMiKQogICAgICAgICAgLm9yKGBvcmRlcl9udW1iZXIuaWxpa2UuJHtsaWtlfSxndWVzdF9lbWFpbC5pbGlrZS4ke2xpa2V9LGd1ZXN0X3Bob25lLmlsaWtlLiR7bGlrZX0sZmlyc3RfbmFtZS5pbGlrZS4ke2xpa2V9LGxhc3RfbmFtZS5pbGlrZS4ke2xpa2V9YCkKICAgICAgICAgIC5vcmRlcigiY3JlYXRlZF9hdCIsIHsgYXNjZW5kaW5nOiBmYWxzZSB9KQogICAgICAgICAgLmxpbWl0KDYpLAogICAgICApLAogICAgICBydW5TZWFyY2g8U2VsbGVyUm93PigKICAgICAgICBzdXBhYmFzZQogICAgICAgICAgLmZyb20oInNlbGxlcnMiKQogICAgICAgICAgLnNlbGVjdCgiaWQsbGVnYWxfbmFtZSxlbWFpbCxhY2NvdW50X3N0YXR1cyIpCiAgICAgICAgICAub3IoYGxlZ2FsX25hbWUuaWxpa2UuJHtsaWtlfSxlbWFpbC5pbGlrZS4ke2xpa2V9LHBob25lLmlsaWtlLiR7bGlrZX1gKQogICAgICAgICAgLm9yZGVyKCJjcmVhdGVkX2F0IiwgeyBhc2NlbmRpbmc6IGZhbHNlIH0pCiAgICAgICAgICAubGltaXQoNiksCiAgICAgICksCiAgICAgIHJ1blNlYXJjaDxQcm9kdWN0Um93PigKICAgICAgICBzdXBhYmFzZQogICAgICAgICAgLmZyb20oInByb2R1Y3RzIikKICAgICAgICAgIC5zZWxlY3QoImlkLHNsdWcsbmFtZSxiYXNlX3ByaWNlLHN0YXR1cyIpCiAgICAgICAgICAub3IoYHNsdWcuaWxpa2UuJHtsaWtlfSxuYW1lLT4+YXIuaWxpa2UuJHtsaWtlfSxuYW1lLT4+ZnIuaWxpa2UuJHtsaWtlfSxuYW1lLT4+ZW4uaWxpa2UuJHtsaWtlfWApCiAgICAgICAgICAub3JkZXIoImNyZWF0ZWRfYXQiLCB7IGFzY2VuZGluZzogZmFsc2UgfSkKICAgICAgICAgIC5saW1pdCg2KSwKICAgICAgKSwKICAgICAgcnVuU2VhcmNoPFN0b3JlUm93PigKICAgICAgICBzdXBhYmFzZQogICAgICAgICAgLmZyb20oInN0b3JlcyIpCiAgICAgICAgICAuc2VsZWN0KCJpZCxuYW1lLHNsdWciKQogICAgICAgICAgLm9yKGBuYW1lLmlsaWtlLiR7bGlrZX0sc2x1Zy5pbGlrZS4ke2xpa2V9YCkKICAgICAgICAgIC5vcmRlcigiY3JlYXRlZF9hdCIsIHsgYXNjZW5kaW5nOiBmYWxzZSB9KQogICAgICAgICAgLmxpbWl0KDYpLAogICAgICApLAogICAgICBydW5TZWFyY2g8Q3VzdG9tZXJSb3c+KAogICAgICAgIHN1cGFiYXNlQWRtaW4KICAgICAgICAgIC5mcm9tKCJjdXN0b21lcnMiKQogICAgICAgICAgLnNlbGVjdCgiaWQsZW1haWwscGhvbmUscHJvZmlsZXMoZGlzcGxheV9uYW1lKSIpCiAgICAgICAgICAub3IoYGVtYWlsLmlsaWtlLiR7bGlrZX0scGhvbmUuaWxpa2UuJHtsaWtlfWApCiAgICAgICAgICAub3JkZXIoImNyZWF0ZWRfYXQiLCB7IGFzY2VuZGluZzogZmFsc2UgfSkKICAgICAgICAgIC5saW1pdCg2KSwKICAgICAgKSwKICAgICAgcnVuU2VhcmNoPENhdGVnb3J5Um93PigKICAgICAgICBzdXBhYmFzZQogICAgICAgICAgLmZyb20oImNhdGVnb3JpZXMiKQogICAgICAgICAgLnNlbGVjdCgiaWQsbmFtZSxzbHVnLHN0YXR1cyIpCiAgICAgICAgICAub3IoYHNsdWcuaWxpa2UuJHtsaWtlfSxuYW1lLT4+YXIuaWxpa2UuJHtsaWtlfSxuYW1lLT4+ZnIuaWxpa2UuJHtsaWtlfSxuYW1lLT4+ZW4uaWxpa2UuJHtsaWtlfWApCiAgICAgICAgICAub3JkZXIoImNyZWF0ZWRfYXQiLCB7IGFzY2VuZGluZzogZmFsc2UgfSkKICAgICAgICAgIC5saW1pdCg2KSwKICAgICAgKSwKICAgICAgcnVuU2VhcmNoPENvdXBvblJvdz4oCiAgICAgICAgc3VwYWJhc2UKICAgICAgICAgIC5mcm9tKCJjb3Vwb25zIikKICAgICAgICAgIC5zZWxlY3QoImlkLGNvZGUsZGlzY291bnRfdHlwZSxkaXNjb3VudF92YWx1ZSxzdGF0dXMiKQogICAgICAgICAgLmlsaWtlKCJjb2RlIiwgbGlrZSkKICAgICAgICAgIC5vcmRlcigiY3JlYXRlZF9hdCIsIHsgYXNjZW5kaW5nOiBmYWxzZSB9KQogICAgICAgICAgLmxpbWl0KDYpLAogICAgICApLAogICAgICAvLyBTZWxsZXIgbG9naW4gdXNlcm5hbWVzIGFyZSBpZGVudGl0eSBkYXRhOyByZWFkIHRocm91Z2ggdGhlCiAgICAgIC8vIHNlcnZpY2Utcm9sZSBjbGllbnQgbGlrZSB0aGUgY3VzdG9tZXIgZ3JvdXAgKGFkbWluLW9ubHkgZnVuY3Rpb24pLgogICAgICBydW5TZWFyY2g8QWNjb3VudFJvdz4oCiAgICAgICAgc3VwYWJhc2VBZG1pbgogICAgICAgICAgLmZyb20oInNlbGxlcl9hY2NvdW50cyIpCiAgICAgICAgICAuc2VsZWN0KCJzZWxsZXJfaWQsdXNlcm5hbWUsc2VsbGVycyhsZWdhbF9uYW1lKSIpCiAgICAgICAgICAuaWxpa2UoInVzZXJuYW1lIiwgbGlrZSkKICAgICAgICAgIC5vcmRlcigiY3JlYXRlZF9hdCIsIHsgYXNjZW5kaW5nOiBmYWxzZSB9KQogICAgICAgICAgLmxpbWl0KDYpLAogICAgICApLAogICAgXSk7CgogICAgcmV0dXJuIHsKICAgICAgb3JkZXJzOiBvcmRlcnMubWFwKChvKSA9PiAoewogICAgICAgIGlkOiBvLmlkLAogICAgICAgIG9yZGVyX251bWJlcjogby5vcmRlcl9udW1iZXIsCiAgICAgICAgY3VzdG9tZXI6IFtvLmZpcnN0X25hbWUsIG8ubGFzdF9uYW1lXS5maWx0ZXIoQm9vbGVhbikuam9pbigiICIpIHx8ICLigJQiLAogICAgICAgIHRvdGFsOiBvLmdyYW5kX3RvdGFsLAogICAgICAgIHN0YXR1czogby5zdGF0dXMsCiAgICAgIH0pKSwKICAgICAgc2VsbGVyczogc2VsbGVycy5tYXAoKHMpID0+ICh7CiAgICAgICAgaWQ6IHMuaWQsCiAgICAgICAgbmFtZTogcy5sZWdhbF9uYW1lLAogICAgICAgIGVtYWlsOiBzLmVtYWlsID8/ICLigJQiLAogICAgICAgIHN0YXR1czogcy5hY2NvdW50X3N0YXR1cywKICAgICAgfSkpLAogICAgICBwcm9kdWN0czogcHJvZHVjdHMubWFwKChwKSA9PiAoewogICAgICAgIGlkOiBwLmlkLAogICAgICAgIHNsdWc6IHAuc2x1ZywKICAgICAgICBuYW1lOiBwaWNrTG9jYWxpemVkTmFtZShwLm5hbWUsIHAuc2x1ZyksCiAgICAgICAgcHJpY2U6IHAuYmFzZV9wcmljZSwKICAgICAgICBzdGF0dXM6IHAuc3RhdHVzLAogICAgICB9KSksCiAgICAgIHN0b3Jlczogc3RvcmVzLm1hcCgocykgPT4gKHsgaWQ6IHMuaWQsIG5hbWU6IHMubmFtZSwgc2x1Zzogcy5zbHVnIH0pKSwKICAgICAgY3VzdG9tZXJzOiBjdXN0b21lcnMubWFwKChjKSA9PiB7CiAgICAgICAgY29uc3QgcHJvZmlsZSA9IEFycmF5LmlzQXJyYXkoYy5wcm9maWxlcykgPyAoYy5wcm9maWxlc1swXSA/PyBudWxsKSA6IGMucHJvZmlsZXM7CiAgICAgICAgcmV0dXJuIHsKICAgICAgICAgIGlkOiBjLmlkLAogICAgICAgICAgbmFtZTogcHJvZmlsZT8uZGlzcGxheV9uYW1lPy50cmltKCkgfHwgYy5lbWFpbCB8fCBjLnBob25lIHx8ICLigJQiLAogICAgICAgICAgZW1haWw6IGMuZW1haWwsCiAgICAgICAgICBwaG9uZTogYy5waG9uZSwKICAgICAgICB9OwogICAgICB9KSwKICAgICAgY2F0ZWdvcmllczogY2F0ZWdvcmllcy5tYXAoKGMpID0+ICh7CiAgICAgICAgaWQ6IGMuaWQsCiAgICAgICAgbmFtZTogcGlja0xvY2FsaXplZE5hbWUoYy5uYW1lLCBjLnNsdWcpLAogICAgICAgIHNsdWc6IGMuc2x1ZywKICAgICAgICBzdGF0dXM6IGMuc3RhdHVzLAogICAgICB9KSksCiAgICAgIGNvdXBvbnM6IGNvdXBvbnMubWFwKChjKSA9PiAoewogICAgICAgIGlkOiBjLmlkLAogICAgICAgIGNvZGU6IGMuY29kZSwKICAgICAgICB2YWx1ZTogYy5kaXNjb3VudF90eXBlID09PSAicGVyY2VudGFnZSIgPyBgJHtjLmRpc2NvdW50X3ZhbHVlfSVgIDogYCR7Yy5kaXNjb3VudF92YWx1ZX0gRFpEYCwKICAgICAgICBzdGF0dXM6IGMuc3RhdHVzLAogICAgICB9KSksCiAgICAgIHVzZXJuYW1lczogYWNjb3VudHMubWFwKChhKSA9PiB7CiAgICAgICAgY29uc3Qgc2VsbGVyID0gQXJyYXkuaXNBcnJheShhLnNlbGxlcnMpID8gKGEuc2VsbGVyc1swXSA/PyBudWxsKSA6IGEuc2VsbGVyczsKICAgICAgICByZXR1cm4gewogICAgICAgICAgc2VsbGVySWQ6IGEuc2VsbGVyX2lkLAogICAgICAgICAgdXNlcm5hbWU6IGEudXNlcm5hbWUsCiAgICAgICAgICBzZWxsZXJOYW1lOiBzZWxsZXI/LmxlZ2FsX25hbWU/LnRyaW0oKSB8fCAi4oCUIiwKICAgICAgICB9OwogICAgICB9KSwKICAgIH07CiAgfSk7CgpleHBvcnQgdHlwZSBBZG1pbkdsb2JhbFNlYXJjaFJlc3VsdCA9IEF3YWl0ZWQ8UmV0dXJuVHlwZTx0eXBlb2YgYWRtaW5HbG9iYWxTZWFyY2g+PjsK
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertAdmin } from "@/lib/admin-auth";
+import { pickLocalizedName } from "@/lib/names";
+
+const adminOnly = [requireSupabaseAuth] as const;
+
+async function adminClient() {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  return supabaseAdmin;
+}
+
+type OrderRow = { id: string; order_number: string; first_name: string | null; last_name: string | null; grand_total: number; status: string };
+type SellerRow = { id: string; legal_name: string; email: string | null; account_status: string };
+type ProductRow = { id: string; slug: string; name: unknown; base_price: number; status: string };
+type StoreRow = { id: string; name: string; slug: string };
+type CategoryRow = { id: string; name: unknown; slug: string; status: string };
+type CouponRow = { id: string; code: string; discount_type: string; discount_value: number; status: string };
+type AccountRow = {
+  seller_id: string;
+  username: string;
+  sellers: { legal_name: string | null } | { legal_name: string | null }[] | null;
+};
+type CustomerRow = {
+  id: string;
+  email: string | null;
+  phone: string | null;
+  profiles: { display_name: string | null } | { display_name: string | null }[] | null;
+};
+
+async function runSearch<T>(query: any): Promise<T[]> {
+  try {
+    const { data, error } = await query;
+    if (error) return [];
+    return (data ?? []) as T[];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Admin-only global search across orders, sellers, products, stores,
+ * customers, categories, coupons and seller usernames.
+ * One failing table never takes down the whole search — it resolves to an
+ * empty group instead.
+ */
+export const adminGlobalSearch = createServerFn({ method: "GET" })
+  .middleware(adminOnly)
+  .inputValidator((data) => z.object({ q: z.string().min(2).max(60) }).parse(data))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    // Strip characters that would break PostgREST's .or() list syntax.
+    const q = data.q.trim().replace(/[,()]/g, "");
+    if (q.length < 2) throw new Error("Search query too short.");
+    const like = `%${q}%`;
+    const supabase = context.supabase;
+    // customers RLS only allows the customer themselves, so the customer
+    // group is read through the service-role client (admin-only function).
+    const supabaseAdmin = await adminClient();
+
+    const [orders, sellers, products, stores, customers, categories, coupons, accounts] = await Promise.all([
+      runSearch<OrderRow>(
+        supabase
+          .from("orders")
+          .select("id,order_number,first_name,last_name,grand_total,status")
+          .or(`order_number.ilike.${like},guest_email.ilike.${like},guest_phone.ilike.${like},first_name.ilike.${like},last_name.ilike.${like}`)
+          .order("created_at", { ascending: false })
+          .limit(6),
+      ),
+      runSearch<SellerRow>(
+        supabase
+          .from("sellers")
+          .select("id,legal_name,email,account_status")
+          .or(`legal_name.ilike.${like},email.ilike.${like},phone.ilike.${like}`)
+          .order("created_at", { ascending: false })
+          .limit(6),
+      ),
+      runSearch<ProductRow>(
+        supabase
+          .from("products")
+          .select("id,slug,name,base_price,status")
+          .or(`slug.ilike.${like},name->>ar.ilike.${like},name->>fr.ilike.${like},name->>en.ilike.${like}`)
+          .order("created_at", { ascending: false })
+          .limit(6),
+      ),
+      runSearch<StoreRow>(
+        supabase
+          .from("stores")
+          .select("id,name,slug")
+          .or(`name.ilike.${like},slug.ilike.${like}`)
+          .order("created_at", { ascending: false })
+          .limit(6),
+      ),
+      runSearch<CustomerRow>(
+        supabaseAdmin
+          .from("customers")
+          .select("id,email,phone,profiles(display_name)")
+          .or(`email.ilike.${like},phone.ilike.${like}`)
+          .order("created_at", { ascending: false })
+          .limit(6),
+      ),
+      runSearch<CategoryRow>(
+        supabase
+          .from("categories")
+          .select("id,name,slug,status")
+          .or(`slug.ilike.${like},name->>ar.ilike.${like},name->>fr.ilike.${like},name->>en.ilike.${like}`)
+          .order("created_at", { ascending: false })
+          .limit(6),
+      ),
+      runSearch<CouponRow>(
+        supabase
+          .from("coupons")
+          .select("id,code,discount_type,discount_value,status")
+          .ilike("code", like)
+          .order("created_at", { ascending: false })
+          .limit(6),
+      ),
+      // Seller login usernames are identity data; read through the
+      // service-role client like the customer group (admin-only function).
+      runSearch<AccountRow>(
+        supabaseAdmin
+          .from("seller_accounts")
+          .select("seller_id,username,sellers(legal_name)")
+          .ilike("username", like)
+          .order("created_at", { ascending: false })
+          .limit(6),
+      ),
+    ]);
+
+    return {
+      orders: orders.map((o) => ({
+        id: o.id,
+        order_number: o.order_number,
+        customer: [o.first_name, o.last_name].filter(Boolean).join(" ") || "—",
+        total: o.grand_total,
+        status: o.status,
+      })),
+      sellers: sellers.map((s) => ({
+        id: s.id,
+        name: s.legal_name,
+        email: s.email ?? "—",
+        status: s.account_status,
+      })),
+      products: products.map((p) => ({
+        id: p.id,
+        slug: p.slug,
+        name: pickLocalizedName(p.name, p.slug),
+        price: p.base_price,
+        status: p.status,
+      })),
+      stores: stores.map((s) => ({ id: s.id, name: s.name, slug: s.slug })),
+      customers: customers.map((c) => {
+        const profile = Array.isArray(c.profiles) ? (c.profiles[0] ?? null) : c.profiles;
+        return {
+          id: c.id,
+          name: profile?.display_name?.trim() || c.email || c.phone || "—",
+          email: c.email,
+          phone: c.phone,
+        };
+      }),
+      categories: categories.map((c) => ({
+        id: c.id,
+        name: pickLocalizedName(c.name, c.slug),
+        slug: c.slug,
+        status: c.status,
+      })),
+      coupons: coupons.map((c) => ({
+        id: c.id,
+        code: c.code,
+        value: c.discount_type === "percentage" ? `${c.discount_value}%` : `${c.discount_value} DZD`,
+        status: c.status,
+      })),
+      usernames: accounts.map((a) => {
+        const seller = Array.isArray(a.sellers) ? (a.sellers[0] ?? null) : a.sellers;
+        return {
+          sellerId: a.seller_id,
+          username: a.username,
+          sellerName: seller?.legal_name?.trim() || "—",
+        };
+      }),
+    };
+  });
+
+export type AdminGlobalSearchResult = Awaited<ReturnType<typeof adminGlobalSearch>>;

@@ -4,6 +4,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
+import { resolveSupportSeller } from "@/lib/seller-support-auth.server";
 
 export type SellerPermission =
   | "products.view"
@@ -131,114 +132,6 @@ export const SELLER_ROLE_PRESETS: Record<SellerStaffRole, readonly SellerPermiss
 };
 
 type SellerDb = SupabaseClient<Database>;
-
-/** Cookie carrying the raw support bearer token (set by the admin browser). */
-const SUPPORT_COOKIE_NAME = "modalia_support";
-
-async function sha256Hex(value: string): Promise<string> {
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
-  return Array.from(new Uint8Array(digest))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-}
-
-/** Read the support bearer token from the current request's cookies, if any. */
-async function readSupportToken(): Promise<string | null> {
-  try {
-    // Dynamic import: "@tanstack/react-start/server" is denied in the client
-    // bundle by the import-protection plugin, so it must never be a static
-    // import in this module (imported by client route files). This function
-    // only ever runs inside server-fn handlers.
-    const { getRequest } = await import("@tanstack/react-start/server");
-    const req = getRequest();
-    const header = req?.headers?.get("cookie");
-    if (!header) return null;
-    const part = header
-      .split(";")
-      .map((s) => s.trim())
-      .find((s) => s.startsWith(`${SUPPORT_COOKIE_NAME}=`));
-    if (!part) return null;
-    const token = decodeURIComponent(part.slice(SUPPORT_COOKIE_NAME.length + 1));
-    return /^[0-9a-f]{64}$/.test(token) ? token : null;
-  } catch {
-    // Outside a request context (or any parsing failure): no support mode.
-    return null;
-  }
-}
-
-/**
- * V8 Section 47 — support-mode identity fallback for resolveSeller.
- *
- * Runs ONLY when the session resolves to no seller identity at all (no owned
- * seller row, no staff row), so it can never override or weaken a real
- * seller/staff resolution. Every check is server-side:
- *  1. bearer token from the request cookie (opaque 64-hex),
- *  2. grant row: token hash matches, not revoked, not expired,
- *  3. creator binding: grant.admin_id === calling user,
- *  4. defense in depth: the caller must STILL be a super_admin right now
- *     (a demoted admin's grant dies immediately),
- *  5. target seller still exists.
- *
- * Returns a scoped SellerContext with SUPPORT_READ_PERMISSIONS only —
- * isOwner false, supportMode true — and NEVER any credentials. Returns null
- * when there is no valid grant, and the caller keeps the normal DENIED path.
- */
-async function resolveSupportSeller(ctx: {
-  supabase: SellerDb;
-  userId: string;
-}): Promise<SellerContext | null> {
-  const token = await readSupportToken();
-  if (!token) return null;
-
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const nowIso = new Date().toISOString();
-  const { data: grant } = await supabaseAdmin
-    .from("seller_support_grants")
-    .select("id,admin_id,seller_id,expires_at")
-    .eq("token_hash", await sha256Hex(token))
-    .is("revoked_at", null)
-    .gt("expires_at", nowIso)
-    .maybeSingle();
-  if (!grant || grant.admin_id !== ctx.userId) return null;
-
-  // The grant was created by a super_admin; re-check on every use so a
-  // demoted admin loses support access immediately.
-  const { data: stillAdmin } = await ctx.supabase.rpc("is_super_admin");
-  if (stillAdmin !== true) return null;
-
-  const { data: seller } = await supabaseAdmin
-    .from("sellers")
-    .select("id,legal_name,onboarded_at")
-    .eq("id", grant.seller_id)
-    .maybeSingle();
-  if (!seller) return null;
-
-  const { data: store } = await supabaseAdmin
-    .from("stores")
-    .select("id,slug")
-    .eq("seller_id", seller.id)
-    .maybeSingle();
-
-  // Best-effort touch; never blocks the resolution.
-  void supabaseAdmin
-    .from("seller_support_grants")
-    .update({ last_used_at: nowIso })
-    .eq("id", grant.id);
-
-  return {
-    sellerId: seller.id,
-    storeId: store?.id ?? null,
-    storeSlug: store?.slug ?? null,
-    isOwner: false,
-    permissions: [...SUPPORT_READ_PERMISSIONS],
-    legalName: seller.legal_name,
-    mustResetPassword: false,
-    onboarded: seller.onboarded_at != null,
-    supportMode: true,
-    supportAdminId: grant.admin_id,
-    supportExpiresAt: grant.expires_at,
-  };
-}
 
 /**
  * THE security contract for the Seller OS. Resolves the seller from the

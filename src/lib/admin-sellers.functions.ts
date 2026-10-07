@@ -57,7 +57,7 @@ export const listApplications = createServerFn({ method: "GET" })
     await assertAdminPermission(context, "applications.decide");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     let query = supabaseAdmin.from("seller_applications").select("*", { count: "exact" });
-    if (data.status) query = query.eq("status", data.status);
+    if (data.status) query = query.eq("status", data.status as Database["public"]["Enums"]["seller_application_status"]);
     const q = data.q ? sanitizeSearch(data.q) : "";
     if (q) {
       query = query.or(
@@ -157,7 +157,7 @@ export const reviewApplication = createServerFn({ method: "POST" })
       }
       const { error: updateError } = await supabaseAdmin
         .from("seller_applications")
-        .update({ status: "under_review", reviewed_by: context.userId, ...notesPatch })
+        .update({ status: "under_review" as Database["public"]["Enums"]["seller_application_status"], reviewed_by: context.userId, ...notesPatch })
         .eq("id", data.id);
       if (updateError) throw new Error(updateError.message);
       await supabaseAdmin.from("audit_logs").insert({

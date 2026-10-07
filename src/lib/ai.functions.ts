@@ -213,19 +213,19 @@ async function searchAssistantCatalog(
   try {
     const { data: payload, error } = await supabase.rpc("search_products_fts", {
       p_query: query,
-      p_category_slug: intent.categorySlug,
-      p_brand_slugs: intent.brandSlug ? [intent.brandSlug] : null,
-      p_store_slugs: intent.storeSlug ? [intent.storeSlug] : null,
-      p_min_price: intent.minPrice,
-      p_max_price: intent.maxPrice,
-      p_color_slugs: intent.colors.length ? intent.colors : null,
-      p_size_values: intent.sizes.length ? intent.sizes : null,
+      p_category_slug: intent.categorySlug ?? undefined,
+      p_brand_slugs: intent.brandSlug ? [intent.brandSlug] : undefined,
+      p_store_slugs: intent.storeSlug ? [intent.storeSlug] : undefined,
+      p_min_price: intent.minPrice ?? undefined,
+      p_max_price: intent.maxPrice ?? undefined,
+      p_color_slugs: intent.colors.length ? intent.colors : undefined,
+      p_size_values: intent.sizes.length ? intent.sizes : undefined,
       // V8 #180: the parsed gender reaches the DB as a structured filter
       // (category or ancestor chain carries the gender). If the migration
       // adding the 14-arg overload isn't applied yet, this RPC errors and
       // searchAssistantCatalog returns null — the caller then uses the
       // bounded legacy fallback, so nothing breaks.
-      p_gender: intent.genders[0] ?? null,
+      p_gender: intent.genders[0] ?? undefined,
       p_in_stock: false,
       p_on_sale: false,
       p_sort: intent.sort,

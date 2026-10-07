@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Copy, Info, Sparkles } from "lucide-react";
+import { Check, Copy, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,6 +11,7 @@ import { aiSellerDraft, aiApplySellerDraft } from "@/lib/ai.functions";
 import { getLocale, getTranslations } from "@/lib/i18n";
 import { SellerShell } from "@/components/seller/SellerShell";
 import { errMsg } from "../admin/_shared";
+import { ModaliaIntelligenceIcon } from "@/components/marketplace/ModaliaIntelligenceIcon";
 
 export const Route = createFileRoute("/_authenticated/seller/ai")({
   validateSearch: (search: Record<string, unknown>) => ({ locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined) }),
@@ -161,7 +162,7 @@ function SellerAiPage() {
             <AdminCard
               title="SEO title & description generator"
               subtitle="Deterministic template output from your product fields."
-              actions={<Sparkles className="size-4 text-muted-foreground" />}
+              actions={<ModaliaIntelligenceIcon size={16} className="text-muted-foreground" />}
             >
               <div className="space-y-5">
                 <CopyableBlock label="SEO title (max 60 chars)" value={seo.title} hint={`${seo.title.length}/60 characters`} />
@@ -186,7 +187,7 @@ function SellerAiPage() {
             <AdminCard
               title="Product description improver"
               subtitle="Structured rewrite built from your existing description, attributes and price."
-              actions={<Sparkles className="size-4 text-muted-foreground" />}
+              actions={<ModaliaIntelligenceIcon size={16} className="text-muted-foreground" />}
             >
               <div className="space-y-5">
                 <div>
@@ -259,7 +260,7 @@ function AiDraftStudio({ productId, productName }: { productId: string; productN
     <AdminCard
       title="Description draft studio"
       subtitle={`Drafts for “${productName}”. Nothing here publishes anything.`}
-      actions={<Sparkles className="size-4 text-muted-foreground" />}
+      actions={<ModaliaIntelligenceIcon size={16} className="text-muted-foreground" />}
     >
       <div className="space-y-5">
         <div className="flex items-start gap-3 rounded-2xl border border-sky-500/30 bg-sky-500/10 p-4">

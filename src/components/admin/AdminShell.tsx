@@ -196,6 +196,7 @@ function NavLink({ item, compact }: { item: NavItem; compact?: boolean }) {
   return (
     <Link
       to={item.to}
+      preload="intent"
       {...(item.exact ? { activeOptions: { exact: true } } : {})}
       activeProps={{ className: "bg-accent text-accent-foreground font-medium" }}
       className={cn(

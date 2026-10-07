@@ -27,7 +27,6 @@ import {
   Settings,
   ShieldCheck,
   ShoppingBag,
-  Sparkles,
   Star,
   Store,
   Ticket,
@@ -52,6 +51,7 @@ import { cn } from "@/lib/utils";
 import { Crumbs, type Crumb } from "@/components/routing/crumbs";
 
 import type { LinkProps } from "@tanstack/react-router";
+import { ModaliaIntelligenceIcon } from "@/components/marketplace/ModaliaIntelligenceIcon";
 
 type AdminNavStrings = Translation["adminNav"];
 
@@ -142,7 +142,7 @@ function buildNavGroups(t: AdminNavStrings): NavGroup[] {
       label: t.groups.system,
       items: [
         { label: items.team, to: "/admin/team", icon: <UserCog className={icon} /> },
-        { label: items.ai, to: "/admin/ai", icon: <Sparkles className={icon} /> },
+        { label: items.ai, to: "/admin/ai", icon: <ModaliaIntelligenceIcon size={18} className={icon} /> },
         { label: items.seo, to: "/admin/seo", icon: <Globe className={icon} /> },
         { label: items.settings, to: "/admin/settings", icon: <Settings className={icon} /> },
         { label: items.security, to: "/admin/security", icon: <ShieldCheck className={icon} /> },

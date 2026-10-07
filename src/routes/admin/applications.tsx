@@ -448,12 +448,12 @@ function ApplicationDrawer({
               </section>
 
               {/* Actions */}
-              {(app.status === "pending" || app.status === "under_review") && (
+              {(app.status === "pending" || (app.status as string) === "under_review") && (
                 <section className="rounded-lg border p-4">
                   <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
                     Decision
                   </h3>
-                  {app.status === "under_review" && (
+                  {(app.status as string) === "under_review" && (
                     <p className="mb-3 text-sm text-muted-foreground">
                       This application is under review — record a final decision below.
                     </p>

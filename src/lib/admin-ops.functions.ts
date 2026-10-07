@@ -1,1 +1,544 @@
-aW1wb3J0IHsgY3JlYXRlU2VydmVyRm4gfSBmcm9tICJAdGFuc3RhY2svcmVhY3Qtc3RhcnQiOwppbXBvcnQgeyB6IH0gZnJvbSAiem9kIjsKaW1wb3J0IHsgcmVxdWlyZVN1cGFiYXNlQXV0aCB9IGZyb20gIkAvaW50ZWdyYXRpb25zL3N1cGFiYXNlL2F1dGgtbWlkZGxld2FyZSI7CmltcG9ydCB0eXBlIHsgRGF0YWJhc2UsIEpzb24gfSBmcm9tICJAL2ludGVncmF0aW9ucy9zdXBhYmFzZS90eXBlcyI7CmltcG9ydCB7IGFzc2VydEFkbWluIH0gZnJvbSAiQC9saWIvYWRtaW4tYXV0aCI7CmltcG9ydCB7IGFzc2VydEFkbWluUGVybWlzc2lvbiB9IGZyb20gIkAvbGliL2FkbWluLXBlcm1pc3Npb25zIjsKCi8qKgogKiBBZG1pbiBvcGVyYXRpb25zIHNlcnZlciBmdW5jdGlvbnMgKFN1cGVyIEFkbWluIE9TLCBwaGFzZSAzLzgg4oCUIHdvcmtlciAxLzUpLgogKgogKiBDb3ZlcnMgdGhlIG5ldyBzdGFuZGFsb25lIGFkbWluIHNlY3Rpb25zOiBzdG9yZXMsIGN1c3RvbWVycywgd2lsYXlhcywKICogY29tbXVuZXMsIG9mZmljaWFsIHN0b3JlLCBtZWRpYSBsaWJyYXJ5LCBzZWN1cml0eSBvdmVydmlldyBhbmQgc2l0ZQogKiBzZXR0aW5ncy4gRXZlcnkgZnVuY3Rpb24gaXMgYWRtaW4tb25seTogYC5taWRkbGV3YXJlKFtyZXF1aXJlU3VwYWJhc2VBdXRoXSlgCiAqIHBsdXMgdGhlIHNoYXJlZCBgYXNzZXJ0QWRtaW5gIHRoYXQgY2FsbHMgdGhlIGBpc19zdXBlcl9hZG1pbmAgUlBDLgogKgogKiBFeGlzdGluZyBzZWN0aW9ucyAocHJvZHVjdHMsIG9yZGVycywgc2VsbGVycywgc2hpcHBpbmcgcnVsZXMsIGNvdXBvbnMsCiAqIHNldHRsZW1lbnRzLCBhdWRpdCBsb2dzKSBrZWVwIHRoZWlyIG93biBmdW5jdGlvbnMgdW50b3VjaGVkLgogKi8KCmNvbnN0IGFkbWluT25seSA9IFtyZXF1aXJlU3VwYWJhc2VBdXRoXSBhcyBjb25zdDsKCnR5cGUgU3RvcmVSb3cgPSBEYXRhYmFzZVsicHVibGljIl1bIlRhYmxlcyJdWyJzdG9yZXMiXVsiUm93Il07CnR5cGUgUHJvZmlsZVJvdyA9IERhdGFiYXNlWyJwdWJsaWMiXVsiVGFibGVzIl1bInByb2ZpbGVzIl1bIlJvdyJdOwp0eXBlIFdpbGF5YVJvdyA9IERhdGFiYXNlWyJwdWJsaWMiXVsiVGFibGVzIl1bIndpbGF5YXMiXVsiUm93Il07CnR5cGUgQ29tbXVuZVJvdyA9IERhdGFiYXNlWyJwdWJsaWMiXVsiVGFibGVzIl1bImNvbW11bmVzIl1bIlJvdyJdOwoKYXN5bmMgZnVuY3Rpb24gYWRtaW5DbGllbnQoKSB7CiAgY29uc3QgeyBzdXBhYmFzZUFkbWluIH0gPSBhd2FpdCBpbXBvcnQoIkAvaW50ZWdyYXRpb25zL3N1cGFiYXNlL2NsaWVudC5zZXJ2ZXIiKTsKICByZXR1cm4gc3VwYWJhc2VBZG1pbjsKfQoKYXN5bmMgZnVuY3Rpb24gYXVkaXRMb2coCiAgY29udGV4dDogdW5rbm93biwKICBhY3Rpb246IHN0cmluZywKICByZXNvdXJjZTogc3RyaW5nLAogIHJlc291cmNlSWQ6IHN0cmluZyB8IG51bGwsCiAgbWV0YWRhdGE6IFJlY29yZDxzdHJpbmcsIEpzb24+ID0ge30sCikgewogIHRyeSB7CiAgICBjb25zdCBzdXBhYmFzZUFkbWluID0gYXdhaXQgYWRtaW5DbGllbnQoKTsKICAgIGNvbnN0IGFjdG9ySWQgPSAoY29udGV4dCBhcyB7IHVzZXJJZD86IHN0cmluZyB9IHwgbnVsbCB8IHVuZGVmaW5lZCk/LnVzZXJJZCA/PyBudWxsOwogICAgYXdhaXQgc3VwYWJhc2VBZG1pbi5mcm9tKCJhdWRpdF9sb2dzIikuaW5zZXJ0KHsKICAgICAgYWN0b3JfaWQ6IGFjdG9ySWQsCiAgICAgIGFjdGlvbiwKICAgICAgcmVzb3VyY2UsCiAgICAgIHJlc291cmNlX2lkOiByZXNvdXJjZUlkLAogICAgICBtZXRhZGF0YSwKICAgIH0pOwogIH0gY2F0Y2ggewogICAgLy8gQXVkaXQgbG9nZ2luZyBtdXN0IG5ldmVyIGJyZWFrIHRoZSBtdXRhdGlvbiBpdHNlbGYuCiAgfQp9CgovKiogU3RyaXAgcG9zdGdyZXN0IGZpbHRlci1icmVha2luZyBjaGFyYWN0ZXJzIGZyb20gZnJlZS10ZXh0IHNlYXJjaC4gKi8KZnVuY3Rpb24gc2FuaXRpemVTZWFyY2gocTogc3RyaW5nKTogc3RyaW5nIHsKICByZXR1cm4gcS5yZXBsYWNlKC9bLCgpXS9nLCAiIikudHJpbSgpLnNsaWNlKDAsIDEwMCk7Cn0KCmNvbnN0IFBBR0VfU0laRSA9IDI1OwoKLyogLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tICovCi8qIFN0b3JlcyAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgKi8KLyogLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tICovCgpleHBvcnQgdHlwZSBBZG1pblN0b3JlTGlzdEl0ZW0gPSBTdG9yZVJvdyAmIHsKICBzZWxsZXJfbGVnYWxfbmFtZTogc3RyaW5nIHwgbnVsbDsKICBwcm9kdWN0X2NvdW50OiBudW1iZXI7Cn07Cgpjb25zdCBlbXB0eVRvVW5kZWZpbmVkID0gKHY6IHVua25vd24pID0+ICh2ID09PSAiIiA/IHVuZGVmaW5lZCA6IHYpOwoKY29uc3QgbGlzdFN0b3Jlc0lucHV0ID0gei5vYmplY3QoewogIHE6IHouc3RyaW5nKCkubWF4KDEwMCkub3B0aW9uYWwoKSwKICBzdGF0dXM6IHoucHJlcHJvY2VzcyhlbXB0eVRvVW5kZWZpbmVkLCB6LmVudW0oWyJkcmFmdCIsICJhY3RpdmUiLCAic3VzcGVuZGVkIiwgImNsb3NlZCJdKS5vcHRpb25hbCgpKSwKICBwYWdlOiB6Lm51bWJlcigpLmludCgpLm1pbigxKS5kZWZhdWx0KDEpLAp9KTsKCmV4cG9ydCBjb25zdCBsaXN0QWRtaW5TdG9yZXMgPSBjcmVhdGVTZXJ2ZXJGbih7IG1ldGhvZDogIkdFVCIgfSkKICAubWlkZGxld2FyZShhZG1pbk9ubHkpCiAgLmlucHV0VmFsaWRhdG9yKChkYXRhKSA9PiBsaXN0U3RvcmVzSW5wdXQucGFyc2UoZGF0YSkpCiAgLmhhbmRsZXIoYXN5bmMgKHsgZGF0YSwgY29udGV4dCB9KSA9PiB7CiAgICBhd2FpdCBhc3NlcnRBZG1pblBlcm1pc3Npb24oY29udGV4dCwgInN0b3Jlcy52aWV3Iik7CiAgICBjb25zdCBzdXBhYmFzZUFkbWluID0gYXdhaXQgYWRtaW5DbGllbnQoKTsKICAgIGNvbnN0IHEgPSBkYXRhLnEgPyBzYW5pdGl6ZVNlYXJjaChkYXRhLnEpIDogIiI7CgogICAgbGV0IHF1ZXJ5ID0gc3VwYWJhc2VBZG1pbi5mcm9tKCJzdG9yZXMiKS5zZWxlY3QoIiosIHNlbGxlcnMobGVnYWxfbmFtZSkiLCB7IGNvdW50OiAiZXhhY3QiIH0pOwogICAgaWYgKGRhdGEuc3RhdHVzKSBxdWVyeSA9IHF1ZXJ5LmVxKCJzdGF0dXMiLCBkYXRhLnN0YXR1cyk7CiAgICBpZiAocSkgcXVlcnkgPSBxdWVyeS5vcihgbmFtZS5pbGlrZS4lJHtxfSUsc2x1Zy5pbGlrZS4lJHtxfSVgKTsKCiAgICBjb25zdCBmcm9tID0gKGRhdGEucGFnZSAtIDEpICogUEFHRV9TSVpFOwogICAgY29uc3QgewogICAgICBkYXRhOiByb3dzLAogICAgICBlcnJvciwKICAgICAgY291bnQsCiAgICB9ID0gYXdhaXQgcXVlcnkub3JkZXIoImNyZWF0ZWRfYXQiLCB7IGFzY2VuZGluZzogZmFsc2UgfSkucmFuZ2UoZnJvbSwgZnJvbSArIFBBR0VfU0laRSAtIDEpOwogICAgaWYgKGVycm9yKSB0aHJvdyBuZXcgRXJyb3IoZXJyb3IubWVzc2FnZSk7CgogICAgY29uc3QgaXRlbXM6IEFkbWluU3RvcmVMaXN0SXRlbVtdID0gKHJvd3MgPz8gW10pLm1hcCgocykgPT4gKHsKICAgICAgLi4uKHMgYXMgU3RvcmVSb3cpLAogICAgICBzZWxsZXJfbGVnYWxfbmFtZToKICAgICAgICAocyBhcyB7IHNlbGxlcnM/OiB7IGxlZ2FsX25hbWU/OiBzdHJpbmcgfCBudWxsIH0gfCBudWxsIH0pLnNlbGxlcnM/LmxlZ2FsX25hbWUgPz8gbnVsbCwKICAgICAgcHJvZHVjdF9jb3VudDogMCwKICAgIH0pKTsKCiAgICAvLyBQcm9kdWN0IGNvdW50cyBwZXIgc2VsbGVyIChwcm9kdWN0cyBiZWxvbmcgdG8gc2VsbGVycywgc3RvcmVzIHRvIHNlbGxlcnMpLgogICAgY29uc3Qgc2VsbGVySWRzID0gWy4uLm5ldyBTZXQoaXRlbXMubWFwKChzKSA9PiBzLnNlbGxlcl9pZCkpXTsKICAgIGlmIChzZWxsZXJJZHMubGVuZ3RoID4gMCkgewogICAgICBjb25zdCB7IGRhdGE6IHByb2R1Y3RzIH0gPSBhd2FpdCBzdXBhYmFzZUFkbWluCiAgICAgICAgLmZyb20oInByb2R1Y3RzIikKICAgICAgICAuc2VsZWN0KCJzZWxsZXJfaWQiKQogICAgICAgIC5pbigic2VsbGVyX2lkIiwgc2VsbGVySWRzKTsKICAgICAgY29uc3QgY291bnRzID0gbmV3IE1hcDxzdHJpbmcsIG51bWJlcj4oKTsKICAgICAgZm9yIChjb25zdCBwIG9mIHByb2R1Y3RzID8/IFtdKSB7CiAgICAgICAgaWYgKHAuc2VsbGVyX2lkKSBjb3VudHMuc2V0KHAuc2VsbGVyX2lkLCAoY291bnRzLmdldChwLnNlbGxlcl9pZCkgPz8gMCkgKyAxKTsKICAgICAgfQogICAgICBmb3IgKGNvbnN0IGl0ZW0gb2YgaXRlbXMpIGl0ZW0ucHJvZHVjdF9jb3VudCA9IGNvdW50cy5nZXQoaXRlbS5zZWxsZXJfaWQpID8/IDA7CiAgICB9CgogICAgcmV0dXJuIHsgaXRlbXMsIHRvdGFsOiBjb3VudCA/PyAwLCBwYWdlOiBkYXRhLnBhZ2UsIHBhZ2VTaXplOiBQQUdFX1NJWkUgfTsKICB9KTsKCi8qIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLSAqLwovKiBDdXN0b21lcnMgKHJlZ2lzdGVyZWQgcHJvZmlsZXMgKyBndWVzdCBidXllcnMpICAgICAgICAgICAgICAgICAgICAgICovCi8qIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLSAqLwoKZXhwb3J0IHR5cGUgQWRtaW5DdXN0b21lckxpc3RJdGVtID0gUHJvZmlsZVJvdyAmIHsKICBvcmRlcl9jb3VudDogbnVtYmVyOwogIHRvdGFsX3NwZW50OiBudW1iZXI7CiAgbGFzdF9vcmRlcl9hdDogc3RyaW5nIHwgbnVsbDsKfTsKCmNvbnN0IGxpc3RDdXN0b21lcnNJbnB1dCA9IHoub2JqZWN0KHsKICBxOiB6LnN0cmluZygpLm1heCgxMDApLm9wdGlvbmFsKCksCiAgcGFnZTogei5udW1iZXIoKS5pbnQoKS5taW4oMSkuZGVmYXVsdCgxKSwKfSk7CgpleHBvcnQgY29uc3QgbGlzdEFkbWluQ3VzdG9tZXJzID0gY3JlYXRlU2VydmVyRm4oeyBtZXRob2Q6ICJHRVQiIH0pCiAgLm1pZGRsZXdhcmUoYWRtaW5Pbmx5KQogIC5pbnB1dFZhbGlkYXRvcigoZGF0YSkgPT4gbGlzdEN1c3RvbWVyc0lucHV0LnBhcnNlKGRhdGEpKQogIC5oYW5kbGVyKGFzeW5jICh7IGRhdGEsIGNvbnRleHQgfSkgPT4gewogICAgYXdhaXQgYXNzZXJ0QWRtaW5QZXJtaXNzaW9uKGNvbnRleHQsICJjdXN0b21lcnMudmlldyIpOwogICAgY29uc3Qgc3VwYWJhc2VBZG1pbiA9IGF3YWl0IGFkbWluQ2xpZW50KCk7CiAgICBjb25zdCBxID0gZGF0YS5xID8gc2FuaXRpemVTZWFyY2goZGF0YS5xKSA6ICIiOwoKICAgIGxldCBxdWVyeSA9IHN1cGFiYXNlQWRtaW4uZnJvbSgicHJvZmlsZXMiKS5zZWxlY3QoIioiLCB7IGNvdW50OiAiZXhhY3QiIH0pOwogICAgaWYgKHEpIHF1ZXJ5ID0gcXVlcnkub3IoYGRpc3BsYXlfbmFtZS5pbGlrZS4lJHtxfSUscGhvbmUuaWxpa2UuJSR7cX0lYCk7CgogICAgY29uc3QgZnJvbSA9IChkYXRhLnBhZ2UgLSAxKSAqIFBBR0VfU0laRTsKICAgIGNvbnN0IHsKICAgICAgZGF0YTogcm93cywKICAgICAgZXJyb3IsCiAgICAgIGNvdW50LAogICAgfSA9IGF3YWl0IHF1ZXJ5Lm9yZGVyKCJjcmVhdGVkX2F0IiwgeyBhc2NlbmRpbmc6IGZhbHNlIH0pLnJhbmdlKGZyb20sIGZyb20gKyBQQUdFX1NJWkUgLSAxKTsKICAgIGlmIChlcnJvcikgdGhyb3cgbmV3IEVycm9yKGVycm9yLm1lc3NhZ2UpOwoKICAgIGNvbnN0IGl0ZW1zOiBBZG1pbkN1c3RvbWVyTGlzdEl0ZW1bXSA9IChyb3dzID8/IFtdKS5tYXAoKHApID0+ICh7CiAgICAgIC4uLnAsCiAgICAgIG9yZGVyX2NvdW50OiAwLAogICAgICB0b3RhbF9zcGVudDogMCwKICAgICAgbGFzdF9vcmRlcl9hdDogbnVsbCwKICAgIH0pKTsKCiAgICBjb25zdCBpZHMgPSBpdGVtcy5tYXAoKHApID0+IHAuaWQpOwogICAgaWYgKGlkcy5sZW5ndGggPiAwKSB7CiAgICAgIGNvbnN0IHsgZGF0YTogb3JkZXJzIH0gPSBhd2FpdCBzdXBhYmFzZUFkbWluCiAgICAgICAgLmZyb20oIm9yZGVycyIpCiAgICAgICAgLnNlbGVjdCgiY3VzdG9tZXJfaWQsZ3JhbmRfdG90YWwsY3JlYXRlZF9hdCIpCiAgICAgICAgLmluKCJjdXN0b21lcl9pZCIsIGlkcyk7CiAgICAgIGNvbnN0IHN0YXRzID0gbmV3IE1hcDxzdHJpbmcsIHsgbjogbnVtYmVyOyB0b3RhbDogbnVtYmVyOyBsYXN0OiBzdHJpbmcgfCBudWxsIH0+KCk7CiAgICAgIGZvciAoY29uc3QgbyBvZiBvcmRlcnMgPz8gW10pIHsKICAgICAgICBpZiAoIW8uY3VzdG9tZXJfaWQpIGNvbnRpbnVlOwogICAgICAgIGNvbnN0IHMgPSBzdGF0cy5nZXQoby5jdXN0b21lcl9pZCkgPz8geyBuOiAwLCB0b3RhbDogMCwgbGFzdDogbnVsbCB9OwogICAgICAgIHMubiArPSAxOwogICAgICAgIHMudG90YWwgKz0gTnVtYmVyKG8uZ3JhbmRfdG90YWwpIHx8IDA7CiAgICAgICAgaWYgKCFzLmxhc3QgfHwgby5jcmVhdGVkX2F0ID4gcy5sYXN0KSBzLmxhc3QgPSBvLmNyZWF0ZWRfYXQ7CiAgICAgICAgc3RhdHMuc2V0KG8uY3VzdG9tZXJfaWQsIHMpOwogICAgICB9CiAgICAgIGZvciAoY29uc3QgaXRlbSBvZiBpdGVtcykgewogICAgICAgIGNvbnN0IHMgPSBzdGF0cy5nZXQoaXRlbS5pZCk7CiAgICAgICAgaWYgKHMpIHsKICAgICAgICAgIGl0ZW0ub3JkZXJfY291bnQgPSBzLm47CiAgICAgICAgICBpdGVtLnRvdGFsX3NwZW50ID0gcy50b3RhbDsKICAgICAgICAgIGl0ZW0ubGFzdF9vcmRlcl9hdCA9IHMubGFzdDsKICAgICAgICB9CiAgICAgIH0KICAgIH0KCiAgICByZXR1cm4geyBpdGVtcywgdG90YWw6IGNvdW50ID8/IDAsIHBhZ2U6IGRhdGEucGFnZSwgcGFnZVNpemU6IFBBR0VfU0laRSB9OwogIH0pOwoKZXhwb3J0IHR5cGUgQWRtaW5HdWVzdEN1c3RvbWVyID0gewogIGtleTogc3RyaW5nOwogIGVtYWlsOiBzdHJpbmcgfCBudWxsOwogIHBob25lOiBzdHJpbmcgfCBudWxsOwogIG9yZGVyX2NvdW50OiBudW1iZXI7CiAgdG90YWxfc3BlbnQ6IG51bWJlcjsKICBsYXN0X29yZGVyX2F0OiBzdHJpbmcgfCBudWxsOwp9OwoKZXhwb3J0IGNvbnN0IGxpc3RHdWVzdEN1c3RvbWVycyA9IGNyZWF0ZVNlcnZlckZuKHsgbWV0aG9kOiAiR0VUIiB9KQogIC5taWRkbGV3YXJlKGFkbWluT25seSkKICAuaW5wdXRWYWxpZGF0b3IoKGRhdGEpID0+IHoub2JqZWN0KHsgcGFnZTogei5udW1iZXIoKS5pbnQoKS5taW4oMSkuZGVmYXVsdCgxKSB9KS5wYXJzZShkYXRhKSkKICAuaGFuZGxlcihhc3luYyAoeyBkYXRhLCBjb250ZXh0IH0pID0+IHsKICAgIGF3YWl0IGFzc2VydEFkbWluUGVybWlzc2lvbihjb250ZXh0LCAiY3VzdG9tZXJzLnZpZXciKTsKICAgIGNvbnN0IHN1cGFiYXNlQWRtaW4gPSBhd2FpdCBhZG1pbkNsaWVudCgpOwogICAgLy8gR3Vlc3Qgb3JkZXJzIGNhcnJ5IG5vIGN1c3RvbWVyX2lkOyBhZ2dyZWdhdGUgYnkgY29udGFjdCBkZXRhaWxzLgogICAgY29uc3QgeyBkYXRhOiBvcmRlcnMsIGVycm9yIH0gPSBhd2FpdCBzdXBhYmFzZUFkbWluCiAgICAgIC5mcm9tKCJvcmRlcnMiKQogICAgICAuc2VsZWN0KCJndWVzdF9lbWFpbCxndWVzdF9waG9uZSxncmFuZF90b3RhbCxjcmVhdGVkX2F0IikKICAgICAgLmlzKCJjdXN0b21lcl9pZCIsIG51bGwpCiAgICAgIC5vcmRlcigiY3JlYXRlZF9hdCIsIHsgYXNjZW5kaW5nOiBmYWxzZSB9KQogICAgICAubGltaXQoMjAwMCk7CiAgICBpZiAoZXJyb3IpIHRocm93IG5ldyBFcnJvcihlcnJvci5tZXNzYWdlKTsKCiAgICBjb25zdCBieUtleSA9IG5ldyBNYXA8c3RyaW5nLCBBZG1pbkd1ZXN0Q3VzdG9tZXI+KCk7CiAgICBmb3IgKGNvbnN0IG8gb2Ygb3JkZXJzID8/IFtdKSB7CiAgICAgIGNvbnN0IGVtYWlsID0gKG8uZ3Vlc3RfZW1haWwgPz8gIiIpLnRyaW0oKS50b0xvd2VyQ2FzZSgpIHx8IG51bGw7CiAgICAgIGNvbnN0IHBob25lID0gKG8uZ3Vlc3RfcGhvbmUgPz8gIiIpLnRyaW0oKSB8fCBudWxsOwogICAgICBjb25zdCBrZXkgPSBlbWFpbCA/PyBwaG9uZSA/PyAidW5rbm93biI7CiAgICAgIGNvbnN0IGV4aXN0aW5nID0gYnlLZXkuZ2V0KGtleSk7CiAgICAgIGlmIChleGlzdGluZykgewogICAgICAgIGV4aXN0aW5nLm9yZGVyX2NvdW50ICs9IDE7CiAgICAgICAgZXhpc3RpbmcudG90YWxfc3BlbnQgKz0gTnVtYmVyKG8uZ3JhbmRfdG90YWwpIHx8IDA7CiAgICAgICAgaWYgKCFleGlzdGluZy5sYXN0X29yZGVyX2F0IHx8IG8uY3JlYXRlZF9hdCA+IGV4aXN0aW5nLmxhc3Rfb3JkZXJfYXQpIHsKICAgICAgICAgIGV4aXN0aW5nLmxhc3Rfb3JkZXJfYXQgPSBvLmNyZWF0ZWRfYXQ7CiAgICAgICAgfQogICAgICB9IGVsc2UgewogICAgICAgIGJ5S2V5LnNldChrZXksIHsKICAgICAgICAgIGtleSwKICAgICAgICAgIGVtYWlsLAogICAgICAgICAgcGhvbmUsCiAgICAgICAgICBvcmRlcl9jb3VudDogMSwKICAgICAgICAgIHRvdGFsX3NwZW50OiBOdW1iZXIoby5ncmFuZF90b3RhbCkgfHwgMCwKICAgICAgICAgIGxhc3Rfb3JkZXJfYXQ6IG8uY3JlYXRlZF9hdCwKICAgICAgICB9KTsKICAgICAgfQogICAgfQoKICAgIGNvbnN0IGFsbCA9IFsuLi5ieUtleS52YWx1ZXMoKV0uc29ydCgoYSwgYikgPT4gYi5vcmRlcl9jb3VudCAtIGEub3JkZXJfY291bnQpOwogICAgY29uc3QgZnJvbSA9IChkYXRhLnBhZ2UgLSAxKSAqIFBBR0VfU0laRTsKICAgIHJldHVybiB7CiAgICAgIGl0ZW1zOiBhbGwuc2xpY2UoZnJvbSwgZnJvbSArIFBBR0VfU0laRSksCiAgICAgIHRvdGFsOiBhbGwubGVuZ3RoLAogICAgICBwYWdlOiBkYXRhLnBhZ2UsCiAgICAgIHBhZ2VTaXplOiBQQUdFX1NJWkUsCiAgICB9OwogIH0pOwoKLyogLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tICovCi8qIFdpbGF5YXMgKHdpdGggY29tbXVuZSArIHNoaXBwaW5nLXJ1bGUgY291bnRzKSAgICAgICAgICAgICAgICAgICAgICAgKi8KLyogLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tICovCgpleHBvcnQgdHlwZSBBZG1pbldpbGF5YUxpc3RJdGVtID0gV2lsYXlhUm93ICYgewogIGNvbW11bmVfY291bnQ6IG51bWJlcjsKICBydWxlX2NvdW50OiBudW1iZXI7Cn07CgovKioKICogUmljaCB3aWxheWEgbGlzdCBmb3IgdGhlIG1hbmFnZW1lbnQgcGFnZSAod2l0aCBjb21tdW5lX2NvdW50ICsgcnVsZV9jb3VudCkuCiAqIEZvciBzaW1wbGUgZHJvcGRvd25zLCB1c2UgdGhlIGxpdGUgYGxpc3RXaWxheWFzYCBpbiBhZG1pbi1jYXRhbG9nLmZ1bmN0aW9ucy50cy4KICovCmV4cG9ydCBjb25zdCBsaXN0QWRtaW5XaWxheWFzID0gY3JlYXRlU2VydmVyRm4oeyBtZXRob2Q6ICJHRVQiIH0pCiAgLm1pZGRsZXdhcmUoYWRtaW5Pbmx5KQogIC5pbnB1dFZhbGlkYXRvcigoZGF0YSkgPT4gei5vYmplY3Qoe30pLnBhcnNlKGRhdGEpKQogIC5oYW5kbGVyKGFzeW5jICh7IGNvbnRleHQgfSkgPT4gewogICAgYXdhaXQgYXNzZXJ0QWRtaW5QZXJtaXNzaW9uKGNvbnRleHQsICJzaGlwcGluZy5tYW5hZ2UiKTsKICAgIGNvbnN0IHN1cGFiYXNlQWRtaW4gPSBhd2FpdCBhZG1pbkNsaWVudCgpOwogICAgY29uc3QgW3sgZGF0YTogd2lsYXlhcywgZXJyb3IgfSwgeyBkYXRhOiBjb21tdW5lcyB9LCB7IGRhdGE6IHJ1bGVzIH1dID0gYXdhaXQgUHJvbWlzZS5hbGwoWwogICAgICBzdXBhYmFzZUFkbWluLmZyb20oIndpbGF5YXMiKS5zZWxlY3QoIioiKS5vcmRlcigiY29kZSIpLAogICAgICBzdXBhYmFzZUFkbWluLmZyb20oImNvbW11bmVzIikuc2VsZWN0KCJ3aWxheWFfaWQiKSwKICAgICAgc3VwYWJhc2VBZG1pbi5mcm9tKCJzaGlwcGluZ19ydWxlcyIpLnNlbGVjdCgid2lsYXlhX2lkIiksCiAgICBdKTsKICAgIGlmIChlcnJvcikgdGhyb3cgbmV3IEVycm9yKGVycm9yLm1lc3NhZ2UpOwoKICAgIGNvbnN0IGNvbW11bmVDb3VudHMgPSBuZXcgTWFwPHN0cmluZywgbnVtYmVyPigpOwogICAgZm9yIChjb25zdCBjIG9mIGNvbW11bmVzID8/IFtdKSB7CiAgICAgIGlmIChjLndpbGF5YV9pZCkgY29tbXVuZUNvdW50cy5zZXQoYy53aWxheWFfaWQsIChjb21tdW5lQ291bnRzLmdldChjLndpbGF5YV9pZCkgPz8gMCkgKyAxKTsKICAgIH0KICAgIGNvbnN0IHJ1bGVDb3VudHMgPSBuZXcgTWFwPHN0cmluZywgbnVtYmVyPigpOwogICAgZm9yIChjb25zdCByIG9mIHJ1bGVzID8/IFtdKSB7CiAgICAgIGlmIChyLndpbGF5YV9pZCkgcnVsZUNvdW50cy5zZXQoci53aWxheWFfaWQsIChydWxlQ291bnRzLmdldChyLndpbGF5YV9pZCkgPz8gMCkgKyAxKTsKICAgIH0KCiAgICBjb25zdCBpdGVtczogQWRtaW5XaWxheWFMaXN0SXRlbVtdID0gKHdpbGF5YXMgPz8gW10pLm1hcCgodykgPT4gKHsKICAgICAgLi4udywKICAgICAgY29tbXVuZV9jb3VudDogY29tbXVuZUNvdW50cy5nZXQody5pZCkgPz8gMCwKICAgICAgcnVsZV9jb3VudDogcnVsZUNvdW50cy5nZXQody5pZCkgPz8gMCwKICAgIH0pKTsKICAgIHJldHVybiB7IGl0ZW1zIH07CiAgfSk7CgovKiAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0gKi8KLyogQ29tbXVuZXMgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAqLwovKiAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0gKi8KCmV4cG9ydCB0eXBlIEFkbWluQ29tbXVuZUxpc3RJdGVtID0gQ29tbXVuZVJvdyAmIHsKICB3aWxheWFfY29kZTogc3RyaW5nIHwgbnVsbDsKICB3aWxheWFfbmFtZTogSnNvbjsKfTsKCmNvbnN0IGxpc3RDb21tdW5lc0lucHV0ID0gei5vYmplY3QoewogIHdpbGF5YUlkOiB6LnN0cmluZygpLnV1aWQoKS5vcHRpb25hbCgpLAogIHE6IHouc3RyaW5nKCkubWF4KDEwMCkub3B0aW9uYWwoKSwKICBwYWdlOiB6Lm51bWJlcigpLmludCgpLm1pbigxKS5kZWZhdWx0KDEpLAp9KTsKCi8qKgogKiBSaWNoIHBhZ2luYXRlZC9zZWFyY2hhYmxlIGNvbW11bmUgbGlzdCBmb3IgdGhlIG1hbmFnZW1lbnQgcGFnZS4KICogRm9yIHNpbXBsZSBkcm9wZG93bnMgYnkgd2lsYXlhLCB1c2UgdGhlIGxpdGUgYGxpc3RDb21tdW5lc2AgaW4KICogYWRtaW4tY2F0YWxvZy5mdW5jdGlvbnMudHMuCiAqLwpleHBvcnQgY29uc3QgbGlzdEFkbWluQ29tbXVuZXMgPSBjcmVhdGVTZXJ2ZXJGbih7IG1ldGhvZDogIkdFVCIgfSkKICAubWlkZGxld2FyZShhZG1pbk9ubHkpCiAgLmlucHV0VmFsaWRhdG9yKChkYXRhKSA9PiBsaXN0Q29tbXVuZXNJbnB1dC5wYXJzZShkYXRhKSkKICAuaGFuZGxlcihhc3luYyAoeyBkYXRhLCBjb250ZXh0IH0pID0+IHsKICAgIGF3YWl0IGFzc2VydEFkbWluUGVybWlzc2lvbihjb250ZXh0LCAic2hpcHBpbmcubWFuYWdlIik7CiAgICBjb25zdCBzdXBhYmFzZUFkbWluID0gYXdhaXQgYWRtaW5DbGllbnQoKTsKICAgIGNvbnN0IHEgPSBkYXRhLnEgPyBzYW5pdGl6ZVNlYXJjaChkYXRhLnEpIDogIiI7CgogICAgbGV0IHF1ZXJ5ID0gc3VwYWJhc2VBZG1pbi5mcm9tKCJjb21tdW5lcyIpLnNlbGVjdCgiKiwgd2lsYXlhcyhjb2RlLG5hbWUpIiwgeyBjb3VudDogImV4YWN0IiB9KTsKICAgIGlmIChkYXRhLndpbGF5YUlkKSBxdWVyeSA9IHF1ZXJ5LmVxKCJ3aWxheWFfaWQiLCBkYXRhLndpbGF5YUlkKTsKICAgIGlmIChxKSBxdWVyeSA9IHF1ZXJ5Lm9yKGBjb2RlLmlsaWtlLiUke3F9JWApOwoKICAgIGNvbnN0IGZyb20gPSAoZGF0YS5wYWdlIC0gMSkgKiBQQUdFX1NJWkU7CiAgICBjb25zdCB7CiAgICAgIGRhdGE6IHJvd3MsCiAgICAgIGVycm9yLAogICAgICBjb3VudCwKICAgIH0gPSBhd2FpdCBxdWVyeS5vcmRlcigiY29kZSIpLnJhbmdlKGZyb20sIGZyb20gKyBQQUdFX1NJWkUgLSAxKTsKICAgIGlmIChlcnJvcikgdGhyb3cgbmV3IEVycm9yKGVycm9yLm1lc3NhZ2UpOwoKICAgIGNvbnN0IGl0ZW1zOiBBZG1pbkNvbW11bmVMaXN0SXRlbVtdID0gKHJvd3MgPz8gW10pLm1hcCgoYykgPT4gewogICAgICBjb25zdCB3ID0gKGMgYXMgeyB3aWxheWFzPzogeyBjb2RlPzogc3RyaW5nOyBuYW1lPzogdW5rbm93biB9IHwgbnVsbCB9KS53aWxheWFzOwogICAgICBjb25zdCB7IHdpbGF5YXM6IF9vbWl0LCAuLi5yZXN0IH0gPSBjIGFzIENvbW11bmVSb3cgJiB7IHdpbGF5YXM/OiB1bmtub3duIH07CiAgICAgIHZvaWQgX29taXQ7CiAgICAgIHJldHVybiB7CiAgICAgICAgLi4ucmVzdCwKICAgICAgICB3aWxheWFfY29kZTogdz8uY29kZSA/PyBudWxsLAogICAgICAgIHdpbGF5YV9uYW1lOiAodz8ubmFtZSBhcyBKc29uIHwgdW5kZWZpbmVkKSA/PyBudWxsLAogICAgICB9OwogICAgfSk7CiAgICByZXR1cm4geyBpdGVtcywgdG90YWw6IGNvdW50ID8/IDAsIHBhZ2U6IGRhdGEucGFnZSwgcGFnZVNpemU6IFBBR0VfU0laRSB9OwogIH0pOwoKLyogLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tICovCi8qIFNlY3VyaXR5IG92ZXJ2aWV3ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgKi8KLyogLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tICovCgpleHBvcnQgdHlwZSBTZWN1cml0eU92ZXJ2aWV3ID0gewogIHJvbGVDb3VudHM6IHsgcm9sZTogc3RyaW5nOyBjb3VudDogbnVtYmVyIH1bXTsKICBzdXBlckFkbWluczogeyB1c2VyX2lkOiBzdHJpbmc7IGRpc3BsYXlfbmFtZTogc3RyaW5nIHwgbnVsbDsgY3JlYXRlZF9hdDogc3RyaW5nIH1bXTsKICBwYXNzd29yZFJlc2V0UmVxdWlyZWQ6IG51bWJlcjsKICByZWNlbnRTZWN1cml0eUV2ZW50czogewogICAgaWQ6IHN0cmluZzsKICAgIGFjdGlvbjogc3RyaW5nOwogICAgY3JlYXRlZF9hdDogc3RyaW5nOwogICAgcmVzb3VyY2U6IHN0cmluZyB8IG51bGw7CiAgfVtdOwp9OwoKZXhwb3J0IGNvbnN0IGdldFNlY3VyaXR5T3ZlcnZpZXcgPSBjcmVhdGVTZXJ2ZXJGbih7IG1ldGhvZDogIkdFVCIgfSkKICAubWlkZGxld2FyZShhZG1pbk9ubHkpCiAgLmlucHV0VmFsaWRhdG9yKChkYXRhKSA9PiB6Lm9iamVjdCh7fSkucGFyc2UoZGF0YSkpCiAgLmhhbmRsZXIoYXN5bmMgKHsgY29udGV4dCB9KTogUHJvbWlzZTxTZWN1cml0eU92ZXJ2aWV3PiA9PiB7CiAgICBhd2FpdCBhc3NlcnRBZG1pbihjb250ZXh0KTsKICAgIGNvbnN0IHN1cGFiYXNlQWRtaW4gPSBhd2FpdCBhZG1pbkNsaWVudCgpOwoKICAgIGNvbnN0IFsKICAgICAgeyBkYXRhOiByb2xlcyB9LAogICAgICB7IGRhdGE6IGFkbWlucyB9LAogICAgICB7IGRhdGE6IHJlc2V0U2VsbGVycywgY291bnQ6IHJlc2V0Q291bnQgfSwKICAgICAgeyBkYXRhOiBldmVudHMgfSwKICAgIF0gPSBhd2FpdCBQcm9taXNlLmFsbChbCiAgICAgIHN1cGFiYXNlQWRtaW4uZnJvbSgidXNlcl9yb2xlcyIpLnNlbGVjdCgicm9sZSIpLAogICAgICBzdXBhYmFzZUFkbWluCiAgICAgICAgLmZyb20oInVzZXJfcm9sZXMiKQogICAgICAgIC5zZWxlY3QoInVzZXJfaWQsY3JlYXRlZF9hdCIpCiAgICAgICAgLmVxKCJyb2xlIiwgInN1cGVyX2FkbWluIikKICAgICAgICAub3JkZXIoImNyZWF0ZWRfYXQiKSwKICAgICAgc3VwYWJhc2VBZG1pbgogICAgICAgIC5mcm9tKCJzZWxsZXJzIikKICAgICAgICAuc2VsZWN0KCJpZCIsIHsgY291bnQ6ICJleGFjdCIgfSkKICAgICAgICAuZXEoIm11c3RfcmVzZXRfcGFzc3dvcmQiLCB0cnVlKSwKICAgICAgc3VwYWJhc2VBZG1pbgogICAgICAgIC5mcm9tKCJhdWRpdF9sb2dzIikKICAgICAgICAuc2VsZWN0KCJpZCxhY3Rpb24sY3JlYXRlZF9hdCxyZXNvdXJjZSIpCiAgICAgICAgLm9yKAogICAgICAgICAgImFjdGlvbi5pbGlrZS4lcGFzc3dvcmQlLGFjdGlvbi5pbGlrZS4lbG9naW4lLGFjdGlvbi5pbGlrZS4lcm9sZSUsYWN0aW9uLmlsaWtlLiVzZXNzaW9uJSxhY3Rpb24uaWxpa2UuJWF1dGglIiwKICAgICAgICApCiAgICAgICAgLm9yZGVyKCJjcmVhdGVkX2F0IiwgeyBhc2NlbmRpbmc6IGZhbHNlIH0pCiAgICAgICAgLmxpbWl0KDIwKSwKICAgIF0pOwoKICAgIGNvbnN0IGFkbWluSWRzID0gKGFkbWlucyA/PyBbXSkubWFwKChhKSA9PiBhLnVzZXJfaWQpOwogICAgY29uc3QgeyBkYXRhOiBhZG1pblByb2ZpbGVzIH0gPQogICAgICBhZG1pbklkcy5sZW5ndGggPiAwCiAgICAgICAgPyBhd2FpdCBzdXBhYmFzZUFkbWluLmZyb20oInByb2ZpbGVzIikuc2VsZWN0KCJpZCxkaXNwbGF5X25hbWUiKS5pbigiaWQiLCBhZG1pbklkcykKICAgICAgICA6IHsgZGF0YTogW10gYXMgeyBpZDogc3RyaW5nOyBkaXNwbGF5X25hbWU6IHN0cmluZyB8IG51bGwgfVtdIH07CiAgICBjb25zdCBkaXNwbGF5TmFtZXMgPSBuZXcgTWFwKChhZG1pblByb2ZpbGVzID8/IFtdKS5tYXAoKHApID0+IFtwLmlkLCBwLmRpc3BsYXlfbmFtZV0pKTsKCiAgICBjb25zdCBjb3VudHMgPSBuZXcgTWFwPHN0cmluZywgbnVtYmVyPigpOwogICAgZm9yIChjb25zdCByIG9mIHJvbGVzID8/IFtdKSBjb3VudHMuc2V0KHIucm9sZSwgKGNvdW50cy5nZXQoci5yb2xlKSA/PyAwKSArIDEpOwoKICAgIHJldHVybiB7CiAgICAgIHJvbGVDb3VudHM6IFsuLi5jb3VudHMuZW50cmllcygpXQogICAgICAgIC5tYXAoKFtyb2xlLCBjb3VudF0pID0+ICh7IHJvbGUsIGNvdW50IH0pKQogICAgICAgIC5zb3J0KChhLCBiKSA9PiBiLmNvdW50IC0gYS5jb3VudCksCiAgICAgIHN1cGVyQWRtaW5zOiAoYWRtaW5zID8/IFtdKS5tYXAoKGEpID0+ICh7CiAgICAgICAgdXNlcl9pZDogYS51c2VyX2lkLAogICAgICAgIGRpc3BsYXlfbmFtZTogZGlzcGxheU5hbWVzLmdldChhLnVzZXJfaWQpID8/IG51bGwsCiAgICAgICAgY3JlYXRlZF9hdDogYS5jcmVhdGVkX2F0LAogICAgICB9KSksCiAgICAgIHBhc3N3b3JkUmVzZXRSZXF1aXJlZDogcmVzZXRDb3VudCA/PyAocmVzZXRTZWxsZXJzID8/IFtdKS5sZW5ndGgsCiAgICAgIHJlY2VudFNlY3VyaXR5RXZlbnRzOiAoZXZlbnRzID8/IFtdKS5tYXAoKGUpID0+ICh7CiAgICAgICAgaWQ6IGUuaWQsCiAgICAgICAgYWN0aW9uOiBlLmFjdGlvbiwKICAgICAgICBjcmVhdGVkX2F0OiBlLmNyZWF0ZWRfYXQsCiAgICAgICAgcmVzb3VyY2U6IGUucmVzb3VyY2UsCiAgICAgIH0pKSwKICAgIH07CiAgfSk7CgovKiAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0gKi8KLyogU2l0ZSBzZXR0aW5ncyAoY29udGFjdCwgc29jaWFsLCBTRU8gZGVmYXVsdHMpICAgICAgICAgICAgICAgICAgICAgICAqLwovKiAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0gKi8KCi8qKiBLZXlzIHRoZSBhZG1pbiBzZXR0aW5ncyBVSSBpcyBhbGxvd2VkIHRvIHJlYWQvd3JpdGUuICovCmV4cG9ydCBjb25zdCBTSVRFX1NFVFRJTkdfS0VZUyA9IFsKICAiY29udGFjdF9lbWFpbCIsCiAgImNvbnRhY3RfcGhvbmUiLAogICJjb250YWN0X2FkZHJlc3MiLAogICJjb250YWN0X2hvdXJzIiwKICAiaW5zdGFncmFtX3VybCIsCiAgImZhY2Vib29rX3VybCIsCiAgInRpa3Rva191cmwiLAogICJ3aGF0c2FwcF9udW1iZXIiLAogICJzZW9fdGl0bGUiLAogICJzZW9fZGVzY3JpcHRpb24iLAogICJzZW9fa2V5d29yZHMiLAogICJzZW9fcm9ib3RzX2luZGV4IiwKICAvLyBQbGF0Zm9ybSBwcm9kdWN0LW1vZGVyYXRpb24gbW9kZTogYHJlcXVpcmVfYXBwcm92YWxgIChkZWZhdWx0KSBvcgogIC8vIGBhdXRvX3B1Ymxpc2hgLiBSZWFkIHNlcnZlci1zaWRlIGJ5IHRoZSBzZWxsZXIgcHVibGlzaCBhY3Rpb25zLgogICJwcm9kdWN0X21vZGVyYXRpb25fbW9kZSIsCiAgLy8gUGxhdGZvcm0gZGVmYXVsdCBjb21taXNzaW9uIHJhdGUgKHBlcmNlbnQsIDDigJMxMDApIHByZS1maWxsZWQgaW4gdGhlCiAgLy8gc2VsbGVyLWNyZWF0aW9uIHdpemFyZC4gUmVhZCBieSBgZ2V0RGVmYXVsdENvbW1pc3Npb25SYXRlYC4KICAiZGVmYXVsdF9jb21taXNzaW9uX3JhdGUiLApdIGFzIGNvbnN0OwoKZXhwb3J0IGNvbnN0IGdldFNpdGVTZXR0aW5ncyA9IGNyZWF0ZVNlcnZlckZuKHsgbWV0aG9kOiAiR0VUIiB9KQogIC5taWRkbGV3YXJlKGFkbWluT25seSkKICAuaW5wdXRWYWxpZGF0b3IoKGRhdGEpID0+IHoub2JqZWN0KHt9KS5wYXJzZShkYXRhKSkKICAuaGFuZGxlcihhc3luYyAoeyBjb250ZXh0IH0pID0+IHsKICAgIGF3YWl0IGFzc2VydEFkbWluKGNvbnRleHQpOwogICAgY29uc3Qgc3VwYWJhc2VBZG1pbiA9IGF3YWl0IGFkbWluQ2xpZW50KCk7CiAgICBjb25zdCB7IGRhdGEsIGVycm9yIH0gPSBhd2FpdCBzdXBhYmFzZUFkbWluCiAgICAgIC5mcm9tKCJzaXRlX3NldHRpbmdzIikKICAgICAgLnNlbGVjdCgia2V5LHZhbHVlLHVwZGF0ZWRfYXQiKQogICAgICAuaW4oImtleSIsIFsuLi5TSVRFX1NFVFRJTkdfS0VZU10pOwogICAgaWYgKGVycm9yKSB0aHJvdyBuZXcgRXJyb3IoZXJyb3IubWVzc2FnZSk7CiAgICBjb25zdCB2YWx1ZXM6IFJlY29yZDxzdHJpbmcsIEpzb24+ID0ge307CiAgICBmb3IgKGNvbnN0IHJvdyBvZiBkYXRhID8/IFtdKSB2YWx1ZXNbcm93LmtleV0gPSByb3cudmFsdWU7CiAgICByZXR1cm4geyB2YWx1ZXMgfTsKICB9KTsKCmV4cG9ydCBjb25zdCB1cGRhdGVTaXRlU2V0dGluZ3MgPSBjcmVhdGVTZXJ2ZXJGbih7IG1ldGhvZDogIlBPU1QiIH0pCiAgLm1pZGRsZXdhcmUoYWRtaW5Pbmx5KQogIC5pbnB1dFZhbGlkYXRvcigoZGF0YSkgPT4gei5vYmplY3QoeyB2YWx1ZXM6IHoucmVjb3JkKHouc3RyaW5nKCksIHoudW5rbm93bigpKSB9KS5wYXJzZShkYXRhKSkKICAuaGFuZGxlcihhc3luYyAoeyBkYXRhLCBjb250ZXh0IH0pID0+IHsKICAgIGF3YWl0IGFzc2VydEFkbWluKGNvbnRleHQpOwogICAgY29uc3Qgc3VwYWJhc2VBZG1pbiA9IGF3YWl0IGFkbWluQ2xpZW50KCk7CiAgICBjb25zdCBhY3RvcklkID0gKGNvbnRleHQgYXMgeyB1c2VySWQ/OiBzdHJpbmcgfSB8IG51bGwgfCB1bmRlZmluZWQpPy51c2VySWQgPz8gbnVsbDsKCiAgICBjb25zdCBhbGxvd2VkID0gbmV3IFNldDxzdHJpbmc+KFNJVEVfU0VUVElOR19LRVlTIGFzIHJlYWRvbmx5IHN0cmluZ1tdKTsKICAgIGNvbnN0IHJvd3MgPSBPYmplY3QuZW50cmllcyhkYXRhLnZhbHVlcykKICAgICAgLmZpbHRlcigoW2tleV0pID0+IGFsbG93ZWQuaGFzKGtleSkpCiAgICAgIC5tYXAoKFtrZXksIHZhbHVlXSkgPT4gewogICAgICAgIC8vIFRoZSBtb2RlcmF0aW9uIG1vZGUgaXMgYSBzdHJpY3QgZW51bSDigJQgbmV2ZXIgcGVyc2lzdCBnYXJiYWdlIHRoYXQKICAgICAgICAvLyB0aGUgc2VsbGVyIHB1Ymxpc2ggcGF0aCB3b3VsZCBzaWxlbnRseSBmYWxsIGJhY2sgZnJvbS4KICAgICAgICBpZiAoa2V5ID09PSAicHJvZHVjdF9tb2RlcmF0aW9uX21vZGUiKSB7CiAgICAgICAgICBpZiAodmFsdWUgIT09ICJyZXF1aXJlX2FwcHJvdmFsIiAmJiB2YWx1ZSAhPT0gImF1dG9fcHVibGlzaCIpIHsKICAgICAgICAgICAgdGhyb3cgbmV3IEVycm9yKCJJbnZhbGlkIG1vZGVyYXRpb24gbW9kZS4iKTsKICAgICAgICAgIH0KICAgICAgICB9CiAgICAgICAgLy8gVGhlIGRlZmF1bHQgY29tbWlzc2lvbiByYXRlIGlzIGEgcGVyY2VudCDigJQgbmV2ZXIgcGVyc2lzdCBnYXJiYWdlCiAgICAgICAgLy8gdGhlIHNlbGxlciB3aXphcmQgd291bGQgc2lsZW50bHkgZmFsbCBiYWNrIGZyb20uCiAgICAgICAgaWYgKGtleSA9PT0gImRlZmF1bHRfY29tbWlzc2lvbl9yYXRlIikgewogICAgICAgICAgY29uc3QgbiA9CiAgICAgICAgICAgIHR5cGVvZiB2YWx1ZSA9PT0gIm51bWJlciIKICAgICAgICAgICAgICA/IHZhbHVlCiAgICAgICAgICAgICAgOiBOdW1iZXIoU3RyaW5nKHZhbHVlID8/ICIiKS50cmltKCkucmVwbGFjZSgiLCIsICIuIikpOwogICAgICAgICAgaWYgKCFOdW1iZXIuaXNGaW5pdGUobikgfHwgbiA8IDAgfHwgbiA+IDEwMCkgewogICAgICAgICAgICB0aHJvdyBuZXcgRXJyb3IoIkludmFsaWQgZGVmYXVsdCBjb21taXNzaW9uIHJhdGUgKDDigJMxMDApLiIpOwogICAgICAgICAgfQogICAgICAgICAgcmV0dXJuIHsKICAgICAgICAgICAga2V5LAogICAgICAgICAgICB2YWx1ZTogTWF0aC5yb3VuZChuICogMTAwKSAvIDEwMCwKICAgICAgICAgICAgdXBkYXRlZF9ieTogYWN0b3JJZCwKICAgICAgICAgICAgdXBkYXRlZF9hdDogbmV3IERhdGUoKS50b0lTT1N0cmluZygpLAogICAgICAgICAgfTsKICAgICAgICB9CiAgICAgICAgcmV0dXJuIHsKICAgICAgICAgIGtleSwKICAgICAgICAgIHZhbHVlOiB2YWx1ZSBhcyBKc29uLAogICAgICAgICAgdXBkYXRlZF9ieTogYWN0b3JJZCwKICAgICAgICAgIHVwZGF0ZWRfYXQ6IG5ldyBEYXRlKCkudG9JU09TdHJpbmcoKSwKICAgICAgICB9OwogICAgICB9KTsKICAgIGlmIChyb3dzLmxlbmd0aCA9PT0gMCkgdGhyb3cgbmV3IEVycm9yKCJObyB2YWxpZCBzZXR0aW5ncyB0byBzYXZlLiIpOwoKICAgIGNvbnN0IHsgZXJyb3IgfSA9IGF3YWl0IHN1cGFiYXNlQWRtaW4uZnJvbSgic2l0ZV9zZXR0aW5ncyIpLnVwc2VydChyb3dzLCB7IG9uQ29uZmxpY3Q6ICJrZXkiIH0pOwogICAgaWYgKGVycm9yKSB0aHJvdyBuZXcgRXJyb3IoZXJyb3IubWVzc2FnZSk7CgogICAgYXdhaXQgYXVkaXRMb2coY29udGV4dCwgInNpdGVfc2V0dGluZ3NfdXBkYXRlZCIsICJzaXRlX3NldHRpbmdzIiwgbnVsbCwgewogICAgICBrZXlzOiByb3dzLm1hcCgocikgPT4gci5rZXkpLAogICAgfSk7CiAgICByZXR1cm4geyBvazogdHJ1ZSwgc2F2ZWQ6IHJvd3MubGVuZ3RoIH07CiAgfSk7CgovKiogSGFyZCBmYWxsYmFjayB3aGVuIHRoZSBwbGF0Zm9ybSBzZXR0aW5nIHdhcyBuZXZlciBjb25maWd1cmVkLiAqLwpleHBvcnQgY29uc3QgREVGQVVMVF9DT01NSVNTSU9OX1JBVEUgPSAxMDsKCi8qKgogKiBBZG1pbiByZWFkIG9mIHRoZSBwbGF0Zm9ybSBkZWZhdWx0IGNvbW1pc3Npb24gcmF0ZSAocGVyY2VudCwgMOKAkzEwMCkuCiAqIFRoZSBzZWxsZXItY3JlYXRpb24gd2l6YXJkIHByZS1maWxscyBpdHMgY29tbWlzc2lvbiBzdGVwIGZyb20gdGhpcyDigJQKICogY2hhbmdpbmcgaXQgaW4gQWRtaW4gPiBTZXR0aW5ncyBhY3R1YWxseSBjaGFuZ2VzIG5ldy1zZWxsZXIgYmVoYXZpb3IuCiAqLwpleHBvcnQgY29uc3QgZ2V0RGVmYXVsdENvbW1pc3Npb25SYXRlID0gY3JlYXRlU2VydmVyRm4oeyBtZXRob2Q6ICJHRVQiIH0pCiAgLm1pZGRsZXdhcmUoYWRtaW5Pbmx5KQogIC5pbnB1dFZhbGlkYXRvcigoZGF0YSkgPT4gei5vYmplY3Qoe30pLnBhcnNlKGRhdGEpKQogIC5oYW5kbGVyKGFzeW5jICh7IGNvbnRleHQgfSkgPT4gewogICAgYXdhaXQgYXNzZXJ0QWRtaW4oY29udGV4dCk7CiAgICBjb25zdCBzdXBhYmFzZUFkbWluID0gYXdhaXQgYWRtaW5DbGllbnQoKTsKICAgIGNvbnN0IHsgZGF0YSwgZXJyb3IgfSA9IGF3YWl0IHN1cGFiYXNlQWRtaW4KICAgICAgLmZyb20oInNpdGVfc2V0dGluZ3MiKQogICAgICAuc2VsZWN0KCJ2YWx1ZSIpCiAgICAgIC5lcSgia2V5IiwgImRlZmF1bHRfY29tbWlzc2lvbl9yYXRlIikKICAgICAgLm1heWJlU2luZ2xlKCk7CiAgICBpZiAoZXJyb3IpIHRocm93IG5ldyBFcnJvcihlcnJvci5tZXNzYWdlKTsKICAgIGNvbnN0IHJhdyA9IGRhdGE/LnZhbHVlIGFzIEpzb247CiAgICBjb25zdCBuID0KICAgICAgdHlwZW9mIHJhdyA9PT0gIm51bWJlciIgPyByYXcgOiBOdW1iZXIoU3RyaW5nKHJhdyA/PyAiIikudHJpbSgpLnJlcGxhY2UoIiwiLCAiLiIpKTsKICAgIGNvbnN0IHJhdGUgPSBOdW1iZXIuaXNGaW5pdGUobikgPyBNYXRoLm1pbigxMDAsIE1hdGgubWF4KDAsIG4pKSA6IERFRkFVTFRfQ09NTUlTU0lPTl9SQVRFOwogICAgcmV0dXJuIHsgcmF0ZSB9OwogIH0pOwo=
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { Database, Json } from "@/integrations/supabase/types";
+import { assertAdmin } from "@/lib/admin-auth";
+import { assertAdminPermission } from "@/lib/admin-permissions";
+
+/**
+ * Admin operations server functions (Super Admin OS, phase 3/8 — worker 1/5).
+ *
+ * Covers the new standalone admin sections: stores, customers, wilayas,
+ * communes, official store, media library, security overview and site
+ * settings. Every function is admin-only: `.middleware([requireSupabaseAuth])`
+ * plus the shared `assertAdmin` that calls the `is_super_admin` RPC.
+ *
+ * Existing sections (products, orders, sellers, shipping rules, coupons,
+ * settlements, audit logs) keep their own functions untouched.
+ */
+
+const adminOnly = [requireSupabaseAuth] as const;
+
+type StoreRow = Database["public"]["Tables"]["stores"]["Row"];
+type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
+type WilayaRow = Database["public"]["Tables"]["wilayas"]["Row"];
+type CommuneRow = Database["public"]["Tables"]["communes"]["Row"];
+
+async function adminClient() {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  return supabaseAdmin;
+}
+
+async function auditLog(
+  context: unknown,
+  action: string,
+  resource: string,
+  resourceId: string | null,
+  metadata: Record<string, Json> = {},
+) {
+  try {
+    const supabaseAdmin = await adminClient();
+    const actorId = (context as { userId?: string } | null | undefined)?.userId ?? null;
+    await supabaseAdmin.from("audit_logs").insert({
+      actor_id: actorId,
+      action,
+      resource,
+      resource_id: resourceId,
+      metadata,
+    });
+  } catch {
+    // Audit logging must never break the mutation itself.
+  }
+}
+
+/** Strip postgrest filter-breaking characters from free-text search. */
+function sanitizeSearch(q: string): string {
+  return q.replace(/[,()]/g, "").trim().slice(0, 100);
+}
+
+const PAGE_SIZE = 25;
+
+/* ------------------------------------------------------------------ */
+/* Stores                                                              */
+/* ------------------------------------------------------------------ */
+
+export type AdminStoreListItem = StoreRow & {
+  seller_legal_name: string | null;
+  product_count: number;
+};
+
+const emptyToUndefined = (v: unknown) => (v === "" ? undefined : v);
+
+const listStoresInput = z.object({
+  q: z.string().max(100).optional(),
+  status: z.preprocess(emptyToUndefined, z.enum(["draft", "active", "suspended", "closed"]).optional()),
+  page: z.number().int().min(1).default(1),
+});
+
+export const listAdminStores = createServerFn({ method: "GET" })
+  .middleware(adminOnly)
+  .inputValidator((data) => listStoresInput.parse(data))
+  .handler(async ({ data, context }) => {
+    await assertAdminPermission(context, "stores.view");
+    const supabaseAdmin = await adminClient();
+    const q = data.q ? sanitizeSearch(data.q) : "";
+
+    let query = supabaseAdmin.from("stores").select("*, sellers(legal_name)", { count: "exact" });
+    if (data.status) query = query.eq("status", data.status);
+    if (q) query = query.or(`name.ilike.%${q}%,slug.ilike.%${q}%`);
+
+    const from = (data.page - 1) * PAGE_SIZE;
+    const {
+      data: rows,
+      error,
+      count,
+    } = await query.order("created_at", { ascending: false }).range(from, from + PAGE_SIZE - 1);
+    if (error) throw new Error(error.message);
+
+    const items: AdminStoreListItem[] = (rows ?? []).map((s) => ({
+      ...(s as StoreRow),
+      seller_legal_name:
+        (s as { sellers?: { legal_name?: string | null } | null }).sellers?.legal_name ?? null,
+      product_count: 0,
+    }));
+
+    // Product counts per seller (products belong to sellers, stores to sellers).
+    const sellerIds = [...new Set(items.map((s) => s.seller_id))];
+    if (sellerIds.length > 0) {
+      const { data: products } = await supabaseAdmin
+        .from("products")
+        .select("seller_id")
+        .in("seller_id", sellerIds);
+      const counts = new Map<string, number>();
+      for (const p of products ?? []) {
+        if (p.seller_id) counts.set(p.seller_id, (counts.get(p.seller_id) ?? 0) + 1);
+      }
+      for (const item of items) item.product_count = counts.get(item.seller_id) ?? 0;
+    }
+
+    return { items, total: count ?? 0, page: data.page, pageSize: PAGE_SIZE };
+  });
+
+/* ------------------------------------------------------------------ */
+/* Customers (registered profiles + guest buyers)                      */
+/* ------------------------------------------------------------------ */
+
+export type AdminCustomerListItem = ProfileRow & {
+  order_count: number;
+  total_spent: number;
+  last_order_at: string | null;
+};
+
+const listCustomersInput = z.object({
+  q: z.string().max(100).optional(),
+  page: z.number().int().min(1).default(1),
+});
+
+export const listAdminCustomers = createServerFn({ method: "GET" })
+  .middleware(adminOnly)
+  .inputValidator((data) => listCustomersInput.parse(data))
+  .handler(async ({ data, context }) => {
+    await assertAdminPermission(context, "customers.view");
+    const supabaseAdmin = await adminClient();
+    const q = data.q ? sanitizeSearch(data.q) : "";
+
+    let query = supabaseAdmin.from("profiles").select("*", { count: "exact" });
+    if (q) query = query.or(`display_name.ilike.%${q}%,phone.ilike.%${q}%`);
+
+    const from = (data.page - 1) * PAGE_SIZE;
+    const {
+      data: rows,
+      error,
+      count,
+    } = await query.order("created_at", { ascending: false }).range(from, from + PAGE_SIZE - 1);
+    if (error) throw new Error(error.message);
+
+    const items: AdminCustomerListItem[] = (rows ?? []).map((p) => ({
+      ...p,
+      order_count: 0,
+      total_spent: 0,
+      last_order_at: null,
+    }));
+
+    const ids = items.map((p) => p.id);
+    if (ids.length > 0) {
+      const { data: orders } = await supabaseAdmin
+        .from("orders")
+        .select("customer_id,grand_total,created_at")
+        .in("customer_id", ids);
+      const stats = new Map<string, { n: number; total: number; last: string | null }>();
+      for (const o of orders ?? []) {
+        if (!o.customer_id) continue;
+        const s = stats.get(o.customer_id) ?? { n: 0, total: 0, last: null };
+        s.n += 1;
+        s.total += Number(o.grand_total) || 0;
+        if (!s.last || o.created_at > s.last) s.last = o.created_at;
+        stats.set(o.customer_id, s);
+      }
+      for (const item of items) {
+        const s = stats.get(item.id);
+        if (s) {
+          item.order_count = s.n;
+          item.total_spent = s.total;
+          item.last_order_at = s.last;
+        }
+      }
+    }
+
+    return { items, total: count ?? 0, page: data.page, pageSize: PAGE_SIZE };
+  });
+
+export type AdminGuestCustomer = {
+  key: string;
+  email: string | null;
+  phone: string | null;
+  order_count: number;
+  total_spent: number;
+  last_order_at: string | null;
+};
+
+export const listGuestCustomers = createServerFn({ method: "GET" })
+  .middleware(adminOnly)
+  .inputValidator((data) => z.object({ page: z.number().int().min(1).default(1) }).parse(data))
+  .handler(async ({ data, context }) => {
+    await assertAdminPermission(context, "customers.view");
+    const supabaseAdmin = await adminClient();
+    // Guest orders carry no customer_id; aggregate by contact details.
+    const { data: orders, error } = await supabaseAdmin
+      .from("orders")
+      .select("guest_email,guest_phone,grand_total,created_at")
+      .is("customer_id", null)
+      .order("created_at", { ascending: false })
+      .limit(2000);
+    if (error) throw new Error(error.message);
+
+    const byKey = new Map<string, AdminGuestCustomer>();
+    for (const o of orders ?? []) {
+      const email = (o.guest_email ?? "").trim().toLowerCase() || null;
+      const phone = (o.guest_phone ?? "").trim() || null;
+      const key = email ?? phone ?? "unknown";
+      const existing = byKey.get(key);
+      if (existing) {
+        existing.order_count += 1;
+        existing.total_spent += Number(o.grand_total) || 0;
+        if (!existing.last_order_at || o.created_at > existing.last_order_at) {
+          existing.last_order_at = o.created_at;
+        }
+      } else {
+        byKey.set(key, {
+          key,
+          email,
+          phone,
+          order_count: 1,
+          total_spent: Number(o.grand_total) || 0,
+          last_order_at: o.created_at,
+        });
+      }
+    }
+
+    const all = [...byKey.values()].sort((a, b) => b.order_count - a.order_count);
+    const from = (data.page - 1) * PAGE_SIZE;
+    return {
+      items: all.slice(from, from + PAGE_SIZE),
+      total: all.length,
+      page: data.page,
+      pageSize: PAGE_SIZE,
+    };
+  });
+
+/* ------------------------------------------------------------------ */
+/* Wilayas (with commune + shipping-rule counts)                       */
+/* ------------------------------------------------------------------ */
+
+export type AdminWilayaListItem = WilayaRow & {
+  commune_count: number;
+  rule_count: number;
+};
+
+/**
+ * Rich wilaya list for the management page (with commune_count + rule_count).
+ * For simple dropdowns, use the lite `listWilayas` in admin-catalog.functions.ts.
+ */
+export const listAdminWilayas = createServerFn({ method: "GET" })
+  .middleware(adminOnly)
+  .inputValidator((data) => z.object({}).parse(data))
+  .handler(async ({ context }) => {
+    await assertAdminPermission(context, "shipping.manage");
+    const supabaseAdmin = await adminClient();
+    const [{ data: wilayas, error }, { data: communes }, { data: rules }] = await Promise.all([
+      supabaseAdmin.from("wilayas").select("*").order("code"),
+      supabaseAdmin.from("communes").select("wilaya_id"),
+      supabaseAdmin.from("shipping_rules").select("wilaya_id"),
+    ]);
+    if (error) throw new Error(error.message);
+
+    const communeCounts = new Map<string, number>();
+    for (const c of communes ?? []) {
+      if (c.wilaya_id) communeCounts.set(c.wilaya_id, (communeCounts.get(c.wilaya_id) ?? 0) + 1);
+    }
+    const ruleCounts = new Map<string, number>();
+    for (const r of rules ?? []) {
+      if (r.wilaya_id) ruleCounts.set(r.wilaya_id, (ruleCounts.get(r.wilaya_id) ?? 0) + 1);
+    }
+
+    const items: AdminWilayaListItem[] = (wilayas ?? []).map((w) => ({
+      ...w,
+      commune_count: communeCounts.get(w.id) ?? 0,
+      rule_count: ruleCounts.get(w.id) ?? 0,
+    }));
+    return { items };
+  });
+
+/* ------------------------------------------------------------------ */
+/* Communes                                                            */
+/* ------------------------------------------------------------------ */
+
+export type AdminCommuneListItem = CommuneRow & {
+  wilaya_code: string | null;
+  wilaya_name: Json;
+};
+
+const listCommunesInput = z.object({
+  wilayaId: z.string().uuid().optional(),
+  q: z.string().max(100).optional(),
+  page: z.number().int().min(1).default(1),
+});
+
+/**
+ * Rich paginated/searchable commune list for the management page.
+ * For simple dropdowns by wilaya, use the lite `listCommunes` in
+ * admin-catalog.functions.ts.
+ */
+export const listAdminCommunes = createServerFn({ method: "GET" })
+  .middleware(adminOnly)
+  .inputValidator((data) => listCommunesInput.parse(data))
+  .handler(async ({ data, context }) => {
+    await assertAdminPermission(context, "shipping.manage");
+    const supabaseAdmin = await adminClient();
+    const q = data.q ? sanitizeSearch(data.q) : "";
+
+    let query = supabaseAdmin.from("communes").select("*, wilayas(code,name)", { count: "exact" });
+    if (data.wilayaId) query = query.eq("wilaya_id", data.wilayaId);
+    if (q) query = query.or(`code.ilike.%${q}%`);
+
+    const from = (data.page - 1) * PAGE_SIZE;
+    const {
+      data: rows,
+      error,
+      count,
+    } = await query.order("code").range(from, from + PAGE_SIZE - 1);
+    if (error) throw new Error(error.message);
+
+    const items: AdminCommuneListItem[] = (rows ?? []).map((c) => {
+      const w = (c as { wilayas?: { code?: string; name?: unknown } | null }).wilayas;
+      const { wilayas: _omit, ...rest } = c as CommuneRow & { wilayas?: unknown };
+      void _omit;
+      return {
+        ...rest,
+        wilaya_code: w?.code ?? null,
+        wilaya_name: (w?.name as Json | undefined) ?? null,
+      };
+    });
+    return { items, total: count ?? 0, page: data.page, pageSize: PAGE_SIZE };
+  });
+
+/* ------------------------------------------------------------------ */
+/* Security overview                                                   */
+/* ------------------------------------------------------------------ */
+
+export type SecurityOverview = {
+  roleCounts: { role: string; count: number }[];
+  superAdmins: { user_id: string; display_name: string | null; created_at: string }[];
+  passwordResetRequired: number;
+  recentSecurityEvents: {
+    id: string;
+    action: string;
+    created_at: string;
+    resource: string | null;
+  }[];
+};
+
+export const getSecurityOverview = createServerFn({ method: "GET" })
+  .middleware(adminOnly)
+  .inputValidator((data) => z.object({}).parse(data))
+  .handler(async ({ context }): Promise<SecurityOverview> => {
+    await assertAdmin(context);
+    const supabaseAdmin = await adminClient();
+
+    const [
+      { data: roles },
+      { data: admins },
+      { data: resetSellers, count: resetCount },
+      { data: events },
+    ] = await Promise.all([
+      supabaseAdmin.from("user_roles").select("role"),
+      supabaseAdmin
+        .from("user_roles")
+        .select("user_id,created_at")
+        .eq("role", "super_admin")
+        .order("created_at"),
+      supabaseAdmin
+        .from("sellers")
+        .select("id", { count: "exact" })
+        .eq("must_reset_password", true),
+      supabaseAdmin
+        .from("audit_logs")
+        .select("id,action,created_at,resource")
+        .or(
+          "action.ilike.%password%,action.ilike.%login%,action.ilike.%role%,action.ilike.%session%,action.ilike.%auth%",
+        )
+        .order("created_at", { ascending: false })
+        .limit(20),
+    ]);
+
+    const adminIds = (admins ?? []).map((a) => a.user_id);
+    const { data: adminProfiles } =
+      adminIds.length > 0
+        ? await supabaseAdmin.from("profiles").select("id,display_name").in("id", adminIds)
+        : { data: [] as { id: string; display_name: string | null }[] };
+    const displayNames = new Map((adminProfiles ?? []).map((p) => [p.id, p.display_name]));
+
+    const counts = new Map<string, number>();
+    for (const r of roles ?? []) counts.set(r.role, (counts.get(r.role) ?? 0) + 1);
+
+    return {
+      roleCounts: [...counts.entries()]
+        .map(([role, count]) => ({ role, count }))
+        .sort((a, b) => b.count - a.count),
+      superAdmins: (admins ?? []).map((a) => ({
+        user_id: a.user_id,
+        display_name: displayNames.get(a.user_id) ?? null,
+        created_at: a.created_at,
+      })),
+      passwordResetRequired: resetCount ?? (resetSellers ?? []).length,
+      recentSecurityEvents: (events ?? []).map((e) => ({
+        id: e.id,
+        action: e.action,
+        created_at: e.created_at,
+        resource: e.resource,
+      })),
+    };
+  });
+
+/* ------------------------------------------------------------------ */
+/* Site settings (contact, social, SEO defaults)                       */
+/* ------------------------------------------------------------------ */
+
+/** Keys the admin settings UI is allowed to read/write. */
+export const SITE_SETTING_KEYS = [
+  "contact_email",
+  "contact_phone",
+  "contact_address",
+  "contact_hours",
+  "instagram_url",
+  "facebook_url",
+  "tiktok_url",
+  "whatsapp_number",
+  "seo_title",
+  "seo_description",
+  "seo_keywords",
+  "seo_robots_index",
+  // Platform product-moderation mode: `require_approval` (default) or
+  // `auto_publish`. Read server-side by the seller publish actions.
+  "product_moderation_mode",
+  // Platform default commission rate (percent, 0–100) pre-filled in the
+  // seller-creation wizard. Read by `getDefaultCommissionRate`.
+  "default_commission_rate",
+] as const;
+
+export const getSiteSettings = createServerFn({ method: "GET" })
+  .middleware(adminOnly)
+  .inputValidator((data) => z.object({}).parse(data))
+  .handler(async ({ context }) => {
+    await assertAdmin(context);
+    const supabaseAdmin = await adminClient();
+    const { data, error } = await supabaseAdmin
+      .from("site_settings")
+      .select("key,value,updated_at")
+      .in("key", [...SITE_SETTING_KEYS]);
+    if (error) throw new Error(error.message);
+    const values: Record<string, Json> = {};
+    for (const row of data ?? []) values[row.key] = row.value;
+    return { values };
+  });
+
+export const updateSiteSettings = createServerFn({ method: "POST" })
+  .middleware(adminOnly)
+  .inputValidator((data) => z.object({ values: z.record(z.string(), z.unknown()) }).parse(data))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const supabaseAdmin = await adminClient();
+    const actorId = (context as { userId?: string } | null | undefined)?.userId ?? null;
+
+    const allowed = new Set<string>(SITE_SETTING_KEYS as readonly string[]);
+    const rows = Object.entries(data.values)
+      .filter(([key]) => allowed.has(key))
+      .map(([key, value]) => {
+        // The moderation mode is a strict enum — never persist garbage that
+        // the seller publish path would silently fall back from.
+        if (key === "product_moderation_mode") {
+          if (value !== "require_approval" && value !== "auto_publish") {
+            throw new Error("Invalid moderation mode.");
+          }
+        }
+        // The default commission rate is a percent — never persist garbage
+        // the seller wizard would silently fall back from.
+        if (key === "default_commission_rate") {
+          const n =
+            typeof value === "number"
+              ? value
+              : Number(String(value ?? "").trim().replace(",", "."));
+          if (!Number.isFinite(n) || n < 0 || n > 100) {
+            throw new Error("Invalid default commission rate (0–100).");
+          }
+          return {
+            key,
+            value: Math.round(n * 100) / 100,
+            updated_by: actorId,
+            updated_at: new Date().toISOString(),
+          };
+        }
+        return {
+          key,
+          value: value as Json,
+          updated_by: actorId,
+          updated_at: new Date().toISOString(),
+        };
+      });
+    if (rows.length === 0) throw new Error("No valid settings to save.");
+
+    const { error } = await supabaseAdmin.from("site_settings").upsert(rows, { onConflict: "key" });
+    if (error) throw new Error(error.message);
+
+    await auditLog(context, "site_settings_updated", "site_settings", null, {
+      keys: rows.map((r) => r.key),
+    });
+    return { ok: true, saved: rows.length };
+  });
+
+/** Hard fallback when the platform setting was never configured. */
+export const DEFAULT_COMMISSION_RATE = 10;
+
+/**
+ * Admin read of the platform default commission rate (percent, 0–100).
+ * The seller-creation wizard pre-fills its commission step from this —
+ * changing it in Admin > Settings actually changes new-seller behavior.
+ */
+export const getDefaultCommissionRate = createServerFn({ method: "GET" })
+  .middleware(adminOnly)
+  .inputValidator((data) => z.object({}).parse(data))
+  .handler(async ({ context }) => {
+    await assertAdmin(context);
+    const supabaseAdmin = await adminClient();
+    const { data, error } = await supabaseAdmin
+      .from("site_settings")
+      .select("value")
+      .eq("key", "default_commission_rate")
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    const raw = data?.value as Json;
+    const n =
+      typeof raw === "number" ? raw : Number(String(raw ?? "").trim().replace(",", "."));
+    const rate = Number.isFinite(n) ? Math.min(100, Math.max(0, n)) : DEFAULT_COMMISSION_RATE;
+    return { rate };
+  });

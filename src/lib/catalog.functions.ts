@@ -866,22 +866,24 @@ async function runFtsSearch(
       ? data.gender
       : null;
 
-  const { data: payload, error } = await client.rpc("search_products_fts", {
+  const rpcArgs: Record<string, string | number | boolean | string[]> = {
     p_query: safeQuery,
-    p_category_slug: data.category?.trim() || null,
-    p_brand_slugs: data.brands?.length ? data.brands : null,
-    p_store_slugs: data.stores?.length ? data.stores : null,
-    p_min_price: data.minPrice ?? null,
-    p_max_price: data.maxPrice ?? null,
-    p_color_slugs: data.colors?.length ? data.colors : null,
-    p_size_values: data.sizes?.length ? data.sizes : null,
-    p_gender: gender,
     p_in_stock: data.inStock ?? false,
     p_on_sale: data.onSale ?? false,
     p_sort: sort,
     p_limit: pageSize,
     p_offset: (page - 1) * pageSize,
-  });
+  };
+  const categorySlug = data.category?.trim();
+  if (categorySlug) rpcArgs["p_category_slug"] = categorySlug;
+  if (data.brands?.length) rpcArgs["p_brand_slugs"] = data.brands;
+  if (data.stores?.length) rpcArgs["p_store_slugs"] = data.stores;
+  if (data.minPrice !== undefined) rpcArgs["p_min_price"] = data.minPrice;
+  if (data.maxPrice !== undefined) rpcArgs["p_max_price"] = data.maxPrice;
+  if (data.colors?.length) rpcArgs["p_color_slugs"] = data.colors;
+  if (data.sizes?.length) rpcArgs["p_size_values"] = data.sizes;
+  if (gender) rpcArgs["p_gender"] = gender;
+  const { data: payload, error } = await client.rpc("search_products_fts", rpcArgs as never);
   if (error) throw new FtsUnavailableError(error.message);
 
   const result = payload as unknown as FtsPayload;

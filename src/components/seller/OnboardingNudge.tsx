@@ -1,7 +1,8 @@
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { ArrowRight, Sparkles, X } from "lucide-react";
+import { ArrowRight, X } from "lucide-react";
 import { getTranslations, localeDirections, type SupportedLocale } from "@/lib/i18n";
+import { ModaliaIntelligenceIcon } from "@/components/marketplace/ModaliaIntelligenceIcon";
 
 const DISMISS_KEY = "modalia:onboarding-nudge:dismissed";
 
@@ -43,7 +44,7 @@ export function OnboardingNudge({ locale }: { locale: SupportedLocale }) {
         className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-brand/10 text-brand"
         aria-hidden="true"
       >
-        <Sparkles className="h-5 w-5" />
+        <ModaliaIntelligenceIcon size={20} />
       </span>
       <div className="min-w-0 flex-1">
         <p className="text-h3 text-foreground">{t.nudgeTitle}</p>

@@ -26,7 +26,6 @@ import {
   ShieldAlert,
   ShieldCheck,
   ShoppingBag,
-  Sparkles,
   Star,
   Store as StoreIcon,
   Tags,
@@ -188,7 +187,7 @@ function getNavGroups(
       items: [
         // AI draft actions require products.edit (a write); the page's purpose
         // is drafting, so it stays out of the read-only support scope.
-        { label: t.aiTools, to: "/seller/ai", icon: <Sparkles className={icon} />, permission: "products.edit" },
+        { label: t.aiTools, to: "/seller/ai", icon: <ModaliaIntelligenceIcon size={18} className={icon} />, permission: "products.edit" },
         { label: t.settings, to: "/seller/settings", icon: <Settings className={icon} />, permission: "settings.manage" },
         { label: t.security, to: "/seller/security", icon: <ShieldCheck className={icon} />, permission: null },
       ],
@@ -388,6 +387,7 @@ function suspendedMessage(
 }
 
 import { Crumbs, type Crumb } from "@/components/routing/crumbs";
+import { ModaliaIntelligenceIcon } from "@/components/marketplace/ModaliaIntelligenceIcon";
 
 export function SellerShell({
   title,

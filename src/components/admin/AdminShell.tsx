@@ -107,6 +107,7 @@ function buildNavGroups(t: AdminNavStrings): NavGroup[] {
         { label: "Verifications", to: "/admin/verifications" as any, icon: <BadgeCheck className={icon} /> },
         { label: items.customers, to: "/admin/customers", icon: <UserRound className={icon} /> },
         { label: "Partnerships", to: "/admin/partnerships" as any, icon: <Building2 className={icon} /> },
+        { label: "Reports", to: "/admin/reports" as any, icon: <Flag className={icon} /> },
       ],
     },
     {

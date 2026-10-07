@@ -1,1 +1,79 @@
-LyoqCiAqIFBhcnRuZXIgYmFubmVyIGNhcm91c2VsIOKAlCByZWN0YW5ndWxhciByb3RhdGluZyBhZHMgYXQgdG9wIG9mIGhvbWVwYWdlLgogKiBNYW5hZ2VkIGZyb20gL2FkbWluL2Jhbm5lcnMuIEVhY2ggYmFubmVyIGxpbmtzIHRvIHRoZSBwYXJ0bmVyIFVSTC4KICovCmltcG9ydCB7IHVzZUVmZmVjdCwgdXNlU3RhdGUgfSBmcm9tICJyZWFjdCI7CmltcG9ydCB7IHVzZVF1ZXJ5IH0gZnJvbSAiQHRhbnN0YWNrL3JlYWN0LXF1ZXJ5IjsKaW1wb3J0IHsgQ2hldnJvbkxlZnQsIENoZXZyb25SaWdodCB9IGZyb20gImx1Y2lkZS1yZWFjdCI7CmltcG9ydCB7IGdldEFjdGl2ZVBhcnRuZXJCYW5uZXJzIH0gZnJvbSAiQC9saWIvcGFydG5lci1iYW5uZXJzLmZ1bmN0aW9ucyI7CgpleHBvcnQgZnVuY3Rpb24gUGFydG5lckJhbm5lckNhcm91c2VsKCkgewogIGNvbnN0IHsgZGF0YTogYmFubmVycyB9ID0gdXNlUXVlcnkoewogICAgcXVlcnlLZXk6IFsicGFydG5lci1iYW5uZXJzIl0sCiAgICBxdWVyeUZuOiAoKSA9PiBnZXRBY3RpdmVQYXJ0bmVyQmFubmVycygpLAogICAgc3RhbGVUaW1lOiA2MF8wMDAsCiAgfSk7CiAgY29uc3QgW2luZGV4LCBzZXRJbmRleF0gPSB1c2VTdGF0ZSgwKTsKCiAgY29uc3QgbGlzdCA9IGJhbm5lcnMgPz8gW107CiAgdXNlRWZmZWN0KCgpID0+IHsKICAgIGlmIChsaXN0Lmxlbmd0aCA8PSAxKSByZXR1cm47CiAgICBjb25zdCB0ID0gc2V0SW50ZXJ2YWwoKCkgPT4gc2V0SW5kZXgoKGkpID0+IChpICsgMSkgJSBsaXN0Lmxlbmd0aCksIDUwMDApOwogICAgcmV0dXJuICgpID0+IGNsZWFySW50ZXJ2YWwodCk7CiAgfSwgW2xpc3QubGVuZ3RoXSk7CgogIGlmIChsaXN0Lmxlbmd0aCA9PT0gMCkgcmV0dXJuIG51bGw7CiAgY29uc3QgYmFubmVyID0gbGlzdFtpbmRleCAlIGxpc3QubGVuZ3RoXTsKICBpZiAoIWJhbm5lcikgcmV0dXJuIG51bGw7CgogIHJldHVybiAoCiAgICA8c2VjdGlvbiBhcmlhLWxhYmVsPSJQYXJ0bmVycyIgY2xhc3NOYW1lPSJteC1hdXRvIG1heC13LTd4bCBweC00IHB0LTYiPgogICAgICA8ZGl2IGNsYXNzTmFtZT0icmVsYXRpdmUgb3ZlcmZsb3ctaGlkZGVuIHJvdW5kZWQtMnhsIj4KICAgICAgICA8YQogICAgICAgICAgaHJlZj17YmFubmVyLmxpbmtVcmx9CiAgICAgICAgICB0YXJnZXQ9e2Jhbm5lci5saW5rVXJsLnN0YXJ0c1dpdGgoImh0dHAiKSA/ICJfYmxhbmsiIDogdW5kZWZpbmVkfQogICAgICAgICAgcmVsPXtiYW5uZXIubGlua1VybC5zdGFydHNXaXRoKCJodHRwIikgPyAibm9vcGVuZXIgbm9yZWZlcnJlciIgOiB1bmRlZmluZWR9CiAgICAgICAgICBjbGFzc05hbWU9ImJsb2NrIgogICAgICAgID4KICAgICAgICAgIDxpbWcKICAgICAgICAgICAgc3JjPXtiYW5uZXIuaW1hZ2VVcmx9CiAgICAgICAgICAgIGFsdD17YmFubmVyLnRpdGxlfQogICAgICAgICAgICBjbGFzc05hbWU9ImgtMzIgdy1mdWxsIG9iamVjdC1jb3ZlciBzbTpoLTQwIgogICAgICAgICAgICBsb2FkaW5nPSJsYXp5IgogICAgICAgICAgLz4KICAgICAgICA8L2E+CiAgICAgICAge2xpc3QubGVuZ3RoID4gMSA/ICgKICAgICAgICAgIDw+CiAgICAgICAgICAgIDxidXR0b24KICAgICAgICAgICAgICB0eXBlPSJidXR0b24iCiAgICAgICAgICAgICAgYXJpYS1sYWJlbD0iUHJldmlvdXMiCiAgICAgICAgICAgICAgb25DbGljaz17KCkgPT4gc2V0SW5kZXgoKGkpID0+IChpIC0gMSArIGxpc3QubGVuZ3RoKSAlIGxpc3QubGVuZ3RoKX0KICAgICAgICAgICAgICBjbGFzc05hbWU9ImFic29sdXRlIGxlZnQtMiB0b3AtMS8yIGdyaWQgc2l6ZS04IC10cmFuc2xhdGUteS0xLzIgcGxhY2UtaXRlbXMtY2VudGVyIHJvdW5kZWQtZnVsbCBiZy1ibGFjay80MCB0ZXh0LXdoaXRlIGhvdmVyOmJnLWJsYWNrLzYwIgogICAgICAgICAgICA+CiAgICAgICAgICAgICAgPENoZXZyb25MZWZ0IGNsYXNzTmFtZT0ic2l6ZS00IiAvPgogICAgICAgICAgICA8L2J1dHRvbj4KICAgICAgICAgICAgPGJ1dHRvbgogICAgICAgICAgICAgIHR5cGU9ImJ1dHRvbiIKICAgICAgICAgICAgICBhcmlhLWxhYmVsPSJOZXh0IgogICAgICAgICAgICAgIG9uQ2xpY2s9eygpID0+IHNldEluZGV4KChpKSA9PiAoaSArIDEpICUgbGlzdC5sZW5ndGgpfQogICAgICAgICAgICAgIGNsYXNzTmFtZT0iYWJzb2x1dGUgcmlnaHQtMiB0b3AtMS8yIGdyaWQgc2l6ZS04IC10cmFuc2xhdGUteS0xLzIgcGxhY2UtaXRlbXMtY2VudGVyIHJvdW5kZWQtZnVsbCBiZy1ibGFjay80MCB0ZXh0LXdoaXRlIGhvdmVyOmJnLWJsYWNrLzYwIgogICAgICAgICAgICA+CiAgICAgICAgICAgICAgPENoZXZyb25SaWdodCBjbGFzc05hbWU9InNpemUtNCIgLz4KICAgICAgICAgICAgPC9idXR0b24+CiAgICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPSJhYnNvbHV0ZSBib3R0b20tMiBsZWZ0LTEvMiBmbGV4IC10cmFuc2xhdGUteC0xLzIgZ2FwLTEuNSI+CiAgICAgICAgICAgICAge2xpc3QubWFwKChiLCBpKSA9PiAoCiAgICAgICAgICAgICAgICA8YnV0dG9uCiAgICAgICAgICAgICAgICAgIGtleT17Yi5pZH0KICAgICAgICAgICAgICAgICAgdHlwZT0iYnV0dG9uIgogICAgICAgICAgICAgICAgICBhcmlhLWxhYmVsPXtgR28gdG8gJHtiLnRpdGxlfWB9CiAgICAgICAgICAgICAgICAgIG9uQ2xpY2s9eygpID0+IHNldEluZGV4KGkpfQogICAgICAgICAgICAgICAgICBjbGFzc05hbWU9e2BzaXplLTIgcm91bmRlZC1mdWxsIHRyYW5zaXRpb24tY29sb3JzICR7aSA9PT0gaW5kZXggJSBsaXN0Lmxlbmd0aCA/ICJiZy13aGl0ZSIgOiAiYmctd2hpdGUvNDAifWB9CiAgICAgICAgICAgICAgICAvPgogICAgICAgICAgICAgICkpfQogICAgICAgICAgICA8L2Rpdj4KICAgICAgICAgIDwvPgogICAgICAgICkgOiBudWxsfQogICAgICA8L2Rpdj4KICAgIDwvc2VjdGlvbj4KICApOwp9Cg==
+/**
+ * Partner banner carousel — rectangular rotating ads at top of homepage.
+ * Managed from /admin/banners. Each banner links to the partner URL.
+ */
+import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { getActivePartnerBanners } from "@/lib/partner-banners.functions";
+
+export function PartnerBannerCarousel() {
+  const { data: banners } = useQuery({
+    queryKey: ["partner-banners"],
+    queryFn: () => getActivePartnerBanners(),
+    staleTime: 60_000,
+  });
+  const [index, setIndex] = useState(0);
+
+  const list = banners ?? [];
+  useEffect(() => {
+    if (list.length <= 1) return;
+    const t = setInterval(() => setIndex((i) => (i + 1) % list.length), 5000);
+    return () => clearInterval(t);
+  }, [list.length]);
+
+  if (list.length === 0) return null;
+  const banner = list[index % list.length];
+  if (!banner) return null;
+
+  return (
+    <section aria-label="Partners" className="mx-auto max-w-7xl px-4 pt-6">
+      <div className="relative overflow-hidden rounded-2xl">
+        <a
+          href={banner.linkUrl}
+          target={banner.linkUrl.startsWith("http") ? "_blank" : undefined}
+          rel={banner.linkUrl.startsWith("http") ? "noopener noreferrer" : undefined}
+          className="block"
+        >
+          <img
+            src={banner.imageUrl}
+            alt={banner.title}
+            className="h-32 w-full object-cover sm:h-40"
+            loading="lazy"
+          />
+        </a>
+        {list.length > 1 ? (
+          <>
+            <button
+              type="button"
+              aria-label="Previous"
+              onClick={() => setIndex((i) => (i - 1 + list.length) % list.length)}
+              className="absolute left-2 top-1/2 grid size-8 -translate-y-1/2 place-items-center rounded-full bg-black/40 text-white hover:bg-black/60"
+            >
+              <ChevronLeft className="size-4" />
+            </button>
+            <button
+              type="button"
+              aria-label="Next"
+              onClick={() => setIndex((i) => (i + 1) % list.length)}
+              className="absolute right-2 top-1/2 grid size-8 -translate-y-1/2 place-items-center rounded-full bg-black/40 text-white hover:bg-black/60"
+            >
+              <ChevronRight className="size-4" />
+            </button>
+            <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1.5">
+              {list.map((b, i) => (
+                <button
+                  key={b.id}
+                  type="button"
+                  aria-label={`Go to ${b.title}`}
+                  onClick={() => setIndex(i)}
+                  className={`size-2 rounded-full transition-colors ${i === index % list.length ? "bg-white" : "bg-white/40"}`}
+                />
+              ))}
+            </div>
+          </>
+        ) : null}
+      </div>
+    </section>
+  );
+}

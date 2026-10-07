@@ -14,6 +14,66 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_members: {
+        Row: {
+          active: boolean
+          created_at: string
+          created_by: string | null
+          permissions: Json
+          role: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          permissions?: Json
+          role: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          permissions?: Json
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      analytics_events: {
+        Row: {
+          anon_id: string
+          created_at: string
+          entity_id: string | null
+          entity_type: string | null
+          event_type: Database["public"]["Enums"]["analytics_event_type"]
+          id: string
+          metadata: Json
+          user_id: string | null
+        }
+        Insert: {
+          anon_id: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          event_type: Database["public"]["Enums"]["analytics_event_type"]
+          id?: string
+          metadata?: Json
+          user_id?: string | null
+        }
+        Update: {
+          anon_id?: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          event_type?: Database["public"]["Enums"]["analytics_event_type"]
+          id?: string
+          metadata?: Json
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       anonymous_wishlists: {
         Row: {
           created_at: string
@@ -42,33 +102,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      admin_members: {
-        Row: {
-          active: boolean
-          created_at: string
-          created_by: string | null
-          permissions: Json
-          role: string
-          user_id: string
-        }
-        Insert: {
-          active?: boolean
-          created_at?: string
-          created_by?: string | null
-          permissions?: Json
-          role: string
-          user_id: string
-        }
-        Update: {
-          active?: boolean
-          created_at?: string
-          created_by?: string | null
-          permissions?: Json
-          role?: string
-          user_id?: string
-        }
-        Relationships: []
       }
       audit_logs: {
         Row: {
@@ -107,6 +140,7 @@ export type Database = {
           email: string | null
           id: string
           notified_at: string | null
+          unsubscribe_token: string | null
           variant_id: string
         }
         Insert: {
@@ -115,6 +149,7 @@ export type Database = {
           email?: string | null
           id?: string
           notified_at?: string | null
+          unsubscribe_token?: string | null
           variant_id: string
         }
         Update: {
@@ -123,6 +158,7 @@ export type Database = {
           email?: string | null
           id?: string
           notified_at?: string | null
+          unsubscribe_token?: string | null
           variant_id?: string
         }
         Relationships: [
@@ -447,55 +483,6 @@ export type Database = {
           },
         ]
       }
-      coupon_usages: {
-        Row: {
-          coupon_id: string
-          customer_id: string | null
-          guest_phone: string | null
-          id: string
-          order_id: string
-          used_at: string
-        }
-        Insert: {
-          coupon_id: string
-          customer_id?: string | null
-          guest_phone?: string | null
-          id?: string
-          order_id: string
-          used_at?: string
-        }
-        Update: {
-          coupon_id?: string
-          customer_id?: string | null
-          guest_phone?: string | null
-          id?: string
-          order_id?: string
-          used_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "coupon_usages_coupon_id_fkey"
-            columns: ["coupon_id"]
-            isOneToOne: false
-            referencedRelation: "coupons"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "coupon_usages_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "customers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "coupon_usages_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "orders"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       customers: {
         Row: {
           created_at: string
@@ -681,6 +668,45 @@ export type Database = {
         }
         Relationships: []
       }
+      intelligence_settings: {
+        Row: {
+          fallback_message: Json
+          id: number
+          ranking_weights: Json
+          recommendations_enabled: boolean
+          smart_shopping_enabled: boolean
+          suggested_questions: Json
+          support_enabled: boolean
+          updated_at: string
+          updated_by: string | null
+          welcome_message: Json
+        }
+        Insert: {
+          fallback_message?: Json
+          id: number
+          ranking_weights?: Json
+          recommendations_enabled?: boolean
+          smart_shopping_enabled?: boolean
+          suggested_questions?: Json
+          support_enabled?: boolean
+          updated_at?: string
+          updated_by?: string | null
+          welcome_message?: Json
+        }
+        Update: {
+          fallback_message?: Json
+          id?: number
+          ranking_weights?: Json
+          recommendations_enabled?: boolean
+          smart_shopping_enabled?: boolean
+          suggested_questions?: Json
+          support_enabled?: boolean
+          updated_at?: string
+          updated_by?: string | null
+          welcome_message?: Json
+        }
+        Relationships: []
+      }
       inventory: {
         Row: {
           id: string
@@ -715,6 +741,38 @@ export type Database = {
             columns: ["variant_id"]
             isOneToOne: true
             referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_preferences: {
+        Row: {
+          id: string
+          prefs: Json
+          seller_id: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          id?: string
+          prefs?: Json
+          seller_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          id?: string
+          prefs?: Json
+          seller_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_preferences_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers"
             referencedColumns: ["id"]
           },
         ]
@@ -759,33 +817,9 @@ export type Database = {
           type?: string
           user_id?: string | null
         }
-        Relationships: []
-      }
-      notification_preferences: {
-        Row: {
-          id: string
-          prefs: Json
-          seller_id: string | null
-          updated_at: string
-          user_id: string | null
-        }
-        Insert: {
-          id?: string
-          prefs?: Json
-          seller_id?: string | null
-          updated_at?: string
-          user_id?: string | null
-        }
-        Update: {
-          id?: string
-          prefs?: Json
-          seller_id?: string | null
-          updated_at?: string
-          user_id?: string | null
-        }
         Relationships: [
           {
-            foreignKeyName: "notification_preferences_seller_id_fkey"
+            foreignKeyName: "notifications_seller_id_fkey"
             columns: ["seller_id"]
             isOneToOne: false
             referencedRelation: "sellers"
@@ -1017,8 +1051,6 @@ export type Database = {
           cancelled_by: string | null
           checkout_idempotency_key: string | null
           created_at: string
-          coupon_code: string | null
-          coupon_id: string | null
           currency: string
           customer_id: string | null
           customer_note: string | null
@@ -1053,8 +1085,6 @@ export type Database = {
           cancelled_by?: string | null
           checkout_idempotency_key?: string | null
           created_at?: string
-          coupon_code?: string | null
-          coupon_id?: string | null
           currency?: string
           customer_id?: string | null
           customer_note?: string | null
@@ -1089,8 +1119,6 @@ export type Database = {
           cancelled_by?: string | null
           checkout_idempotency_key?: string | null
           created_at?: string
-          coupon_code?: string | null
-          coupon_id?: string | null
           currency?: string
           customer_id?: string | null
           customer_note?: string | null
@@ -1123,13 +1151,6 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "orders_coupon_id_fkey"
-            columns: ["coupon_id"]
-            isOneToOne: false
-            referencedRelation: "coupons"
             referencedColumns: ["id"]
           },
         ]
@@ -1620,7 +1641,7 @@ export type Database = {
           name: Json
           publication_status: string
           published_at: string | null
-          search_vector: string | null
+          search_vector: unknown
           seller_id: string
           short_description: Json | null
           sku: string | null
@@ -1651,7 +1672,7 @@ export type Database = {
           name: Json
           publication_status?: string
           published_at?: string | null
-          search_vector?: string | null
+          search_vector?: unknown
           seller_id: string
           short_description?: Json | null
           sku?: string | null
@@ -1682,7 +1703,7 @@ export type Database = {
           name?: Json
           publication_status?: string
           published_at?: string | null
-          search_vector?: string | null
+          search_vector?: unknown
           seller_id?: string
           short_description?: Json | null
           sku?: string | null
@@ -1996,12 +2017,75 @@ export type Database = {
           },
         ]
       }
+      seller_offices: {
+        Row: {
+          active: boolean
+          address: string | null
+          commune_id: string | null
+          created_at: string
+          id: string
+          name: string
+          opening_hours: string | null
+          phone: string | null
+          seller_id: string
+          updated_at: string
+          wilaya_id: string
+        }
+        Insert: {
+          active?: boolean
+          address?: string | null
+          commune_id?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          opening_hours?: string | null
+          phone?: string | null
+          seller_id: string
+          updated_at?: string
+          wilaya_id: string
+        }
+        Update: {
+          active?: boolean
+          address?: string | null
+          commune_id?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          opening_hours?: string | null
+          phone?: string | null
+          seller_id?: string
+          updated_at?: string
+          wilaya_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seller_offices_commune_id_fkey"
+            columns: ["commune_id"]
+            isOneToOne: false
+            referencedRelation: "communes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seller_offices_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seller_offices_wilaya_id_fkey"
+            columns: ["wilaya_id"]
+            isOneToOne: false
+            referencedRelation: "wilayas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       seller_orders: {
         Row: {
           commission_total: number
           created_at: string
           delivery_method: string | null
-          discount_total: number
           id: string
           order_id: string
           seller_id: string
@@ -2017,7 +2101,6 @@ export type Database = {
           commission_total?: number
           created_at?: string
           delivery_method?: string | null
-          discount_total?: number
           id?: string
           order_id: string
           seller_id: string
@@ -2033,7 +2116,6 @@ export type Database = {
           commission_total?: number
           created_at?: string
           delivery_method?: string | null
-          discount_total?: number
           id?: string
           order_id?: string
           seller_id?: string
@@ -2129,6 +2211,35 @@ export type Database = {
             foreignKeyName: "seller_settlements_seller_id_fkey"
             columns: ["seller_id"]
             isOneToOne: false
+            referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seller_shipping_settings: {
+        Row: {
+          created_at: string
+          office_enabled: boolean
+          seller_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          office_enabled?: boolean
+          seller_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          office_enabled?: boolean
+          seller_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seller_shipping_settings_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: true
             referencedRelation: "sellers"
             referencedColumns: ["id"]
           },
@@ -2389,82 +2500,43 @@ export type Database = {
       }
       site_buttons: {
         Row: {
-          id: string
-          label: string
           action_type: string
-          destination: string
-          placement: string
-          style: string
-          is_active: boolean
-          sort_order: number
-          locale: string | null
           created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          label: string
-          action_type: string
           destination: string
+          id: string
+          is_active: boolean
+          label: string
+          locale: string | null
           placement: string
-          style?: string
-          is_active?: boolean
-          sort_order?: number
-          locale?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          label?: string
-          action_type?: string
-          destination?: string
-          placement?: string
-          style?: string
-          is_active?: boolean
-          sort_order?: number
-          locale?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      intelligence_settings: {
-        Row: {
-          id: number
-          support_enabled: boolean
-          smart_shopping_enabled: boolean
-          recommendations_enabled: boolean
-          welcome_message: Json
-          suggested_questions: Json
-          fallback_message: Json
-          ranking_weights: Json
+          sort_order: number
+          style: string
           updated_at: string
-          updated_by: string | null
         }
         Insert: {
-          id: number
-          support_enabled?: boolean
-          smart_shopping_enabled?: boolean
-          recommendations_enabled?: boolean
-          welcome_message?: Json
-          suggested_questions?: Json
-          fallback_message?: Json
-          ranking_weights?: Json
+          action_type: string
+          created_at?: string
+          destination: string
+          id?: string
+          is_active?: boolean
+          label: string
+          locale?: string | null
+          placement: string
+          sort_order?: number
+          style?: string
           updated_at?: string
-          updated_by?: string | null
         }
         Update: {
-          id?: number
-          support_enabled?: boolean
-          smart_shopping_enabled?: boolean
-          recommendations_enabled?: boolean
-          welcome_message?: Json
-          suggested_questions?: Json
-          fallback_message?: Json
-          ranking_weights?: Json
+          action_type?: string
+          created_at?: string
+          destination?: string
+          id?: string
+          is_active?: boolean
+          label?: string
+          locale?: string | null
+          placement?: string
+          sort_order?: number
+          style?: string
           updated_at?: string
-          updated_by?: string | null
         }
         Relationships: []
       }
@@ -2744,43 +2816,36 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      checkout_cart:
-        | {
-            Args: {
-              p_address_line: string
-              p_cart_id: string
-              p_commune_id: string
-              p_customer_note?: string
-              p_delivery_method: string
-              p_first_name: string
-              p_last_name: string
-              p_phone: string
-              p_session_token: string
-              p_wilaya_id: string
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_address_line: string
-              p_cart_id: string
-              p_commune_id?: string
-              p_commune_name?: string
-              p_coupon_code?: string
-              p_customer_id?: string
-              p_customer_note?: string
-              p_delivery_method: string
-              p_first_name: string
-              p_idempotency_key?: string
-              p_last_name: string
-              p_office_ids?: Json
-              p_phone: string
-              p_seller_methods?: Json
-              p_session_token: string
-              p_wilaya_id: string
-            }
-            Returns: Json
-          }
+      admin_analytics_events: {
+        Args: { p_days?: number }
+        Returns: {
+          anon_id: string
+          created_at: string
+          entity_id: string
+          entity_type: string
+          event_type: Database["public"]["Enums"]["analytics_event_type"]
+          id: string
+          metadata: Json
+        }[]
+      }
+      checkout_cart: {
+        Args: {
+          p_address_line: string
+          p_cart_id: string
+          p_commune_id: string
+          p_customer_id?: string
+          p_customer_note?: string
+          p_delivery_method: string
+          p_first_name: string
+          p_idempotency_key?: string
+          p_last_name: string
+          p_phone: string
+          p_session_token: string
+          p_wilaya_id: string
+        }
+        Returns: Json
+      }
+      current_seller_id: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -2788,29 +2853,89 @@ export type Database = {
         }
         Returns: boolean
       }
-      is_super_admin: { Args: never; Returns: boolean }
-      search_products_fts: {
-        Args: {
-          p_query: string
-          p_category_slug?: string | null
-          p_brand_slugs?: string[] | null
-          p_store_slugs?: string[] | null
-          p_min_price?: number | null
-          p_max_price?: number | null
-          p_color_slugs?: string[] | null
-          p_size_values?: string[] | null
-          p_in_stock?: boolean
-          p_on_sale?: boolean
-          p_sort?: string
-          p_limit?: number
-          p_offset?: number
-        }
-        Returns: Json
+      is_active_seller_staff: {
+        Args: { _seller_id: string; _user_id: string }
+        Returns: boolean
       }
+      is_admin_member: { Args: never; Returns: boolean }
+      is_super_admin: { Args: never; Returns: boolean }
       media_seller_id: { Args: { object_name: string }; Returns: string }
+      product_search_vector: {
+        Args: { p: Database["public"]["Tables"]["products"]["Row"] }
+        Returns: unknown
+      }
+      related_products: {
+        Args: { p_limit?: number; p_product_id: string }
+        Returns: {
+          product_id: string
+          score: number
+        }[]
+      }
+      search_products_fts:
+        | {
+            Args: {
+              p_brand_slugs?: string[]
+              p_category_slug?: string
+              p_color_slugs?: string[]
+              p_gender?: string
+              p_in_stock?: boolean
+              p_limit?: number
+              p_max_price?: number
+              p_min_price?: number
+              p_offset?: number
+              p_on_sale?: boolean
+              p_query: string
+              p_size_values?: string[]
+              p_sort?: string
+              p_store_slugs?: string[]
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_brand_slugs?: string[]
+              p_category_slug?: string
+              p_color_slugs?: string[]
+              p_in_stock?: boolean
+              p_limit?: number
+              p_max_price?: number
+              p_min_price?: number
+              p_offset?: number
+              p_on_sale?: boolean
+              p_query: string
+              p_size_values?: string[]
+              p_sort?: string
+              p_store_slugs?: string[]
+            }
+            Returns: Json
+          }
+      seller_analytics_events: {
+        Args: { p_days?: number }
+        Returns: {
+          anon_id: string
+          created_at: string
+          entity_id: string
+          entity_type: string
+          event_type: Database["public"]["Enums"]["analytics_event_type"]
+          id: string
+          metadata: Json
+        }[]
+      }
       seller_can: {
         Args: { _permission: string; _seller_id: string }
         Returns: boolean
+      }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
+      track_analytics_event: {
+        Args: {
+          p_anon_id: string
+          p_entity_id?: string
+          p_entity_type?: string
+          p_event_type: string
+          p_metadata?: Json
+        }
+        Returns: string
       }
       transition_seller_order_status: {
         Args: {
@@ -2820,8 +2945,26 @@ export type Database = {
         }
         Returns: Json
       }
+      trending_products: {
+        Args: { p_days?: number; p_limit?: number }
+        Returns: {
+          product_id: string
+          views: number
+        }[]
+      }
     }
     Enums: {
+      analytics_event_type:
+        | "page_view"
+        | "product_view"
+        | "search"
+        | "category_view"
+        | "add_to_cart"
+        | "wishlist_add"
+        | "checkout_started"
+        | "checkout_completed"
+        | "purchase"
+        | "store_view"
       app_role: "customer" | "seller_owner" | "seller_staff" | "super_admin"
       discovery_event_kind:
         | "product_view"
@@ -2841,13 +2984,13 @@ export type Database = {
         | "editorial"
         | "blog"
         | "app_banner"
-        | "collections"
-        | "customer_reviews"
-        | "fashion_edit"
-        | "limited_drops"
-        | "newsletter"
-        | "showcase"
         | "sport_edit"
+        | "fashion_edit"
+        | "collections"
+        | "showcase"
+        | "limited_drops"
+        | "customer_reviews"
+        | "newsletter"
       order_status:
         | "pending"
         | "confirmed"
@@ -2867,10 +3010,8 @@ export type Database = {
       seller_account_status: "pending" | "active" | "suspended" | "disabled"
       seller_application_status:
         | "pending"
-        | "under_review"
         | "approved"
         | "rejected"
-        | "converted"
         | "suspended"
       seller_order_status:
         | "pending"
@@ -3022,6 +3163,18 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      analytics_event_type: [
+        "page_view",
+        "product_view",
+        "search",
+        "category_view",
+        "add_to_cart",
+        "wishlist_add",
+        "checkout_started",
+        "checkout_completed",
+        "purchase",
+        "store_view",
+      ],
       app_role: ["customer", "seller_owner", "seller_staff", "super_admin"],
       discovery_event_kind: [
         "product_view",
@@ -3039,6 +3192,16 @@ export const Constants = {
         "flash_sale",
         "stores",
         "recommendations",
+        "editorial",
+        "blog",
+        "app_banner",
+        "sport_edit",
+        "fashion_edit",
+        "collections",
+        "showcase",
+        "limited_drops",
+        "customer_reviews",
+        "newsletter",
       ],
       order_status: [
         "pending",

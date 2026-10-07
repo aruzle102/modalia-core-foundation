@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { useDeviceTier } from "@/hooks/use-device-tier";
 import { DiscoverySkeleton, ProductCard } from "@/components/marketplace/discovery";
 import { PartnerBannerCarousel } from "@/components/marketplace/PartnerBannerCarousel";
+import { MarketplaceLayout } from "@/components/marketplace/MarketplaceLayout";
 import { OfficialStoreBadge, VerifiedSellerBadge } from "@/components/marketplace/StoreBadges";
 import { SiteFooter, SiteHeader } from "@/components/layout/site-shell";
 import { useReveal } from "@/hooks/use-reveal";
@@ -698,7 +699,7 @@ function TrendingSection({
       />
       <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 lg:pb-0">
         {products.slice(0, 6).map((product) => (
-          <div key={product.id} className="w-52 shrink-0 snap-start sm:w-60">
+          <div key={product.id} className="w-40 shrink-0 snap-start sm:w-44">
             <ProductCard product={product} locale={locale} />
           </div>
         ))}
@@ -736,7 +737,7 @@ function BestsellersSection({
       />
       <div className="flex snap-x snap-mandatory gap-5 overflow-x-auto pb-2 lg:pb-0">
         {data.products.map((product, index) => (
-          <div key={product.id} className="w-52 shrink-0 snap-start sm:w-60">
+          <div key={product.id} className="w-40 shrink-0 snap-start sm:w-44">
             <p
               aria-hidden
               className="mb-2 font-display text-3xl font-semibold tabular-nums text-muted-foreground/45"
@@ -780,7 +781,7 @@ function PopularNow({
       />
       <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 lg:pb-0">
         {data.products.map((product) => (
-          <div key={product.id} className="w-52 shrink-0 snap-start sm:w-60">
+          <div key={product.id} className="w-40 shrink-0 snap-start sm:w-44">
             <ProductCard product={product} locale={locale} />
           </div>
         ))}
@@ -890,7 +891,7 @@ function OffersSection({
             </div>
             <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 lg:pb-0">
               {offers.map((product) => (
-                <div key={product.id} className="w-52 shrink-0 snap-start sm:w-60">
+                <div key={product.id} className="w-40 shrink-0 snap-start sm:w-44">
                   <ProductCard product={product} locale={locale} dark />
                 </div>
               ))}
@@ -1313,7 +1314,7 @@ function RecentlyViewed({
       />
       <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 lg:pb-0">
         {items.map((product) => (
-          <div key={product.id} className="w-52 shrink-0 snap-start sm:w-60">
+          <div key={product.id} className="w-40 shrink-0 snap-start sm:w-44">
             <ProductCard product={product} locale={locale} />
           </div>
         ))}
@@ -1640,9 +1641,12 @@ function HomePage() {
       <SiteHeader locale={locale} t={t} />
       <main id="main-content" tabIndex={-1}>
         <PartnerBannerCarousel />
-        <Hero locale={locale} hero={hero} copy={copy} products={data.products} />
-        <TrustMarquee copy={copy} />
-        <TrustStrip copy={copy} />
+        {/* Amazon-style: products + categories with sidebar, no cinematic hero */}
+        <MarketplaceLayout
+          categories={data.categories}
+          products={data.products}
+          locale={locale}
+        />
 
         <div className="mx-auto max-w-7xl space-y-16 px-4 py-14 sm:space-y-24 sm:px-6 sm:py-20 lg:px-8">
           {data.categories.length ? (

@@ -57,6 +57,7 @@ import { Route as AdminSettlementsRouteImport } from './routes/admin/settlements
 import { Route as AdminShippingRouteImport } from './routes/admin/shipping'
 import { Route as AdminStoresRouteImport } from './routes/admin/stores'
 import { Route as AdminTeamRouteImport } from './routes/admin/team'
+import { Route as AdminVerificationsRouteImport } from './routes/admin/verifications'
 import { Route as AdminWilayasRouteImport } from './routes/admin/wilayas'
 import { Route as CategorySlugRouteImport } from './routes/category.$slug'
 import { Route as ProductSlugRouteImport } from './routes/product.$slug'
@@ -341,6 +342,11 @@ const AdminStoresRoute = AdminStoresRouteImport.update({
 const AdminTeamRoute = AdminTeamRouteImport.update({
   id: '/admin/team',
   path: '/admin/team',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminVerificationsRoute = AdminVerificationsRouteImport.update({
+  id: '/admin/verifications',
+  path: '/admin/verifications',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminWilayasRoute = AdminWilayasRouteImport.update({
@@ -646,6 +652,7 @@ export interface FileRoutesByFullPath {
   '/admin/shipping': typeof AdminShippingRoute
   '/admin/stores': typeof AdminStoresRouteWithChildren
   '/admin/team': typeof AdminTeamRoute
+  '/admin/verifications': typeof AdminVerificationsRoute
   '/admin/wilayas': typeof AdminWilayasRoute
   '/category/$slug': typeof CategorySlugRoute
   '/product/$slug': typeof ProductSlugRoute
@@ -740,6 +747,7 @@ export interface FileRoutesByTo {
   '/admin/shipping': typeof AdminShippingRoute
   '/admin/stores': typeof AdminStoresRouteWithChildren
   '/admin/team': typeof AdminTeamRoute
+  '/admin/verifications': typeof AdminVerificationsRoute
   '/admin/wilayas': typeof AdminWilayasRoute
   '/category/$slug': typeof CategorySlugRoute
   '/product/$slug': typeof ProductSlugRoute
@@ -836,6 +844,7 @@ export interface FileRoutesById {
   '/admin/shipping': typeof AdminShippingRoute
   '/admin/stores': typeof AdminStoresRouteWithChildren
   '/admin/team': typeof AdminTeamRoute
+  '/admin/verifications': typeof AdminVerificationsRoute
   '/admin/wilayas': typeof AdminWilayasRoute
   '/category/$slug': typeof CategorySlugRoute
   '/product/$slug': typeof ProductSlugRoute
@@ -1562,6 +1571,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/team'
       fullPath: '/admin/team'
       preLoaderRoute: typeof AdminTeamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/verifications': {
+      id: '/admin/verifications'
+      path: '/admin/verifications'
+      fullPath: '/admin/verifications'
+      preLoaderRoute: typeof AdminVerificationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/wilayas': {

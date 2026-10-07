@@ -1648,90 +1648,11 @@ function HomePage() {
           locale={locale}
         />
 
+        {/* V10: MarketplaceLayout shows products directly (Amazon-style).
+            Legacy product rails removed to avoid duplication.
+            Only editorial/content sections remain below. */}
         <div className="mx-auto max-w-7xl space-y-16 px-4 py-14 sm:space-y-24 sm:px-6 sm:py-20 lg:px-8">
-          {data.categories.length ? (
-            <CategoryGrid
-              categories={data.categories}
-              locale={locale}
-              copy={copy}
-              viewAll={t.common.viewAll}
-              shopSearch={shopSearch}
-            />
-          ) : null}
-
-          {trending && data.products.length ? (
-            <TrendingSection
-              locale={locale}
-              section={trending}
-              products={data.products}
-              copy={copy}
-              viewAll={t.common.viewAll}
-              shopSearch={shopSearch}
-            />
-          ) : null}
-
-          <BestsellersSection
-            locale={locale}
-            copy={copy}
-            viewAll={t.common.viewAll}
-            shopSearch={shopSearch}
-          />
-
-          <PopularNow locale={locale} copy={copy} viewAll={t.common.viewAll} shopSearch={shopSearch} />
-
-          {data.products.length ? (
-            <NewArrivalsSection
-              locale={locale}
-              products={data.products}
-              title={sectionByKind("new_arrivals")?.title || copy.newArrivals}
-              copy={copy}
-              viewAll={t.common.viewAll}
-              shopSearch={shopSearch}
-            />
-          ) : null}
-
           {editorial ? <EditorialSection section={editorial} copy={copy} /> : null}
-
-          {flashActive ? (
-            <FlashSaleSection
-              locale={locale}
-              section={flash!}
-              products={data.products}
-              copy={copy}
-              viewAll={t.common.viewAll}
-              shopSearch={shopSearch}
-            />
-          ) : null}
-
-          <OffersSection
-            locale={locale}
-            products={data.products}
-            copy={copy}
-            viewAll={t.common.viewAll}
-            shopSearch={shopSearch}
-          />
-
-          {recommendations && recommendationsEnabled ? (
-            <RecommendationsSection
-              locale={locale}
-              section={recommendations}
-              copy={copy}
-              viewAll={t.common.viewAll}
-              shopSearch={shopSearch}
-            />
-          ) : null}
-
-          {data.stores.length ? (
-            <BrandStores
-              stores={data.stores}
-              products={data.products}
-              locale={locale}
-              title={sectionByKind("stores")?.title || copy.storesToDiscover}
-              copy={copy}
-              viewAll={t.common.viewAll}
-              shopSearch={shopSearch}
-            />
-          ) : null}
 
           <TestimonialsSection locale={locale} copy={copy} />
 

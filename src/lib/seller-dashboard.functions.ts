@@ -29,10 +29,12 @@ const num = (value: unknown): number => {
 };
 
 /** Authenticate + authorize, returning the caller's seller context. */
+/* V10: overview is the dashboard landing — any authenticated seller/staff
+   can view it, not just those with analytics.view. */
 async function sellerGuard(context: any): Promise<SellerContext> {
   const userId = context?.userId as string | undefined;
   if (!userId) throw new Error("Unauthorized");
-  return requireSeller({ supabase: context.supabase, userId }, "analytics.view");
+  return requireSeller({ supabase: context.supabase, userId });
 }
 
 type RpcResult = { data: unknown; error: { message?: string } | null };

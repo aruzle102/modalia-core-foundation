@@ -215,6 +215,16 @@ function OfficialStorePage() {
           ) : undefined
         }
       >
+        {/* Separation notice: the official store is managed as a regular seller store */}
+        {official && linked ? (
+          <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
+            <p className="font-medium">The official store is managed as a seller store.</p>
+            <p className="mt-1 text-blue-700">
+              Add and manage products from the seller dashboard. This admin page is for
+              store linking and oversight only.
+            </p>
+          </div>
+        ) : null}
         {storeQuery.isPending ? (
           <TableSkeleton rows={6} />
         ) : storeQuery.isError ? (

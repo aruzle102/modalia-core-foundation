@@ -1,1 +1,64 @@
-LyoqCiAqIFNlbGxlci1zaWRlIHdhcm5pbmcgaW5ib3g6IG1vZGVyYXRpb24gd2FybmluZ3MgaXNzdWVkIGJ5IGFkbWluCiAqIChwcm9kdWN0IGRlbGV0ZWQvcmVqZWN0ZWQvaGlkZGVuLCBvciBwbGFpbiBub3RpY2VzKS4KICovCmltcG9ydCB7IGNyZWF0ZVNlcnZlckZuIH0gZnJvbSAiQHRhbnN0YWNrL3JlYWN0LXN0YXJ0IjsKaW1wb3J0IHsgeiB9IGZyb20gInpvZCI7CmltcG9ydCB7IHJlcXVpcmVTdXBhYmFzZUF1dGggfSBmcm9tICJAL2ludGVncmF0aW9ucy9zdXBhYmFzZS9hdXRoLW1pZGRsZXdhcmUiOwppbXBvcnQgeyByZXF1aXJlU2VsbGVyIH0gZnJvbSAiQC9saWIvc2VsbGVyLWF1dGgiOwoKY29uc3Qgc2VsbGVyT25seSA9IFtyZXF1aXJlU3VwYWJhc2VBdXRoXSBhcyBjb25zdDsKCmV4cG9ydCB0eXBlIFNlbGxlcldhcm5pbmcgPSB7CiAgaWQ6IHN0cmluZzsKICByZWFzb246IHN0cmluZzsKICBhY3Rpb25UYWtlbjogc3RyaW5nOwogIGlzc3VlZEF0OiBzdHJpbmc7CiAgYWNrbm93bGVkZ2VkQXQ6IHN0cmluZyB8IG51bGw7CiAgcHJvZHVjdElkOiBzdHJpbmcgfCBudWxsOwp9OwoKLyoqIFNlbGxlcjogbGlzdCBteSBtb2RlcmF0aW9uIHdhcm5pbmdzIChuZXdlc3QgZmlyc3QpLiAqLwpleHBvcnQgY29uc3QgZ2V0TXlXYXJuaW5ncyA9IGNyZWF0ZVNlcnZlckZuKHsgbWV0aG9kOiAiR0VUIiB9KQogIC5taWRkbGV3YXJlKHNlbGxlck9ubHkpCiAgLmhhbmRsZXIoYXN5bmMgKHsgY29udGV4dCB9KTogUHJvbWlzZTxTZWxsZXJXYXJuaW5nW10+ID0+IHsKICAgIGNvbnN0IHVzZXJJZCA9IChjb250ZXh0IGFzIGFueSk/LnVzZXJJZCBhcyBzdHJpbmc7CiAgICBpZiAoIXVzZXJJZCkgdGhyb3cgbmV3IEVycm9yKCJVbmF1dGhvcml6ZWQiKTsKICAgIGNvbnN0IHNlbGxlciA9IGF3YWl0IHJlcXVpcmVTZWxsZXIoeyBzdXBhYmFzZTogKGNvbnRleHQgYXMgYW55KS5zdXBhYmFzZSwgdXNlcklkIH0sICJzdG9yZS5tYW5hZ2UiKTsKICAgIGNvbnN0IHN1cGFiYXNlID0gKGNvbnRleHQgYXMgYW55KS5zdXBhYmFzZTsKCiAgICBjb25zdCB7IGRhdGEsIGVycm9yIH0gPSBhd2FpdCBzdXBhYmFzZQogICAgICAuZnJvbSgic2VsbGVyX3dhcm5pbmdzIikKICAgICAgLnNlbGVjdCgiaWQsIHJlYXNvbiwgYWN0aW9uX3Rha2VuLCBpc3N1ZWRfYXQsIGFja25vd2xlZGdlZF9hdCwgcHJvZHVjdF9pZCIpCiAgICAgIC5lcSgic2VsbGVyX2lkIiwgc2VsbGVyLnNlbGxlcklkKQogICAgICAub3JkZXIoImlzc3VlZF9hdCIsIHsgYXNjZW5kaW5nOiBmYWxzZSB9KQogICAgICAubGltaXQoNTApOwogICAgaWYgKGVycm9yKSB0aHJvdyBuZXcgRXJyb3IoZXJyb3IubWVzc2FnZSk7CiAgICByZXR1cm4gKGRhdGEgPz8gW10pLm1hcCgodzogYW55KSA9PiAoewogICAgICBpZDogdy5pZCwKICAgICAgcmVhc29uOiB3LnJlYXNvbiwKICAgICAgYWN0aW9uVGFrZW46IHcuYWN0aW9uX3Rha2VuLAogICAgICBpc3N1ZWRBdDogdy5pc3N1ZWRfYXQsCiAgICAgIGFja25vd2xlZGdlZEF0OiB3LmFja25vd2xlZGdlZF9hdCwKICAgICAgcHJvZHVjdElkOiB3LnByb2R1Y3RfaWQsCiAgICB9KSk7CiAgfSk7CgovKiogU2VsbGVyOiBhY2tub3dsZWRnZSBhIHdhcm5pbmcgKG1hcmtzIGFzIHJlYWQpLiAqLwpleHBvcnQgY29uc3QgYWNrbm93bGVkZ2VXYXJuaW5nID0gY3JlYXRlU2VydmVyRm4oeyBtZXRob2Q6ICJQT1NUIiB9KQogIC5taWRkbGV3YXJlKHNlbGxlck9ubHkpCiAgLnZhbGlkYXRvcigoZCkgPT4gei5vYmplY3QoeyB3YXJuaW5nSWQ6IHouc3RyaW5nKCkudXVpZCgpIH0pLnBhcnNlKGQpKQogIC5oYW5kbGVyKGFzeW5jICh7IGRhdGEsIGNvbnRleHQgfSk6IFByb21pc2U8eyBvazogYm9vbGVhbiB9PiA9PiB7CiAgICBjb25zdCB1c2VySWQgPSAoY29udGV4dCBhcyBhbnkpPy51c2VySWQgYXMgc3RyaW5nOwogICAgaWYgKCF1c2VySWQpIHRocm93IG5ldyBFcnJvcigiVW5hdXRob3JpemVkIik7CiAgICBjb25zdCBzZWxsZXIgPSBhd2FpdCByZXF1aXJlU2VsbGVyKHsgc3VwYWJhc2U6IChjb250ZXh0IGFzIGFueSkuc3VwYWJhc2UsIHVzZXJJZCB9LCAic3RvcmUubWFuYWdlIik7CiAgICBjb25zdCBzdXBhYmFzZSA9IChjb250ZXh0IGFzIGFueSkuc3VwYWJhc2U7CgogICAgY29uc3QgeyBlcnJvciB9ID0gYXdhaXQgc3VwYWJhc2UKICAgICAgLmZyb20oInNlbGxlcl93YXJuaW5ncyIpCiAgICAgIC51cGRhdGUoeyBhY2tub3dsZWRnZWRfYXQ6IG5ldyBEYXRlKCkudG9JU09TdHJpbmcoKSB9KQogICAgICAuZXEoImlkIiwgZGF0YS53YXJuaW5nSWQpCiAgICAgIC5lcSgic2VsbGVyX2lkIiwgc2VsbGVyLnNlbGxlcklkKTsKICAgIGlmIChlcnJvcikgdGhyb3cgbmV3IEVycm9yKGVycm9yLm1lc3NhZ2UpOwogICAgcmV0dXJuIHsgb2s6IHRydWUgfTsKICB9KTsK
+/**
+ * Seller-side warning inbox: moderation warnings issued by admin
+ * (product deleted/rejected/hidden, or plain notices).
+ */
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireSeller } from "@/lib/seller-auth";
+
+const sellerOnly = [requireSupabaseAuth] as const;
+
+export type SellerWarning = {
+  id: string;
+  reason: string;
+  actionTaken: string;
+  issuedAt: string;
+  acknowledgedAt: string | null;
+  productId: string | null;
+};
+
+/** Seller: list my moderation warnings (newest first). */
+export const getMyWarnings = createServerFn({ method: "GET" })
+  .middleware(sellerOnly)
+  .handler(async ({ context }): Promise<SellerWarning[]> => {
+    const userId = (context as any)?.userId as string;
+    if (!userId) throw new Error("Unauthorized");
+    const seller = await requireSeller({ supabase: (context as any).supabase, userId }, "store.manage");
+    const supabase = (context as any).supabase;
+
+    const { data, error } = await supabase
+      .from("seller_warnings")
+      .select("id, reason, action_taken, issued_at, acknowledged_at, product_id")
+      .eq("seller_id", seller.sellerId)
+      .order("issued_at", { ascending: false })
+      .limit(50);
+    if (error) throw new Error(error.message);
+    return (data ?? []).map((w: any) => ({
+      id: w.id,
+      reason: w.reason,
+      actionTaken: w.action_taken,
+      issuedAt: w.issued_at,
+      acknowledgedAt: w.acknowledged_at,
+      productId: w.product_id,
+    }));
+  });
+
+/** Seller: acknowledge a warning (marks as read). */
+export const acknowledgeWarning = createServerFn({ method: "POST" })
+  .middleware(sellerOnly)
+  .validator((d) => z.object({ warningId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }): Promise<{ ok: boolean }> => {
+    const userId = (context as any)?.userId as string;
+    if (!userId) throw new Error("Unauthorized");
+    const seller = await requireSeller({ supabase: (context as any).supabase, userId }, "store.manage");
+    const supabase = (context as any).supabase;
+
+    const { error } = await supabase
+      .from("seller_warnings")
+      .update({ acknowledged_at: new Date().toISOString() })
+      .eq("id", data.warningId)
+      .eq("seller_id", seller.sellerId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });

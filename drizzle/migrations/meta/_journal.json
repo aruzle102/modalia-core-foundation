@@ -8,6 +8,13 @@
       "when": 1791374915491,
       "tag": "0000_align_seller_application_lifecycle",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791383130758,
+      "tag": "0001_secure_selected_scan_policies",
+      "breakpoints": true
     }
   ]
 }

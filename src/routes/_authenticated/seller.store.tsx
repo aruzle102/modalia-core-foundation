@@ -1,1 +1,57 @@
-aW1wb3J0IHsgY3JlYXRlRmlsZVJvdXRlIH0gZnJvbSAiQHRhbnN0YWNrL3JlYWN0LXJvdXRlciI7CmltcG9ydCB7IHF1ZXJ5T3B0aW9ucywgdXNlU3VzcGVuc2VRdWVyeSB9IGZyb20gIkB0YW5zdGFjay9yZWFjdC1xdWVyeSI7CmltcG9ydCB7IFNlbGxlclNoZWxsIH0gZnJvbSAiQC9jb21wb25lbnRzL3NlbGxlci9TZWxsZXJTaGVsbCI7CmltcG9ydCB7IFN0b3JlU3R1ZGlvIH0gZnJvbSAiQC9jb21wb25lbnRzL3NlbGxlci9TdG9yZVN0dWRpbyI7CmltcG9ydCB7IFZlcmlmaWNhdGlvbkNhcmQgfSBmcm9tICJAL2NvbXBvbmVudHMvc2VsbGVyL1ZlcmlmaWNhdGlvbkNhcmQiOwppbXBvcnQgeyBnZXRTdG9yZVN0dWRpbyB9IGZyb20gIkAvbGliL3NlbGxlci1zdG9yZS5mdW5jdGlvbnMiOwppbXBvcnQgeyBnZXRMb2NhbGUsIGdldFRyYW5zbGF0aW9ucyB9IGZyb20gIkAvbGliL2kxOG4iOwppbXBvcnQgeyBSb3V0ZUVycm9yIH0gZnJvbSAiQC9jb21wb25lbnRzL3JvdXRpbmcvcm91dGUtc3RhdGVzIjsKCmNvbnN0IHN0dWRpb1F1ZXJ5ID0gcXVlcnlPcHRpb25zKHsKICBxdWVyeUtleTogWyJzZWxsZXItc3RvcmUtc3R1ZGlvIl0sCiAgcXVlcnlGbjogKCkgPT4gZ2V0U3RvcmVTdHVkaW8oKSwKfSk7CgpleHBvcnQgY29uc3QgUm91dGUgPSBjcmVhdGVGaWxlUm91dGUoIi9fYXV0aGVudGljYXRlZC9zZWxsZXIvc3RvcmUiKSh7CiAgdmFsaWRhdGVTZWFyY2g6IChzZWFyY2g6IFJlY29yZDxzdHJpbmcsIHVua25vd24+KSA9PiAoewogICAgbG9jYWxlOiBnZXRMb2NhbGUodHlwZW9mIHNlYXJjaFsibG9jYWxlIl0gPT09ICJzdHJpbmciID8gc2VhcmNoWyJsb2NhbGUiXSA6IHVuZGVmaW5lZCksCiAgfSksCiAgbG9hZGVyOiAoeyBjb250ZXh0IH0pID0+IGNvbnRleHQucXVlcnlDbGllbnQuZW5zdXJlUXVlcnlEYXRhKHN0dWRpb1F1ZXJ5KSwKICBwZW5kaW5nQ29tcG9uZW50OiAoKSA9PiB7CiAgICBjb25zdCB0ID0gZ2V0VHJhbnNsYXRpb25zKGdldExvY2FsZSgpKS5zZWxsZXJTdG9yZVY4LnBhZ2U7CiAgICByZXR1cm4gKAogICAgICA8U2VsbGVyU2hlbGwgZXllYnJvdz0iU2VsbGVyIE9TIiB0aXRsZT17dC5wZW5kaW5nVGl0bGV9PgogICAgICAgIDxkaXYgY2xhc3NOYW1lPSJzcGFjZS15LTQiIGFyaWEtYnVzeT0idHJ1ZSI+CiAgICAgICAgICA8ZGl2IGNsYXNzTmFtZT0iaC04IHctMS8zIGFuaW1hdGUtcHVsc2Ugcm91bmRlZCBiZy1tdXRlZCIgLz4KICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPSJoLTY0IGFuaW1hdGUtcHVsc2Ugcm91bmRlZC14bCBiZy1tdXRlZCIgLz4KICAgICAgICA8L2Rpdj4KICAgICAgPC9TZWxsZXJTaGVsbD4KICAgICk7CiAgfSwKICBlcnJvckNvbXBvbmVudDogKHsgcmVzZXQgfSkgPT4gewogICAgY29uc3QgdCA9IGdldFRyYW5zbGF0aW9ucyhnZXRMb2NhbGUoKSkuc2VsbGVyU3RvcmVWOC5wYWdlOwogICAgcmV0dXJuICgKICAgICAgPFNlbGxlclNoZWxsIGV5ZWJyb3c9IlNlbGxlciBPUyIgdGl0bGU9e3QucGVuZGluZ1RpdGxlfT4KICAgICAgICA8Um91dGVFcnJvciBtZXNzYWdlPXt0LmxvYWRFcnJvcn0gcmVzZXQ9e3Jlc2V0fSAvPgogICAgICA8L1NlbGxlclNoZWxsPgogICAgKTsKICB9LAogIGhlYWQ6ICgpID0+ICh7IG1ldGE6IFt7IG5hbWU6ICJyb2JvdHMiLCBjb250ZW50OiAibm9pbmRleCxub2ZvbGxvdyIgfV0gfSksCiAgY29tcG9uZW50OiBTdG9yZVN0dWRpb1BhZ2UsCn0pOwoKZnVuY3Rpb24gU3RvcmVTdHVkaW9QYWdlKCkgewogIGNvbnN0IHsgbG9jYWxlIH0gPSBSb3V0ZS51c2VTZWFyY2goKTsKICBjb25zdCB7IGRhdGEgfSA9IHVzZVN1c3BlbnNlUXVlcnkoc3R1ZGlvUXVlcnkpOwogIGNvbnN0IHQgPSBnZXRUcmFuc2xhdGlvbnMobG9jYWxlKS5zZWxsZXJTdG9yZVY4LnBhZ2U7CiAgcmV0dXJuICgKICAgIDxTZWxsZXJTaGVsbCB0aXRsZT17dC50aXRsZX0gZXllYnJvdz17dC5leWVicm93fSBhY3Rpb25zPXtudWxsfT4KICAgICAgPFZlcmlmaWNhdGlvbkNhcmQgLz4KICAgICAge2RhdGEgPyAoCiAgICAgICAgPFN0b3JlU3R1ZGlvIGRhdGE9e2RhdGF9IGxvY2FsZT17bG9jYWxlfSBpbml0aWFsVGFiPSJwcm9maWxlIiAvPgogICAgICApIDogKAogICAgICAgIDxwIGNsYXNzTmFtZT0icHktMTAgdGV4dC1zbWFsbCB0ZXh0LW11dGVkLWZvcmVncm91bmQiPnt0Lm5vdEZvdW5kfTwvcD4KICAgICAgKX0KICAgIDwvU2VsbGVyU2hlbGw+CiAgKTsKfQo=
+import { createFileRoute } from "@tanstack/react-router";
+import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
+import { SellerShell } from "@/components/seller/SellerShell";
+import { StoreStudio } from "@/components/seller/StoreStudio";
+import { VerificationCard } from "@/components/seller/VerificationCard";
+import { getStoreStudio } from "@/lib/seller-store.functions";
+import { getLocale, getTranslations } from "@/lib/i18n";
+import { RouteError } from "@/components/routing/route-states";
+
+const studioQuery = queryOptions({
+  queryKey: ["seller-store-studio"],
+  queryFn: () => getStoreStudio(),
+});
+
+export const Route = createFileRoute("/_authenticated/seller/store")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined),
+  }),
+  loader: ({ context }) => context.queryClient.ensureQueryData(studioQuery),
+  pendingComponent: () => {
+    const t = getTranslations(getLocale()).sellerStoreV8.page;
+    return (
+      <SellerShell eyebrow="Seller OS" title={t.pendingTitle}>
+        <div className="space-y-4" aria-busy="true">
+          <div className="h-8 w-1/3 animate-pulse rounded bg-muted" />
+          <div className="h-64 animate-pulse rounded-xl bg-muted" />
+        </div>
+      </SellerShell>
+    );
+  },
+  errorComponent: ({ reset }) => {
+    const t = getTranslations(getLocale()).sellerStoreV8.page;
+    return (
+      <SellerShell eyebrow="Seller OS" title={t.pendingTitle}>
+        <RouteError message={t.loadError} reset={reset} />
+      </SellerShell>
+    );
+  },
+  head: () => ({ meta: [{ name: "robots", content: "noindex,nofollow" }] }),
+  component: StoreStudioPage,
+});
+
+function StoreStudioPage() {
+  const { locale } = Route.useSearch();
+  const { data } = useSuspenseQuery(studioQuery);
+  const t = getTranslations(locale).sellerStoreV8.page;
+  return (
+    <SellerShell title={t.title} eyebrow={t.eyebrow} actions={null}>
+      <VerificationCard />
+      {data ? (
+        <StoreStudio data={data} locale={locale} initialTab="profile" />
+      ) : (
+        <p className="py-10 text-small text-muted-foreground">{t.notFound}</p>
+      )}
+    </SellerShell>
+  );
+}

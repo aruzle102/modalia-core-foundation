@@ -1,1 +1,106 @@
-aW1wb3J0IHsgdXNlRWZmZWN0IH0gZnJvbSAicmVhY3QiOwppbXBvcnQgeyBjcmVhdGVGaWxlUm91dGUgfSBmcm9tICJAdGFuc3RhY2svcmVhY3Qtcm91dGVyIjsKaW1wb3J0IHsgcXVlcnlPcHRpb25zLCB1c2VTdXNwZW5zZVF1ZXJ5IH0gZnJvbSAiQHRhbnN0YWNrL3JlYWN0LXF1ZXJ5IjsKaW1wb3J0IHsgU2l0ZUZvb3RlciwgU2l0ZUhlYWRlciB9IGZyb20gIkAvY29tcG9uZW50cy9sYXlvdXQvc2l0ZS1zaGVsbCI7CmltcG9ydCB7IFN0b3JlRnJvbnQgfSBmcm9tICJAL2NvbXBvbmVudHMvc3RvcmUvU3RvcmVGcm9udCI7CmltcG9ydCB7IGdldFN0b3JlRGV0YWlsIH0gZnJvbSAiQC9saWIvc3RvcmUuZnVuY3Rpb25zIjsKaW1wb3J0IHsgcmVjb3JkU3RvcmVWaWV3IH0gZnJvbSAiQC9saWIvdmVyaWZpY2F0aW9uLmZ1bmN0aW9ucyI7CmltcG9ydCB7IGJyZWFkY3J1bWJKc29uTGQsIGNhbm9uaWNhbFVybCwgZmlsbFNlb1RlbXBsYXRlLCBvbmxpbmVTdG9yZUpzb25MZCwgcGFnZUhlYWQsIHByZWZldGNoU2VvU2V0dGluZ3MsIHNlb1JvYm90c0Zyb21IZWFkQ3R4LCBzdG9yZUhlYWRDb3B5IH0gZnJvbSAiQC9saWIvc2VvIjsKaW1wb3J0IHsgUm91dGVFcnJvciwgUm91dGVQZW5kaW5nIH0gZnJvbSAiQC9jb21wb25lbnRzL3JvdXRpbmcvcm91dGUtc3RhdGVzIjsKaW1wb3J0IHsgZ2V0TG9jYWxlLCBnZXRUcmFuc2xhdGlvbnMsIGxvY2FsZURpcmVjdGlvbnMsIHJlc29sdmVMb2NhbGUgfSBmcm9tICJAL2xpYi9pMThuIjsKaW1wb3J0IHsgdHJhY2sgfSBmcm9tICJAL2xpYi9hbmFseXRpY3MiOwoKLyoqIFN0YWJsZSBwZXItZGV2aWNlIGlkZW50aWZpZXIgZm9yIHZpZXcgZGVkdXBsaWNhdGlvbiAoc3RvcmVkIGluIGxvY2FsU3RvcmFnZSkuICovCmZ1bmN0aW9uIGdldERldmljZUhhc2goKTogc3RyaW5nIHsKICB0cnkgewogICAgbGV0IGggPSBsb2NhbFN0b3JhZ2UuZ2V0SXRlbSgibW9kYWxpYV9kZXZpY2UiKTsKICAgIGlmICghaCkgewogICAgICBoID0gImRfIiArIE1hdGgucmFuZG9tKCkudG9TdHJpbmcoMzYpLnNsaWNlKDIpICsgRGF0ZS5ub3coKS50b1N0cmluZygzNik7CiAgICAgIGxvY2FsU3RvcmFnZS5zZXRJdGVtKCJtb2RhbGlhX2RldmljZSIsIGgpOwogICAgfQogICAgcmV0dXJuIGg7CiAgfSBjYXRjaCB7CiAgICByZXR1cm4gImRfYW5vbnltb3VzIjsKICB9Cn0KCmNvbnN0IHN0b3JlUXVlcnkgPSAoc2x1Zzogc3RyaW5nLCBsb2NhbGU6IHN0cmluZykgPT4KICBxdWVyeU9wdGlvbnMoewogICAgcXVlcnlLZXk6IFsic3RvcmUiLCBzbHVnLCBsb2NhbGVdLAogICAgcXVlcnlGbjogKCkgPT4gZ2V0U3RvcmVEZXRhaWwoeyBkYXRhOiB7IHNsdWcsIGxvY2FsZSB9IH0pLAogIH0pOwoKZXhwb3J0IGNvbnN0IFJvdXRlID0gY3JlYXRlRmlsZVJvdXRlKCIvc3RvcmUvJHNsdWciKSh7CiAgdmFsaWRhdGVTZWFyY2g6IChzZWFyY2g6IFJlY29yZDxzdHJpbmcsIHVua25vd24+KSA9PiAoewogICAgbG9jYWxlOiBnZXRMb2NhbGUodHlwZW9mIHNlYXJjaFsibG9jYWxlIl0gPT09ICJzdHJpbmciID8gc2VhcmNoWyJsb2NhbGUiXSA6IHVuZGVmaW5lZCksCiAgfSksCiAgbG9hZGVyRGVwczogKHsgc2VhcmNoIH0pID0+ICh7IGxvY2FsZTogc2VhcmNoLmxvY2FsZSB9KSwKICBsb2FkZXI6ICh7IGNvbnRleHQsIHBhcmFtcywgZGVwcyB9KSA9PiB7CiAgICB2b2lkIHByZWZldGNoU2VvU2V0dGluZ3MoY29udGV4dC5xdWVyeUNsaWVudCk7CiAgICByZXR1cm4gY29udGV4dC5xdWVyeUNsaWVudC5lbnN1cmVRdWVyeURhdGEoc3RvcmVRdWVyeShwYXJhbXMuc2x1ZywgZGVwcy5sb2NhbGUpKTsKICB9LAogIHBlbmRpbmdDb21wb25lbnQ6ICgpID0+IDxSb3V0ZVBlbmRpbmcgbGFiZWw9e2dldFRyYW5zbGF0aW9ucyhyZXNvbHZlTG9jYWxlKCkpLnN0b3JlLmxvYWRpbmdTdG9yZX0gLz4sCiAgZXJyb3JDb21wb25lbnQ6ICh7IHJlc2V0IH0pID0+ICgKICAgIDxSb3V0ZUVycm9yCiAgICAgIG1lc3NhZ2U9e2dldFRyYW5zbGF0aW9ucyhyZXNvbHZlTG9jYWxlKCkpLnN0b3JlLmxvYWRFcnJvcn0KICAgICAgcmVzZXQ9e3Jlc2V0fQogICAgLz4KICApLAogIGhlYWQ6IChjb250ZXh0KSA9PiB7CiAgICBjb25zdCB7IHBhcmFtcywgbG9hZGVyRGF0YSB9ID0gY29udGV4dDsKICAgIGNvbnN0IHJhd1NlYXJjaCA9IChjb250ZXh0IGFzIHVua25vd24gYXMgeyBzZWFyY2g/OiBSZWNvcmQ8c3RyaW5nLCB1bmtub3duPiB9KS5zZWFyY2ggPz8ge307CiAgICBjb25zdCBsb2NhbGUgPSBnZXRMb2NhbGUodHlwZW9mIHJhd1NlYXJjaFsibG9jYWxlIl0gPT09ICJzdHJpbmciID8gcmF3U2VhcmNoWyJsb2NhbGUiXSA6IHVuZGVmaW5lZCk7CiAgICBjb25zdCBjb3B5ID0gc3RvcmVIZWFkQ29weShsb2NhbGUpOwogICAgY29uc3QgcGF0aCA9IGAvc3RvcmUvJHtwYXJhbXMuc2x1Z31gOwogICAgY29uc3Qgc3RvcmUgPSBsb2FkZXJEYXRhOwogICAgY29uc3QgbmFtZSA9IHN0b3JlPy5uYW1lID8/IHBhcmFtcy5zbHVnOwogICAgcmV0dXJuIHBhZ2VIZWFkKHsKICAgICAgcm9ib3RzOiBzZW9Sb2JvdHNGcm9tSGVhZEN0eChjb250ZXh0KSwKICAgICAgdGl0bGU6IHN0b3JlPy5zZW9UaXRsZSA/PyBgJHtuYW1lfSDigJQgTW9kYWxpYWAsCiAgICAgIGRlc2NyaXB0aW9uOgogICAgICAgIHN0b3JlPy5zZW9EZXNjcmlwdGlvbiA/PwogICAgICAgIChzdG9yZT8uZGVzY3JpcHRpb24KICAgICAgICAgID8gZmlsbFNlb1RlbXBsYXRlKGNvcHkuZGVzY3JpcHRpb25XaXRoQmx1cmIsIHsgbmFtZSwgYmx1cmI6IHN0b3JlLmRlc2NyaXB0aW9uIH0pCiAgICAgICAgICA6IGZpbGxTZW9UZW1wbGF0ZShjb3B5LmRlc2NyaXB0aW9uRmFsbGJhY2ssIHsgbmFtZSB9KSksCiAgICAgIHBhdGgsCiAgICAgIGltYWdlOiBzdG9yZT8ubG9nb1VybCA/PyBzdG9yZT8uYmFubmVyVXJsID8/IG51bGwsCiAgICAgIGpzb25MZDogc3RvcmUKICAgICAgICA/IFsKICAgICAgICAgICAgb25saW5lU3RvcmVKc29uTGQoc3RvcmUsIGNhbm9uaWNhbFVybChwYXRoKSksCiAgICAgICAgICAgIGJyZWFkY3J1bWJKc29uTGQoWwogICAgICAgICAgICAgIHsgbmFtZTogIkhvbWUiLCB1cmw6IGNhbm9uaWNhbFVybCgiLyIpIH0sCiAgICAgICAgICAgICAgeyBuYW1lOiBuYW1lLCB1cmw6IGNhbm9uaWNhbFVybChwYXRoKSB9LAogICAgICAgICAgICBdKSwKICAgICAgICAgIF0KICAgICAgICA6IFtdLAogICAgfSk7CiAgfSwKICBjb21wb25lbnQ6IFN0b3JlUGFnZSwKfSk7CgpmdW5jdGlvbiBTdG9yZVBhZ2UoKSB7CiAgY29uc3QgeyBzbHVnIH0gPSBSb3V0ZS51c2VQYXJhbXMoKTsKICBjb25zdCB7IGxvY2FsZSB9ID0gUm91dGUudXNlU2VhcmNoKCk7CiAgY29uc3QgeyBkYXRhOiBzdG9yZSB9ID0gdXNlU3VzcGVuc2VRdWVyeShzdG9yZVF1ZXJ5KHNsdWcsIGxvY2FsZSkpOwogIGNvbnN0IHQgPSBnZXRUcmFuc2xhdGlvbnMobG9jYWxlKTsKICBjb25zdCBzdG9yZUlkID0gc3RvcmU/LmlkOwogIHVzZUVmZmVjdCgoKSA9PiB7CiAgICBpZiAoc3RvcmVJZCkgewogICAgICB0cmFjaygic3RvcmVfdmlldyIsIHsgZW50aXR5VHlwZTogInN0b3JlIiwgZW50aXR5SWQ6IHN0b3JlSWQsIG1ldGFkYXRhOiB7IHNsdWcgfSB9KTsKICAgICAgLy8gRGVkdXBsaWNhdGVkIHZpZXcgZm9yIHZlcmlmaWNhdGlvbiBlbGlnaWJpbGl0eSAob25lIHBlciBkZXZpY2UpCiAgICAgIHJlY29yZFN0b3JlVmlldyh7IGRhdGE6IHsgc3RvcmVJZCwgZGV2aWNlSGFzaDogZ2V0RGV2aWNlSGFzaCgpIH0gfSkuY2F0Y2goKCkgPT4ge30pOwogICAgfQogIH0sIFtzdG9yZUlkLCBzbHVnXSk7CiAgaWYgKCFzdG9yZSkKICAgIHJldHVybiAoCiAgICAgIDxkaXYgZGlyPXtsb2NhbGVEaXJlY3Rpb25zW2xvY2FsZV19IGNsYXNzTmFtZT0ibWluLWgtc2NyZWVuIGJnLWJhY2tncm91bmQiPgogICAgICAgIDxTaXRlSGVhZGVyIGxvY2FsZT17bG9jYWxlfSB0PXt0fSAvPgogICAgICAgIDxtYWluIGlkPSJtYWluLWNvbnRlbnQiIHRhYkluZGV4PXstMX0gY2xhc3NOYW1lPSJteC1hdXRvIG1heC13LTd4bCBweC00IHB5LTE2IHRleHQtY2VudGVyIj4KICAgICAgICAgIDxoMSBjbGFzc05hbWU9InRleHQtZGlzcGxheSI+e3Quc3RvcmUudW5hdmFpbGFibGVUaXRsZX08L2gxPgogICAgICAgICAgPHAgY2xhc3NOYW1lPSJtdC0zIHRleHQtYm9keSB0ZXh0LW11dGVkLWZvcmVncm91bmQiPnt0LnN0b3JlLnVuYXZhaWxhYmxlVGV4dH08L3A+CiAgICAgICAgPC9tYWluPgogICAgICAgIDxTaXRlRm9vdGVyIGxvY2FsZT17bG9jYWxlfSB0PXt0fSAvPgogICAgICA8L2Rpdj4KICAgICk7CiAgcmV0dXJuIDxTdG9yZUZyb250IHN0b3JlPXtzdG9yZX0gbG9jYWxlPXtsb2NhbGV9IHQ9e3R9IC8+Owp9Cg==
+import { useEffect } from "react";
+import { createFileRoute } from "@tanstack/react-router";
+import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
+import { SiteFooter, SiteHeader } from "@/components/layout/site-shell";
+import { StoreFront } from "@/components/store/StoreFront";
+import { getStoreDetail } from "@/lib/store.functions";
+import { recordStoreView } from "@/lib/verification.functions";
+import { breadcrumbJsonLd, canonicalUrl, fillSeoTemplate, onlineStoreJsonLd, pageHead, prefetchSeoSettings, seoRobotsFromHeadCtx, storeHeadCopy } from "@/lib/seo";
+import { RouteError, RoutePending } from "@/components/routing/route-states";
+import { getLocale, getTranslations, localeDirections, resolveLocale } from "@/lib/i18n";
+import { track } from "@/lib/analytics";
+
+/** Stable per-device identifier for view deduplication (stored in localStorage). */
+function getDeviceHash(): string {
+  try {
+    let h = localStorage.getItem("modalia_device");
+    if (!h) {
+      h = "d_" + Math.random().toString(36).slice(2) + Date.now().toString(36);
+      localStorage.setItem("modalia_device", h);
+    }
+    return h;
+  } catch {
+    return "d_anonymous";
+  }
+}
+
+const storeQuery = (slug: string, locale: string) =>
+  queryOptions({
+    queryKey: ["store", slug, locale],
+    queryFn: () => getStoreDetail({ data: { slug, locale } }),
+  });
+
+export const Route = createFileRoute("/store/$slug")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined),
+  }),
+  loaderDeps: ({ search }) => ({ locale: search.locale }),
+  loader: ({ context, params, deps }) => {
+    void prefetchSeoSettings(context.queryClient);
+    return context.queryClient.ensureQueryData(storeQuery(params.slug, deps.locale));
+  },
+  pendingComponent: () => <RoutePending label={getTranslations(resolveLocale()).store.loadingStore} />,
+  errorComponent: ({ reset }) => (
+    <RouteError
+      message={getTranslations(resolveLocale()).store.loadError}
+      reset={reset}
+    />
+  ),
+  head: (context) => {
+    const { params, loaderData } = context;
+    const rawSearch = (context as unknown as { search?: Record<string, unknown> }).search ?? {};
+    const locale = getLocale(typeof rawSearch["locale"] === "string" ? rawSearch["locale"] : undefined);
+    const copy = storeHeadCopy(locale);
+    const path = `/store/${params.slug}`;
+    const store = loaderData;
+    const name = store?.name ?? params.slug;
+    return pageHead({
+      robots: seoRobotsFromHeadCtx(context),
+      title: store?.seoTitle ?? `${name} — Modalia`,
+      description:
+        store?.seoDescription ??
+        (store?.description
+          ? fillSeoTemplate(copy.descriptionWithBlurb, { name, blurb: store.description })
+          : fillSeoTemplate(copy.descriptionFallback, { name })),
+      path,
+      image: store?.logoUrl ?? store?.bannerUrl ?? null,
+      jsonLd: store
+        ? [
+            onlineStoreJsonLd(store, canonicalUrl(path)),
+            breadcrumbJsonLd([
+              { name: "Home", url: canonicalUrl("/") },
+              { name: name, url: canonicalUrl(path) },
+            ]),
+          ]
+        : [],
+    });
+  },
+  component: StorePage,
+});
+
+function StorePage() {
+  const { slug } = Route.useParams();
+  const { locale } = Route.useSearch();
+  const { data: store } = useSuspenseQuery(storeQuery(slug, locale));
+  const t = getTranslations(locale);
+  const storeId = store?.id;
+  useEffect(() => {
+    if (storeId) {
+      track("store_view", { entityType: "store", entityId: storeId, metadata: { slug } });
+      // Deduplicated view for verification eligibility (one per device)
+      recordStoreView({ data: { storeId, deviceHash: getDeviceHash() } }).catch(() => {});
+    }
+  }, [storeId, slug]);
+  if (!store)
+    return (
+      <div dir={localeDirections[locale]} className="min-h-screen bg-background">
+        <SiteHeader locale={locale} t={t} />
+        <main id="main-content" tabIndex={-1} className="mx-auto max-w-7xl px-4 py-16 text-center">
+          <h1 className="text-display">{t.store.unavailableTitle}</h1>
+          <p className="mt-3 text-body text-muted-foreground">{t.store.unavailableText}</p>
+        </main>
+        <SiteFooter locale={locale} t={t} />
+      </div>
+    );
+  return <StoreFront store={store} locale={locale} t={t} />;
+}

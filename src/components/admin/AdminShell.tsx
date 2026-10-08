@@ -13,6 +13,7 @@ import {
   FolderTree,
   Globe,
   Hammer,
+  HeartPulse,
   Images,
   ImagePlus,
   Layers,
@@ -35,6 +36,7 @@ import {
   UserRound,
   Users,
   Wallet,
+  Wrench,
 } from "lucide-react";
 import { CommandBar } from "./CommandBar";
 import { QuickCreate } from "./QuickCreate";
@@ -145,6 +147,8 @@ function buildNavGroups(t: AdminNavStrings): NavGroup[] {
         { label: items.ai, to: "/admin/ai", icon: <ModaliaIntelligenceIcon size={18} className={icon} /> },
         { label: items.seo, to: "/admin/seo", icon: <Globe className={icon} /> },
         { label: items.settings, to: "/admin/settings", icon: <Settings className={icon} /> },
+        { label: "Maintenance", to: "/admin/maintenance" as any, icon: <Wrench className={icon} /> },
+        { label: "System Health", to: "/admin/system-health" as any, icon: <HeartPulse className={icon} /> },
         { label: items.security, to: "/admin/security", icon: <ShieldCheck className={icon} /> },
         { label: items.auditLogs, to: "/admin/audit", icon: <ScrollText className={icon} /> },
       ],

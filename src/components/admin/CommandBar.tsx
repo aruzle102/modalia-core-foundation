@@ -241,9 +241,8 @@ export function CommandBar() {
           label: s.name,
           sub: s.slug,
           icon: <Store className="h-4 w-4 text-muted-foreground" />,
-          // The sellers list search matches store *names* (not slugs), so
-          // deep-link by name to land on the right seller row.
-          run: () => go("/admin/sellers", { search: { q: s.name } }),
+          // Open the store's Store Control Center directly.
+          run: () => go("/admin/stores/$storeId", { params: { storeId: s.id } }),
         });
       }
       for (const c of data.customers) {

@@ -7,6 +7,7 @@ import {
   ArrowUpRight,
   BadgeCheck,
   Banknote,
+  LayoutGrid,
   MapPin,
   Play,
   Smartphone,
@@ -854,11 +855,12 @@ function CategoryExplorer({
   copy: HomeCopy;
 }) {
   const [active, setActive] = useState<string | null>(null);
+  const allLabel = getTranslations(locale).shop.all;
   if (!categories.length) return null;
   return (
     <div className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-8">
       <Reveal>
-        <div className="mb-5 flex items-center justify-between">
+        <div className="mb-4 flex items-center justify-between">
           <h2 className="text-[13px] font-bold uppercase tracking-[0.22em] text-foreground">
             {copy.browseCategories}
           </h2>
@@ -871,10 +873,36 @@ function CategoryExplorer({
             <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5" />
           </Link>
         </div>
+        {/* Premium shop-nav rail: icon + name, active pill inversion. */}
         <nav
           aria-label={copy.browseCategories}
-          className="-mx-4 flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-4 pb-3 sm:gap-3 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="-mx-4 flex snap-x snap-mandatory items-stretch gap-1.5 overflow-x-auto px-4 pb-2 sm:gap-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
+          {/* All → /shop */}
+          <Link
+            to="/shop"
+            search={{ locale } as any}
+            onMouseEnter={() => setActive("__all")}
+            onMouseLeave={() => setActive(null)}
+            onFocus={() => setActive("__all")}
+            onBlur={() => setActive(null)}
+            className={`group flex shrink-0 snap-start items-center gap-2.5 rounded-full py-2 pe-5 ps-2 transition-all duration-300 active:scale-[0.97] ${
+              active === "__all"
+                ? "bg-foreground text-background shadow-[0_10px_28px_-10px_rgba(0,0,0,0.4)]"
+                : "hover:bg-muted"
+            }`}
+          >
+            <span
+              className={`grid size-11 place-items-center rounded-full transition-all duration-300 group-hover:scale-105 ${
+                active === "__all" ? "bg-background/20 text-background" : "bg-muted text-foreground"
+              }`}
+            >
+              <LayoutGrid className="size-5" aria-hidden />
+            </span>
+            <span className="whitespace-nowrap text-[13px] font-semibold leading-none">
+              {allLabel}
+            </span>
+          </Link>
           {categories.map((cat) => {
             const isActive = active === cat.id;
             return (
@@ -888,10 +916,10 @@ function CategoryExplorer({
                 onFocus={() => setActive(cat.id)}
                 onBlur={() => setActive(null)}
                 aria-current={isActive ? "true" : undefined}
-                className={`group relative flex shrink-0 snap-start flex-col items-center gap-2.5 rounded-2xl border px-5 py-4 transition-all duration-300 active:scale-[0.96] ${
+                className={`group flex shrink-0 snap-start items-center gap-2.5 rounded-full py-2 pe-5 ps-2 transition-all duration-300 active:scale-[0.97] ${
                   isActive
-                    ? "border-foreground/40 bg-foreground text-background shadow-[0_10px_30px_-12px_rgba(0,0,0,0.45)]"
-                    : "border-border/70 bg-card hover:-translate-y-0.5 hover:border-foreground/25 hover:shadow-[0_14px_30px_-16px_rgba(0,0,0,0.3)]"
+                    ? "bg-foreground text-background shadow-[0_10px_28px_-10px_rgba(0,0,0,0.4)]"
+                    : "hover:bg-muted"
                 }`}
               >
                 {cat.imageUrl ? (
@@ -899,36 +927,31 @@ function CategoryExplorer({
                     src={cat.imageUrl}
                     alt=""
                     loading="lazy"
-                    className={`size-12 rounded-full object-cover ring-2 transition-all duration-300 group-hover:scale-110 ${
-                      isActive ? "ring-background/40" : "ring-border/60 group-hover:ring-foreground/30"
+                    className={`size-11 rounded-full object-cover ring-2 transition-all duration-300 group-hover:scale-105 ${
+                      isActive ? "ring-background/50" : "ring-border/50"
                     }`}
                   />
                 ) : (
                   <span
-                    className={`grid size-12 place-items-center rounded-full text-sm font-bold transition-all duration-300 group-hover:scale-110 ${
-                      isActive ? "bg-background/15 text-background" : "bg-muted text-foreground"
+                    className={`grid size-11 place-items-center rounded-full text-sm font-bold transition-all duration-300 group-hover:scale-105 ${
+                      isActive ? "bg-background/20 text-background" : "bg-muted text-foreground"
                     }`}
                   >
                     {cat.name.slice(0, 1).toUpperCase()}
                   </span>
                 )}
-                <span className="whitespace-nowrap text-[13px] font-semibold leading-none">
-                  {cat.name}
+                <span className="flex flex-col items-start gap-0.5">
+                  <span className="whitespace-nowrap text-[13px] font-semibold leading-none">
+                    {cat.name}
+                  </span>
+                  <span
+                    className={`text-[10px] leading-none transition-colors ${
+                      isActive ? "text-background/65" : "text-muted-foreground"
+                    }`}
+                  >
+                    {cat.productCount}
+                  </span>
                 </span>
-                <span
-                  className={`text-[11px] leading-none transition-colors ${
-                    isActive ? "text-background/70" : "text-muted-foreground"
-                  }`}
-                >
-                  {cat.productCount}
-                </span>
-                {/* Active indicator */}
-                <span
-                  className={`absolute -bottom-px left-1/2 h-0.5 -translate-x-1/2 rounded-full bg-current transition-all duration-300 ${
-                    isActive ? "w-8 opacity-100" : "w-0 opacity-0"
-                  }`}
-                  aria-hidden
-                />
               </Link>
             );
           })}

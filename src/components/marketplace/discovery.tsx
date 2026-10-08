@@ -62,6 +62,14 @@ export function ProductCard({
     if (added) replayAnimation(event.currentTarget, microAnimationClass.wishlistPop);
   };
 
+  const handleQuickAdd = (event: MouseEvent<HTMLButtonElement>) => {
+    // Independent commerce action inside the card link: open the BuyNowHost
+    // sheet (variant selection when required) or add directly.
+    event.preventDefault();
+    event.stopPropagation();
+    startBuyNow(locale, buyNowProduct, { mode: "add" });
+  };
+
   const buyNowProduct = {
     productId: product.id,
     slug: product.slug,
@@ -145,6 +153,20 @@ export function ProductCard({
             aria-hidden="true"
           />
         </button>
+
+        {/* Quick add — real commerce action. Reveals on hover (desktop),
+            always visible on touch. Opens variant sheet when required. */}
+        {!soldOut ? (
+          <button
+            type="button"
+            onClick={handleQuickAdd}
+            aria-label={t.quickAdd}
+            className="absolute inset-x-3 bottom-3 z-10 flex translate-y-2 items-center justify-center gap-2 rounded-full bg-background/95 py-2.5 text-[13px] font-semibold text-foreground opacity-0 shadow-[0_8px_24px_rgba(0,0,0,0.22)] backdrop-blur transition-all duration-300 hover:bg-foreground hover:text-background active:scale-[0.98] group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100 [@media(hover:none)]:translate-y-0 [@media(hover:none)]:opacity-100"
+          >
+            <ShoppingBag className="size-4" aria-hidden="true" />
+            {t.quickAdd}
+          </button>
+        ) : null}
 
         {/* Commerce actions — REMOVED per V10: homepage is discovery only.
             Product page handles Buy Now / Add to Cart. Card click opens product. */}

@@ -77,15 +77,17 @@ export function ProductCard({
 
   return (
     <article className="group relative min-w-0 overflow-hidden rounded-[14px] border border-[#E5E5E5] bg-white transition-shadow duration-300 hover:shadow-[0_12px_32px_-12px_rgba(0,0,0,0.18)]">
-      <Link
-        to="/product/$slug"
-        params={{ slug: product.slug }}
-        search={{ locale }}
-        className="block"
-        aria-label={product.name}
-      >
-        {/* Image — 4:5, dominant */}
-        <div className={`relative aspect-square overflow-hidden bg-[#F6F6F4] ${soldOut ? "saturate-50" : ""}`}>
+      {/* Image wrapper — buttons are siblings of the Link, not nested inside */}
+      <div className="relative">
+        <Link
+          to="/product/$slug"
+          params={{ slug: product.slug }}
+          search={{ locale }}
+          className="block"
+          aria-label={product.name}
+        >
+          {/* Image — 1:1, dominant */}
+          <div className={`relative aspect-square overflow-hidden bg-[#F6F6F4] ${soldOut ? "saturate-50" : ""}`}>
           {product.imagePath ? (
             <img
               src={product.imagePath}
@@ -131,30 +133,38 @@ export function ProductCard({
             ) : null}
           </div>
 
-          {/* Wishlist — functional */}
+          </div>
+        </Link>
+
+        {/* Action buttons — siblings of Link, positioned over image */}
+        <button
+          type="button"
+          onClick={handleWishlist}
+          aria-pressed={wishlisted}
+          aria-label={t.wishlist(product.name)}
+          className="absolute right-2 top-2 z-10 grid size-8 place-items-center rounded-full bg-white text-[#0A0A0A] shadow-[0_2px_10px_rgba(0,0,0,0.12)] transition-transform hover:scale-105 active:scale-95"
+        >
+          <Heart className={`size-4 ${wishlisted ? "fill-[#E53935] text-[#E53935]" : ""}`} aria-hidden="true" />
+        </button>
+        {!soldOut ? (
           <button
             type="button"
-            onClick={handleWishlist}
-            aria-pressed={wishlisted}
-            aria-label={t.wishlist(product.name)}
-            className="absolute right-2 top-2 z-10 grid size-8 place-items-center rounded-full bg-white text-[#0A0A0A] shadow-[0_2px_10px_rgba(0,0,0,0.12)] transition-transform hover:scale-105 active:scale-95"
+            onClick={handleQuickAdd}
+            aria-label={t.addToCart || "Add to cart"}
+            className="absolute bottom-2 right-2 z-10 grid size-8 place-items-center rounded-full bg-[#0A0A0A] text-white shadow-[0_2px_10px_rgba(0,0,0,0.25)] transition-transform hover:scale-105 active:scale-95"
           >
-            <Heart className={`size-4 ${wishlisted ? "fill-[#E53935] text-[#E53935]" : ""}`} aria-hidden="true" />
+            <ShoppingBag className="size-4" aria-hidden="true" />
           </button>
+        ) : null}
+      </div>
 
-          {/* Add to cart — icon only, bottom-right of image */}
-          {!soldOut ? (
-            <button
-              type="button"
-              onClick={handleQuickAdd}
-              aria-label={t.addToCart || "Add to cart"}
-              className="absolute bottom-2 right-2 z-10 grid size-8 place-items-center rounded-full bg-[#0A0A0A] text-white shadow-[0_2px_10px_rgba(0,0,0,0.25)] transition-transform hover:scale-105 active:scale-95"
-            >
-              <ShoppingBag className="size-4" aria-hidden="true" />
-            </button>
-          ) : null}
-        </div>
-
+      <Link
+        to="/product/$slug"
+        params={{ slug: product.slug }}
+        search={{ locale }}
+        className="block"
+        aria-label={product.name}
+      >
         {/* Info */}
         <div className="space-y-1 px-3.5 pb-3.5 pt-3">
           <p className="truncate text-[10px] font-semibold uppercase tracking-[0.14em] text-[#666666]">

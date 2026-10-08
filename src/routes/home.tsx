@@ -1937,8 +1937,6 @@ function HomePage() {
             />
           </div>
 
-          <PartnerBannerCarousel />
-
           {flash && flashActive ? (
             <FlashSaleSection
               locale={locale}

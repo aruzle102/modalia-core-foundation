@@ -547,6 +547,21 @@ export const arAdmin = {
       removeVerification: "إزالة التوثيق",
       verified: "تم توثيق المتجر.",
       unverified: "تمت إزالة توثيق المتجر.",
+      manualVerifyStore: "منح تحقق يدوي",
+      confirmManualVerifyTitle: "منح تحقق يدوي؟",
+      confirmManualVerifyDesc: (name: string) =>
+        `تحقق يدويًا من "${name}" كتجاوز إداري. لا تُشترط معايير التحقق العادية.`,
+      verificationNote: "السبب / ملاحظة",
+      verificationNotePlaceholder: "لماذا يتم التحقق من هذا المتجر يدويًا؟",
+      verificationExpires: "تنتهي (اختياري)",
+      manuallyVerified: "تم التحقق يدويًا",
+      manualOverride: "تجاوز إداري يدوي",
+      suspendVerification: "تعليق التحقق",
+      confirmSuspendVerifyTitle: "تعليق التحقق؟",
+      confirmSuspendVerifyDesc: (name: string) =>
+        `تعليق شارة التحقق لـ "${name}". لن يظهر المتجر كمتحقق منه.`,
+      verificationSuspended: "تم تعليق التحقق.",
+      manualVerified: "تم التحقق من المتجر يدويًا.",
       tabs: {
         overview: "نظرة عامة",
         identity: "الهوية",

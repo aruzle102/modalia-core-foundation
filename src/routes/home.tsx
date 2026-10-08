@@ -5,21 +5,31 @@ import {
   Apple,
   ArrowRight,
   ArrowUpRight,
+  Backpack,
   BadgeCheck,
   Banknote,
+  Coffee,
+  Dumbbell,
+  Footprints,
+  Glasses,
   LayoutGrid,
   MapPin,
   Play,
+  Shirt,
+  ShoppingBag,
   Smartphone,
+  Sparkles,
   Star,
   Store,
+  Sun,
+  Watch,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useDeviceTier } from "@/hooks/use-device-tier";
 import { DiscoverySkeleton, ProductCard } from "@/components/marketplace/discovery";
 import { PartnerBannerCarousel } from "@/components/marketplace/PartnerBannerCarousel";
-import { CommerceHero } from "@/components/marketplace/CommerceHero";
+import { CommerceHero, type HeroShortcut } from "@/components/marketplace/CommerceHero";
 import { MarketplaceLayout } from "@/components/marketplace/MarketplaceLayout";
 import { ProductRail } from "@/components/marketplace/ProductRail";
 import { OfficialStoreBadge, VerifiedSellerBadge } from "@/components/marketplace/StoreBadges";
@@ -845,6 +855,24 @@ function NewArrivalsSection({
     top of /home. Hidden when no categories. */
 /** Category Explorer — premium horizontal commerce navigation.
     Icon + name, active indicator, hover/press micro-interactions. */
+/** Map a category to a recognizable commerce icon (slug/name matching). */
+function categoryIcon(slug: string, name: string) {
+  const s = `${slug} ${name}`.toLowerCase();
+  if (/sport|fitness|gym/.test(s)) return Dumbbell;
+  if (/shoe|chaussure|sneaker|basket/.test(s)) return Footprints;
+  if (/beaut|cosm|maquillage/.test(s)) return Sparkles;
+  if (/nutrition|food|aliment|sant[eé]/.test(s)) return Apple;
+  if (/accessoir|bijou|watch|montre|lunette/.test(s)) return Watch;
+  if (/[eé]quipement|equip|outdoor/.test(s)) return Backpack;
+  if (/lifestyle|maison|home|d[eé]co/.test(s)) return Coffee;
+  if (/femme|women|woman|dame/.test(s)) return Shirt;
+  if (/homme|men|man/.test(s)) return Shirt;
+  if (/enfant|kid|b[eé]b[eé]/.test(s)) return Sun;
+  if (/sac|bag/.test(s)) return ShoppingBag;
+  if (/lunette|glass/.test(s)) return Glasses;
+  return Store;
+}
+
 function CategoryExplorer({
   categories,
   locale,
@@ -854,110 +882,44 @@ function CategoryExplorer({
   locale: SupportedLocale;
   copy: HomeCopy;
 }) {
-  const [active, setActive] = useState<string | null>(null);
   const allLabel = getTranslations(locale).shop.all;
   if (!categories.length) return null;
+  const items = [
+    { id: "__all", slug: null as string | null, name: allLabel, Icon: LayoutGrid },
+    ...categories.map((cat) => ({ id: cat.id, slug: cat.slug, name: cat.name, Icon: categoryIcon(cat.slug, cat.name) })),
+  ];
   return (
-    <div className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-8">
+    <section aria-label={copy.sfCatTitle} className="mx-auto max-w-7xl px-4 pt-10 sm:px-6 lg:px-8">
       <Reveal>
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-[13px] font-bold uppercase tracking-[0.22em] text-foreground">
-            {copy.browseCategories}
+        <div className="mb-6">
+          <h2 className="text-xl font-bold tracking-tight text-[#0A0A0A] sm:text-2xl">
+            {copy.sfCatTitle}
           </h2>
-          <Link
-            to="/shop"
-            search={{ locale } as any}
-            className="group inline-flex items-center gap-1.5 text-[13px] font-semibold text-muted-foreground transition-colors hover:text-foreground"
-          >
-            {copy.viewAllCategories ?? ""}
-            <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5" />
-          </Link>
+          <p className="mt-1 text-sm text-[#666666]">{copy.sfCatSubtitle}</p>
         </div>
-        {/* Premium shop-nav rail: icon + name, active pill inversion. */}
         <nav
-          aria-label={copy.browseCategories}
-          className="-mx-4 flex snap-x snap-mandatory items-stretch gap-1.5 overflow-x-auto px-4 pb-2 sm:gap-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="-mx-4 flex snap-x snap-mandatory gap-2 overflow-x-auto px-4 pb-2 sm:gap-3 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
-          {/* All → /shop */}
-          <Link
-            to="/shop"
-            search={{ locale } as any}
-            onMouseEnter={() => setActive("__all")}
-            onMouseLeave={() => setActive(null)}
-            onFocus={() => setActive("__all")}
-            onBlur={() => setActive(null)}
-            className={`group flex shrink-0 snap-start items-center gap-2.5 rounded-full py-2 pe-5 ps-2 transition-all duration-300 active:scale-[0.97] ${
-              active === "__all"
-                ? "bg-foreground text-background shadow-[0_10px_28px_-10px_rgba(0,0,0,0.4)]"
-                : "hover:bg-muted"
-            }`}
-          >
-            <span
-              className={`grid size-11 place-items-center rounded-full transition-all duration-300 group-hover:scale-105 ${
-                active === "__all" ? "bg-background/20 text-background" : "bg-muted text-foreground"
-              }`}
+          {items.map(({ id, slug, name, Icon }) => (
+            <Link
+              key={id}
+              {...(slug
+                ? { to: "/category/$slug", params: { slug } }
+                : { to: "/shop" }) as any}
+              search={{ locale } as any}
+              className="group flex shrink-0 snap-start flex-col items-center gap-2.5 rounded-[14px] border border-[#E5E5E5] bg-white px-5 py-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-[#0A0A0A]/25 hover:shadow-[0_10px_24px_-12px_rgba(0,0,0,0.2)] active:scale-[0.97]"
             >
-              <LayoutGrid className="size-5" aria-hidden />
-            </span>
-            <span className="whitespace-nowrap text-[13px] font-semibold leading-none">
-              {allLabel}
-            </span>
-          </Link>
-          {categories.map((cat) => {
-            const isActive = active === cat.id;
-            return (
-              <Link
-                key={cat.id}
-                to="/category/$slug"
-                params={{ slug: cat.slug }}
-                search={{ locale }}
-                onMouseEnter={() => setActive(cat.id)}
-                onMouseLeave={() => setActive(null)}
-                onFocus={() => setActive(cat.id)}
-                onBlur={() => setActive(null)}
-                aria-current={isActive ? "true" : undefined}
-                className={`group flex shrink-0 snap-start items-center gap-2.5 rounded-full py-2 pe-5 ps-2 transition-all duration-300 active:scale-[0.97] ${
-                  isActive
-                    ? "bg-foreground text-background shadow-[0_10px_28px_-10px_rgba(0,0,0,0.4)]"
-                    : "hover:bg-muted"
-                }`}
-              >
-                {cat.imageUrl ? (
-                  <img
-                    src={cat.imageUrl}
-                    alt=""
-                    loading="lazy"
-                    className={`size-11 rounded-full object-cover ring-2 transition-all duration-300 group-hover:scale-105 ${
-                      isActive ? "ring-background/50" : "ring-border/50"
-                    }`}
-                  />
-                ) : (
-                  <span
-                    className={`grid size-11 place-items-center rounded-full text-sm font-bold transition-all duration-300 group-hover:scale-105 ${
-                      isActive ? "bg-background/20 text-background" : "bg-muted text-foreground"
-                    }`}
-                  >
-                    {cat.name.slice(0, 1).toUpperCase()}
-                  </span>
-                )}
-                <span className="flex flex-col items-start gap-0.5">
-                  <span className="whitespace-nowrap text-[13px] font-semibold leading-none">
-                    {cat.name}
-                  </span>
-                  <span
-                    className={`text-[10px] leading-none transition-colors ${
-                      isActive ? "text-background/65" : "text-muted-foreground"
-                    }`}
-                  >
-                    {cat.productCount}
-                  </span>
-                </span>
-              </Link>
-            );
-          })}
+              <span className="grid size-11 place-items-center rounded-full bg-[#F6F6F4] text-[#0A0A0A] transition-colors group-hover:bg-[#0A0A0A] group-hover:text-white">
+                <Icon className="size-5" aria-hidden />
+              </span>
+              <span className="whitespace-nowrap text-[12.5px] font-semibold text-[#0A0A0A]">
+                {name}
+              </span>
+            </Link>
+          ))}
         </nav>
       </Reveal>
-    </div>
+    </section>
   );
 }
 
@@ -1115,7 +1077,7 @@ function OffersSection({
             <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 lg:pb-0">
               {offers.map((product) => (
                 <div key={product.id} className="w-40 shrink-0 snap-start sm:w-44">
-                  <ProductCard product={product} locale={locale} dark />
+                  <ProductCard product={product} locale={locale} />
                 </div>
               ))}
             </div>
@@ -1126,107 +1088,86 @@ function OffersSection({
   );
 }
 
-/** Flash sale: real countdown from the section content's starts_at/ends_at. Counter hidden when dates are absent. */
+/** Flash sale: renders ONLY when a real campaign window is active.
+    Real countdown (HH MM SS) from the section's ends_at. Sale red (#E53935)
+    is used only for sale information. Light system: white bg, #E5E5E5 border. */
 function FlashSaleSection({
   locale,
   section,
   products,
   copy,
   viewAll,
-  shopSearch,
 }: {
   locale: SupportedLocale;
   section: HomepageSection;
   products: CatalogProduct[];
   copy: HomeCopy;
   viewAll: string;
-  shopSearch: ShopSearch;
 }) {
   const content = sectionContent(section);
-  const startsAt = contentDate(content["starts_at"]);
   const endsAt = contentDate(content["ends_at"]);
   const [now, setNow] = useState(() => Date.now());
-  // Subtle scroll parallax on the sale band background.
-  const bandRef = useParallax<HTMLElement>(0.15);
-
-  // The 1s countdown ticker only runs while the sale is actually live. When
-  // the section would render nothing (no window, or expired), no timer is
-  // scheduled at all — previously it ticked forever on a null render.
   const live = endsAt !== null && endsAt > now;
   useEffect(() => {
     if (!live) return;
     const id = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(id);
   }, [live]);
-
   if (!endsAt || endsAt <= now) return null;
 
-  const target = startsAt && now < startsAt ? startsAt : endsAt;
-  const label = target === startsAt ? copy.startsIn : copy.endsIn;
-  const diff = Math.max(0, target - now);
+  const diff = Math.max(0, endsAt - now);
   const units = [
-    { value: Math.floor(diff / 86_400_000), label: copy.days },
-    { value: Math.floor(diff / 3_600_000) % 24, label: copy.hours },
-    { value: Math.floor(diff / 60_000) % 60, label: copy.minutes },
-    { value: Math.floor(diff / 1000) % 60, label: copy.seconds },
+    { value: Math.floor(diff / 3_600_000), label: "H" },
+    { value: Math.floor(diff / 60_000) % 60, label: "M" },
+    { value: Math.floor(diff / 1000) % 60, label: "S" },
   ];
+  const saleProducts = products
+    .filter((p) => p.compareAtPrice != null && p.compareAtPrice > p.price)
+    .slice(0, 8);
+  if (!saleProducts.length) return null;
 
   return (
-    <Reveal>
-      <div className="-mx-4 sm:-mx-6 lg:-mx-8">
-        <section ref={bandRef} className="overflow-hidden bg-ink text-primary-foreground">
-          <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 lg:grid-cols-[1fr_auto] lg:items-center lg:px-8 lg:py-20">
+    <section aria-label={copy.sfFlashTitle} className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <Reveal>
+        <div className="overflow-hidden rounded-[20px] border border-[#E5E5E5] bg-white p-6 sm:p-8">
+          <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
             <div>
-              <p className="flex items-center gap-3 text-eyebrow tracking-[0.18em] text-white/50">
-                <span className="h-px w-8 bg-white/40" aria-hidden />
-                {copy.flashEyebrow}
-              </p>
-              <h2 className="mt-4 font-display text-[clamp(2rem,5.5vw,4rem)] font-semibold leading-[1.05] tracking-tight text-white">
-                {section.title || copy.flashEyebrow}
+              <h2 className="text-xl font-bold tracking-tight text-[#0A0A0A] sm:text-2xl">
+                {copy.sfFlashTitle}
               </h2>
-              {section.subtitle ? (
-                <p className="mt-4 max-w-md text-body leading-relaxed text-white/70">
-                  {section.subtitle}
-                </p>
-              ) : null}
-              <div className="mt-8" role="timer" aria-live="off">
-                <p className="text-caption uppercase tracking-[0.14em] text-white/50">{label}</p>
-                <div className="mt-3 flex gap-2" dir="ltr">
-                  {units.map((unit) => (
-                    <div
-                      key={unit.label}
-                      className="grid min-w-14 place-items-center bg-white/8 px-2 py-2.5 backdrop-blur-sm sm:min-w-16 sm:px-3"
-                    >
-                      <span className="font-display text-2xl font-semibold tabular-nums text-white">
-                        {String(unit.value).padStart(2, "0")}
+              <div className="mt-3 flex items-center gap-1.5" role="timer" aria-live="off" dir="ltr">
+                {units.map((u, i) => (
+                  <span key={u.label} className="flex items-center gap-1.5">
+                    <span className="grid min-w-12 place-items-center rounded-[10px] bg-[#0A0A0A] px-2 py-2">
+                      <span className="text-lg font-bold tabular-nums text-white">
+                        {String(u.value).padStart(2, "0")}
                       </span>
-                      <span className="mt-0.5 text-caption text-white/55">{unit.label}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <Link
-                to="/shop"
-                search={shopSearch}
-                className="group mt-8 inline-flex items-center gap-2 text-small font-medium text-white"
-              >
-                {viewAll}
-                <ArrowRight className={`size-4 ${motionTw.transition.transform} ${motionTw.duration.feedback} group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5 motion-reduce:transition-none`} />
-              </Link>
-            </div>
-            {products.length ? (
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4">
-                {products.slice(0, 4).map((product) => (
-                  <div key={product.id} className="w-36 shrink-0 sm:w-40">
-                    <ProductCard product={product} locale={locale} />
-                  </div>
+                    </span>
+                    <span className="text-[11px] font-bold text-[#E53935]">{u.label}</span>
+                    {i < units.length - 1 ? <span className="text-[#666666]">:</span> : null}
+                  </span>
                 ))}
               </div>
-            ) : null}
+            </div>
+            <Link
+              to="/shop"
+              search={{ locale, onSale: true } as any}
+              className="group inline-flex shrink-0 items-center gap-1.5 text-[13px] font-semibold text-[#0A0A0A] transition-all hover:gap-2.5"
+            >
+              {viewAll}
+              <ArrowRight className="size-3.5 transition-transform rtl:rotate-180" />
+            </Link>
           </div>
-        </section>
-      </div>
-    </Reveal>
+          <div className="-mx-6 flex snap-x snap-mandatory gap-3 overflow-x-auto px-6 pb-1 sm:-mx-8 sm:gap-4 sm:px-8 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {saleProducts.map((product) => (
+              <div key={product.id} className="w-36 shrink-0 snap-start sm:w-44 lg:w-48">
+                <ProductCard product={product} locale={locale} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </Reveal>
+    </section>
   );
 }
 
@@ -1446,21 +1387,13 @@ function RecommendationsSection({
   if (!data?.hasData || data.products.length === 0) return null;
 
   return (
-    <Reveal>
-      <SectionHeading
-        eyebrow={copy.recsEyebrow}
-        title={section.title || copy.recsTitle}
-        href="/shop"
-        search={shopSearch}
-        viewAll={viewAll}
-      />
-      {/* Editorial grid — not another rail. */}
-      <div className="grid grid-cols-2 gap-x-4 gap-y-10 sm:gap-x-5 lg:grid-cols-4">
-        {data.products.map((product) => (
-          <ProductCard key={product.id} product={product} locale={locale} />
-        ))}
-      </div>
-    </Reveal>
+    <ProductRail
+      title={section.title || copy.recsTitle}
+      {...(section.subtitle ? { subtitle: section.subtitle } : {})}
+      products={data.products}
+      locale={locale}
+      viewAllLabel={viewAll}
+    />
   );
 }
 
@@ -1797,6 +1730,127 @@ function HomeNotFound() {
   return <div className="px-6 py-24 text-center text-muted-foreground">{t.home.nothingYet}</div>;
 }
 
+/** Boutiques: compact brand discovery — 4-6 stores max, never a directory. */
+function BoutiquesGrid({
+  stores,
+  products,
+  locale,
+  copy,
+}: {
+  stores: CatalogStore[];
+  products: CatalogProduct[];
+  locale: SupportedLocale;
+  copy: HomeCopy;
+}) {
+  const storeT = getTranslations(locale).store;
+  const list = stores.slice(0, 6);
+  if (!list.length) return null;
+  return (
+    <section aria-label={copy.sfStoresTitle} className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <Reveal>
+        <div className="mb-6 flex items-end justify-between gap-4">
+          <h2 className="text-xl font-bold tracking-tight text-[#0A0A0A] sm:text-2xl">
+            {copy.sfStoresTitle}
+          </h2>
+          <Link
+            to={"/stores" as any}
+            search={{ locale } as any}
+            className="group inline-flex shrink-0 items-center gap-1.5 text-[13px] font-semibold text-[#0A0A0A] transition-all hover:gap-2.5"
+          >
+            {copy.sfStoresCta}
+            <ArrowRight className="size-3.5 transition-transform rtl:rotate-180" />
+          </Link>
+        </div>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-6">
+          {list.map((store) => {
+            const preview = products.find((p) => p.storeName === store.name && p.imagePath);
+            return (
+              <Link
+                key={store.id}
+                to="/store/$slug"
+                params={{ slug: store.slug }}
+                search={{ locale }}
+                className="group flex flex-col items-center gap-2 rounded-[14px] border border-[#E5E5E5] bg-white p-4 text-center transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_10px_24px_-12px_rgba(0,0,0,0.2)]"
+                aria-label={store.name}
+              >
+                <span className="relative block">
+                  {store.logoPath ? (
+                    <img
+                      src={store.logoPath}
+                      alt=""
+                      loading="lazy"
+                      className="size-14 rounded-full bg-[#F6F6F4] object-cover ring-1 ring-[#E5E5E5]"
+                    />
+                  ) : (
+                    <span className="grid size-14 place-items-center rounded-full bg-[#F6F6F4] text-lg font-bold text-[#0A0A0A]">
+                      {store.name.slice(0, 1).toUpperCase()}
+                    </span>
+                  )}
+                  {store.verified || store.slug === "modalia" ? (
+                    <span className="absolute -bottom-0.5 -right-0.5 grid size-5 place-items-center rounded-full bg-[#16803C] text-white ring-2 ring-white">
+                      <BadgeCheck className="size-3" aria-hidden />
+                    </span>
+                  ) : null}
+                </span>
+                <span className="line-clamp-1 w-full text-[13px] font-semibold text-[#0A0A0A]">
+                  {store.name}
+                </span>
+                {store.slug === "modalia" ? (
+                  <OfficialStoreBadge label={storeT.officialStore} />
+                ) : null}
+                {preview?.imagePath ? (
+                  <img
+                    src={preview.imagePath as string}
+                    alt=""
+                    aria-hidden
+                    loading="lazy"
+                    className="mt-1 aspect-square w-full rounded-[10px] bg-[#F6F6F4] object-cover"
+                  />
+                ) : null}
+              </Link>
+            );
+          })}
+        </div>
+      </Reveal>
+    </section>
+  );
+}
+
+/** Final CTA — clean closing section before the footer. */
+function FinalCTA({ locale, copy }: { locale: SupportedLocale; copy: HomeCopy }) {
+  return (
+    <section aria-label={copy.sfFinalTitle} className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <Reveal>
+        <div className="flex flex-col items-center gap-5 rounded-[20px] bg-[#0A0A0A] px-6 py-14 text-center text-white sm:py-16">
+          <h2 className="max-w-xl text-2xl font-bold tracking-tight sm:text-3xl">
+            {copy.sfFinalTitle}
+          </h2>
+          <p className="max-w-md text-[15px] leading-relaxed text-white/70">
+            {copy.sfFinalText}
+          </p>
+          <div className="mt-1 flex flex-wrap items-center justify-center gap-3">
+            <Link
+              to="/shop"
+              search={{ locale } as any}
+              className="group inline-flex items-center gap-2 rounded-[10px] bg-white px-7 py-3 text-sm font-semibold text-[#0A0A0A] transition-all hover:bg-white/90 active:scale-[0.98]"
+            >
+              {copy.sfFinalPrimary}
+              <ArrowRight className="size-4 transition-transform group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1" />
+            </Link>
+            <Link
+              to={"/stores" as any}
+              search={{ locale } as any}
+              className="inline-flex items-center gap-2 rounded-[10px] border border-white/40 px-7 py-3 text-sm font-semibold text-white transition-all hover:border-white hover:bg-white/10 active:scale-[0.98]"
+            >
+              {copy.sfFinalSecondary}
+            </Link>
+          </div>
+        </div>
+      </Reveal>
+    </section>
+  );
+}
+
 function HomePage() {
   const { locale } = Route.useSearch();
   const { data } = useSuspenseQuery(homeQuery(locale));
@@ -1864,85 +1918,108 @@ function HomePage() {
     track("page_view", { metadata: { page: "home" } });
   }, []);
 
+  // Hero shortcuts: MODE / SPORT / LIFESTYLE → real categories, /shop fallback.
+  const shortcutFor = (label: string, match: RegExp): HeroShortcut => {
+    const cat = data.categories.find((x) => match.test(x.slug) || match.test(x.name));
+    return cat
+      ? { label, to: "/category/$slug", params: { slug: cat.slug } }
+      : { label, to: "/shop" };
+  };
+  const heroShortcuts: HeroShortcut[] = [
+    shortcutFor(copy.sfHeroShortcuts[0] ?? "MODE", /fashion|mode|women|femme/i),
+    shortcutFor(copy.sfHeroShortcuts[1] ?? "SPORT", /sport/i),
+    shortcutFor(copy.sfHeroShortcuts[2] ?? "LIFESTYLE", /lifestyle/i),
+  ];
+
   return (
-    <div dir={localeDirections[locale]} lang={locale} className="min-h-screen bg-background">
-      {/* BrandEntrance disabled per owner request */}
+    <div dir={localeDirections[locale]} lang={locale} className="min-h-screen bg-[#F6F6F4]">
       <SiteHeader locale={locale} t={t} />
       <main id="main-content" tabIndex={-1}>
-        <CommerceHero locale={locale} />
+        <CommerceHero
+          locale={locale}
+          eyebrow={copy.sfHeroEyebrow}
+          title={copy.sfHeroTitle}
+          subtitle={copy.sfHeroSubtitle}
+          primaryLabel={copy.sfHeroPrimary}
+          secondaryLabel={copy.sfHeroSecondary}
+          shortcuts={heroShortcuts}
+        />
         <PartnerBannerCarousel />
-        <CategoryExplorer categories={data.categories} locale={locale} copy={copy} />
-        {/* Discovery: editorial rhythm — rails broken by visual moments */}
-        <div className="mx-auto max-w-7xl space-y-12 px-4 py-10 sm:px-6 sm:space-y-14 lg:px-8">
-          <ProductRail
-            eyebrow={copy.trendingEyebrow}
-            title={copy.trendingTitle}
-            products={data.products.slice(0, 10)}
-            locale={locale}
-            viewAllLabel={t.common.viewAll}
-          />
-          <EditorialMoment
-            locale={locale}
-            eyebrow={copy.sportEditEyebrow}
-            title={copy.sportEditTitle}
-            text={copy.sportEditText ?? ""}
-            imageUrl={sportCategory?.imageUrl ?? null}
-            categorySlug={sportCategory?.slug}
-            ctaLabel={copy.exploreCta ?? t.common.viewAll}
-            dark
-          />
-          <OffersSection
-            locale={locale}
-            products={data.products}
-            copy={copy}
-            viewAll={t.common.viewAll}
-            shopSearch={shopSearch}
-          />
-          <ProductRail
-            eyebrow={copy.freshEyebrow}
-            title={copy.newArrivals}
-            products={[...data.products].reverse().slice(0, 10)}
-            locale={locale}
-            viewAllLabel={t.common.viewAll}
-          />
-          <EditorialMoment
-            locale={locale}
-            eyebrow={copy.fashionEditEyebrow}
-            title={copy.fashionEditTitle}
-            text={copy.fashionEditText ?? ""}
-            imageUrl={fashionCategory?.imageUrl ?? null}
-            categorySlug={fashionCategory?.slug}
-            ctaLabel={copy.exploreCta ?? t.common.viewAll}
-            dark={false}
-          />
-          {recommendationsEnabled && recommendations ? (
-            <RecommendationsSection
+        <div className="space-y-12 py-2 sm:space-y-16">
+          <CategoryExplorer categories={data.categories} locale={locale} copy={copy} />
+
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <ProductRail
+              title={copy.sfTrendingTitle}
+              subtitle={copy.sfTrendingSubtitle}
+              products={data.products.slice(0, 10)}
               locale={locale}
-              section={{
-                ...recommendations,
-                title: copy.recommendedTitle,
-              }}
+              viewAllLabel={t.common.viewAll}
+            />
+          </div>
+
+          {flash && flashActive ? (
+            <FlashSaleSection
+              locale={locale}
+              section={flash}
+              products={data.products}
               copy={copy}
               viewAll={t.common.viewAll}
-              shopSearch={shopSearch}
             />
           ) : null}
-          <StoresEntry locale={locale} copy={copy} />
-        </div>
 
-        {/* V10: Only editorial/content sections remain below. */}
-        <div className="mx-auto max-w-7xl space-y-16 px-4 py-14 sm:space-y-24 sm:px-6 sm:py-20 lg:px-8">
-          {editorial ? <EditorialSection section={editorial} copy={copy} /> : null}
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <ProductRail
+              title={copy.sfNewTitle}
+              subtitle={copy.sfNewSubtitle}
+              products={[...data.products].reverse().slice(0, 10)}
+              locale={locale}
+              viewAllLabel={t.common.viewAll}
+            />
+          </div>
 
-          <TestimonialsSection locale={locale} copy={copy} />
+          {recommendationsEnabled && recommendations ? (
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+              <RecommendationsSection
+                locale={locale}
+                section={{
+                  ...recommendations,
+                  title: copy.sfRecTitle,
+                  subtitle: copy.sfRecSubtitle,
+                }}
+                copy={copy}
+                viewAll={t.common.viewAll}
+                shopSearch={shopSearch}
+              />
+            </div>
+          ) : null}
 
-          <RecentlyViewed locale={locale} copy={copy} viewAll={t.common.viewAll} shopSearch={shopSearch} />
+          <div className="mx-auto max-w-7xl space-y-12 px-4 sm:space-y-16 sm:px-6 lg:px-8">
+            <EditorialMoment
+              locale={locale}
+              eyebrow="SPORT"
+              title={copy.sfSportTitle}
+              text={copy.sportEditText ?? ""}
+              imageUrl={sportCategory?.imageUrl ?? null}
+              categorySlug={sportCategory?.slug}
+              ctaLabel={copy.sfSportCta}
+              dark
+            />
+            <EditorialMoment
+              locale={locale}
+              eyebrow="MODE"
+              title={copy.sfFashionTitle}
+              text={copy.fashionEditText ?? ""}
+              imageUrl={fashionCategory?.imageUrl ?? null}
+              categorySlug={fashionCategory?.slug}
+              ctaLabel={copy.sfFashionCta}
+              dark={false}
+            />
+          </div>
 
-          {blog ? <BlogSection section={blog} copy={copy} /> : null}
+          <BoutiquesGrid stores={data.stores} products={data.products} locale={locale} copy={copy} />
 
-          <NewsletterBand locale={locale} copy={copy} />
-
-          {appBanner ? <AppBannerSection section={appBanner} copy={copy} /> : null}
+          <FinalCTA locale={locale} copy={copy} />
         </div>
       </main>
       <SiteFooter locale={locale} t={t} />

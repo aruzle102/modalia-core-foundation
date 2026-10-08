@@ -41,7 +41,7 @@ export const getStoreAnalytics = createServerFn({ method: "GET" })
       const entry = top.get(productId) ?? { product_id: productId, title: (item.products as { name?: Json } | null)?.name ?? {}, units: 0, revenue: 0 };
       entry.units += Number(item.quantity ?? 0); entry.revenue += Number(item.total ?? 0); top.set(productId, entry);
     }
-    return { series: [...byDay.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([date, value]) => ({ date, ...value })), topProducts: [...top.values()].sort((a, b) => b.revenue - a.revenue).slice(0, 10) };
+    return { series: [...byDay.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([date, value]) => ({ date, orders: value.orders, sales: value.revenue })), topProducts: [...top.values()].sort((a, b) => b.revenue - a.revenue).slice(0, 10) };
   });
 
 export const getStoreProducts = createServerFn({ method: "GET" })
@@ -89,6 +89,6 @@ export const sendStoreNotification = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdminPermission(context, "stores.manage");
     const { store } = await getStoreOrThrow(data.storeId);
-    const sent = await emitSellerNotification(store.seller_id, { type: "store_status_changed", params: { status: data.title, message: data.message }, link: data.link || "/seller/notifications", payload: { store_id: data.storeId, message: data.message } });
+    const sent = await emitSellerNotification(store.seller_id, { type: "store_status_changed", params: { status: data.title, reason: data.message }, link: data.link || "/seller/notifications", payload: { store_id: data.storeId, message: data.message } });
     return { ok: sent };
   });

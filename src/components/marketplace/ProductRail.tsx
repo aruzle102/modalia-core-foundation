@@ -92,7 +92,7 @@ export function ProductRail({
           {products.map((product) => (
             <div
               key={product.id}
-              className="w-40 shrink-0 snap-start sm:w-44 md:w-48 lg:w-52"
+              className="w-32 shrink-0 snap-start sm:w-36 md:w-40 lg:w-44"
             >
               <ProductCard product={product} locale={locale} />
             </div>

@@ -48,6 +48,8 @@ export function ProductCard({
   const handleQuickAdd = (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     event.stopPropagation();
+    // Use native event to ensure Link doesn't intercept
+    event.nativeEvent.stopImmediatePropagation();
     startBuyNow(locale, {
       productId: product.id,
       slug: product.slug,

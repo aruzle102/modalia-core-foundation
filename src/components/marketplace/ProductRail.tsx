@@ -58,14 +58,14 @@ export function ProductRail({
           <p className="mb-1.5 text-[11px] font-bold uppercase tracking-[0.22em] text-muted-foreground/80">
             {eyebrow ?? "Discover"}
           </p>
-          <h2 className="truncate text-2xl font-bold tracking-tight sm:text-[26px]">{title}</h2>
+          <h2 className="truncate text-2xl font-bold tracking-tight text-[#0A0A0A] sm:text-[26px]">{title}</h2>
           {subtitle ? <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p> : null}
         </div>
         {viewAllLabel ? (
           <Link
             to={viewAllTo as any}
             search={{ locale } as any}
-            className="group inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border/70 px-4 py-2 text-[13px] font-semibold text-foreground transition-all hover:gap-2.5 hover:border-foreground/30 hover:bg-secondary/60"
+            className="group inline-flex shrink-0 items-center gap-1.5 text-[13px] font-semibold text-[#0A0A0A] transition-all hover:gap-2.5"
           >
             {viewAllLabel}
             <ChevronRight className="size-3.5 transition-transform rtl:rotate-180" />

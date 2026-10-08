@@ -18,7 +18,6 @@ import { Input } from "@/components/ui/input";
 import { useDeviceTier } from "@/hooks/use-device-tier";
 import { DiscoverySkeleton, ProductCard } from "@/components/marketplace/discovery";
 import { PartnerBannerCarousel } from "@/components/marketplace/PartnerBannerCarousel";
-import { ModaliaHero } from "@/components/marketplace/ModaliaHero";
 import { MarketplaceLayout } from "@/components/marketplace/MarketplaceLayout";
 import { ProductRail } from "@/components/marketplace/ProductRail";
 import { OfficialStoreBadge, VerifiedSellerBadge } from "@/components/marketplace/StoreBadges";
@@ -1642,7 +1641,6 @@ function HomePage() {
       {/* BrandEntrance disabled per owner request */}
       <SiteHeader locale={locale} t={t} />
       <main id="main-content" tabIndex={-1}>
-        <ModaliaHero />
         <PartnerBannerCarousel />
 
         {/* Discovery: horizontal product rails (not a full listing) */}

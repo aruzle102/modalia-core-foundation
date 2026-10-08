@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { useDeviceTier } from "@/hooks/use-device-tier";
 import { DiscoverySkeleton, ProductCard } from "@/components/marketplace/discovery";
 import { PartnerBannerCarousel } from "@/components/marketplace/PartnerBannerCarousel";
+import { CommerceHero } from "@/components/marketplace/CommerceHero";
 import { MarketplaceLayout } from "@/components/marketplace/MarketplaceLayout";
 import { ProductRail } from "@/components/marketplace/ProductRail";
 import { OfficialStoreBadge, VerifiedSellerBadge } from "@/components/marketplace/StoreBadges";
@@ -841,7 +842,9 @@ function NewArrivalsSection({
 
 /** Categories strip: compact horizontal scroll of real categories near the
     top of /home. Hidden when no categories. */
-function CategoriesStrip({
+/** Category Explorer — premium horizontal commerce navigation.
+    Icon + name, active indicator, hover/press micro-interactions. */
+function CategoryExplorer({
   categories,
   locale,
   copy,
@@ -850,42 +853,151 @@ function CategoriesStrip({
   locale: SupportedLocale;
   copy: HomeCopy;
 }) {
+  const [active, setActive] = useState<string | null>(null);
   if (!categories.length) return null;
   return (
-    <div className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-8">
       <Reveal>
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+        <div className="mb-5 flex items-center justify-between">
+          <h2 className="text-[13px] font-bold uppercase tracking-[0.22em] text-foreground">
             {copy.browseCategories}
           </h2>
+          <Link
+            to="/shop"
+            search={{ locale } as any}
+            className="group inline-flex items-center gap-1.5 text-[13px] font-semibold text-muted-foreground transition-colors hover:text-foreground"
+          >
+            {copy.viewAllCategories ?? ""}
+            <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5" />
+          </Link>
         </div>
-        <div className="flex snap-x gap-3 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {categories.map((cat) => (
-            <Link
-              key={cat.id}
-              to="/category/$slug"
-              params={{ slug: cat.slug }}
-              search={{ locale }}
-              className="group flex shrink-0 snap-start items-center gap-3 rounded-full border border-border bg-card py-2 pe-5 ps-2 transition-colors hover:border-foreground/30 hover:bg-secondary/60"
-            >
-              {cat.imageUrl ? (
-                <img
-                  src={cat.imageUrl}
-                  alt=""
-                  loading="lazy"
-                  className="size-9 rounded-full object-cover"
-                />
-              ) : (
-                <span className="grid size-9 place-items-center rounded-full bg-muted text-xs font-semibold">
-                  {cat.name.slice(0, 1).toUpperCase()}
+        <nav
+          aria-label={copy.browseCategories}
+          className="-mx-4 flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-4 pb-3 sm:gap-3 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
+          {categories.map((cat) => {
+            const isActive = active === cat.id;
+            return (
+              <Link
+                key={cat.id}
+                to="/category/$slug"
+                params={{ slug: cat.slug }}
+                search={{ locale }}
+                onMouseEnter={() => setActive(cat.id)}
+                onMouseLeave={() => setActive(null)}
+                onFocus={() => setActive(cat.id)}
+                onBlur={() => setActive(null)}
+                aria-current={isActive ? "true" : undefined}
+                className={`group relative flex shrink-0 snap-start flex-col items-center gap-2.5 rounded-2xl border px-5 py-4 transition-all duration-300 active:scale-[0.96] ${
+                  isActive
+                    ? "border-foreground/40 bg-foreground text-background shadow-[0_10px_30px_-12px_rgba(0,0,0,0.45)]"
+                    : "border-border/70 bg-card hover:-translate-y-0.5 hover:border-foreground/25 hover:shadow-[0_14px_30px_-16px_rgba(0,0,0,0.3)]"
+                }`}
+              >
+                {cat.imageUrl ? (
+                  <img
+                    src={cat.imageUrl}
+                    alt=""
+                    loading="lazy"
+                    className={`size-12 rounded-full object-cover ring-2 transition-all duration-300 group-hover:scale-110 ${
+                      isActive ? "ring-background/40" : "ring-border/60 group-hover:ring-foreground/30"
+                    }`}
+                  />
+                ) : (
+                  <span
+                    className={`grid size-12 place-items-center rounded-full text-sm font-bold transition-all duration-300 group-hover:scale-110 ${
+                      isActive ? "bg-background/15 text-background" : "bg-muted text-foreground"
+                    }`}
+                  >
+                    {cat.name.slice(0, 1).toUpperCase()}
+                  </span>
+                )}
+                <span className="whitespace-nowrap text-[13px] font-semibold leading-none">
+                  {cat.name}
                 </span>
-              )}
-              <span className="whitespace-nowrap text-sm font-medium">{cat.name}</span>
-            </Link>
-          ))}
-        </div>
+                <span
+                  className={`text-[11px] leading-none transition-colors ${
+                    isActive ? "text-background/70" : "text-muted-foreground"
+                  }`}
+                >
+                  {cat.productCount}
+                </span>
+                {/* Active indicator */}
+                <span
+                  className={`absolute -bottom-px left-1/2 h-0.5 -translate-x-1/2 rounded-full bg-current transition-all duration-300 ${
+                    isActive ? "w-8 opacity-100" : "w-0 opacity-0"
+                  }`}
+                  aria-hidden
+                />
+              </Link>
+            );
+          })}
+        </nav>
       </Reveal>
     </div>
+  );
+}
+
+/** Editorial discovery moment — visual rhythm break between commerce rails.
+    Large imagery + short copy, links to a category. Hidden when no image. */
+function EditorialMoment({
+  locale,
+  eyebrow,
+  title,
+  text,
+  imageUrl,
+  categorySlug,
+  ctaLabel,
+  dark = true,
+}: {
+  locale: SupportedLocale;
+  eyebrow: string;
+  title: string;
+  text: string;
+  imageUrl: string | null;
+  categorySlug?: string | undefined;
+  ctaLabel: string;
+  dark?: boolean;
+}) {
+  if (!imageUrl) return null;
+  return (
+    <Reveal>
+      <Link
+        {...({
+          to: categorySlug ? "/category/$slug" : "/shop",
+          ...(categorySlug ? { params: { slug: categorySlug } } : {}),
+          search: { locale },
+        } as any)}
+        className={`group relative block overflow-hidden rounded-3xl ${dark ? "bg-neutral-950 text-white" : "bg-muted text-foreground"}`}
+      >
+        <div className="grid md:grid-cols-2">
+          <div className="relative min-h-[280px] overflow-hidden md:min-h-[360px]">
+            <img
+              src={imageUrl}
+              alt=""
+              loading="lazy"
+              className="absolute inset-0 size-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+            />
+            <div className={`absolute inset-0 ${dark ? "bg-gradient-to-r from-black/30 to-transparent" : ""}`} aria-hidden />
+          </div>
+          <div className="flex flex-col justify-center p-8 sm:p-10 lg:p-12">
+            <p className={`text-[11px] font-bold uppercase tracking-[0.25em] ${dark ? "text-white/55" : "text-muted-foreground"}`}>
+              {eyebrow}
+            </p>
+            <h2 className="mt-3 text-3xl font-bold leading-tight tracking-tight sm:text-4xl">
+              {title}
+            </h2>
+            <p className={`mt-4 max-w-sm text-[15px] leading-relaxed ${dark ? "text-white/65" : "text-muted-foreground"}`}>
+              {text}
+            </p>
+            <span className={`mt-6 inline-flex w-fit items-center gap-2 text-sm font-semibold transition-all group-hover:gap-3 ${dark ? "text-white" : "text-foreground"}`}>
+              {ctaLabel}
+              <ArrowRight className="size-4 rtl:rotate-180" />
+            </span>
+          </div>
+        </div>
+      </Link>
+    </Reveal>
   );
 }
 
@@ -1719,6 +1831,12 @@ function HomePage() {
   const flashEndsAt = contentDate(flashContent["ends_at"]);
   const flashActive = flash && flashEndsAt !== null;
 
+  // Editorial moments use real category imagery (sport / fashion).
+  const findCategory = (match: RegExp) =>
+    data.categories.find((cat) => match.test(cat.slug) || match.test(cat.name));
+  const sportCategory = findCategory(/sport/i);
+  const fashionCategory = findCategory(/fashion|mode|women|femme/i);
+
   useEffect(() => {
     track("page_view", { metadata: { page: "home" } });
   }, []);
@@ -1728,15 +1846,27 @@ function HomePage() {
       {/* BrandEntrance disabled per owner request */}
       <SiteHeader locale={locale} t={t} />
       <main id="main-content" tabIndex={-1}>
+        <CommerceHero locale={locale} />
         <PartnerBannerCarousel />
-        <CategoriesStrip categories={data.categories} locale={locale} copy={copy} />
-        {/* Discovery: horizontal product rails (not a full listing) */}
-        <div className="mx-auto max-w-7xl space-y-10 px-4 py-8 sm:px-6 lg:px-8">
+        <CategoryExplorer categories={data.categories} locale={locale} copy={copy} />
+        {/* Discovery: editorial rhythm — rails broken by visual moments */}
+        <div className="mx-auto max-w-7xl space-y-12 px-4 py-10 sm:px-6 sm:space-y-14 lg:px-8">
           <ProductRail
+            eyebrow={copy.trendingEyebrow}
             title={copy.trendingTitle}
             products={data.products.slice(0, 10)}
             locale={locale}
             viewAllLabel={t.common.viewAll}
+          />
+          <EditorialMoment
+            locale={locale}
+            eyebrow={copy.sportEditEyebrow}
+            title={copy.sportEditTitle}
+            text={copy.sportEditText ?? ""}
+            imageUrl={sportCategory?.imageUrl ?? null}
+            categorySlug={sportCategory?.slug}
+            ctaLabel={copy.exploreCta ?? t.common.viewAll}
+            dark
           />
           <OffersSection
             locale={locale}
@@ -1746,10 +1876,21 @@ function HomePage() {
             shopSearch={shopSearch}
           />
           <ProductRail
+            eyebrow={copy.freshEyebrow}
             title={copy.newArrivals}
             products={[...data.products].reverse().slice(0, 10)}
             locale={locale}
             viewAllLabel={t.common.viewAll}
+          />
+          <EditorialMoment
+            locale={locale}
+            eyebrow={copy.fashionEditEyebrow}
+            title={copy.fashionEditTitle}
+            text={copy.fashionEditText ?? ""}
+            imageUrl={fashionCategory?.imageUrl ?? null}
+            categorySlug={fashionCategory?.slug}
+            ctaLabel={copy.exploreCta ?? t.common.viewAll}
+            dark={false}
           />
           {recommendationsEnabled && recommendations ? (
             <RecommendationsSection

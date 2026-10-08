@@ -1,8 +1,10 @@
 /**
- * Modalia Intelligence — custom brand icon.
+ * Modalia Intelligence — distinctive brand symbol.
  *
- * Minimal geometric mark combining "M" with an intelligence/signal motif.
- * Monochrome, recognizable at 16px. Replaces generic Sparkles.
+ * Geometric "M" formed by connected intelligence nodes.
+ * The central node represents discovery; the connecting paths
+ * represent search and commerce intelligence.
+ * Monochrome, premium, recognizable at 16px.
  */
 import { cn } from "@/lib/utils";
 
@@ -20,18 +22,20 @@ export function ModaliaIntelligenceIcon({
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.8}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={cn("shrink-0", className)}
       aria-hidden="true"
     >
-      {/* M letterform */}
-      <path d="M4 18V6l4 6 4-6v12" />
-      {/* Signal/discovery dot — the "intelligence" spark */}
-      <circle cx="18.5" cy="5.5" r="1.5" fill="currentColor" stroke="none" />
-      {/* Signal arc */}
-      <path d="M15 9.5a5 5 0 0 1 6 0" strokeWidth={1.5} opacity={0.6} />
+      {/* M letterform as connected nodes */}
+      <path d="M4 19V7l5 7 3-4.5L15 14l5-7v12" />
+      {/* Intelligence nodes */}
+      <circle cx="4" cy="7" r="1.3" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="9.5" r="1.3" fill="currentColor" stroke="none" />
+      <circle cx="20" cy="7" r="1.3" fill="currentColor" stroke="none" />
+      {/* Discovery signal — central pulse */}
+      <circle cx="12" cy="16.5" r="1" fill="currentColor" stroke="none" opacity={0.7} />
     </svg>
   );
 }

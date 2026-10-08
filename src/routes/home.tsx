@@ -29,7 +29,6 @@ import { Input } from "@/components/ui/input";
 import { useDeviceTier } from "@/hooks/use-device-tier";
 import { DiscoverySkeleton, ProductCard } from "@/components/marketplace/discovery";
 import { PartnerBannerCarousel } from "@/components/marketplace/PartnerBannerCarousel";
-import { CommerceHero, type HeroShortcut } from "@/components/marketplace/CommerceHero";
 import { MarketplaceLayout } from "@/components/marketplace/MarketplaceLayout";
 import { ProductRail } from "@/components/marketplace/ProductRail";
 import { OfficialStoreBadge, VerifiedSellerBadge } from "@/components/marketplace/StoreBadges";
@@ -1918,33 +1917,11 @@ function HomePage() {
     track("page_view", { metadata: { page: "home" } });
   }, []);
 
-  // Hero shortcuts: MODE / SPORT / LIFESTYLE → real categories, /shop fallback.
-  const shortcutFor = (label: string, match: RegExp): HeroShortcut => {
-    const cat = data.categories.find((x) => match.test(x.slug) || match.test(x.name));
-    return cat
-      ? { label, to: "/category/$slug", params: { slug: cat.slug } }
-      : { label, to: "/shop" };
-  };
-  const heroShortcuts: HeroShortcut[] = [
-    shortcutFor(copy.sfHeroShortcuts?.[0] ?? "MODE", /fashion|mode|women|femme/i),
-    shortcutFor(copy.sfHeroShortcuts?.[1] ?? "SPORT", /sport/i),
-    shortcutFor(copy.sfHeroShortcuts?.[2] ?? "LIFESTYLE", /lifestyle/i),
-  ];
 
   return (
     <div dir={localeDirections[locale]} lang={locale} className="min-h-screen bg-[#F6F6F4]">
       <SiteHeader locale={locale} t={t} />
       <main id="main-content" tabIndex={-1}>
-        <CommerceHero
-          locale={locale}
-          eyebrow={copy.sfHeroEyebrow}
-          title={copy.sfHeroTitle}
-          subtitle={copy.sfHeroSubtitle}
-          primaryLabel={copy.sfHeroPrimary}
-          secondaryLabel={copy.sfHeroSecondary}
-          shortcuts={heroShortcuts}
-        />
-        <PartnerBannerCarousel />
         <div className="space-y-12 py-2 sm:space-y-16">
           <CategoryExplorer categories={data.categories} locale={locale} copy={copy} />
 
@@ -1957,6 +1934,8 @@ function HomePage() {
               viewAllLabel={t.common.viewAll}
             />
           </div>
+
+          <PartnerBannerCarousel />
 
           {flash && flashActive ? (
             <FlashSaleSection

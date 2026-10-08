@@ -49,6 +49,9 @@ export function PartnerBannerCarousel() {
 
   return (
     <section aria-label="Partners" className="mx-auto max-w-7xl px-4 pt-4 sm:px-6 lg:px-8">
+      <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.24em] text-[#666666]">
+        NOS PARTENAIRES
+      </p>
       <div className="group relative">
         {banner.link_url ? (
           <a

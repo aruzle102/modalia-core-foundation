@@ -71,7 +71,7 @@ export function ProductCard({
   };
 
   return (
-    <article className="group relative min-w-0 overflow-hidden rounded-2xl border border-border/60 bg-card shadow-[0_1px_3px_rgba(0,0,0,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_32px_rgba(0,0,0,0.12)]">
+    <article className="group relative min-w-0 overflow-hidden rounded-2xl border border-border/60 bg-card shadow-[0_1px_3px_rgba(0,0,0,0.06)] transition-all duration-300 hover:-translate-y-1 hover:border-foreground/15 hover:shadow-[0_16px_40px_-12px_rgba(0,0,0,0.18)]">
       <Link
         to="/product/$slug"
         params={{ slug: product.slug }}
@@ -150,29 +150,29 @@ export function ProductCard({
             Product page handles Buy Now / Add to Cart. Card click opens product. */}
       </div>
 
-      {/* Info — premium spacing and hierarchy */}
-      <div className="space-y-1.5 p-4">
+      {/* Info — compact, image-dominant hierarchy */}
+      <div className="space-y-1 px-3.5 py-3.5">
         <p
-          className={`truncate text-[11px] font-medium uppercase tracking-[0.12em] ${dark ? "text-white/50" : "text-muted-foreground"}`}
+          className={`truncate text-[10px] font-semibold uppercase tracking-[0.14em] ${dark ? "text-white/50" : "text-muted-foreground"}`}
         >
           {product.storeName}
         </p>
         <h3
-          className={`line-clamp-2 min-h-[2.6em] text-[15px] font-semibold leading-snug ${dark ? "text-white" : "text-foreground"}`}
+          className={`line-clamp-2 min-h-[2.5em] text-[13.5px] font-semibold leading-snug ${dark ? "text-white" : "text-foreground"}`}
         >
           <span className={`transition-colors ${dark ? "group-hover:text-white/70" : "group-hover:text-primary"}`}>
             {product.name}
           </span>
         </h3>
-        <p className="flex items-baseline gap-2 pt-1">
+        <p className="flex items-baseline gap-1.5 pt-0.5">
           <span
-            className={`text-lg font-bold ${dark ? "text-white" : "text-foreground"}`}
+            className={`text-[17px] font-bold tracking-tight ${dark ? "text-white" : "text-foreground"}`}
           >
             {formatPrice(product.price, locale)}
           </span>
           {sale != null && product.compareAtPrice ? (
             <span
-              className={`text-sm line-through ${dark ? "text-white/45" : "text-muted-foreground"}`}
+              className={`text-[13px] line-through ${dark ? "text-white/45" : "text-muted-foreground"}`}
             >
               {formatPrice(product.compareAtPrice, locale)}
             </span>

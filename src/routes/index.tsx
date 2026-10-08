@@ -19,6 +19,7 @@ import { useDeviceTier } from "@/hooks/use-device-tier";
 import { DiscoverySkeleton, ProductCard } from "@/components/marketplace/discovery";
 import { PartnerBannerCarousel } from "@/components/marketplace/PartnerBannerCarousel";
 import { MarketplaceLayout } from "@/components/marketplace/MarketplaceLayout";
+import { ProductRail } from "@/components/marketplace/ProductRail";
 import { OfficialStoreBadge, VerifiedSellerBadge } from "@/components/marketplace/StoreBadges";
 import { SiteFooter, SiteHeader } from "@/components/layout/site-shell";
 import { useReveal } from "@/hooks/use-reveal";
@@ -1648,9 +1649,23 @@ function HomePage() {
           locale={locale}
         />
 
-        {/* V10: MarketplaceLayout shows products directly (Amazon-style).
-            Legacy product rails removed to avoid duplication.
-            Only editorial/content sections remain below. */}
+        {/* V10.1: Horizontal product rails */}
+        <div className="mx-auto max-w-7xl space-y-10 px-4 py-8 sm:px-6 lg:px-8">
+          <ProductRail
+            title="Trending Now"
+            products={data.products.slice(0, 10)}
+            locale={locale}
+            viewAllLabel={t.common.viewAll}
+          />
+          <ProductRail
+            title="New Arrivals"
+            products={[...data.products].reverse().slice(0, 10)}
+            locale={locale}
+            viewAllLabel={t.common.viewAll}
+          />
+        </div>
+
+        {/* V10: Only editorial/content sections remain below. */}
         <div className="mx-auto max-w-7xl space-y-16 px-4 py-14 sm:space-y-24 sm:px-6 sm:py-20 lg:px-8">
           {editorial ? <EditorialSection section={editorial} copy={copy} /> : null}
 

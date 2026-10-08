@@ -1,17 +1,25 @@
 /**
- * Partner banner carousel — rectangular rotating ads at top of homepage.
- * Managed from /admin/banners. Each banner links to the partner URL.
+ * Partner advertising section for /home — placed below the hero.
+ * Premium composition: white background, 1px #E5E5E5 border, 20px radius.
+ * Content side carries the advertiser message + "Devenir partenaire" CTA
+ * (→ /partnership). Visual side shows the real active partner banners from
+ * the Admin-controlled system (rotating when several are active), or a
+ * clean "MODALIA — ESPACE PUBLICITAIRE" placeholder when none exist.
+ * Backend (Admin → Partner Banners) is untouched.
  */
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { getActivePartnerBanners } from "@/lib/partner-banners.functions";
-import { getLocale, getTranslations } from "@/lib/i18n";
+import { getLocale, getTranslations, type Translation } from "@/lib/i18n";
+import type { SupportedLocale } from "@/config/platform";
 
 export function PartnerBannerCarousel() {
-  const locale = getLocale();
-  const t = getTranslations(locale);
-  const { data: banners, isPending, isError } = useQuery({
+  const locale: SupportedLocale = getLocale();
+  const t: Translation = getTranslations(locale);
+  const copy = t.home;
+  const { data: banners, isPending } = useQuery({
     queryKey: ["partner-banners"],
     queryFn: () => getActivePartnerBanners(),
     staleTime: 60_000,
@@ -22,79 +30,115 @@ export function PartnerBannerCarousel() {
   const list = banners ?? [];
   useEffect(() => {
     if (list.length <= 1) return;
-    const t = setInterval(() => setIndex((i) => (i + 1) % list.length), 5000);
-    return () => clearInterval(t);
+    const timer = setInterval(() => {
+      setIndex((i) => (i + 1) % list.length);
+      setImgError(false);
+    }, 6000);
+    return () => clearInterval(timer);
   }, [list.length]);
 
-  // Loading: show skeleton so the space is reserved
-  if (isPending) {
-    return (
-      <section aria-label="Partners" className="mx-auto max-w-7xl px-4 pt-3">
-        <div className="h-24 animate-pulse rounded-2xl bg-muted sm:h-32" />
-      </section>
-    );
-  }
-
-  // Error or empty: don't render (admin can add banners)
-  if (isError || list.length === 0) return null;
-  const banner = list[index % list.length];
-  if (!banner) return null;
+  const banner = list.length > 0 ? list[index % list.length] : null;
 
   return (
-    <section aria-label="Partners" className="mx-auto max-w-7xl px-4 pt-3">
-      <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">{t.home.ourPartners}</p>
-      <div className="relative overflow-hidden rounded-2xl">
-        <a
-          href={banner.linkUrl}
-          target={banner.linkUrl.startsWith("http") ? "_blank" : undefined}
-          rel={banner.linkUrl.startsWith("http") ? "noopener noreferrer" : undefined}
-          className="block"
-        >
-          {!imgError ? (
-            <img
-              src={banner.imageUrl}
-              alt={banner.title}
-              className="h-24 w-full object-cover sm:h-32"
-              loading="lazy"
-              onError={() => setImgError(true)}
-            />
-          ) : (
-            <div className="flex h-24 items-center justify-center bg-muted sm:h-32">
-              <span className="text-lg font-semibold text-muted-foreground">{banner.title}</span>
-            </div>
-          )}
-        </a>
-        {list.length > 1 ? (
-          <>
-            <button
-              type="button"
-              aria-label="Previous"
-              onClick={() => setIndex((i) => (i - 1 + list.length) % list.length)}
-              className="absolute left-2 top-1/2 grid size-8 -translate-y-1/2 place-items-center rounded-full bg-black/40 text-white hover:bg-black/60"
+    <section aria-label={copy.sfPartnersLabel} className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8">
+      <div className="overflow-hidden rounded-[20px] border border-[#E5E5E5] bg-white">
+        <div className="grid md:grid-cols-2">
+          {/* Content side */}
+          <div className="flex flex-col items-start justify-center gap-4 p-6 sm:p-10">
+            <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-[#666666]">
+              {copy.sfPartnersLabel}
+            </p>
+            <h2 className="text-2xl font-bold tracking-tight text-[#0A0A0A] sm:text-3xl">
+              {copy.sfPartnersTitle}
+            </h2>
+            <p className="max-w-sm text-[15px] leading-relaxed text-[#666666]">
+              {copy.sfPartnersText}
+            </p>
+            <Link
+              to={"/partnership" as any}
+              search={{ locale } as any}
+              className="group mt-1 inline-flex items-center gap-2 rounded-[10px] bg-[#0A0A0A] px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-black active:scale-[0.98]"
             >
-              <ChevronLeft className="size-4" />
-            </button>
-            <button
-              type="button"
-              aria-label="Next"
-              onClick={() => setIndex((i) => (i + 1) % list.length)}
-              className="absolute right-2 top-1/2 grid size-8 -translate-y-1/2 place-items-center rounded-full bg-black/40 text-white hover:bg-black/60"
-            >
-              <ChevronRight className="size-4" />
-            </button>
-            <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1.5">
-              {list.map((b, i) => (
-                <button
-                  key={b.id}
-                  type="button"
-                  aria-label={`Go to ${b.title}`}
-                  onClick={() => setIndex(i)}
-                  className={`size-2 rounded-full transition-colors ${i === index % list.length ? "bg-white" : "bg-white/40"}`}
+              {copy.sfPartnersCta}
+              <ArrowRight className="size-4 transition-transform group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1" />
+            </Link>
+          </div>
+
+          {/* Visual side — real active banner, or clean placeholder */}
+          <div className="relative min-h-[220px] bg-[#F6F6F4] md:min-h-[280px]">
+            {isPending ? (
+              <div className="absolute inset-0 animate-pulse bg-[#E5E5E5]/60" />
+            ) : banner && !imgError ? (
+              <a
+                key={banner.id}
+                href={banner.linkUrl}
+                target={banner.linkUrl.startsWith("http") ? "_blank" : undefined}
+                rel={banner.linkUrl.startsWith("http") ? "noopener noreferrer" : undefined}
+                className="absolute inset-0 block"
+                aria-label={banner.title}
+              >
+                <img
+                  src={banner.imageUrl}
+                  alt={banner.title}
+                  loading="lazy"
+                  onError={() => setImgError(true)}
+                  className="size-full object-cover"
                 />
-              ))}
-            </div>
-          </>
-        ) : null}
+              </a>
+            ) : (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-8 text-center">
+                <p className="text-sm font-bold uppercase tracking-[0.3em] text-[#0A0A0A]">
+                  Modalia
+                </p>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#666666]">
+                  Espace publicitaire
+                </p>
+              </div>
+            )}
+
+            {/* Carousel controls — only when several real banners */}
+            {list.length > 1 && banner && !imgError ? (
+              <>
+                <button
+                  type="button"
+                  aria-label="Previous"
+                  onClick={() => {
+                    setIndex((i) => (i - 1 + list.length) % list.length);
+                    setImgError(false);
+                  }}
+                  className="absolute left-3 top-1/2 grid size-9 -translate-y-1/2 place-items-center rounded-full bg-black/45 text-white transition-colors hover:bg-black/65"
+                >
+                  <ChevronLeft className="size-4" />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Next"
+                  onClick={() => {
+                    setIndex((i) => (i + 1) % list.length);
+                    setImgError(false);
+                  }}
+                  className="absolute right-3 top-1/2 grid size-9 -translate-y-1/2 place-items-center rounded-full bg-black/45 text-white transition-colors hover:bg-black/65"
+                >
+                  <ChevronRight className="size-4" />
+                </button>
+                <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5">
+                  {list.map((b, i) => (
+                    <button
+                      key={b.id}
+                      type="button"
+                      aria-label={b.title}
+                      onClick={() => {
+                        setIndex(i);
+                        setImgError(false);
+                      }}
+                      className={`size-2 rounded-full transition-colors ${i === index % list.length ? "bg-white" : "bg-white/50"}`}
+                    />
+                  ))}
+                </div>
+              </>
+            ) : null}
+          </div>
+        </div>
       </div>
     </section>
   );

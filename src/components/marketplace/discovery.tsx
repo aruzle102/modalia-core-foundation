@@ -45,6 +45,18 @@ export function ProductCard({
   const soldOut = stock === 0;
   const lowStock = stock != null && stock > 0 && stock <= LOW_STOCK_THRESHOLD;
 
+  const handleQuickAdd = (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    startBuyNow(locale, {
+      productId: product.id,
+      slug: product.slug,
+      name: product.name,
+      image: product.imagePath,
+      storeName: product.storeName,
+    }, { mode: "add" });
+  };
+
   const handleWishlist = (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     event.stopPropagation();
@@ -71,7 +83,7 @@ export function ProductCard({
         aria-label={product.name}
       >
         {/* Image — 4:5, dominant */}
-        <div className={`relative aspect-[4/5] overflow-hidden bg-[#F6F6F4] ${soldOut ? "saturate-50" : ""}`}>
+        <div className={`relative aspect-square overflow-hidden bg-[#F6F6F4] ${soldOut ? "saturate-50" : ""}`}>
           {product.imagePath ? (
             <img
               src={product.imagePath}
@@ -123,10 +135,22 @@ export function ProductCard({
             onClick={handleWishlist}
             aria-pressed={wishlisted}
             aria-label={t.wishlist(product.name)}
-            className="absolute right-2.5 top-2.5 z-10 grid size-9 place-items-center rounded-full bg-white text-[#0A0A0A] shadow-[0_2px_10px_rgba(0,0,0,0.12)] transition-transform hover:scale-105 active:scale-95"
+            className="absolute right-2 top-2 z-10 grid size-8 place-items-center rounded-full bg-white text-[#0A0A0A] shadow-[0_2px_10px_rgba(0,0,0,0.12)] transition-transform hover:scale-105 active:scale-95"
           >
             <Heart className={`size-4 ${wishlisted ? "fill-[#E53935] text-[#E53935]" : ""}`} aria-hidden="true" />
           </button>
+
+          {/* Add to cart — icon only, bottom-right of image */}
+          {!soldOut ? (
+            <button
+              type="button"
+              onClick={handleQuickAdd}
+              aria-label={t.addToCart || "Add to cart"}
+              className="absolute bottom-2 right-2 z-10 grid size-8 place-items-center rounded-full bg-[#0A0A0A] text-white shadow-[0_2px_10px_rgba(0,0,0,0.25)] transition-transform hover:scale-105 active:scale-95"
+            >
+              <ShoppingBag className="size-4" aria-hidden="true" />
+            </button>
+          ) : null}
         </div>
 
         {/* Info */}

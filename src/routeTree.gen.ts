@@ -26,6 +26,7 @@ import { Route as ShippingRouteImport } from './routes/shipping'
 import { Route as ShopRouteImport } from './routes/shop'
 import { Route as HomeRouteImport } from './routes/home'
 import { Route as SearchRouteImport } from './routes/search'
+import { Route as StoresRouteImport } from './routes/stores'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TrackOrderRouteImport } from './routes/track-order'
 import { Route as WishlistRouteImport } from './routes/wishlist'
@@ -182,6 +183,11 @@ const ShopRoute = ShopRouteImport.update({
 const HomeRoute = HomeRouteImport.update({
   id: '/home',
   path: '/home',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StoresRoute = StoresRouteImport.update({
+  id: '/stores',
+  path: '/stores',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SearchRoute = SearchRouteImport.update({
@@ -626,6 +632,7 @@ export interface FileRoutesByFullPath {
   '/returns': typeof ReturnsRoute
   '/shipping': typeof ShippingRoute
   '/shop': typeof ShopRoute
+  '/stores': typeof StoresRoute
   '/search': typeof SearchRoute
   '/home': typeof HomeRoute
   '/terms': typeof TermsRoute
@@ -722,6 +729,7 @@ export interface FileRoutesByTo {
   '/returns': typeof ReturnsRoute
   '/shipping': typeof ShippingRoute
   '/shop': typeof ShopRoute
+  '/stores': typeof StoresRoute
   '/search': typeof SearchRoute
   '/home': typeof HomeRoute
   '/terms': typeof TermsRoute
@@ -820,6 +828,7 @@ export interface FileRoutesById {
   '/returns': typeof ReturnsRoute
   '/shipping': typeof ShippingRoute
   '/shop': typeof ShopRoute
+  '/stores': typeof StoresRoute
   '/search': typeof SearchRoute
   '/home': typeof HomeRoute
   '/terms': typeof TermsRoute
@@ -1203,6 +1212,7 @@ export interface RootRouteChildren {
   ReturnsRoute: typeof ReturnsRoute
   ShippingRoute: typeof ShippingRoute
   ShopRoute: typeof ShopRoute
+  StoresRoute: typeof StoresRoute
   SearchRoute: typeof SearchRoute
   TermsRoute: typeof TermsRoute
   TrackOrderRoute: typeof TrackOrderRoute
@@ -1357,6 +1367,13 @@ declare module '@tanstack/react-router' {
       path: '/home'
       fullPath: '/home'
       preLoaderRoute: typeof HomeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stores': {
+      id: '/stores'
+      path: '/stores'
+      fullPath: '/stores'
+      preLoaderRoute: typeof StoresRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/search': {
@@ -2145,6 +2162,7 @@ const rootRouteChildren: RootRouteChildren = {
   ShippingRoute: ShippingRoute,
   ShopRoute: ShopRoute,
   HomeRoute: HomeRoute,
+  StoresRoute: StoresRoute,
   SearchRoute: SearchRoute,
   TermsRoute: TermsRoute,
   TrackOrderRoute: TrackOrderRoute,

@@ -6,8 +6,11 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { getActivePartnerBanners } from "@/lib/partner-banners.functions";
+import { getLocale, getTranslations } from "@/lib/i18n";
 
 export function PartnerBannerCarousel() {
+  const locale = getLocale();
+  const t = getTranslations(locale);
   const { data: banners, isPending, isError } = useQuery({
     queryKey: ["partner-banners"],
     queryFn: () => getActivePartnerBanners(),
@@ -39,6 +42,7 @@ export function PartnerBannerCarousel() {
 
   return (
     <section aria-label="Partners" className="mx-auto max-w-7xl px-4 pt-3">
+      <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">{t.home.ourPartners}</p>
       <div className="relative overflow-hidden rounded-2xl">
         <a
           href={banner.linkUrl}

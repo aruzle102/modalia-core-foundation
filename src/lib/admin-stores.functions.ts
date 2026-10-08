@@ -10,6 +10,108 @@ type SellerRow = Database["public"]["Tables"]["sellers"]["Row"];
 
 const adminOnly = [requireSupabaseAuth] as const;
 
+function sanitizeSearch(q: string): string {
+  return q.replace(/[%_\\]/g, "").trim().slice(0, 100);
+}
+
+export type StoreSearchResult = {
+  id: string;
+  name: string;
+  slug: string;
+  status: string;
+  verification_status: string;
+  created_at: string;
+  seller_id: string | null;
+  seller_legal_name: string | null;
+  seller_email: string | null;
+  seller_phone: string | null;
+  product_count: number;
+};
+
+/**
+ * Fast server-side store lookup for admin.
+ * Matches store name / slug, seller legal name / email / phone, and seller
+ * login username. Returns lean rows (no product counts) for quick access —
+ * clicking a result opens the store's Control Center.
+ */
+export const searchStores = createServerFn({ method: "GET" })
+  .middleware(adminOnly)
+  .inputValidator((data) =>
+    z
+      .object({
+        q: z.string().trim().min(1).max(100),
+        limit: z.number().int().min(1).max(50).default(20),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }): Promise<StoreSearchResult[]> => {
+    await assertAdminPermission(context, "stores.view");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const q = sanitizeSearch(data.q);
+    if (!q) return [];
+    const like = `%${q}%`;
+
+    // Seller ids matching name / email / phone / login username.
+    const sellerIds = new Set<string>();
+    const [bySeller, byUsername] = await Promise.all([
+      supabaseAdmin
+        .from("sellers")
+        .select("id")
+        .or(`legal_name.ilike.${like},email.ilike.${like},phone.ilike.${like}`)
+        .limit(50),
+      supabaseAdmin.from("seller_accounts").select("seller_id").ilike("username", like).limit(50),
+    ]);
+    for (const s of bySeller.data ?? []) if (s.id) sellerIds.add(s.id);
+    for (const a of byUsername.data ?? []) if (a.seller_id) sellerIds.add(a.seller_id);
+    const ids = [...sellerIds];
+
+    let query = supabaseAdmin
+      .from("stores")
+      .select(
+        "id,name,slug,status,verification_status,created_at,seller_id,sellers(legal_name,email,phone)",
+      )
+      .limit(data.limit);
+    query =
+      ids.length > 0
+        ? query.or(`name.ilike.${like},slug.ilike.${like},seller_id.in.(${ids.join(",")})`)
+        : query.or(`name.ilike.${like},slug.ilike.${like}`);
+
+    const { data: rows, error } = await query.order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+
+    const items: StoreSearchResult[] = (rows ?? []).map((r: any) => ({
+      id: r.id,
+      name: r.name,
+      slug: r.slug,
+      status: r.status,
+      verification_status: r.verification_status ?? "unverified",
+      created_at: r.created_at,
+      seller_id: r.seller_id ?? null,
+      seller_legal_name: r.sellers?.legal_name ?? null,
+      seller_email: r.sellers?.email ?? null,
+      seller_phone: r.sellers?.phone ?? null,
+      product_count: 0,
+    }));
+
+    // Product counts per seller (products belong to sellers, stores to sellers).
+    const productSellerIds = [...new Set(items.map((i) => i.seller_id).filter(Boolean))] as string[];
+    if (productSellerIds.length > 0) {
+      const { data: products } = await supabaseAdmin
+        .from("products")
+        .select("seller_id")
+        .in("seller_id", productSellerIds);
+      const counts = new Map<string, number>();
+      for (const p of products ?? []) {
+        if (p.seller_id) counts.set(p.seller_id, (counts.get(p.seller_id) ?? 0) + 1);
+      }
+      for (const item of items) {
+        if (item.seller_id) item.product_count = counts.get(item.seller_id) ?? 0;
+      }
+    }
+
+    return items;
+  });
+
 /* ------------------------------------------------------------------ */
 /* Store profile (admin store detail workspace)                        */
 /* ------------------------------------------------------------------ */

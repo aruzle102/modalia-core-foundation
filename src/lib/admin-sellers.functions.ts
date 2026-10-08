@@ -1171,7 +1171,9 @@ export const updateStoreVerification = createServerFn({ method: "POST" })
     z
       .object({
         storeId: z.string().uuid(),
-        verificationStatus: z.enum(["unverified", "verified"]),
+        verificationStatus: z.enum(["unverified", "verified", "manual", "suspended"]),
+        note: z.string().trim().max(500).optional(),
+        expiresAt: z.string().datetime({ offset: true }).optional(),
       })
       .parse(data),
   )
@@ -1184,17 +1186,36 @@ export const updateStoreVerification = createServerFn({ method: "POST" })
       .eq("id", data.storeId)
       .single();
     if (!store) throw new Error("Store not found.");
-    const { error } = await supabaseAdmin
-      .from("stores")
-      .update({ verification_status: data.verificationStatus })
-      .eq("id", data.storeId);
+
+    const isGrant = data.verificationStatus === "verified" || data.verificationStatus === "manual";
+    const update: Record<string, unknown> = { verification_status: data.verificationStatus };
+    if (isGrant) {
+      update['verified_by'] = context.userId;
+      update['verified_at'] = new Date().toISOString();
+      update['verification_note'] = data.note?.trim() || null;
+      update['verification_expires_at'] = data.expiresAt ?? null;
+    } else {
+      // Removing / suspending clears the grant audit trail.
+      update['verified_by'] = null;
+      update['verified_at'] = null;
+      update['verification_note'] = null;
+      update['verification_expires_at'] = null;
+    }
+
+    const { error } = await (supabaseAdmin.from("stores") as any).update(update).eq("id", data.storeId);
     if (error) throw new Error(error.message);
     await supabaseAdmin.from("audit_logs").insert({
       actor_id: context.userId,
       action: "store_verification_updated",
       resource: "store",
       resource_id: data.storeId,
-      metadata: { from: store.verification_status, to: data.verificationStatus },
+      metadata: {
+        from: store.verification_status,
+        to: data.verificationStatus,
+        manualOverride: data.verificationStatus === "manual",
+        note: data.note?.trim() || null,
+        expiresAt: data.expiresAt ?? null,
+      },
     });
 
     // Notify the seller's team about the verification change (best-effort).

@@ -66,7 +66,7 @@ function WishlistPage() {
         <h1 className="mt-2 text-display">{t.nav.wishlist}</h1>
         <p className="mt-3 text-body text-muted-foreground">{tw.text}</p>
         {!items.length ? (
-          <section className="mt-10 rounded-3xl border border-border bg-card p-12 text-center">
+          <section className="mt-10 rounded-[14px] border border-[#E5E5E5] bg-white p-12 text-center">
             <Heart className="mx-auto size-8" />
             <h2 className="mt-5 text-h3">{tw.emptyTitle}</h2>
             <Button asChild className="mt-6">
@@ -93,14 +93,14 @@ function WishlistPage() {
               return (
                 <article
                   key={item.productId}
-                  className="group rounded-[24px] border border-border bg-card p-2"
+                  className="group rounded-[14px] border border-[#E5E5E5] bg-white p-2"
                 >
                   <Link
                     to="/product/$slug"
                     params={{ slug: live?.slug ?? item.slug }}
                     search={{ locale }}
                   >
-                    <div className="relative aspect-[4/5] overflow-hidden rounded-[18px] bg-muted">
+                    <div className="relative aspect-[4/5] overflow-hidden rounded-[14px] bg-[#F6F6F4]">
                       {item.image ? (
                         <img
                           src={item.image}
@@ -110,12 +110,12 @@ function WishlistPage() {
                         />
                       ) : null}
                       {sale != null ? (
-                        <span className="absolute start-2 top-2 rounded-full bg-destructive px-2 py-1 text-caption font-semibold text-destructive-foreground">
+                        <span className="absolute start-2 top-2 rounded-md bg-[#E53935] px-2 py-1 text-caption font-semibold text-white">
                           {tw.onSale} −{sale}%
                         </span>
                       ) : null}
                       {unavailable ? (
-                        <span className="absolute start-2 top-2 rounded-full bg-muted px-2 py-1 text-caption font-medium text-muted-foreground">
+                        <span className="absolute start-2 top-2 rounded-md bg-[#F6F6F4] px-2 py-1 text-caption font-medium text-[#666666]">
                           {tw.unavailable}
                         </span>
                       ) : null}

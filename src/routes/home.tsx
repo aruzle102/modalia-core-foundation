@@ -839,6 +839,93 @@ function NewArrivalsSection({
   );
 }
 
+/** Categories strip: compact horizontal scroll of real categories near the
+    top of /home. Hidden when no categories. */
+function CategoriesStrip({
+  categories,
+  locale,
+  copy,
+}: {
+  categories: { id: string; slug: string; name: string; productCount: number; imageUrl: string | null }[];
+  locale: SupportedLocale;
+  copy: HomeCopy;
+}) {
+  if (!categories.length) return null;
+  return (
+    <div className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8">
+      <Reveal>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+            {copy.browseCategories}
+          </h2>
+        </div>
+        <div className="flex snap-x gap-3 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {categories.map((cat) => (
+            <Link
+              key={cat.id}
+              to="/category/$slug"
+              params={{ slug: cat.slug }}
+              search={{ locale }}
+              className="group flex shrink-0 snap-start items-center gap-3 rounded-full border border-border bg-card py-2 pe-5 ps-2 transition-colors hover:border-foreground/30 hover:bg-secondary/60"
+            >
+              {cat.imageUrl ? (
+                <img
+                  src={cat.imageUrl}
+                  alt=""
+                  loading="lazy"
+                  className="size-9 rounded-full object-cover"
+                />
+              ) : (
+                <span className="grid size-9 place-items-center rounded-full bg-muted text-xs font-semibold">
+                  {cat.name.slice(0, 1).toUpperCase()}
+                </span>
+              )}
+              <span className="whitespace-nowrap text-sm font-medium">{cat.name}</span>
+            </Link>
+          ))}
+        </div>
+      </Reveal>
+    </div>
+  );
+}
+
+/** Stores entry: compact discovery CTA to the dedicated /stores page.
+    Never a giant directory on the homepage. */
+function StoresEntry({
+  locale,
+  copy,
+}: {
+  locale: SupportedLocale;
+  copy: HomeCopy;
+}) {
+  return (
+    <Reveal>
+      <div className="overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="flex flex-col items-start gap-4 p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+              {copy.storesEyebrow}
+            </p>
+            <h2 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">
+              {copy.storesTitle}
+            </h2>
+            <p className="mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
+              {copy.storesText}
+            </p>
+          </div>
+          <a
+            href={`/stores?locale=${locale}`}
+            className="inline-flex shrink-0 items-center gap-2 rounded-full bg-foreground px-6 py-3 text-sm font-semibold text-background transition-all hover:gap-3"
+          >
+            {copy.storesCta}
+            <ArrowRight className="size-4 rtl:rotate-180" />
+          </a>
+        </div>
+      </div>
+    </Reveal>
+  );
+}
+
 /** Offers: real compare-at discounts only, in a dark sale band that breaks the
     page rhythm. Hidden when none. */
 function OffersSection({
@@ -1641,6 +1728,7 @@ function HomePage() {
       {/* BrandEntrance disabled per owner request */}
       <SiteHeader locale={locale} t={t} />
       <main id="main-content" tabIndex={-1}>
+        <CategoriesStrip categories={data.categories} locale={locale} copy={copy} />
         <PartnerBannerCarousel />
 
         {/* Discovery: horizontal product rails (not a full listing) */}
@@ -1651,12 +1739,32 @@ function HomePage() {
             locale={locale}
             viewAllLabel={t.common.viewAll}
           />
+          <OffersSection
+            locale={locale}
+            products={data.products}
+            copy={copy}
+            viewAll={t.common.viewAll}
+            shopSearch={shopSearch}
+          />
           <ProductRail
             title="New Arrivals"
             products={[...data.products].reverse().slice(0, 10)}
             locale={locale}
             viewAllLabel={t.common.viewAll}
           />
+          {recommendationsEnabled && recommendations ? (
+            <RecommendationsSection
+              locale={locale}
+              section={{
+                ...recommendations,
+                title: copy.recommendedTitle,
+              }}
+              copy={copy}
+              viewAll={t.common.viewAll}
+              shopSearch={shopSearch}
+            />
+          ) : null}
+          <StoresEntry locale={locale} copy={copy} />
         </div>
 
         {/* V10: Only editorial/content sections remain below. */}

@@ -42,8 +42,8 @@ function Section({
   children: ReactNode;
 }) {
   return (
-    <fieldset className="border-t border-border py-5 first:border-t-0 first:pt-0">
-      <legend className="float-start w-full px-0 text-nav font-medium text-foreground">
+    <fieldset className="border-t border-[#E5E5E5] py-5 first:border-t-0 first:pt-0">
+      <legend className="float-start w-full px-0 text-nav font-medium text-[#0A0A0A]">
         {title}
       </legend>
       <div className="mt-3">{children}</div>
@@ -63,11 +63,11 @@ function CheckRow({
   count?: number;
 }) {
   return (
-    <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-1 py-1.5 text-small text-foreground transition-colors hover:bg-muted/60">
+    <label className="flex cursor-pointer items-center gap-2.5 rounded-[10px] px-1 py-1.5 text-small text-[#0A0A0A] transition-colors hover:bg-[#F6F6F4]">
       <span
         aria-hidden
         className={`grid size-4.5 shrink-0 place-items-center rounded border transition-colors ${
-          checked ? "border-foreground bg-foreground text-background" : "border-border bg-background"
+          checked ? "border-[#0A0A0A] bg-[#0A0A0A] text-white" : "border-[#E5E5E5] bg-white"
         }`}
       >
         {checked ? <Check className="size-3" /> : null}
@@ -80,7 +80,7 @@ function CheckRow({
       />
       <span className="min-w-0 flex-1 truncate">{label}</span>
       {count !== undefined ? (
-        <span className="shrink-0 text-caption text-muted-foreground">{count}</span>
+        <span className="shrink-0 text-caption text-[#666666]">{count}</span>
       ) : null}
     </label>
   );
@@ -140,9 +140,9 @@ export function ShopFilters({
               onKeyDown={(event) => {
                 if (event.key === "Enter") applyPrice();
               }}
-              className="h-9"
+              className="h-9 rounded-[10px] border-[#E5E5E5]"
             />
-            <span aria-hidden className="text-muted-foreground">–</span>
+            <span aria-hidden className="text-[#666666]">–</span>
             <Input
               inputMode="numeric"
               aria-label={t.maxPrice}
@@ -152,13 +152,13 @@ export function ShopFilters({
               onKeyDown={(event) => {
                 if (event.key === "Enter") applyPrice();
               }}
-              className="h-9"
+              className="h-9 rounded-[10px] border-[#E5E5E5]"
             />
-            <Button type="button" size="sm" variant="outline" onClick={applyPrice}>
+            <Button type="button" size="sm" variant="outline" className="border-[#0A0A0A] text-[#0A0A0A]" onClick={applyPrice}>
               {t.apply}
             </Button>
           </div>
-          <p className="mt-2 text-caption text-muted-foreground">
+          <p className="mt-2 text-caption text-[#666666]">
             {formatPrice(facets.priceBounds.min, locale)} –{" "}
             {formatPrice(facets.priceBounds.max, locale)}
           </p>
@@ -192,10 +192,10 @@ export function ShopFilters({
                   aria-pressed={active}
                   title={`${size.label} · ${size.productCount}`}
                   onClick={() => onChange({ ...values, sizes: toggle(values.sizes, size.value) })}
-                  className={`min-w-10 rounded-lg border px-2.5 py-1.5 text-small transition-colors ${
+                  className={`min-w-10 rounded-[10px] border px-2.5 py-1.5 text-small transition-colors ${
                     active
-                      ? "border-foreground bg-foreground text-background"
-                      : "border-border bg-background text-foreground hover:border-foreground/40"
+                      ? "border-[#0A0A0A] bg-[#0A0A0A] text-white"
+                      : "border-[#E5E5E5] bg-white text-[#0A0A0A] hover:border-[#0A0A0A]/40"
                   }`}
                 >
                   {size.label}
@@ -220,9 +220,9 @@ export function ShopFilters({
                   title={`${color.name} · ${color.productCount}`}
                   onClick={() => onChange({ ...values, colors: toggle(values.colors, color.slug) })}
                   style={color.hex ? { backgroundColor: color.hex } : undefined}
-                  className={`grid size-9 place-items-center rounded-full border border-border ${motionTw.transition.interactive} ${
-                    active ? "ring-2 ring-foreground ring-offset-2 ring-offset-background" : "hover:scale-110"
-                  } ${color.hex ? "" : "bg-muted"}`}
+                  className={`grid size-9 place-items-center rounded-full border border-[#E5E5E5] ${motionTw.transition.interactive} ${
+                    active ? "ring-2 ring-[#0A0A0A] ring-offset-2 ring-offset-white" : "hover:scale-110"
+                  } ${color.hex ? "" : "bg-[#F6F6F4]"}`}
                 >
                   {active ? <Check className="size-4 text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]" /> : null}
                 </button>

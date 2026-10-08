@@ -17,6 +17,7 @@ import { CartProvider } from "@/lib/cart-store";
 import { PageFade } from "@/lib/motion";
 
 import { getTranslations, resolveLocale } from "../lib/i18n";
+import { MaintenanceGate } from "@/components/maintenance/MaintenanceGate";
 
 function NotFoundComponent() {
   const locale = resolveLocale();
@@ -179,7 +180,9 @@ function RootComponent() {
         <NavigationProgress />
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <PageFade routeKey={pathname}>
-          <Outlet />
+          <MaintenanceGate>
+            <Outlet />
+          </MaintenanceGate>
         </PageFade>
       </CartProvider>
     </QueryClientProvider>

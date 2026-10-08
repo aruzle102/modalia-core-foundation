@@ -48,6 +48,11 @@ import {
   updateStoreVerification,
   updateCommissionRate,
 } from "@/lib/admin-sellers.functions";
+import {
+  grantManualVerification,
+  removeVerification,
+  suspendSellerVerification,
+} from "@/lib/verification.functions";
 import { listAdminProducts } from "@/lib/admin-catalog.functions";
 import { listAdminOrders } from "@/lib/admin-orders.functions";
 import { createSupportSession } from "@/lib/admin-support.functions";
@@ -106,7 +111,16 @@ function isOfficialStore(settings: unknown): boolean {
   );
 }
 
-type ConfirmKind = "suspend" | "disable" | "verify" | "unverify" | "resetOnboarding" | "forcePasswordReset";
+type ConfirmKind =
+  | "suspend"
+  | "disable"
+  | "verify"
+  | "unverify"
+  | "resetOnboarding"
+  | "forcePasswordReset"
+  | "grantSellerVerification"
+  | "removeSellerVerification"
+  | "suspendSellerVerification";
 
 function SellerWorkspacePage() {
   const { sellerId } = Route.useParams();
@@ -196,6 +210,50 @@ function SellerWorkspacePage() {
     },
   });
 
+  // ── Seller-level manual verification override (sellers.verification_state)
+  const [sellerVerifyNote, setSellerVerifyNote] = useState("");
+
+  const grantSellerVerificationMutation = useMutation({
+    mutationFn: (note: string) =>
+      grantManualVerification({ data: { sellerId, note: note.trim() || undefined } }),
+    onSuccess: () => {
+      toast.success("Manual verification granted.");
+      setConfirmAction(null);
+      setSellerVerifyNote("");
+      refresh();
+    },
+    onError: (err: Error) => {
+      setConfirmAction(null);
+      toast.error(err.message);
+    },
+  });
+
+  const removeSellerVerificationMutation = useMutation({
+    mutationFn: () => removeVerification({ data: { sellerId } }),
+    onSuccess: () => {
+      toast.success("Verification removed.");
+      setConfirmAction(null);
+      refresh();
+    },
+    onError: (err: Error) => {
+      setConfirmAction(null);
+      toast.error(err.message);
+    },
+  });
+
+  const suspendSellerVerificationMutation = useMutation({
+    mutationFn: () => suspendSellerVerification({ data: { sellerId } }),
+    onSuccess: () => {
+      toast.success("Verification suspended.");
+      setConfirmAction(null);
+      refresh();
+    },
+    onError: (err: Error) => {
+      setConfirmAction(null);
+      toast.error(err.message);
+    },
+  });
+
   const commissionMutation = useMutation({
     mutationFn: (rate: number) => updateCommissionRate({ data: { sellerId, rate } }),
     onSuccess: (res) => {
@@ -264,6 +322,9 @@ function SellerWorkspacePage() {
     else if (kind === "disable") statusMutation.mutate("disabled");
     else if (kind === "verify") verifyMutation.mutate();
     else if (kind === "unverify") unverifyMutation.mutate();
+    else if (kind === "grantSellerVerification") grantSellerVerificationMutation.mutate(sellerVerifyNote);
+    else if (kind === "removeSellerVerification") removeSellerVerificationMutation.mutate();
+    else if (kind === "suspendSellerVerification") suspendSellerVerificationMutation.mutate();
     else if (kind === "resetOnboarding") resetOnboardingMutation.mutate();
     else if (kind === "forcePasswordReset") forcePasswordResetMutation.mutate();
   };
@@ -439,6 +500,31 @@ function SellerWorkspacePage() {
                 locale={locale}
                 onVerify={() => store && askConfirm("verify", p.confirmVerifyTitle, p.confirmVerifyDesc(store.name), p.verifyStore)}
                 onUnverify={() => store && askConfirm("unverify", p.confirmUnverifyTitle, p.confirmUnverifyDesc(store.name), p.removeVerification)}
+                onGrantSellerVerification={(note) => {
+                  setSellerVerifyNote(note);
+                  askConfirm(
+                    "grantSellerVerification",
+                    "Grant manual verification",
+                    "This is an ADMIN OVERRIDE: the seller will be marked as manually verified before completing the normal requirements. The grant is audited with your identity and timestamp.",
+                    "Grant verification",
+                  );
+                }}
+                onRemoveSellerVerification={() =>
+                  askConfirm(
+                    "removeSellerVerification",
+                    "Remove verification",
+                    "The seller's verification override will be removed and set back to unverified.",
+                    "Remove verification",
+                  )
+                }
+                onSuspendSellerVerification={() =>
+                  askConfirm(
+                    "suspendSellerVerification",
+                    "Suspend verification",
+                    "The seller's verification will be suspended.",
+                    "Suspend verification",
+                  )
+                }
               />
             )}
             {tab === "activity" && <ActivityTab profile={profile} locale={locale} />}
@@ -1280,15 +1366,27 @@ function VerificationTab({
   locale,
   onVerify,
   onUnverify,
+  onGrantSellerVerification,
+  onRemoveSellerVerification,
+  onSuspendSellerVerification,
 }: {
   profile: Profile;
   locale: SupportedLocale;
   onVerify: () => void;
   onUnverify: () => void;
+  onGrantSellerVerification: (note: string) => void;
+  onRemoveSellerVerification: () => void;
+  onSuspendSellerVerification: () => void;
 }) {
   const { p } = useWorkspaceT(locale);
   const store = profile.store;
+  const seller = profile.seller;
+  const sellerState = (seller as { verification_state?: string } | null)?.verification_state ?? "unverified";
+  const sellerNote = (seller as { verification_note?: string | null } | null)?.verification_note ?? null;
+  const sellerVerifiedAt = (seller as { verified_at?: string | null } | null)?.verified_at ?? null;
+  const [note, setNote] = useState("");
   return (
+    <div className="space-y-6">
     <AdminCard title={p.verification}>
       {!store ? (
         <EmptyState title={p.noStore} text={p.noStoreDesc} />
@@ -1297,12 +1395,17 @@ function VerificationTab({
           <div className="flex items-center gap-3">
             <span className="text-sm text-muted-foreground">{p.verification}:</span>
             <StatusPill status={store.verification_status} />
+            {store.verification_status === "manual" && (
+              <span className="text-xs text-muted-foreground">✓ {p.manuallyVerified}</span>
+            )}
           </div>
           <p className="text-sm text-muted-foreground">
-            {store.verification_status === "verified" ? p.verified : p.unverified}
+            {store.verification_status === "verified" || store.verification_status === "manual"
+              ? p.verified
+              : p.unverified}
           </p>
           <div className="flex flex-wrap gap-2">
-            {store.verification_status === "unverified" ? (
+            {store.verification_status === "unverified" || store.verification_status === "suspended" ? (
               <Button size="sm" variant="secondary" onClick={onVerify}>
                 <ShieldCheck className="size-4 me-1.5" />
                 {p.verifyStore}
@@ -1317,6 +1420,67 @@ function VerificationTab({
         </div>
       )}
     </AdminCard>
+
+    {/* Seller-level manual verification override (sellers.verification_state).
+        Explicit ADMIN OVERRIDE — does not change the normal requirements flow. */}
+    <AdminCard title="Seller verification override">
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-muted-foreground">Seller verification:</span>
+          <StatusPill status={sellerState} />
+          {sellerState === "manual" && (
+            <span className="text-xs text-muted-foreground">✓ Manually verified (admin override)</span>
+          )}
+        </div>
+        {sellerNote ? (
+          <p className="text-sm text-muted-foreground">
+            <span className="font-medium">Note:</span> {sellerNote}
+          </p>
+        ) : null}
+        {sellerVerifiedAt ? (
+          <p className="text-xs text-muted-foreground">Granted at {fmtDateTime(sellerVerifiedAt, locale)}</p>
+        ) : null}
+        <div className="space-y-2">
+          <Field label="Override reason / note (optional)">
+            <Input
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="e.g. Strategic partner — verified before requirements"
+              maxLength={500}
+            />
+          </Field>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {sellerState === "unverified" || sellerState === "suspended" ? (
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => {
+                onGrantSellerVerification(note);
+                setNote("");
+              }}
+            >
+              <ShieldCheck className="size-4 me-1.5" />
+              Grant verification
+            </Button>
+          ) : (
+            <>
+              <Button size="sm" variant="outline" onClick={onRemoveSellerVerification}>
+                <ShieldX className="size-4 me-1.5" />
+                Remove verification
+              </Button>
+              {sellerState !== "suspended" ? (
+                <Button size="sm" variant="outline" onClick={onSuspendSellerVerification}>
+                  <Ban className="size-4 me-1.5" />
+                  Suspend verification
+                </Button>
+              ) : null}
+            </>
+          )}
+        </div>
+      </div>
+    </AdminCard>
+    </div>
   );
 }
 

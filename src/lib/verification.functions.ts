@@ -226,3 +226,201 @@ export const reviewVerificationRequest = createServerFn({ method: "POST" })
     }
     return { ok: true };
   });
+
+// ── Admin: manual seller verification override ───────────────────────
+// Explicit admin override on the SELLER record (sellers.verification_state).
+// Does NOT change or bypass the normal requirements flow
+// (stores.verification_status + verification_requests) — it is recorded as
+// a manual override and audited. Mirrored to the seller's stores so the
+// customer-facing badge stays consistent.
+
+export type SellerVerificationState = "unverified" | "verified" | "manual" | "suspended";
+
+async function auditSellerVerification(
+  supabaseAdmin: any,
+  actorId: string,
+  sellerId: string,
+  action: string,
+  metadata: Record<string, unknown>,
+) {
+  await supabaseAdmin.from("audit_logs").insert({
+    actor_id: actorId,
+    action,
+    resource: "seller",
+    resource_id: sellerId,
+    metadata,
+  });
+}
+
+/** Admin: grant manual verification override to a seller. */
+export const grantManualVerification = createServerFn({ method: "POST" })
+  .middleware(adminOnly)
+  .validator((d) =>
+    z
+      .object({
+        sellerId: z.string().uuid(),
+        note: z.string().trim().max(500).optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }): Promise<{ ok: boolean }> => {
+    await assertAdmin((context as any));
+    const userId = (context as any)?.userId as string;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: seller, error: sellerError } = await supabaseAdmin
+      .from("sellers")
+      .select("id, verification_state")
+      .eq("id", data.sellerId)
+      .single();
+    if (sellerError || !seller) throw new Error("Seller not found.");
+
+    const now = new Date().toISOString();
+    const note = data.note?.trim() || null;
+
+    const { error: updError } = await supabaseAdmin
+      .from("sellers")
+      .update({
+        verification_state: "manual",
+        verified_by: userId,
+        verified_at: now,
+        verification_note: note,
+      })
+      .eq("id", data.sellerId);
+    if (updError) throw new Error(updError.message);
+
+    // Mirror to the seller's stores so the public badge reflects the override.
+    // Only touch stores that are currently unverified — never downgrade a
+    // normally-earned "verified".
+    await supabaseAdmin
+      .from("stores")
+      .update({
+        verification_status: "manual",
+        verified_by: userId,
+        verified_at: now,
+        verification_note: note,
+      })
+      .eq("seller_id", data.sellerId)
+      .eq("verification_status", "unverified");
+
+    await auditSellerVerification(supabaseAdmin, userId, data.sellerId, "seller_verification_granted", {
+      from: seller.verification_state,
+      to: "manual",
+      manualOverride: true,
+      note,
+    });
+
+    try {
+      const { emitSellerNotification } = await import("@/lib/notifications.functions");
+      await emitSellerNotification(data.sellerId, {
+        type: "store_verification_changed",
+        params: { status: "manual" },
+        link: "/seller/settings",
+        payload: { seller_id: data.sellerId, to: "manual", manualOverride: true },
+      });
+    } catch {
+      /* notifications are best-effort */
+    }
+
+    return { ok: true };
+  });
+
+/** Admin: remove a seller's verification (back to unverified). */
+export const removeVerification = createServerFn({ method: "POST" })
+  .middleware(adminOnly)
+  .validator((d) => z.object({ sellerId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }): Promise<{ ok: boolean }> => {
+    await assertAdmin((context as any));
+    const userId = (context as any)?.userId as string;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: seller, error: sellerError } = await supabaseAdmin
+      .from("sellers")
+      .select("id, verification_state")
+      .eq("id", data.sellerId)
+      .single();
+    if (sellerError || !seller) throw new Error("Seller not found.");
+
+    const { error: updError } = await supabaseAdmin
+      .from("sellers")
+      .update({
+        verification_state: "unverified",
+        verified_by: null,
+        verified_at: null,
+        verification_note: null,
+      })
+      .eq("id", data.sellerId);
+    if (updError) throw new Error(updError.message);
+
+    // Clear the mirrored manual override on stores (only those still marked manual).
+    await supabaseAdmin
+      .from("stores")
+      .update({
+        verification_status: "unverified",
+        verified_by: null,
+        verified_at: null,
+        verification_note: null,
+        verification_expires_at: null,
+      })
+      .eq("seller_id", data.sellerId)
+      .eq("verification_status", "manual");
+
+    await auditSellerVerification(supabaseAdmin, userId, data.sellerId, "seller_verification_removed", {
+      from: seller.verification_state,
+      to: "unverified",
+    });
+
+    try {
+      const { emitSellerNotification } = await import("@/lib/notifications.functions");
+      await emitSellerNotification(data.sellerId, {
+        type: "store_verification_changed",
+        params: { status: "unverified" },
+        link: "/seller/settings",
+        payload: { seller_id: data.sellerId, to: "unverified" },
+      });
+    } catch {
+      /* notifications are best-effort */
+    }
+
+    return { ok: true };
+  });
+
+/** Admin: suspend a seller's verification. */
+export const suspendSellerVerification = createServerFn({ method: "POST" })
+  .middleware(adminOnly)
+  .validator((d) => z.object({ sellerId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }): Promise<{ ok: boolean }> => {
+    await assertAdmin((context as any));
+    const userId = (context as any)?.userId as string;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: seller, error: sellerError } = await supabaseAdmin
+      .from("sellers")
+      .select("id, verification_state")
+      .eq("id", data.sellerId)
+      .single();
+    if (sellerError || !seller) throw new Error("Seller not found.");
+
+    const { error: updError } = await supabaseAdmin
+      .from("sellers")
+      .update({
+        verification_state: "suspended",
+        verified_by: userId,
+        verified_at: new Date().toISOString(),
+      })
+      .eq("id", data.sellerId);
+    if (updError) throw new Error(updError.message);
+
+    await supabaseAdmin
+      .from("stores")
+      .update({ verification_status: "suspended" })
+      .eq("seller_id", data.sellerId)
+      .in("verification_status", ["manual", "verified"]);
+
+    await auditSellerVerification(supabaseAdmin, userId, data.sellerId, "seller_verification_suspended", {
+      from: seller.verification_state,
+      to: "suspended",
+    });
+
+    return { ok: true };
+  });

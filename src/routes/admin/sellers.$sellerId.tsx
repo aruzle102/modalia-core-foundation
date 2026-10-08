@@ -48,6 +48,11 @@ import {
   updateStoreVerification,
   updateCommissionRate,
 } from "@/lib/admin-sellers.functions";
+import {
+  grantManualVerification,
+  removeVerification,
+  suspendSellerVerification,
+} from "@/lib/verification.functions";
 import { listAdminProducts } from "@/lib/admin-catalog.functions";
 import { listAdminOrders } from "@/lib/admin-orders.functions";
 import { createSupportSession } from "@/lib/admin-support.functions";
@@ -209,13 +214,8 @@ function SellerWorkspacePage() {
   const [sellerVerifyNote, setSellerVerifyNote] = useState("");
 
   const grantSellerVerificationMutation = useMutation({
-    mutationFn: (note: string) => {
-      const storeId = profile?.store?.id;
-      if (!storeId) throw new Error("Store not found.");
-      return updateStoreVerification({
-        data: { storeId, verificationStatus: "manual", note: note.trim() || undefined },
-      });
-    },
+    mutationFn: (note: string) =>
+      grantManualVerification({ data: { sellerId, note: note.trim() || undefined } }),
     onSuccess: () => {
       toast.success("Manual verification granted.");
       setConfirmAction(null);
@@ -229,11 +229,7 @@ function SellerWorkspacePage() {
   });
 
   const removeSellerVerificationMutation = useMutation({
-    mutationFn: () => {
-      const storeId = profile?.store?.id;
-      if (!storeId) throw new Error("Store not found.");
-      return updateStoreVerification({ data: { storeId, verificationStatus: "unverified" } });
-    },
+    mutationFn: () => removeVerification({ data: { sellerId } }),
     onSuccess: () => {
       toast.success("Verification removed.");
       setConfirmAction(null);
@@ -246,11 +242,7 @@ function SellerWorkspacePage() {
   });
 
   const suspendSellerVerificationMutation = useMutation({
-    mutationFn: () => {
-      const storeId = profile?.store?.id;
-      if (!storeId) throw new Error("Store not found.");
-      return updateStoreVerification({ data: { storeId, verificationStatus: "suspended" } });
-    },
+    mutationFn: () => suspendSellerVerification({ data: { sellerId } }),
     onSuccess: () => {
       toast.success("Verification suspended.");
       setConfirmAction(null);
@@ -1404,7 +1396,7 @@ function VerificationTab({
             <span className="text-sm text-muted-foreground">{p.verification}:</span>
             <StatusPill status={store.verification_status} />
             {store.verification_status === "manual" && (
-              <span className="text-xs text-muted-foreground">✓ Manually verified</span>
+              <span className="text-xs text-muted-foreground">✓ {p.manuallyVerified}</span>
             )}
           </div>
           <p className="text-sm text-muted-foreground">

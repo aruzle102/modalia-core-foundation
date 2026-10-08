@@ -1,1 +1,111 @@
-LS0gTU9EQUxJQSDigJQgU3RvcmUgdmVyaWZpY2F0aW9uIHJlcXVlc3Qgc3lzdGVtCi0tIENvbmRpdGlvbnM6IDUwKyBzYWxlcyBpbiBsYXN0IDMwIGRheXMgQU5EIDUwMDArIHVuaXF1ZSBzdG9yZSB2aWV3cwotLSBWaWV3cyBkZWR1cGxpY2F0ZWQgYnkgZGV2aWNlIChvbmUgY291bnQgcGVyIGRldmljZSBwZXIgc3RvcmUpCgotLSAxLiBTdG9yZSB2aWV3cyB0cmFja2luZyAoZGVkdXBsaWNhdGVkIGJ5IGRldmljZSkKQ1JFQVRFIFRBQkxFIElGIE5PVCBFWElTVFMgcHVibGljLnN0b3JlX3ZpZXdzICgKICBpZCBVVUlEIFBSSU1BUlkgS0VZIERFRkFVTFQgZ2VuX3JhbmRvbV91dWlkKCksCiAgc3RvcmVfaWQgVVVJRCBOT1QgTlVMTCBSRUZFUkVOQ0VTIHB1YmxpYy5zdG9yZXMoaWQpIE9OIERFTEVURSBDQVNDQURFLAogIGRldmljZV9oYXNoIFRFWFQgTk9UIE5VTEwsCiAgdmlld2VkX2F0IFRJTUVTVEFNUFRaIE5PVCBOVUxMIERFRkFVTFQgbm93KCksCiAgVU5JUVVFIChzdG9yZV9pZCwgZGV2aWNlX2hhc2gpCik7CkNSRUFURSBJTkRFWCBJRiBOT1QgRVhJU1RTIGlkeF9zdG9yZV92aWV3c19zdG9yZSBPTiBwdWJsaWMuc3RvcmVfdmlld3Moc3RvcmVfaWQpOwpDUkVBVEUgSU5ERVggSUYgTk9UIEVYSVNUUyBpZHhfc3RvcmVfdmlld3Nfdmlld2VkIE9OIHB1YmxpYy5zdG9yZV92aWV3cyh2aWV3ZWRfYXQpOwoKLS0gMi4gVmVyaWZpY2F0aW9uIHJlcXVlc3RzCkNSRUFURSBUQUJMRSBJRiBOT1QgRVhJU1RTIHB1YmxpYy52ZXJpZmljYXRpb25fcmVxdWVzdHMgKAogIGlkIFVVSUQgUFJJTUFSWSBLRVkgREVGQVVMVCBnZW5fcmFuZG9tX3V1aWQoKSwKICBzdG9yZV9pZCBVVUlEIE5PVCBOVUxMIFJFRkVSRU5DRVMgcHVibGljLnN0b3JlcyhpZCkgT04gREVMRVRFIENBU0NBREUsCiAgc2VsbGVyX2lkIFVVSUQgTk9UIE5VTEwgUkVGRVJFTkNFUyBwdWJsaWMuc2VsbGVycyhpZCkgT04gREVMRVRFIENBU0NBREUsCiAgc3RhdHVzIFRFWFQgTk9UIE5VTEwgREVGQVVMVCAncGVuZGluZycgQ0hFQ0sgKHN0YXR1cyBJTiAoJ3BlbmRpbmcnLCdhcHByb3ZlZCcsJ3JlamVjdGVkJykpLAogIHNhbGVzXzMwZCBJTlRFR0VSIE5PVCBOVUxMIERFRkFVTFQgMCwKICB1bmlxdWVfdmlld3MgSU5URUdFUiBOT1QgTlVMTCBERUZBVUxUIDAsCiAgcmVxdWVzdGVkX2F0IFRJTUVTVEFNUFRaIE5PVCBOVUxMIERFRkFVTFQgbm93KCksCiAgcmV2aWV3ZWRfYXQgVElNRVNUQU1QVFosCiAgcmV2aWV3ZWRfYnkgVVVJRCwKICByZXZpZXdfbm90ZXMgVEVYVCwKICBVTklRVUUgKHN0b3JlX2lkLCBzdGF0dXMpIERFRkVSUkFCTEUgSU5JVElBTExZIERFRkVSUkVECik7CkNSRUFURSBJTkRFWCBJRiBOT1QgRVhJU1RTIGlkeF92ZXJpZl9yZXFfc3RvcmUgT04gcHVibGljLnZlcmlmaWNhdGlvbl9yZXF1ZXN0cyhzdG9yZV9pZCk7CkNSRUFURSBJTkRFWCBJRiBOT1QgRVhJU1RTIGlkeF92ZXJpZl9yZXFfc3RhdHVzIE9OIHB1YmxpYy52ZXJpZmljYXRpb25fcmVxdWVzdHMoc3RhdHVzKTsKCi0tIDMuIFJlY29yZCBhIHN0b3JlIHZpZXcgKGlkZW1wb3RlbnQgcGVyIGRldmljZSkKQ1JFQVRFIE9SIFJFUExBQ0UgRlVOQ1RJT04gcHVibGljLnJlY29yZF9zdG9yZV92aWV3KHBfc3RvcmVfaWQgVVVJRCwgcF9kZXZpY2VfaGFzaCBURVhUKQpSRVRVUk5TIEJPT0xFQU4KTEFOR1VBR0UgcGxwZ3NxbCBTRUNVUklUWSBERUZJTkVSIFNFVCBzZWFyY2hfcGF0aCA9IHB1YmxpYwpBUyAkJApCRUdJTgogIElOU0VSVCBJTlRPIHB1YmxpYy5zdG9yZV92aWV3cyAoc3RvcmVfaWQsIGRldmljZV9oYXNoKQogIFZBTFVFUyAocF9zdG9yZV9pZCwgcF9kZXZpY2VfaGFzaCkKICBPTiBDT05GTElDVCAoc3RvcmVfaWQsIGRldmljZV9oYXNoKSBETyBOT1RISU5HOwogIFJFVFVSTiBGT1VORDsKRU5EOwokJDsKCi0tIDQuIEdldCB2ZXJpZmljYXRpb24gZWxpZ2liaWxpdHkgZm9yIGEgc3RvcmUKQ1JFQVRFIE9SIFJFUExBQ0UgRlVOQ1RJT04gcHVibGljLmdldF9zdG9yZV92ZXJpZmljYXRpb25fZWxpZ2liaWxpdHkocF9zdG9yZV9pZCBVVUlEKQpSRVRVUk5TIFRBQkxFIChzYWxlc18zMGQgQklHSU5ULCB1bmlxdWVfdmlld3MgQklHSU5ULCBlbGlnaWJsZSBCT09MRUFOKQpMQU5HVUFHRSBwbHBnc3FsIFNFQ1VSSVRZIERFRklORVIgU0VUIHNlYXJjaF9wYXRoID0gcHVibGljCkFTICQkCkRFQ0xBUkUKICB2X3NhbGVzIEJJR0lOVDsKICB2X3ZpZXdzIEJJR0lOVDsKQkVHSU4KICAtLSBDb3VudCBkZWxpdmVyZWQvcGFpZCBvcmRlcnMgaW4gbGFzdCAzMCBkYXlzIGZvciB0aGlzIHN0b3JlJ3Mgc2VsbGVyCiAgU0VMRUNUIENPVU5UKCopIElOVE8gdl9zYWxlcwogIEZST00gcHVibGljLnNlbGxlcl9vcmRlcnMgc28KICBKT0lOIHB1YmxpYy5zZWxsZXJzIHMgT04gcy5pZCA9IHNvLnNlbGxlcl9pZAogIEpPSU4gcHVibGljLnN0b3JlcyBzdCBPTiBzdC5zZWxsZXJfaWQgPSBzLmlkCiAgV0hFUkUgc3QuaWQgPSBwX3N0b3JlX2lkCiAgICBBTkQgc28uc3RhdHVzIElOICgnZGVsaXZlcmVkJywgJ3BhaWQnLCAnY29tcGxldGVkJykKICAgIEFORCBzby5jcmVhdGVkX2F0ID49IG5vdygpIC0gSU5URVJWQUwgJzMwIGRheXMnOwoKICAtLSBDb3VudCB1bmlxdWUgZGV2aWNlIHZpZXdzCiAgU0VMRUNUIENPVU5UKCopIElOVE8gdl92aWV3cwogIEZST00gcHVibGljLnN0b3JlX3ZpZXdzCiAgV0hFUkUgc3RvcmVfaWQgPSBwX3N0b3JlX2lkOwoKICBSRVRVUk4gUVVFUlkgU0VMRUNUIHZfc2FsZXMsIHZfdmlld3MsICh2X3NhbGVzID49IDUwIEFORCB2X3ZpZXdzID49IDUwMDApOwpFTkQ7CiQkOwoKLS0gNS4gUkxTCkFMVEVSIFRBQkxFIHB1YmxpYy5zdG9yZV92aWV3cyBFTkFCTEUgUk9XIExFVkVMIFNFQ1VSSVRZOwpBTFRFUiBUQUJMRSBwdWJsaWMudmVyaWZpY2F0aW9uX3JlcXVlc3RzIEVOQUJMRSBST1cgTEVWRUwgU0VDVVJJVFk7CgotLSBTdG9yZSB2aWV3czogcHVibGljIGNhbiBpbnNlcnQgKHRyYWNraW5nKSwgc2VsbGVycyBjYW4gcmVhZCB0aGVpciBvd24KRFJPUCBQT0xJQ1kgSUYgRVhJU1RTIHN0b3JlX3ZpZXdzX2luc2VydCBPTiBwdWJsaWMuc3RvcmVfdmlld3M7CkNSRUFURSBQT0xJQ1kgc3RvcmVfdmlld3NfaW5zZXJ0IE9OIHB1YmxpYy5zdG9yZV92aWV3cyBGT1IgSU5TRVJUCiAgV0lUSCBDSEVDSyAodHJ1ZSk7CkRST1AgUE9MSUNZIElGIEVYSVNUUyBzdG9yZV92aWV3c19zZWxsZXJfcmVhZCBPTiBwdWJsaWMuc3RvcmVfdmlld3M7CkNSRUFURSBQT0xJQ1kgc3RvcmVfdmlld3Nfc2VsbGVyX3JlYWQgT04gcHVibGljLnN0b3JlX3ZpZXdzIEZPUiBTRUxFQ1QKICBVU0lORyAoCiAgICBpc19zdXBlcl9hZG1pbigpCiAgICBPUiBFWElTVFMgKAogICAgICBTRUxFQ1QgMSBGUk9NIHB1YmxpYy5zdG9yZXMgc3QKICAgICAgSk9JTiBwdWJsaWMuc2VsbGVycyBzIE9OIHMuaWQgPSBzdC5zZWxsZXJfaWQKICAgICAgV0hFUkUgc3QuaWQgPSBzdG9yZV92aWV3cy5zdG9yZV9pZAogICAgICAgIEFORCAocy5vd25lcl9pZCA9IGF1dGgudWlkKCkgT1IgcHVibGljLmlzX2FjdGl2ZV9zZWxsZXJfc3RhZmYocy5pZCwgYXV0aC51aWQoKSkpCiAgICApCiAgKTsKCi0tIFZlcmlmaWNhdGlvbiByZXF1ZXN0czogc2VsbGVycyBjYW4gY3JlYXRlL3JlYWQgb3duLCBhZG1pbnMgY2FuIG1hbmFnZQpEUk9QIFBPTElDWSBJRiBFWElTVFMgdmVyaWZfcmVxX3NlbGxlciBPTiBwdWJsaWMudmVyaWZpY2F0aW9uX3JlcXVlc3RzOwpDUkVBVEUgUE9MSUNZIHZlcmlmX3JlcV9zZWxsZXIgT04gcHVibGljLnZlcmlmaWNhdGlvbl9yZXF1ZXN0cyBGT1IgQUxMCiAgVVNJTkcgKAogICAgaXNfc3VwZXJfYWRtaW4oKQogICAgT1IgRVhJU1RTICgKICAgICAgU0VMRUNUIDEgRlJPTSBwdWJsaWMuc2VsbGVycyBzCiAgICAgIFdIRVJFIHMuaWQgPSB2ZXJpZmljYXRpb25fcmVxdWVzdHMuc2VsbGVyX2lkCiAgICAgICAgQU5EIChzLm93bmVyX2lkID0gYXV0aC51aWQoKSBPUiBwdWJsaWMuaXNfYWN0aXZlX3NlbGxlcl9zdGFmZihzLmlkLCBhdXRoLnVpZCgpKSkKICAgICkKICApCiAgV0lUSCBDSEVDSyAoCiAgICBpc19zdXBlcl9hZG1pbigpCiAgICBPUiBFWElTVFMgKAogICAgICBTRUxFQ1QgMSBGUk9NIHB1YmxpYy5zZWxsZXJzIHMKICAgICAgV0hFUkUgcy5pZCA9IHZlcmlmaWNhdGlvbl9yZXF1ZXN0cy5zZWxsZXJfaWQKICAgICAgICBBTkQgKHMub3duZXJfaWQgPSBhdXRoLnVpZCgpIE9SIHB1YmxpYy5pc19hY3RpdmVfc2VsbGVyX3N0YWZmKHMuaWQsIGF1dGgudWlkKCkpKQogICAgKQogICk7Cg==
+-- MODALIA — Store verification request system
+-- Conditions: 50+ sales in last 30 days AND 5000+ unique store views
+-- Views deduplicated by device (one count per device per store)
+
+-- 1. Store views tracking (deduplicated by device)
+CREATE TABLE IF NOT EXISTS public.store_views (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  store_id UUID NOT NULL REFERENCES public.stores(id) ON DELETE CASCADE,
+  device_hash TEXT NOT NULL,
+  viewed_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (store_id, device_hash)
+);
+CREATE INDEX IF NOT EXISTS idx_store_views_store ON public.store_views(store_id);
+CREATE INDEX IF NOT EXISTS idx_store_views_viewed ON public.store_views(viewed_at);
+
+-- 2. Verification requests
+CREATE TABLE IF NOT EXISTS public.verification_requests (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  store_id UUID NOT NULL REFERENCES public.stores(id) ON DELETE CASCADE,
+  seller_id UUID NOT NULL REFERENCES public.sellers(id) ON DELETE CASCADE,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','approved','rejected')),
+  sales_30d INTEGER NOT NULL DEFAULT 0,
+  unique_views INTEGER NOT NULL DEFAULT 0,
+  requested_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  reviewed_at TIMESTAMPTZ,
+  reviewed_by UUID,
+  review_notes TEXT,
+  UNIQUE (store_id, status) DEFERRABLE INITIALLY DEFERRED
+);
+CREATE INDEX IF NOT EXISTS idx_verif_req_store ON public.verification_requests(store_id);
+CREATE INDEX IF NOT EXISTS idx_verif_req_status ON public.verification_requests(status);
+
+-- 3. Record a store view (idempotent per device)
+CREATE OR REPLACE FUNCTION public.record_store_view(p_store_id UUID, p_device_hash TEXT)
+RETURNS BOOLEAN
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public
+AS $$
+BEGIN
+  INSERT INTO public.store_views (store_id, device_hash)
+  VALUES (p_store_id, p_device_hash)
+  ON CONFLICT (store_id, device_hash) DO NOTHING;
+  RETURN FOUND;
+END;
+$$;
+
+-- 4. Get verification eligibility for a store
+CREATE OR REPLACE FUNCTION public.get_store_verification_eligibility(p_store_id UUID)
+RETURNS TABLE (sales_30d BIGINT, unique_views BIGINT, eligible BOOLEAN)
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public
+AS $$
+DECLARE
+  v_sales BIGINT;
+  v_views BIGINT;
+BEGIN
+  -- Count delivered/paid orders in last 30 days for this store's seller
+  SELECT COUNT(*) INTO v_sales
+  FROM public.seller_orders so
+  JOIN public.sellers s ON s.id = so.seller_id
+  JOIN public.stores st ON st.seller_id = s.id
+  WHERE st.id = p_store_id
+    AND so.status IN ('delivered', 'paid', 'completed')
+    AND so.created_at >= now() - INTERVAL '30 days';
+
+  -- Count unique device views
+  SELECT COUNT(*) INTO v_views
+  FROM public.store_views
+  WHERE store_id = p_store_id;
+
+  RETURN QUERY SELECT v_sales, v_views, (v_sales >= 50 AND v_views >= 5000);
+END;
+$$;
+
+-- 5. RLS
+ALTER TABLE public.store_views ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.verification_requests ENABLE ROW LEVEL SECURITY;
+
+-- Store views: public can insert (tracking), sellers can read their own
+DROP POLICY IF EXISTS store_views_insert ON public.store_views;
+CREATE POLICY store_views_insert ON public.store_views FOR INSERT
+  WITH CHECK (true);
+DROP POLICY IF EXISTS store_views_seller_read ON public.store_views;
+CREATE POLICY store_views_seller_read ON public.store_views FOR SELECT
+  USING (
+    is_super_admin()
+    OR EXISTS (
+      SELECT 1 FROM public.stores st
+      JOIN public.sellers s ON s.id = st.seller_id
+      WHERE st.id = store_views.store_id
+        AND (s.owner_id = auth.uid() OR public.is_active_seller_staff(s.id, auth.uid()))
+    )
+  );
+
+-- Verification requests: sellers can create/read own, admins can manage
+DROP POLICY IF EXISTS verif_req_seller ON public.verification_requests;
+CREATE POLICY verif_req_seller ON public.verification_requests FOR ALL
+  USING (
+    is_super_admin()
+    OR EXISTS (
+      SELECT 1 FROM public.sellers s
+      WHERE s.id = verification_requests.seller_id
+        AND (s.owner_id = auth.uid() OR public.is_active_seller_staff(s.id, auth.uid()))
+    )
+  )
+  WITH CHECK (
+    is_super_admin()
+    OR EXISTS (
+      SELECT 1 FROM public.sellers s
+      WHERE s.id = verification_requests.seller_id
+        AND (s.owner_id = auth.uid() OR public.is_active_seller_staff(s.id, auth.uid()))
+    )
+  );

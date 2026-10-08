@@ -35,14 +35,14 @@ function parseMaintenanceStatus(value: Json | null) {
 
   const record = value as Record<string, unknown>;
   return {
-    enabled: record.enabled === true,
+    enabled: record["enabled"] === true,
     title:
-      typeof record.title === "string" && record.title.trim()
-        ? record.title.trim().slice(0, 160)
+      typeof record["title"] === "string" && record["title"].trim()
+        ? record["title"].trim().slice(0, 160)
         : fallbackStatus.title,
     message:
-      typeof record.message === "string" && record.message.trim()
-        ? record.message.trim().slice(0, 1000)
+      typeof record["message"] === "string" && record["message"].trim()
+        ? record["message"].trim().slice(0, 1000)
         : fallbackStatus.message,
   };
 }

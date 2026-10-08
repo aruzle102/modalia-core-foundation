@@ -47,6 +47,7 @@ import { pageHead, defaultSeoForLocale, organizationJsonLd, websiteJsonLd, type 
 import { getPublicSeoSettings, subscribeNewsletter } from "@/lib/engagement.functions";
 import { SiteButtons } from "@/components/layout/site-buttons";
 import { getBestsellers, getTrendingProducts } from "@/lib/analytics.functions";
+import { getActivePartnerBanners } from "@/lib/partner-banners.functions";
 import { getRecommendations } from "@/lib/recommendations";
 import { getPublicIntelligenceConfig } from "@/lib/intelligence-settings.functions";
 import { getFeaturedReviews, type FeaturedReview } from "@/lib/reviews.functions";
@@ -116,6 +117,11 @@ export const Route = createFileRoute("/home")({
       context.queryClient.prefetchQuery(bestsellersQuery(deps.locale)),
       context.queryClient.prefetchQuery(trendingQuery(deps.locale)),
       context.queryClient.prefetchQuery(featuredReviewsQuery(deps.locale)),
+      context.queryClient.prefetchQuery({
+        queryKey: ["partner-banners"],
+        queryFn: () => getActivePartnerBanners(),
+        staleTime: 60_000,
+      }).catch(() => null),
     ]);
     return { seo };
   },
@@ -888,9 +894,9 @@ function CategoryExplorer({
     ...categories.map((cat) => ({ id: cat.id, slug: cat.slug, name: cat.name, Icon: categoryIcon(cat.slug, cat.name) })),
   ];
   return (
-    <section aria-label={copy.sfCatTitle} className="mx-auto max-w-7xl px-4 pt-10 sm:px-6 lg:px-8">
+    <section aria-label={copy.sfCatTitle} className="mx-auto max-w-7xl px-4 pt-2 sm:px-6 lg:px-8">
       <Reveal>
-        <div className="mb-6">
+        <div className="mb-3">
           <h2 className="text-xl font-bold tracking-tight text-[#0A0A0A] sm:text-2xl">
             {copy.sfCatTitle}
           </h2>
@@ -1922,7 +1928,7 @@ function HomePage() {
     <div dir={localeDirections[locale]} lang={locale} className="min-h-screen bg-[#F6F6F4]">
       <SiteHeader locale={locale} t={t} />
       <main id="main-content" tabIndex={-1}>
-        <div className="space-y-12 py-2 sm:space-y-16">
+        <div className="space-y-6 py-1 sm:space-y-8">
           <PartnerBannerCarousel />
 
           <CategoryExplorer categories={data.categories} locale={locale} copy={copy} />

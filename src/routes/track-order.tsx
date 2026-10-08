@@ -115,7 +115,7 @@ function OrderTimeline({
         })}
       </ol>
       {terminal && status !== "delivered" ? (
-        <p className="mt-5 rounded-2xl border border-border bg-muted/60 p-4 text-small text-muted-foreground">
+        <p className="mt-5 rounded-[14px] border border-[#E5E5E5] bg-[#F6F6F4] p-4 text-small text-[#666666]">
           {terminalNotice}
         </p>
       ) : null}
@@ -143,7 +143,7 @@ function TrackOrderPage() {
             e.preventDefault();
             lookup.mutate();
           }}
-          className="mt-8 rounded-3xl border border-border bg-card p-6"
+          className="mt-8 rounded-[14px] border border-[#E5E5E5] bg-white p-6"
         >
           <label className="block text-small">
             {tt.orderCode}
@@ -166,7 +166,7 @@ function TrackOrderPage() {
               dir="ltr"
             />
           </label>
-          <Button className="mt-6 h-11 w-full rounded-full" disabled={lookup.isPending}>
+          <Button className="mt-6 h-11 w-full rounded-[10px]" disabled={lookup.isPending}>
             {lookup.isPending ? tt.checking : t.nav.trackOrder}
           </Button>
         </form>
@@ -176,10 +176,10 @@ function TrackOrderPage() {
           </p>
         ) : null}
         {lookup.isSuccess && !lookup.data ? (
-          <p className="mt-5 border border-border p-4 text-small text-muted-foreground">{tt.noMatch}</p>
+          <p className="mt-5 rounded-[10px] border border-[#E5E5E5] p-4 text-small text-[#666666]">{tt.noMatch}</p>
         ) : null}
         {lookup.data ? (
-          <section className="mt-6 rounded-3xl border border-border bg-card p-6">
+          <section className="mt-6 rounded-[14px] border border-[#E5E5E5] bg-white p-6">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <p className="text-caption text-muted-foreground">{lookup.data.orderNumber}</p>
@@ -207,7 +207,7 @@ function TrackOrderPage() {
                 {lookup.data.history.map((event: GuestOrderHistoryEvent) => (
                   <li
                     key={`${event.at}-${event.status}`}
-                    className="flex items-start gap-3 rounded-lg border border-border bg-muted/40 p-4"
+                    className="flex items-start gap-3 rounded-[10px] border border-[#E5E5E5] bg-[#F6F6F4] p-4"
                   >
                     <span aria-hidden className="mt-1.5 size-2 shrink-0 rounded-full bg-foreground" />
                     <div className="min-w-0">

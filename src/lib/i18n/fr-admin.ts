@@ -549,6 +549,21 @@ export const frAdmin = {
       removeVerification: "Retirer la vérification",
       verified: "Boutique vérifiée.",
       unverified: "Vérification de la boutique retirée.",
+      manualVerifyStore: "Accorder une vérification manuelle",
+      confirmManualVerifyTitle: "Accorder une vérification manuelle ?",
+      confirmManualVerifyDesc: (name: string) =>
+        `Vérifier manuellement « ${name} » en tant que dérogation admin. Les critères normaux ne sont pas requis.`,
+      verificationNote: "Motif / note",
+      verificationNotePlaceholder: "Pourquoi cette boutique est-elle vérifiée manuellement ?",
+      verificationExpires: "Expire (facultatif)",
+      manuallyVerified: "Vérifiée manuellement",
+      manualOverride: "Dérogation admin manuelle",
+      suspendVerification: "Suspendre la vérification",
+      confirmSuspendVerifyTitle: "Suspendre la vérification ?",
+      confirmSuspendVerifyDesc: (name: string) =>
+        `Suspendre le badge vérifié de « ${name} ». La boutique ne s'affichera plus comme vérifiée.`,
+      verificationSuspended: "Vérification suspendue.",
+      manualVerified: "Boutique vérifiée manuellement.",
       tabs: {
         overview: "Aperçu",
         identity: "Identité",

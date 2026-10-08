@@ -21,7 +21,6 @@ import {
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { platformConfig, type SupportedLocale } from "@/config/platform";
 import { localeLabels, persistLocale, type Translation } from "@/lib/i18n";
@@ -30,6 +29,7 @@ import { SiteButtons, useVisibleSiteButtons } from "./site-buttons";
 import { getHeaderCategories } from "@/lib/catalog.functions";
 import { useCart } from "@/lib/cart-store";
 import { AiAssistantButton, AiAssistantDrawer } from "@/components/marketplace/ai-assistant";
+import { SearchAutocomplete } from "@/components/marketplace/SearchAutocomplete";
 import { getPublicIntelligenceConfig } from "@/lib/intelligence-settings.functions";
 import { BuyNowHost } from "@/components/marketplace/buy-now";
 import { motionTw } from "@/lib/motion-tokens";
@@ -106,7 +106,6 @@ function BannerBar({ locale }: { locale: SupportedLocale }) {
 export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translation }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [assistantOpen, setAssistantOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const [categoriesOpen, setCategoriesOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -141,11 +140,6 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Focus the search input when it expands.
-  useEffect(() => {
-    if (searchOpen) searchInputRef.current?.focus();
-  }, [searchOpen]);
-
   // Close the categories dropdown on outside click / Escape.
   useEffect(() => {
     if (!categoriesOpen) return;
@@ -178,8 +172,8 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
   const submitSearch = (event: React.FormEvent) => {
     event.preventDefault();
     const q = searchValue.trim();
-    navigate({ to: "/shop", search: shopSearch(locale, { q }) });
-    setSearchOpen(false);
+    if (!q) return;
+    window.location.href = `/search?locale=${locale}&q=${encodeURIComponent(q)}`;
     setDrawerOpen(false);
   };
 
@@ -277,41 +271,19 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
             {/* Admin-configured quick links (Admin > Button Control, placement "header"). */}
             <SiteButtons placement="header" locale={locale} variant="link" itemClassName={navLink} />
 
-            {/* Expanding search */}
-            {searchOpen ? (
-              <form onSubmit={submitSearch} className="flex items-center" role="search">
-                <Input
-                  ref={searchInputRef}
-                  value={searchValue}
-                  onChange={(event) => setSearchValue(event.target.value)}
-                  placeholder={t.nav.search}
-                  aria-label={t.nav.search}
-                  className="h-9 w-56 border-0 border-b border-foreground/20 bg-transparent px-0 text-nav tracking-tight shadow-none outline-none placeholder:text-muted-foreground focus-visible:border-foreground focus-visible:ring-0"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSearchOpen(false);
-                    setSearchValue("");
-                  }}
-                  className="ms-2 text-muted-foreground transition-colors hover:text-foreground"
-                  aria-label={t.common.close}
-                >
-                  <X className="size-4" />
-                </button>
-              </form>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setSearchOpen(true)}
-                className={navLink + " inline-flex items-center gap-1.5"}
-                aria-label={t.nav.search}
-              >
-                <Search className="size-4" aria-hidden="true" />
-                {t.nav.search}
-                {underline}
-              </button>
-            )}
+            {/* Search with autocomplete */}
+            <div className="w-64 shrink-0 lg:w-72">
+              <SearchAutocomplete
+                value={searchValue}
+                onChange={setSearchValue}
+                onSubmit={(q) => {
+                  window.location.href = `/search?locale=${locale}&q=${encodeURIComponent(q)}`;
+                  setDrawerOpen(false);
+                }}
+                onClose={() => {}}
+                inputRef={searchInputRef}
+              />
+            </div>
           </nav>
 
           {/* Right — utilities */}

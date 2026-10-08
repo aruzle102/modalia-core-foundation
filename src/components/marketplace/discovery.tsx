@@ -45,11 +45,8 @@ export function ProductCard({
   const soldOut = stock === 0;
   const lowStock = stock != null && stock > 0 && stock <= LOW_STOCK_THRESHOLD;
 
-  const handleQuickAdd = (event: MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
+  const handleQuickAdd = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
-    // Use native event to ensure Link doesn't intercept
-    event.nativeEvent.stopImmediatePropagation();
     startBuyNow(locale, {
       productId: product.id,
       slug: product.slug,
@@ -59,8 +56,7 @@ export function ProductCard({
     }, { mode: "add" });
   };
 
-  const handleWishlist = (event: MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
+  const handleWishlist = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
     const added = toggleWishlist({
       productId: product.id,

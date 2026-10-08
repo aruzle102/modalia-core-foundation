@@ -60,21 +60,6 @@ export function ProductCard({
     if (added) replayAnimation(event.currentTarget, microAnimationClass.wishlistPop);
   };
 
-  const handleQuickAdd = (event: MouseEvent<HTMLButtonElement>) => {
-    // Independent commerce action inside the card link: opens the BuyNowHost
-    // sheet (variant selection when options are required) or adds directly.
-    event.preventDefault();
-    event.stopPropagation();
-    startBuyNow(locale, buyNowProduct, { mode: "add" });
-  };
-
-  const buyNowProduct = {
-    productId: product.id,
-    slug: product.slug,
-    name: product.name,
-    image: product.imagePath,
-    storeName: product.storeName,
-  };
 
   return (
     <article className="group relative min-w-0 overflow-hidden rounded-[14px] border border-[#E5E5E5] bg-white transition-shadow duration-300 hover:shadow-[0_12px_32px_-12px_rgba(0,0,0,0.18)]">
@@ -169,17 +154,7 @@ export function ProductCard({
             <p className="pt-0.5 text-xs text-[#666666]">{t.soldOut}</p>
           ) : null}
 
-          {/* Commerce action — black primary button */}
-          {!soldOut ? (
-            <button
-              type="button"
-              onClick={handleQuickAdd}
-              className="mt-2.5 flex w-full items-center justify-center gap-2 rounded-[10px] bg-[#0A0A0A] py-2.5 text-[13px] font-semibold text-white transition-all hover:bg-black active:scale-[0.98] md:translate-y-1 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 md:group-focus-within:translate-y-0 md:group-focus-within:opacity-100"
-            >
-              <ShoppingBag className="size-4" aria-hidden="true" />
-              {sf.sfAddToCart}
-            </button>
-          ) : null}
+
         </div>
       </Link>
     </article>

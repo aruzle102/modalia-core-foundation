@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { listAdminStores } from "@/lib/admin-ops.functions";
+import { searchStores } from "@/lib/admin-stores.functions";
 import { getLocale, getTranslations } from "@/lib/i18n";
 import { numParam, strParam, useUrlState, useDebouncedUrlParam, useBackParam } from "@/hooks/use-url-state";
 
@@ -62,8 +63,17 @@ function StoresList() {
   const status = statusFilter === "all" ? undefined : (statusFilter as "draft" | "active" | "suspended" | "closed");
 
   const storesQuery = useQuery({
-    queryKey: ["admin-stores", q, status ?? "all", page],
-    queryFn: () => listAdminStores({ data: { q: q || undefined, status, page } }),
+    queryKey: q ? ["admin-stores-search", q] : ["admin-stores", q, status ?? "all", page],
+    queryFn: async () => {
+      if (q) {
+        // Fast server-side lookup across store name/slug + seller
+        // name/email/phone/username. Clicking a result opens the store's
+        // Control Center.
+        const items = await searchStores({ data: { q } });
+        return { items, total: items.length, page: 1, pageSize: items.length || 1 };
+      }
+      return listAdminStores({ data: { q: q || undefined, status, page } });
+    },
     retry: false,
   });
 
@@ -132,7 +142,7 @@ function StoresList() {
                         <Link
                           to="/admin/stores/$storeId"
                           params={{ storeId: s.id }}
-                          search={{ back: backParam, locale, q, status: statusFilter, page }}
+                          search={{ back: backParam, tab: "overview", locale, q, status: statusFilter, page }}
                           className="font-medium underline-offset-4 hover:underline"
                         >
                           {s.name}

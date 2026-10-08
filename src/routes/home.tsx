@@ -1728,13 +1728,12 @@ function HomePage() {
       {/* BrandEntrance disabled per owner request */}
       <SiteHeader locale={locale} t={t} />
       <main id="main-content" tabIndex={-1}>
-        <CategoriesStrip categories={data.categories} locale={locale} copy={copy} />
         <PartnerBannerCarousel />
-
+        <CategoriesStrip categories={data.categories} locale={locale} copy={copy} />
         {/* Discovery: horizontal product rails (not a full listing) */}
         <div className="mx-auto max-w-7xl space-y-10 px-4 py-8 sm:px-6 lg:px-8">
           <ProductRail
-            title="Trending Now"
+            title={copy.trendingTitle}
             products={data.products.slice(0, 10)}
             locale={locale}
             viewAllLabel={t.common.viewAll}
@@ -1747,7 +1746,7 @@ function HomePage() {
             shopSearch={shopSearch}
           />
           <ProductRail
-            title="New Arrivals"
+            title={copy.newArrivals}
             products={[...data.products].reverse().slice(0, 10)}
             locale={locale}
             viewAllLabel={t.common.viewAll}

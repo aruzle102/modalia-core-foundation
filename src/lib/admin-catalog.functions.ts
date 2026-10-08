@@ -305,7 +305,7 @@ export const updateAdminProduct = createServerFn({ method: "POST" })
     const { error } = await supabaseAdmin.from("products").update(update).eq("id", data.id);
     if (error) throw new Error(error.message);
     await auditLog(context.userId ?? null, "product_updated", "product", data.id, {
-      patch: update,
+      patch: update as Json,
     });
     return { ok: true as const };
   });

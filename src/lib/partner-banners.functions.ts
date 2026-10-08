@@ -1,1 +1,127 @@
-LyoqCiAqIE1PREFMSUEg4oCUIFBhcnRuZXIgYmFubmVycyAocm90YXRpbmcgYWRzKS4KICogUHVibGljIHJlYWQgb2YgYWN0aXZlIGJhbm5lcnM7IGFkbWluIENSVUQgYXQgL2FkbWluL2Jhbm5lcnMuCiAqLwppbXBvcnQgeyBjcmVhdGVTZXJ2ZXJGbiB9IGZyb20gIkB0YW5zdGFjay9yZWFjdC1zdGFydCI7CmltcG9ydCB7IHogfSBmcm9tICJ6b2QiOwppbXBvcnQgeyByZXF1aXJlU3VwYWJhc2VBdXRoIH0gZnJvbSAiQC9pbnRlZ3JhdGlvbnMvc3VwYWJhc2UvYXV0aC1taWRkbGV3YXJlIjsKaW1wb3J0IHsgYXNzZXJ0QWRtaW4gfSBmcm9tICJAL2xpYi9hZG1pbi1hdXRoIjsKCmV4cG9ydCB0eXBlIFBhcnRuZXJCYW5uZXIgPSB7CiAgaWQ6IHN0cmluZzsKICB0aXRsZTogc3RyaW5nOwogIGltYWdlVXJsOiBzdHJpbmc7CiAgbGlua1VybDogc3RyaW5nOwogIHNvcnRPcmRlcjogbnVtYmVyOwogIGlzQWN0aXZlOiBib29sZWFuOwp9OwoKLyoqIFB1YmxpYzogbGlzdCBhY3RpdmUgcGFydG5lciBiYW5uZXJzIGZvciB0aGUgaG9tZXBhZ2UgY2Fyb3VzZWwuICovCmV4cG9ydCBjb25zdCBnZXRBY3RpdmVQYXJ0bmVyQmFubmVycyA9IGNyZWF0ZVNlcnZlckZuKHsgbWV0aG9kOiAiR0VUIiB9KS5oYW5kbGVyKAogIGFzeW5jICgpOiBQcm9taXNlPFBhcnRuZXJCYW5uZXJbXT4gPT4gewogICAgLy8gVXNlIHB1YmxpYyBjbGllbnQgKGFub24ga2V5KSDigJQgUkxTIHBvbGljeSBwYXJ0bmVyX2Jhbm5lcnNfcHVibGljX3JlYWQgYWxsb3dzIGl0CiAgICBjb25zdCB7IGNyZWF0ZUNsaWVudCB9ID0gYXdhaXQgaW1wb3J0KCJAc3VwYWJhc2Uvc3VwYWJhc2UtanMiKTsKICAgIGNvbnN0IHVybCA9IHByb2Nlc3MuZW52WyJTVVBBQkFTRV9VUkwiXTsKICAgIGNvbnN0IGtleSA9IHByb2Nlc3MuZW52WyJTVVBBQkFTRV9QVUJMSVNIQUJMRV9LRVkiXTsKICAgIGlmICghdXJsIHx8ICFrZXkpIHRocm93IG5ldyBFcnJvcigiU2VydmljZSB1bmF2YWlsYWJsZSIpOwogICAgY29uc3Qgc3VwYWJhc2UgPSBjcmVhdGVDbGllbnQodXJsLCBrZXksIHsKICAgICAgYXV0aDogeyBwZXJzaXN0U2Vzc2lvbjogZmFsc2UsIGF1dG9SZWZyZXNoVG9rZW46IGZhbHNlIH0sCiAgICB9KTsKICAgIGNvbnN0IHsgZGF0YSwgZXJyb3IgfSA9IGF3YWl0IHN1cGFiYXNlCiAgICAgIC5mcm9tKCJwYXJ0bmVyX2Jhbm5lcnMiKQogICAgICAuc2VsZWN0KCJpZCwgdGl0bGUsIGltYWdlX3VybCwgbGlua191cmwsIHNvcnRfb3JkZXIsIGlzX2FjdGl2ZSIpCiAgICAgIC5lcSgiaXNfYWN0aXZlIiwgdHJ1ZSkKICAgICAgLm9yZGVyKCJzb3J0X29yZGVyIiwgeyBhc2NlbmRpbmc6IHRydWUgfSkKICAgICAgLmxpbWl0KDEwKTsKICAgIGlmIChlcnJvcikgdGhyb3cgbmV3IEVycm9yKGVycm9yLm1lc3NhZ2UpOwogICAgcmV0dXJuIChkYXRhID8/IFtdKS5tYXAoKGI6IGFueSkgPT4gKHsKICAgICAgaWQ6IGIuaWQsCiAgICAgIHRpdGxlOiBiLnRpdGxlLAogICAgICBpbWFnZVVybDogYi5pbWFnZV91cmwsCiAgICAgIGxpbmtVcmw6IGIubGlua191cmwsCiAgICAgIHNvcnRPcmRlcjogYi5zb3J0X29yZGVyLAogICAgICBpc0FjdGl2ZTogYi5pc19hY3RpdmUsCiAgICB9KSk7CiAgfQopOwoKLyoqIEFkbWluOiBsaXN0IGFsbCBiYW5uZXJzLiAqLwpleHBvcnQgY29uc3QgbGlzdFBhcnRuZXJCYW5uZXJzID0gY3JlYXRlU2VydmVyRm4oeyBtZXRob2Q6ICJHRVQiIH0pCiAgLm1pZGRsZXdhcmUoW3JlcXVpcmVTdXBhYmFzZUF1dGhdIGFzIGNvbnN0KQogIC5oYW5kbGVyKGFzeW5jICh7IGNvbnRleHQgfSk6IFByb21pc2U8UGFydG5lckJhbm5lcltdPiA9PiB7CiAgICBhd2FpdCBhc3NlcnRBZG1pbihjb250ZXh0KTsKICAgIGNvbnN0IHN1cGFiYXNlID0gKGNvbnRleHQgYXMgYW55KS5zdXBhYmFzZTsKICAgIGNvbnN0IHsgZGF0YSwgZXJyb3IgfSA9IGF3YWl0IHN1cGFiYXNlCiAgICAgIC5mcm9tKCJwYXJ0bmVyX2Jhbm5lcnMiKQogICAgICAuc2VsZWN0KCJpZCwgdGl0bGUsIGltYWdlX3VybCwgbGlua191cmwsIHNvcnRfb3JkZXIsIGlzX2FjdGl2ZSIpCiAgICAgIC5vcmRlcigic29ydF9vcmRlciIsIHsgYXNjZW5kaW5nOiB0cnVlIH0pOwogICAgaWYgKGVycm9yKSB0aHJvdyBuZXcgRXJyb3IoZXJyb3IubWVzc2FnZSk7CiAgICByZXR1cm4gKGRhdGEgPz8gW10pLm1hcCgoYjogYW55KSA9PiAoewogICAgICBpZDogYi5pZCwKICAgICAgdGl0bGU6IGIudGl0bGUsCiAgICAgIGltYWdlVXJsOiBiLmltYWdlX3VybCwKICAgICAgbGlua1VybDogYi5saW5rX3VybCwKICAgICAgc29ydE9yZGVyOiBiLnNvcnRfb3JkZXIsCiAgICAgIGlzQWN0aXZlOiBiLmlzX2FjdGl2ZSwKICAgIH0pKTsKICB9KTsKCmNvbnN0IGJhbm5lcklucHV0ID0gei5vYmplY3QoewogIHRpdGxlOiB6LnN0cmluZygpLm1pbigxKS5tYXgoMjAwKSwKICBpbWFnZVVybDogei5zdHJpbmcoKS51cmwoKS5tYXgoMjAwMCksCiAgbGlua1VybDogei5zdHJpbmcoKS5tYXgoMjAwMCksCiAgc29ydE9yZGVyOiB6Lm51bWJlcigpLmludCgpLmRlZmF1bHQoMCksCiAgaXNBY3RpdmU6IHouYm9vbGVhbigpLmRlZmF1bHQodHJ1ZSksCn0pOwoKLyoqIEFkbWluOiBjcmVhdGUgYSBiYW5uZXIuICovCmV4cG9ydCBjb25zdCBjcmVhdGVQYXJ0bmVyQmFubmVyID0gY3JlYXRlU2VydmVyRm4oeyBtZXRob2Q6ICJQT1NUIiB9KQogIC5taWRkbGV3YXJlKFtyZXF1aXJlU3VwYWJhc2VBdXRoXSBhcyBjb25zdCkKICAudmFsaWRhdG9yKChkKSA9PiBiYW5uZXJJbnB1dC5wYXJzZShkKSkKICAuaGFuZGxlcihhc3luYyAoeyBkYXRhLCBjb250ZXh0IH0pOiBQcm9taXNlPHsgb2s6IGJvb2xlYW4gfT4gPT4gewogICAgYXdhaXQgYXNzZXJ0QWRtaW4oY29udGV4dCk7CiAgICBjb25zdCBzdXBhYmFzZSA9IChjb250ZXh0IGFzIGFueSkuc3VwYWJhc2U7CiAgICBjb25zdCB7IGVycm9yIH0gPSBhd2FpdCBzdXBhYmFzZS5mcm9tKCJwYXJ0bmVyX2Jhbm5lcnMiKS5pbnNlcnQoewogICAgICB0aXRsZTogZGF0YS50aXRsZS50cmltKCksCiAgICAgIGltYWdlX3VybDogZGF0YS5pbWFnZVVybCwKICAgICAgbGlua191cmw6IGRhdGEubGlua1VybCwKICAgICAgc29ydF9vcmRlcjogZGF0YS5zb3J0T3JkZXIsCiAgICAgIGlzX2FjdGl2ZTogZGF0YS5pc0FjdGl2ZSwKICAgIH0pOwogICAgaWYgKGVycm9yKSB0aHJvdyBuZXcgRXJyb3IoZXJyb3IubWVzc2FnZSk7CiAgICByZXR1cm4geyBvazogdHJ1ZSB9OwogIH0pOwoKLyoqIEFkbWluOiB1cGRhdGUgYSBiYW5uZXIuICovCmV4cG9ydCBjb25zdCB1cGRhdGVQYXJ0bmVyQmFubmVyID0gY3JlYXRlU2VydmVyRm4oeyBtZXRob2Q6ICJQT1NUIiB9KQogIC5taWRkbGV3YXJlKFtyZXF1aXJlU3VwYWJhc2VBdXRoXSBhcyBjb25zdCkKICAudmFsaWRhdG9yKChkKSA9PiBiYW5uZXJJbnB1dC5leHRlbmQoeyBpZDogei5zdHJpbmcoKS51dWlkKCkgfSkucGFyc2UoZCkpCiAgLmhhbmRsZXIoYXN5bmMgKHsgZGF0YSwgY29udGV4dCB9KTogUHJvbWlzZTx7IG9rOiBib29sZWFuIH0+ID0+IHsKICAgIGF3YWl0IGFzc2VydEFkbWluKGNvbnRleHQpOwogICAgY29uc3Qgc3VwYWJhc2UgPSAoY29udGV4dCBhcyBhbnkpLnN1cGFiYXNlOwogICAgY29uc3QgeyBlcnJvciB9ID0gYXdhaXQgc3VwYWJhc2UKICAgICAgLmZyb20oInBhcnRuZXJfYmFubmVycyIpCiAgICAgIC51cGRhdGUoewogICAgICAgIHRpdGxlOiBkYXRhLnRpdGxlLnRyaW0oKSwKICAgICAgICBpbWFnZV91cmw6IGRhdGEuaW1hZ2VVcmwsCiAgICAgICAgbGlua191cmw6IGRhdGEubGlua1VybCwKICAgICAgICBzb3J0X29yZGVyOiBkYXRhLnNvcnRPcmRlciwKICAgICAgICBpc19hY3RpdmU6IGRhdGEuaXNBY3RpdmUsCiAgICAgICAgdXBkYXRlZF9hdDogbmV3IERhdGUoKS50b0lTT1N0cmluZygpLAogICAgICB9KQogICAgICAuZXEoImlkIiwgZGF0YS5pZCk7CiAgICBpZiAoZXJyb3IpIHRocm93IG5ldyBFcnJvcihlcnJvci5tZXNzYWdlKTsKICAgIHJldHVybiB7IG9rOiB0cnVlIH07CiAgfSk7CgovKiogQWRtaW46IGRlbGV0ZSBhIGJhbm5lci4gKi8KZXhwb3J0IGNvbnN0IGRlbGV0ZVBhcnRuZXJCYW5uZXIgPSBjcmVhdGVTZXJ2ZXJGbih7IG1ldGhvZDogIlBPU1QiIH0pCiAgLm1pZGRsZXdhcmUoW3JlcXVpcmVTdXBhYmFzZUF1dGhdIGFzIGNvbnN0KQogIC52YWxpZGF0b3IoKGQpID0+IHoub2JqZWN0KHsgaWQ6IHouc3RyaW5nKCkudXVpZCgpIH0pLnBhcnNlKGQpKQogIC5oYW5kbGVyKGFzeW5jICh7IGRhdGEsIGNvbnRleHQgfSk6IFByb21pc2U8eyBvazogYm9vbGVhbiB9PiA9PiB7CiAgICBhd2FpdCBhc3NlcnRBZG1pbihjb250ZXh0KTsKICAgIGNvbnN0IHN1cGFiYXNlID0gKGNvbnRleHQgYXMgYW55KS5zdXBhYmFzZTsKICAgIGNvbnN0IHsgZXJyb3IgfSA9IGF3YWl0IHN1cGFiYXNlLmZyb20oInBhcnRuZXJfYmFubmVycyIpLmRlbGV0ZSgpLmVxKCJpZCIsIGRhdGEuaWQpOwogICAgaWYgKGVycm9yKSB0aHJvdyBuZXcgRXJyb3IoZXJyb3IubWVzc2FnZSk7CiAgICByZXR1cm4geyBvazogdHJ1ZSB9OwogIH0pOwo=
+/**
+ * MODALIA — Partner banners (rotating ads).
+ * Public read of active banners; admin CRUD at /admin/banners.
+ */
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertAdmin } from "@/lib/admin-auth";
+
+export type PartnerBanner = {
+  id: string;
+  title: string;
+  imageUrl: string;
+  linkUrl: string;
+  sortOrder: number;
+  isActive: boolean;
+};
+
+/** Public: list active partner banners for the homepage carousel. */
+export const getActivePartnerBanners = createServerFn({ method: "GET" }).handler(
+  async (): Promise<PartnerBanner[]> => {
+    // Use public client (anon key) — RLS policy partner_banners_public_read allows it
+    const { createClient } = await import("@supabase/supabase-js");
+    const url = process.env["SUPABASE_URL"];
+    const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
+    if (!url || !key) throw new Error("Service unavailable");
+    const supabase = createClient(url, key, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    const { data, error } = await supabase
+      .from("partner_banners")
+      .select("id, title, image_url, link_url, sort_order, is_active")
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true })
+      .limit(10);
+    if (error) throw new Error(error.message);
+    return (data ?? []).map((b: any) => ({
+      id: b.id,
+      title: b.title,
+      imageUrl: b.image_url,
+      linkUrl: b.link_url,
+      sortOrder: b.sort_order,
+      isActive: b.is_active,
+    }));
+  }
+);
+
+/** Admin: list all banners. */
+export const listPartnerBanners = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth] as const)
+  .handler(async ({ context }): Promise<PartnerBanner[]> => {
+    await assertAdmin(context);
+    const supabase = (context as any).supabase;
+    const { data, error } = await supabase
+      .from("partner_banners")
+      .select("id, title, image_url, link_url, sort_order, is_active")
+      .order("sort_order", { ascending: true });
+    if (error) throw new Error(error.message);
+    return (data ?? []).map((b: any) => ({
+      id: b.id,
+      title: b.title,
+      imageUrl: b.image_url,
+      linkUrl: b.link_url,
+      sortOrder: b.sort_order,
+      isActive: b.is_active,
+    }));
+  });
+
+const bannerInput = z.object({
+  title: z.string().min(1).max(200),
+  imageUrl: z.string().url().max(2000),
+  linkUrl: z.string().max(2000),
+  sortOrder: z.number().int().default(0),
+  isActive: z.boolean().default(true),
+});
+
+/** Admin: create a banner. */
+export const createPartnerBanner = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth] as const)
+  .validator((d) => bannerInput.parse(d))
+  .handler(async ({ data, context }): Promise<{ ok: boolean }> => {
+    await assertAdmin(context);
+    const supabase = (context as any).supabase;
+    const { error } = await supabase.from("partner_banners").insert({
+      title: data.title.trim(),
+      image_url: data.imageUrl,
+      link_url: data.linkUrl,
+      sort_order: data.sortOrder,
+      is_active: data.isActive,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+/** Admin: update a banner. */
+export const updatePartnerBanner = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth] as const)
+  .validator((d) => bannerInput.extend({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }): Promise<{ ok: boolean }> => {
+    await assertAdmin(context);
+    const supabase = (context as any).supabase;
+    const { error } = await supabase
+      .from("partner_banners")
+      .update({
+        title: data.title.trim(),
+        image_url: data.imageUrl,
+        link_url: data.linkUrl,
+        sort_order: data.sortOrder,
+        is_active: data.isActive,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+/** Admin: delete a banner. */
+export const deletePartnerBanner = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth] as const)
+  .validator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }): Promise<{ ok: boolean }> => {
+    await assertAdmin(context);
+    const supabase = (context as any).supabase;
+    const { error } = await supabase.from("partner_banners").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });

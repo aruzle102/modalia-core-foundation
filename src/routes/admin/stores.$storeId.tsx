@@ -125,7 +125,22 @@ function StoreProfilePage() {
   const adminT = useAdminT();
   const common = getTranslations(locale).common;
   const p = getTranslations(locale).admin.stores.profile;
-  const sellerT = adminT.sellers.profile;
+  const sellerT = {
+    ...adminT.sellers.profile,
+    manualVerified: "Store manually verified.",
+    verificationSuspended: "Store verification suspended.",
+    manualVerifyStore: "Manually verify store",
+    confirmSuspendVerifyTitle: "Suspend store verification?",
+    confirmSuspendVerifyDesc: (_storeName: string) => "The store will no longer show as verified.",
+    suspendVerification: "Suspend verification",
+    manuallyVerified: "Manually verified",
+    manualOverride: "Manual override",
+    confirmManualVerifyTitle: "Manually verify store?",
+    confirmManualVerifyDesc: (_storeName: string) => "This adds an administrator verification override.",
+    verificationNote: "Verification note",
+    verificationNotePlaceholder: "Reason for the manual verification",
+    verificationExpires: "Verification expiry",
+  };
   const navLabels = getTranslations(locale).adminNav.items;
   const tab: TabId = isTabId(tabParam) ? tabParam : "overview";
   const routeNavigate = Route.useNavigate();
@@ -1053,7 +1068,7 @@ function AnalyticsTab({
                 </tr>
               </thead>
               <tbody>
-                {analyticsQuery.data.topProducts.map((tp) => (
+                {analyticsQuery.data.topProducts.map((tp: { product_id: string; title: unknown; units: number; revenue: number }) => (
                   <tr key={tp.product_id} className="border-b last:border-0">
                     <td className="py-1.5 pe-3 font-medium">
                       {tp.product_id === "unknown" ? (

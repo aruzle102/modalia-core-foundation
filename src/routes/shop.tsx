@@ -257,11 +257,11 @@ function SmartSearchBanner({
   if (!suggestion) return null;
   return (
     <div
-      className="mt-4 flex flex-wrap items-center gap-3 rounded-2xl border border-sky-500/30 bg-sky-500/10 px-4 py-3"
+      className="mt-4 flex flex-wrap items-center gap-3 rounded-[14px] border border-[#E5E5E5] bg-white px-4 py-3"
       role="status"
     >
-      <Sparkles className="size-4 shrink-0 text-sky-600 dark:text-sky-400" aria-hidden />
-      <p className="min-w-0 flex-1 text-sm text-sky-900 dark:text-sky-200">
+      <Sparkles className="size-4 shrink-0 text-[#0A0A0A]" aria-hidden />
+      <p className="min-w-0 flex-1 text-sm text-[#0A0A0A]">
         {ts.smartUnderstood(suggestion.summary)}
       </p>
       <div className="flex items-center gap-2">
@@ -503,11 +503,10 @@ function ShopPage() {
   );
 
   return (
-    <div dir={localeDirections[search.locale]} lang={search.locale} className="min-h-screen bg-background">
+    <div dir={localeDirections[search.locale]} lang={search.locale} className="min-h-screen bg-[#F6F6F4]">
       <SiteHeader locale={search.locale} t={t} />
       <main id="main-content" tabIndex={-1} className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <p className="text-eyebrow text-muted-foreground">{ts.eyebrow}</p>
-        <h1 className="mt-2 text-display text-foreground">{ts.title}</h1>
+        <h1 className="text-display tracking-tight text-[#0A0A0A]">SHOP</h1>
 
         <form
           onSubmit={(event) => {
@@ -531,7 +530,7 @@ function ShopPage() {
             name="q"
             defaultValue={search.q}
             placeholder={ts.searchPlaceholder}
-            className="h-11 ps-10"
+            className="h-11 rounded-[10px] border-[#E5E5E5] bg-white ps-10"
           />
         </form>
 
@@ -552,7 +551,7 @@ function ShopPage() {
           onApply={applySmartFilters}
         />
 
-        <div className="mt-8 flex flex-wrap items-center gap-2 border-b border-border pb-4" aria-label={ts.filters}>
+        <div className="mt-8 flex flex-wrap items-center gap-2 border-b border-[#E5E5E5] pb-4" aria-label={ts.filters}>
           {views.map((view) => (
             <Button
               key={view.value || "all"}
@@ -578,7 +577,7 @@ function ShopPage() {
           </div>
         ) : (
           <>
-            <div className="mt-8 flex gap-7 overflow-x-auto border-b border-border" role="tablist" aria-label={ts.filters}>
+            <div className="mt-8 flex gap-7 overflow-x-auto border-b border-[#E5E5E5]" role="tablist" aria-label={ts.filters}>
               <CategoryTab
                 active={search.category === ""}
                 label={ts.all}
@@ -601,7 +600,7 @@ function ShopPage() {
               ))}
             </div>
 
-            <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-y border-border py-3">
+            <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-y border-[#E5E5E5] py-3">
               <div className="flex items-center gap-3">
                 <Button
                   type="button"
@@ -632,7 +631,7 @@ function ShopPage() {
                       }),
                     })
                   }
-                  className="h-9 bg-background text-small text-foreground outline-none"
+                  className="h-10 rounded-[10px] border border-[#E5E5E5] bg-white px-3 text-small text-[#0A0A0A] outline-none"
                 >
                   <option value="newest">{ts.sortNewest}</option>
                   <option value="price_asc">{ts.sortPriceAsc}</option>
@@ -648,7 +647,7 @@ function ShopPage() {
                     key={chip.key}
                     type="button"
                     onClick={chip.clear}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/60 py-1 pe-2 ps-3 text-caption text-foreground transition-colors hover:border-foreground/30"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-[#E5E5E5] bg-white py-1 pe-2 ps-3 text-caption text-[#0A0A0A] transition-colors hover:border-[#0A0A0A]/30"
                   >
                     {chip.label}
                     <X className="size-3.5 text-muted-foreground" aria-hidden />
@@ -666,7 +665,7 @@ function ShopPage() {
 
             <div className="mt-8 grid gap-10 lg:grid-cols-[15rem_minmax(0,1fr)]">
               <aside className="hidden lg:block">
-                <div className="sticky top-24">{filtersPanel}</div>
+                <div className="sticky top-24 rounded-[14px] border border-[#E5E5E5] bg-white p-5">{filtersPanel}</div>
               </aside>
               <div className="min-w-0">
                 <ProductGrid
@@ -742,9 +741,9 @@ function ShopPage() {
             className="absolute inset-0 cursor-default bg-black/50"
             onClick={() => setFiltersOpen(false)}
           />
-          <div className="absolute inset-y-0 start-0 flex w-80 max-w-[85vw] flex-col bg-background shadow-xl">
-            <div className="flex items-center justify-between border-b border-border p-4">
-              <h2 className="text-h3 text-foreground">{ts.filters}</h2>
+          <div className="absolute inset-y-0 start-0 flex w-80 max-w-[85vw] flex-col bg-white shadow-xl">
+            <div className="flex items-center justify-between border-b border-[#E5E5E5] p-4">
+              <h2 className="text-h3 text-[#0A0A0A]">{ts.filters}</h2>
               <Button type="button" variant="ghost" size="icon" onClick={() => setFiltersOpen(false)} aria-label={ts.hideFilters}>
                 <X className="size-5" />
               </Button>

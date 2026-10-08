@@ -5,7 +5,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight, ArrowDown } from "lucide-react";
-import { SiteHeader, SiteFooter } from "@/components/layout/site-shell";
+import { SiteFooter } from "@/components/layout/site-shell";
 import { getLocale, getTranslations, localeDirections } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -126,7 +126,6 @@ function LandingPage() {
 
   return (
     <div dir={localeDirections[locale]} lang={locale} className="min-h-screen bg-neutral-950 text-white antialiased">
-      <SiteHeader locale={locale} t={t} />
       <main id="main-content">
 
         {/* ===== OPENING — cinematic image hero ===== */}

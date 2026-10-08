@@ -39,7 +39,7 @@ export function ModaliaHero() {
               "motion-safe:animate-[fadeUp_0.6s_ease-out]"
             )}
           >
-            {t.home.heroEyebrow}
+            t.home.heroEyebrow
           </p>
 
           {/* Headline */}
@@ -49,7 +49,7 @@ export function ModaliaHero() {
               "motion-safe:animate-[fadeUp_0.6s_ease-out_0.1s_both]"
             )}
           >
-            {t.home.heroFallbackTitle}
+            t.home.heroTitle
           </h1>
 
           {/* Subtext */}
@@ -59,7 +59,7 @@ export function ModaliaHero() {
               "motion-safe:animate-[fadeUp_0.6s_ease-out_0.2s_both]"
             )}
           >
-            {t.home.heroFallbackSubtitle}
+            t.home.heroSubtitle
           </p>
 
           {/* CTA */}
@@ -73,7 +73,7 @@ export function ModaliaHero() {
               to="/shop"
               className="inline-flex items-center gap-2 rounded-full bg-white px-8 py-3.5 text-sm font-semibold text-neutral-950 transition-all hover:bg-white/90 hover:gap-3 active:scale-[0.98]"
             >
-              {t.home.heroPrimaryCta}
+              t.home.heroCta
               <ArrowRight className="size-4" aria-hidden="true" />
             </Link>
           </div>

@@ -549,6 +549,21 @@ export const enAdmin = {
       removeVerification: "Remove verification",
       verified: "Store verified.",
       unverified: "Store verification removed.",
+      manualVerifyStore: "Grant manual verification",
+      confirmManualVerifyTitle: "Grant manual verification?",
+      confirmManualVerifyDesc: (name: string) =>
+        `Manually verify "${name}" as an admin override. Normal verification criteria are not required.`,
+      verificationNote: "Reason / note",
+      verificationNotePlaceholder: "Why is this store being manually verified?",
+      verificationExpires: "Expires (optional)",
+      manuallyVerified: "Manually verified",
+      manualOverride: "Manual admin override",
+      suspendVerification: "Suspend verification",
+      confirmSuspendVerifyTitle: "Suspend verification?",
+      confirmSuspendVerifyDesc: (name: string) =>
+        `Suspend the verified badge for "${name}". The store will no longer show as verified.`,
+      verificationSuspended: "Verification suspended.",
+      manualVerified: "Store manually verified.",
       tabs: {
         overview: "Overview",
         identity: "Identity",

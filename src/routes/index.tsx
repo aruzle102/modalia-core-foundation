@@ -129,56 +129,61 @@ function LandingPage() {
       <SiteHeader locale={locale} t={t} />
       <main id="main-content">
 
-        {/* ===== OPENING — editorial hero with imagery ===== */}
-        <section className="relative overflow-hidden">
-          <div className="grid min-h-[92vh] lg:grid-cols-2">
-            {/* Text side */}
-            <div className="relative z-10 flex flex-col justify-center bg-neutral-950 px-6 py-16 sm:px-12 lg:px-16">
-              <Reveal>
-                <p className="mb-6 text-[12px] font-bold uppercase tracking-[0.45em] text-white/50">Modalia</p>
-              </Reveal>
-              <Reveal delay={100}>
-                <h1 className="text-5xl font-bold leading-[1.02] tracking-tight sm:text-6xl lg:text-7xl">
-                  {heroTitle}
-                </h1>
-              </Reveal>
-              <Reveal delay={200}>
-                <p className="mt-6 max-w-md text-lg leading-relaxed text-white/65">{heroSubtitle}</p>
-              </Reveal>
-              <Reveal delay={300}>
-                <Link
-                  to="/home"
-                  className="group mt-10 inline-flex w-fit items-center gap-3 rounded-full bg-white px-10 py-4 text-sm font-semibold text-neutral-950 transition-all hover:bg-white/90 active:scale-[0.98]"
-                >
-                  {heroCta}
-                  <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
-                </Link>
-              </Reveal>
-              <Reveal delay={400}>
-                <div className="mt-14 flex items-center gap-3 text-white/35">
-                  <ArrowDown className="size-4 animate-bounce" />
-                  <span className="text-[11px] uppercase tracking-[0.25em]">Scroll</span>
-                </div>
-              </Reveal>
-            </div>
-            {/* Image side — layered editorial composition */}
-            <div className="relative min-h-[50vh] overflow-hidden lg:min-h-full">
-              <ParallaxImage src={IMG.heroMain} alt="Fashion editorial" className="absolute inset-0" speed={80} />
-              <div className="absolute inset-0 bg-gradient-to-r from-neutral-950 via-transparent to-transparent" />
-              {/* Floating secondary card */}
-              <div className="absolute bottom-8 left-8 right-8 sm:left-12 sm:right-auto sm:w-64">
-                <Reveal delay={350}>
-                  <div className="overflow-hidden rounded-2xl border border-white/10 bg-neutral-900/80 shadow-2xl backdrop-blur">
-                    <img src={IMG.heroSecondary} alt="Sport lifestyle" loading="lazy" className="aspect-[4/3] w-full object-cover" />
-                    <div className="p-4">
-                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/60">New season</p>
-                      <p className="mt-1 text-sm font-medium">Sport essentials</p>
-                    </div>
-                  </div>
-                </Reveal>
-              </div>
-            </div>
+        {/* ===== OPENING — cinematic image hero ===== */}
+        <section className="relative flex min-h-[92vh] items-center overflow-hidden">
+          {/* Background image */}
+          <div className="absolute inset-0">
+            <img
+              src={IMG.heroMain}
+              alt="Modalia fashion campaign"
+              className="h-full w-full object-cover object-center motion-safe:animate-[heroZoom_20s_ease-in-out_infinite_alternate]"
+              loading="eager"
+            />
           </div>
+          {/* Cinematic dark overlay */}
+          <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/60 to-black/30" />
+          <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/40" />
+
+          <div className="relative z-10 mx-auto w-full max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+            <Reveal>
+              <p className="mb-6 text-[12px] font-bold uppercase tracking-[0.45em] text-white/60">Modalia</p>
+            </Reveal>
+            <Reveal delay={100}>
+              <h1 className="max-w-3xl text-5xl font-bold leading-[1.02] tracking-tight text-white drop-shadow-lg sm:text-7xl lg:text-8xl">
+                {heroTitle}
+              </h1>
+            </Reveal>
+            <Reveal delay={200}>
+              <p className="mt-6 max-w-xl text-lg leading-relaxed text-white/80 drop-shadow sm:text-xl">{heroSubtitle}</p>
+            </Reveal>
+            <Reveal delay={300}>
+              <Link
+                to="/home"
+                className="group mt-10 inline-flex w-fit items-center gap-3 rounded-full bg-white px-10 py-4 text-sm font-semibold text-neutral-950 shadow-2xl transition-all hover:bg-white/90 active:scale-[0.98]"
+              >
+                {heroCta}
+                <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
+              </Link>
+            </Reveal>
+            <Reveal delay={400}>
+              <div className="mt-14 flex items-center gap-3 text-white/50">
+                <ArrowDown className="size-4 animate-bounce" />
+                <span className="text-[11px] uppercase tracking-[0.25em]">Scroll</span>
+              </div>
+            </Reveal>
+          </div>
+
+          <style>{`
+            @keyframes heroZoom {
+              from { transform: scale(1); }
+              to { transform: scale(1.08); }
+            }
+            @media (prefers-reduced-motion: reduce) {
+              .motion-safe\:animate-\[heroZoom_20s_ease-in-out_infinite_alternate\] {
+                animation: none !important;
+              }
+            }
+          `}</style>
         </section>
 
         {/* ===== DISCOVER — image expansion ===== */}

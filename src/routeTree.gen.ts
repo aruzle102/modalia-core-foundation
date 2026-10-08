@@ -628,7 +628,22 @@ const AdminPartnerBannersRoute = AdminPartnerBannersRouteImport.update({
   path: '/admin/partner-banners',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminPartnerCouponsRoute = AdminPartnerCouponsRouteImport.update({
+  id: '/admin/partner-coupons',
+  path: '/admin/partner-coupons',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
+const AdminMaintenanceRoute = AdminMaintenanceRouteImport.update({
+  id: '/admin/maintenance',
+  path: '/admin/maintenance',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminSystemHealthRoute = AdminSystemHealthRouteImport.update({
+  id: '/admin/system-health',
+  path: '/admin/system-health',
+  getParentRoute: () => rootRouteImport,
+} as any)
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
@@ -728,6 +743,9 @@ export interface FileRoutesByFullPath {
   '/admin/verifications': typeof AdminVerificationsRoute
   '/admin/partnerships': typeof AdminPartnershipsRoute
   '/admin/partner-banners': typeof AdminPartnerBannersRoute
+  '/admin/partner-coupons': typeof AdminPartnerCouponsRoute
+  '/admin/maintenance': typeof AdminMaintenanceRoute
+  '/admin/system-health': typeof AdminSystemHealthRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -828,6 +846,9 @@ export interface FileRoutesByTo {
   '/admin/verifications': typeof AdminVerificationsRoute
   '/admin/partnerships': typeof AdminPartnershipsRoute
   '/admin/partner-banners': typeof AdminPartnerBannersRoute
+  '/admin/partner-coupons': typeof AdminPartnerCouponsRoute
+  '/admin/maintenance': typeof AdminMaintenanceRoute
+  '/admin/system-health': typeof AdminSystemHealthRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -930,6 +951,9 @@ export interface FileRoutesById {
   '/admin/verifications': typeof AdminVerificationsRoute
   '/admin/partnerships': typeof AdminPartnershipsRoute
   '/admin/partner-banners': typeof AdminPartnerBannersRoute
+  '/admin/partner-coupons': typeof AdminPartnerCouponsRoute
+  '/admin/maintenance': typeof AdminMaintenanceRoute
+  '/admin/system-health': typeof AdminSystemHealthRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -1969,6 +1993,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPartnerBannersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/partner-coupons': {
+      id: '/admin/partner-coupons'
+      path: '/admin/partner-coupons'
+      fullPath: '/admin/partner-coupons'
+      preLoaderRoute: typeof AdminPartnerCouponsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/maintenance': {
+      id: '/admin/maintenance'
+      path: '/admin/maintenance'
+      fullPath: '/admin/maintenance'
+      preLoaderRoute: typeof AdminMaintenanceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/system-health': {
+      id: '/admin/system-health'
+      path: '/admin/system-health'
+      fullPath: '/admin/system-health'
+      preLoaderRoute: typeof AdminSystemHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -2253,6 +2298,9 @@ import { Route as AdminReportsRouteImport } from './routes/admin/reports'
 import { Route as AdminVerificationsRouteImport } from './routes/admin/verifications'
 import { Route as AdminPartnershipsRouteImport } from './routes/admin/partnerships'
 import { Route as AdminPartnerBannersRouteImport } from './routes/admin/partner-banners'
+import { Route as AdminPartnerCouponsRouteImport } from './routes/admin/partner-coupons'
+import { Route as AdminMaintenanceRouteImport } from './routes/admin/maintenance'
+import { Route as AdminSystemHealthRouteImport } from './routes/admin/system-health'
 declare module '@tanstack/react-start' {
   interface Register {
     ssr: true

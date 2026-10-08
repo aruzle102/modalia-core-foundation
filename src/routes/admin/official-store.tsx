@@ -2004,7 +2004,7 @@ function OffersTab({
                     </td>
                     <td className="px-3 py-3">
                       <div className="flex flex-wrap justify-end gap-1.5">
-                        <Button size="sm" variant="ghost" onClick={() => setEditing(c)}>
+                        <Button size="sm" variant="ghost" onClick={() => setEditing(c as any)}>
                           <Pencil className="size-3.5" /> {t.common.edit}
                         </Button>
                         {c.status === "active" ? (
@@ -2026,7 +2026,7 @@ function OffersTab({
                             {t.offers.activate}
                           </Button>
                         )}
-                        <Button size="sm" variant="ghost" onClick={() => setDeleting(c)}>
+                        <Button size="sm" variant="ghost" onClick={() => setDeleting(c as any)}>
                           <Trash2 className="size-3.5" /> {t.offers.delete}
                         </Button>
                       </div>

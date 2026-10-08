@@ -1925,6 +1925,8 @@ function HomePage() {
         <div className="space-y-12 py-2 sm:space-y-16">
           <CategoryExplorer categories={data.categories} locale={locale} copy={copy} />
 
+          <PartnerBannerCarousel />
+
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <ProductRail
               title={copy.sfTrendingTitle}

@@ -84,7 +84,7 @@ function CollectionsPage() {
                       <Link
                         to="/admin/stores/$storeId"
                         params={{ storeId: c.storeId }}
-                        search={{ back, locale, q: "", status: "all", page: 1 }}
+                        search={{ back, tab: "overview", locale, q: "", status: "all", page: 1 }}
                       >
                         {t.manage}
                       </Link>

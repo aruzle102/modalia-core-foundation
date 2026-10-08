@@ -1926,9 +1926,9 @@ function HomePage() {
       : { label, to: "/shop" };
   };
   const heroShortcuts: HeroShortcut[] = [
-    shortcutFor(copy.sfHeroShortcuts[0] ?? "MODE", /fashion|mode|women|femme/i),
-    shortcutFor(copy.sfHeroShortcuts[1] ?? "SPORT", /sport/i),
-    shortcutFor(copy.sfHeroShortcuts[2] ?? "LIFESTYLE", /lifestyle/i),
+    shortcutFor(copy.sfHeroShortcuts?.[0] ?? "MODE", /fashion|mode|women|femme/i),
+    shortcutFor(copy.sfHeroShortcuts?.[1] ?? "SPORT", /sport/i),
+    shortcutFor(copy.sfHeroShortcuts?.[2] ?? "LIFESTYLE", /lifestyle/i),
   ];
 
   return (

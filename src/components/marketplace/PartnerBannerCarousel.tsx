@@ -65,7 +65,7 @@ export function PartnerBannerCarousel() {
           </div>
 
           {/* Visual side — real active banner, or clean placeholder */}
-          <div className="relative min-h-[220px] bg-[#F6F6F4] md:min-h-[280px]">
+          <div className="relative h-[160px] bg-[#F6F6F4] md:h-[180px]">
             {isPending ? (
               <div className="absolute inset-0 animate-pulse bg-[#E5E5E5]/60" />
             ) : banner && !imgError ? (

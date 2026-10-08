@@ -1928,7 +1928,7 @@ function HomePage() {
     <div dir={localeDirections[locale]} lang={locale} className="min-h-screen bg-[#F6F6F4]">
       <SiteHeader locale={locale} t={t} />
       <main id="main-content" tabIndex={-1}>
-        <div className="space-y-6 py-1 sm:space-y-8">
+        <div className="space-y-4 py-0 sm:space-y-6">
           <PartnerBannerCarousel />
 
           <CategoryExplorer categories={data.categories} locale={locale} copy={copy} />

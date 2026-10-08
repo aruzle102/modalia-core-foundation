@@ -259,6 +259,9 @@ export const fr = {
       heroFallbackTitle: "Une destination pensée pour l’essentiel.",
       heroFallbackSubtitle:
         "Découvrez des produits et des boutiques sélectionnés avec soin pour le quotidien moderne.",
+      heroTitle: "Découvrez ce qui vous fait vibrer",
+      heroSubtitle: "Explorez la mode, le sport et les essentiels du quotidien — tout au même endroit.",
+      heroCta: "Acheter",
       exploreEyebrow: "Explorer",
       browseCategories: "Parcourir par catégorie",
       trendingEyebrow: "En ce moment",

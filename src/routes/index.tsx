@@ -1644,14 +1644,8 @@ function HomePage() {
       <main id="main-content" tabIndex={-1}>
         <ModaliaHero />
         <PartnerBannerCarousel />
-        {/* Amazon-style: products + categories with sidebar, no cinematic hero */}
-        <MarketplaceLayout
-          categories={data.categories}
-          products={data.products}
-          locale={locale}
-        />
 
-        {/* V10.1: Horizontal product rails */}
+        {/* Discovery: horizontal product rails (not a full listing) */}
         <div className="mx-auto max-w-7xl space-y-10 px-4 py-8 sm:px-6 lg:px-8">
           <ProductRail
             title="Trending Now"

@@ -30,7 +30,7 @@ export function PartnerBannerCarousel() {
   }, [list.length]);
 
   const banner = list.length > 0 ? list[index % list.length] : null;
-  if (!banner || imgError || !banner.image_url) return null;
+  if (!banner || imgError || !banner.imageUrl) return null;
 
   const goTo = (dir: number) => {
     setImgError(false);
@@ -39,7 +39,7 @@ export function PartnerBannerCarousel() {
 
   const inner = (
     <img
-      src={banner.image_url}
+      src={banner.imageUrl}
       alt={banner.title || "Partner"}
       loading="lazy"
       onError={() => setImgError(true)}
@@ -53,9 +53,9 @@ export function PartnerBannerCarousel() {
         NOS PARTENAIRES
       </p>
       <div className="group relative">
-        {banner.link_url ? (
+        {banner.linkUrl ? (
           <a
-            href={banner.link_url}
+            href={banner.linkUrl}
             target="_blank"
             rel="noopener noreferrer sponsored"
             className="block"

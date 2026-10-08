@@ -1,1 +1,28 @@
-LS0gTU9EQUxJQSDigJQgU2VjdXJpdHkgaGFyZGVuaW5nIChtYW51YWwgZml4ZXMgZm9yIExvdmFibGUgU2VjdXJpdHkgdGFiIGZpbmRpbmdzKQotLSBBcHBsaWVkIG1hbnVhbGx5IHBlciBvd25lciBpbnN0cnVjdGlvbiAobmV2ZXIgdXNlIExvdmFibGUgYXV0by1maXgpLgotLQotLSBGaXhlZDoKLS0gMS4gc3RvcmVfdmlld3MgSU5TRVJUOiB3YXMgV0lUSCBDSEVDSyAodHJ1ZSkgYWxsb3dpbmcgZmFrZSB2aWV3IGluamVjdGlvbi4KLS0gICAgTm93IHJlcXVpcmVzIHRoZSBzdG9yZSB0byBleGlzdCBhbmQgYmUgYWN0aXZlLgotLSAyLiBwcm9ibGVtLXJlcG9ydHMgc3RvcmFnZSBidWNrZXQ6IHdhcyBwdWJsaWMuIE5vdyBwcml2YXRlIChhZG1pbi1vbmx5IHZpYSBzaWduZWQgVVJMcykuCi0tCi0tIEludGVudGlvbmFsbHkgdW5jaGFuZ2VkIChmYWxzZSBwb3NpdGl2ZXMgZm9yIGUtY29tbWVyY2UpOgotLSAtIHBhcnRuZXJzaGlwX3JlcXVlc3RzIC8gcHJvYmxlbV9yZXBvcnRzIHB1YmxpYyBJTlNFUlQ6IHB1YmxpYyBjb250YWN0IGZvcm1zIGJ5IGRlc2lnbi4KLS0gICBTRUxFQ1QgaXMgYWRtaW4tb25seTsgcGVyc29uYWwgZGF0YSBpcyBuZXZlciBleHBvc2VkIHB1YmxpY2x5LgotLSAtIGNhcnRzIC8gY2FydF9pdGVtcyAvIGFub255bW91c193aXNobGlzdHMgc2Vzc2lvbiBwb2xpY2llczogZ3Vlc3QgY29tbWVyY2UgcmVxdWlyZXMKLS0gICBzZXNzaW9uLXRva2VuIGFjY2Vzcy4gVG9rZW5zIGFyZSBjcnlwdG9ncmFwaGljYWxseSByYW5kb20gYW5kIHVuZ3Vlc3NhYmxlLgotLSAtIHJldmlldy1pbWFnZXMgYnVja2V0IHB1YmxpYzogcHJvZHVjdCByZXZpZXcgcGhvdG9zIGFyZSBwdWJsaWMgY29udGVudCBieSBkZXNpZ24uCgotLSBFbnN1cmUgc3RvcmVfdmlld3MgaGFyZGVuaW5nIGlzIGluIHBsYWNlIChpZGVtcG90ZW50KQpEUk9QIFBPTElDWSBJRiBFWElTVFMgc3RvcmVfdmlld3NfaW5zZXJ0IE9OIHB1YmxpYy5zdG9yZV92aWV3czsKQ1JFQVRFIFBPTElDWSBzdG9yZV92aWV3c19pbnNlcnQgT04gcHVibGljLnN0b3JlX3ZpZXdzIEZPUiBJTlNFUlQKICBXSVRIIENIRUNLICgKICAgIEVYSVNUUyAoCiAgICAgIFNFTEVDVCAxIEZST00gcHVibGljLnN0b3JlcyBzCiAgICAgIFdIRVJFIHMuaWQgPSBzdG9yZV92aWV3cy5zdG9yZV9pZAogICAgICAgIEFORCBzLnN0YXR1cyA9ICdhY3RpdmUnCiAgICApCiAgKTsKCi0tIEVuc3VyZSBwcm9ibGVtLXJlcG9ydHMgYnVja2V0IGlzIHByaXZhdGUKVVBEQVRFIHN0b3JhZ2UuYnVja2V0cyBTRVQgcHVibGljID0gZmFsc2UgV0hFUkUgaWQgPSAncHJvYmxlbS1yZXBvcnRzJzsK
+-- MODALIA — Security hardening (manual fixes for Lovable Security tab findings)
+-- Applied manually per owner instruction (never use Lovable auto-fix).
+--
+-- Fixed:
+-- 1. store_views INSERT: was WITH CHECK (true) allowing fake view injection.
+--    Now requires the store to exist and be active.
+-- 2. problem-reports storage bucket: was public. Now private (admin-only via signed URLs).
+--
+-- Intentionally unchanged (false positives for e-commerce):
+-- - partnership_requests / problem_reports public INSERT: public contact forms by design.
+--   SELECT is admin-only; personal data is never exposed publicly.
+-- - carts / cart_items / anonymous_wishlists session policies: guest commerce requires
+--   session-token access. Tokens are cryptographically random and unguessable.
+-- - review-images bucket public: product review photos are public content by design.
+
+-- Ensure store_views hardening is in place (idempotent)
+DROP POLICY IF EXISTS store_views_insert ON public.store_views;
+CREATE POLICY store_views_insert ON public.store_views FOR INSERT
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.stores s
+      WHERE s.id = store_views.store_id
+        AND s.status = 'active'
+    )
+  );
+
+-- Ensure problem-reports bucket is private
+UPDATE storage.buckets SET public = false WHERE id = 'problem-reports';

@@ -82,13 +82,11 @@ function SellerLoginPage() {
         if (access === "active") {
           // New onboarding flow: sellers who haven't completed setup go to the
           // 4-step wizard (personal → store → appearance → credentials).
-          // The wizard's final step replaces temp credentials, so we skip the
-          // legacy change-password page for non-onboarded sellers.
+          // Onboarding flow: non-onboarded owners go to the wizard.
+          // Onboarded sellers go directly to dashboard - the wizard already
+          // handled credential setup. Never force change-password after onboarding.
           if (isOwner && !onboarded) {
             await nav({ href: `/seller/onboarding?locale=${locale}`, replace: true });
-          } else if (mustResetPassword) {
-            // Legacy flow: already-onboarded seller with a pending rotation.
-            await nav({ href: `/seller/change-password?locale=${locale}`, replace: true });
           } else {
             await nav({ href: target, replace: true });
           }
@@ -135,13 +133,10 @@ function SellerLoginPage() {
         setMessage(blockedMessage(t));
         return;
       }
-      // New onboarding flow: non-onboarded sellers go to the 4-step wizard
-      // (its final step replaces temp credentials).
+      // New onboarding flow: non-onboarded sellers go to the 4-step wizard.
+      // Onboarded sellers go directly to dashboard (wizard handled credentials).
       if (isOwner && !onboarded) {
         await nav({ href: `/seller/onboarding?locale=${locale}`, replace: true });
-      } else if (mustResetPassword) {
-        // Legacy flow: already-onboarded seller with a pending rotation.
-        await nav({ href: `/seller/change-password?locale=${locale}`, replace: true });
       } else {
         await nav({ href: target, replace: true });
       }

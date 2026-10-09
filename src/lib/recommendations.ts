@@ -211,11 +211,12 @@ async function fetchTrendingRanks(
   const ranks = new Map<string, number>();
   try {
     // Bypass the typed RPC registry (trending_products is granted to anon).
+    // Cast the method but keep it bound to the client via .call() to preserve `this`.
     const rpc = client.rpc as unknown as (
       name: string,
       args: Record<string, unknown>,
     ) => Promise<{ data: { product_id: string }[] | null; error: unknown }>;
-    const { data, error } = await rpc("trending_products", {
+    const { data, error } = await rpc.call(client, "trending_products", {
       p_days: 7,
       p_limit: 20,
     });

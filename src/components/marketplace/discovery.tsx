@@ -143,7 +143,7 @@ export function ProductCard({
             type="button"
             onClick={handleQuickAdd}
             onTouchStart={handleQuickAdd}
-            aria-label={t.addToCart || "Add to cart"}
+            aria-label="Add to cart"
             className="absolute bottom-2 right-2 z-10 grid size-11 place-items-center rounded-full bg-[#0A0A0A] text-white shadow-[0_2px_10px_rgba(0,0,0,0.25)] transition-transform hover:scale-105 active:scale-95 touch-manipulation"
           >
             <ShoppingBag className="size-4" aria-hidden="true" />

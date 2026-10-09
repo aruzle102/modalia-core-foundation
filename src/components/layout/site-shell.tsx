@@ -4,19 +4,23 @@ import { useQuery } from "@tanstack/react-query";
 import {
   Banknote,
   ChevronDown,
-  ChevronRight,
-  Clock,
   Facebook,
   Globe,
   Heart,
+  Home,
   Instagram,
+  LayoutGrid,
   Mail,
   MapPin,
   Menu,
   Music2,
+  Package,
   Phone,
   Search,
   ShoppingBag,
+  Sparkles,
+  Tag,
+  TrendingUp,
   UserRound,
   X,
 } from "lucide-react";
@@ -106,12 +110,14 @@ function BannerBar({ locale }: { locale: SupportedLocale }) {
 export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translation }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [assistantOpen, setAssistantOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const [categoriesOpen, setCategoriesOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const cart = useCart();
   const navigate = useNavigate();
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const mobileSearchInputRef = useRef<HTMLInputElement>(null);
   const categoriesRef = useRef<HTMLDivElement>(null);
 
   const categoriesQuery = useQuery({
@@ -159,15 +165,22 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
     };
   }, [categoriesOpen]);
 
-  // Lock body scroll while the mobile drawer is open.
+  // Lock body scroll while the mobile drawer or search overlay is open.
   useEffect(() => {
-    if (!drawerOpen) return;
+    if (!drawerOpen && !searchOpen) return;
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = previous;
     };
-  }, [drawerOpen]);
+  }, [drawerOpen, searchOpen]);
+
+  // Focus the search input when the overlay opens.
+  useEffect(() => {
+    if (!searchOpen) return;
+    const timer = setTimeout(() => mobileSearchInputRef.current?.focus(), 60);
+    return () => clearTimeout(timer);
+  }, [searchOpen]);
 
   const submitSearch = (event: React.FormEvent) => {
     event.preventDefault();
@@ -292,6 +305,17 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
               <AiAssistantButton locale={locale} t={t} onOpen={() => setAssistantOpen(true)} />
             ) : null}
 
+            {/* Search icon — opens the full search overlay (mobile/tablet; desktop uses inline search). */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-foreground/80 hover:text-foreground lg:hidden"
+              aria-label={t.nav.search}
+              onClick={() => setSearchOpen(true)}
+            >
+              <Search className="size-[18px]" />
+            </Button>
+
             <div className="relative hidden sm:block">
               <select
                 aria-label={t.nav.chooseLanguage}
@@ -412,83 +436,104 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
               </form>
 
               <nav aria-label={t.nav.mobileNavigation}>
+                {/* ── DISCOVER ── */}
+                <p className="mb-1 text-caption font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                  {t.nav.menuDiscover}
+                </p>
                 <ul className="space-y-1">
+                  <li>
+                    <Link
+                      to="/home"
+                      search={{ locale }}
+                      onClick={() => setDrawerOpen(false)}
+                      className="flex items-center gap-3 py-2.5 text-nav tracking-tight text-foreground/80 transition-colors hover:text-foreground"
+                    >
+                      <Home className="size-4 shrink-0" aria-hidden="true" />
+                      {t.nav.menuHome}
+                    </Link>
+                  </li>
                   <li>
                     <Link
                       to="/shop"
                       search={shopSearch(locale)}
                       onClick={() => setDrawerOpen(false)}
-                      className="flex items-center justify-between py-3.5 text-h3 tracking-tight text-foreground"
+                      className="flex items-center gap-3 py-2.5 text-nav tracking-tight text-foreground/80 transition-colors hover:text-foreground"
                     >
-                      {t.nav.shop}
-                      <ChevronRight
-                        className="size-4 text-muted-foreground rtl:rotate-180"
-                        aria-hidden="true"
-                      />
+                      <LayoutGrid className="size-4 shrink-0" aria-hidden="true" />
+                      {t.nav.menuAllProducts}
                     </Link>
                   </li>
                   <li>
                     <Link
                       to="/shop"
-                      search={shopSearch(locale, { view: "categories" })}
+                      search={{ ...shopSearch(locale), sort: "newest" }}
                       onClick={() => setDrawerOpen(false)}
-                      className="flex items-center justify-between py-3.5 text-h3 tracking-tight text-foreground"
+                      className="flex items-center gap-3 py-2.5 text-nav tracking-tight text-foreground/80 transition-colors hover:text-foreground"
                     >
-                      {t.nav.categories}
-                      <ChevronRight
-                        className="size-4 text-muted-foreground rtl:rotate-180"
-                        aria-hidden="true"
-                      />
+                      <Sparkles className="size-4 shrink-0" aria-hidden="true" />
+                      {t.nav.menuNew}
                     </Link>
                   </li>
-                  {categories.slice(0, 6).map((category) => (
+                  <li>
+                    <Link
+                      to="/home"
+                      search={{ locale }}
+                      onClick={() => setDrawerOpen(false)}
+                      className="flex items-center gap-3 py-2.5 text-nav tracking-tight text-foreground/80 transition-colors hover:text-foreground"
+                    >
+                      <TrendingUp className="size-4 shrink-0" aria-hidden="true" />
+                      {t.nav.menuTrending}
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/shop"
+                      search={{ ...shopSearch(locale), onSale: true }}
+                      onClick={() => setDrawerOpen(false)}
+                      className="flex items-center gap-3 py-2.5 text-nav tracking-tight text-foreground/80 transition-colors hover:text-foreground"
+                    >
+                      <Tag className="size-4 shrink-0" aria-hidden="true" />
+                      {t.nav.menuOffers}
+                    </Link>
+                  </li>
+                </ul>
+
+                <div className="my-5 border-t border-border" aria-hidden="true" />
+
+                {/* ── CATEGORIES (real, admin-managed) ── */}
+                <p className="mb-1 text-caption font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                  {t.nav.menuCategories}
+                </p>
+                <ul className="space-y-1">
+                  {categories.map((category) => (
                     <li key={category.slug}>
                       <Link
                         to="/shop"
                         search={{ ...shopSearch(locale), category: category.slug }}
                         onClick={() => setDrawerOpen(false)}
-                        className="block py-2 ps-1 text-nav tracking-tight text-foreground/70 transition-colors hover:text-foreground"
+                        className="block py-2 text-nav tracking-tight text-foreground/70 transition-colors hover:text-foreground"
                       >
                         {category.name}
                       </Link>
                     </li>
                   ))}
-                  <li>
-                    <Link
-                      to="/shop"
-                      search={shopSearch(locale, { view: "stores" })}
-                      onClick={() => setDrawerOpen(false)}
-                      className="flex items-center justify-between py-3.5 text-h3 tracking-tight text-foreground"
-                    >
-                      {t.nav.stores}
-                      <ChevronRight
-                        className="size-4 text-muted-foreground rtl:rotate-180"
-                        aria-hidden="true"
-                      />
-                    </Link>
-                  </li>
-                  {/* Admin-configured quick links (placement "header"). */}
-                  <SiteButtons
-                    placement="header"
-                    locale={locale}
-                    variant="link"
-                    listItemClassName=""
-                    itemClassName="block py-2 ps-1 text-nav tracking-tight text-foreground/70 transition-colors hover:text-foreground"
-                    onNavigate={() => setDrawerOpen(false)}
-                  />
                 </ul>
 
                 <div className="my-5 border-t border-border" aria-hidden="true" />
 
+                {/* ── MY PURCHASES ── */}
+                <p className="mb-1 text-caption font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                  {t.nav.menuPurchases}
+                </p>
                 <ul className="space-y-1">
                   <li>
                     <Link
                       to="/wishlist"
                       search={{ locale }}
                       onClick={() => setDrawerOpen(false)}
-                      className="flex items-center gap-3 py-2.5 text-nav tracking-tight text-foreground/80"
+                      className="flex items-center gap-3 py-2.5 text-nav tracking-tight text-foreground/80 transition-colors hover:text-foreground"
                     >
-                      <Heart className="size-4" aria-hidden="true" />
+                      <Heart className="size-4 shrink-0" aria-hidden="true" />
                       {t.nav.wishlist}
                     </Link>
                   </li>
@@ -497,9 +542,9 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
                       to="/cart"
                       search={{ locale }}
                       onClick={() => setDrawerOpen(false)}
-                      className="flex items-center gap-3 py-2.5 text-nav tracking-tight text-foreground/80"
+                      className="flex items-center gap-3 py-2.5 text-nav tracking-tight text-foreground/80 transition-colors hover:text-foreground"
                     >
-                      <ShoppingBag className="size-4" aria-hidden="true" />
+                      <ShoppingBag className="size-4 shrink-0" aria-hidden="true" />
                       {t.nav.cart}
                       {cart.count ? (
                         <span className="bg-foreground px-1.5 text-[10px] font-bold text-background">
@@ -510,23 +555,82 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
                   </li>
                   <li>
                     <Link
-                      to="/auth"
+                      to="/track-order"
                       search={{ locale }}
                       onClick={() => setDrawerOpen(false)}
-                      className="flex items-center gap-3 py-2.5 text-nav tracking-tight text-foreground/80"
+                      className="flex items-center gap-3 py-2.5 text-nav tracking-tight text-foreground/80 transition-colors hover:text-foreground"
                     >
-                      <UserRound className="size-4" aria-hidden="true" />
-                      {t.nav.account}
+                      <Package className="size-4 shrink-0" aria-hidden="true" />
+                      {t.nav.menuTrackOrder}
+                    </Link>
+                  </li>
+                </ul>
+
+                <div className="my-5 border-t border-border" aria-hidden="true" />
+
+                {/* ── INFORMATION ── */}
+                <p className="mb-1 text-caption font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                  {t.nav.menuInfo}
+                </p>
+                <ul className="space-y-1">
+                  <li>
+                    <Link
+                      to="/about"
+                      search={{ locale }}
+                      onClick={() => setDrawerOpen(false)}
+                      className="block py-2 text-nav tracking-tight text-foreground/70 transition-colors hover:text-foreground"
+                    >
+                      {t.nav.menuAbout}
                     </Link>
                   </li>
                   <li>
                     <Link
-                      to="/track-order"
+                      to="/contact"
                       search={{ locale }}
                       onClick={() => setDrawerOpen(false)}
-                      className="flex items-center gap-3 py-2.5 text-nav tracking-tight text-foreground/80"
+                      className="block py-2 text-nav tracking-tight text-foreground/70 transition-colors hover:text-foreground"
                     >
-                      {t.nav.trackOrder}
+                      {t.nav.menuContact}
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/shipping"
+                      search={{ locale }}
+                      onClick={() => setDrawerOpen(false)}
+                      className="block py-2 text-nav tracking-tight text-foreground/70 transition-colors hover:text-foreground"
+                    >
+                      {t.footer.links.shipping}
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/returns"
+                      search={{ locale }}
+                      onClick={() => setDrawerOpen(false)}
+                      className="block py-2 text-nav tracking-tight text-foreground/70 transition-colors hover:text-foreground"
+                    >
+                      {t.footer.links.returns}
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/help"
+                      search={{ locale }}
+                      onClick={() => setDrawerOpen(false)}
+                      className="block py-2 text-nav tracking-tight text-foreground/70 transition-colors hover:text-foreground"
+                    >
+                      {t.nav.menuFaq}
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/terms"
+                      search={{ locale }}
+                      onClick={() => setDrawerOpen(false)}
+                      className="block py-2 text-nav tracking-tight text-foreground/70 transition-colors hover:text-foreground"
+                    >
+                      {t.nav.menuTerms}
                     </Link>
                   </li>
                 </ul>
@@ -556,6 +660,37 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
               </nav>
             </div>
           </aside>
+        </div>
+      ) : null}
+
+      {/* Mobile/tablet search overlay */}
+      {searchOpen ? (
+        <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label={t.nav.search}>
+          <div className="absolute inset-0 bg-background">
+            <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 sm:px-6">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setSearchOpen(false)}
+                aria-label={t.common.close}
+                className="shrink-0"
+              >
+                <X className="size-5" />
+              </Button>
+              <div className="min-w-0 flex-1">
+                <SearchAutocomplete
+                  value={searchValue}
+                  onChange={setSearchValue}
+                  onSubmit={(q) => {
+                    window.location.href = `/search?locale=${locale}&q=${encodeURIComponent(q)}`;
+                    setSearchOpen(false);
+                  }}
+                  onClose={() => setSearchOpen(false)}
+                  inputRef={mobileSearchInputRef}
+                />
+              </div>
+            </div>
+          </div>
         </div>
       ) : null}
 

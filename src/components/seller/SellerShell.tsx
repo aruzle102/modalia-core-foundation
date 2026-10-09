@@ -432,15 +432,8 @@ export function SellerShell({
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   // Forced password rotation: a first-time owner who reaches the workspace
-  // (e.g. via a bookmarked deep link) is routed to the change-password page
-  // before any work. The flag is owner-only; suspended owners never get here
-  // (status !== "ready"). href is used because the route tree regenerates at
-  // build time.
-  useEffect(() => {
-    if (status === "ready" && seller?.isOwner && seller?.mustResetPassword) {
-      void nav({ href: `/seller/change-password?locale=${locale}`, replace: true });
-    }
-  }, [status, seller, locale, nav]);
+  // Password change is handled via the onboarding wizard.
+  // No forced redirect to change-password page.
   // Preserve the intended route so the seller returns here after signing in.
   const intended = useMemo(
     () =>

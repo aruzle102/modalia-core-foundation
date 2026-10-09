@@ -80,12 +80,15 @@ function SellerLoginPage() {
         const { access, mustResetPassword, onboarded, isOwner } = await getSellerAccessStatus();
         if (cancelled) return;
         if (access === "active") {
-          // First-time seller (temporary password): force rotation before work.
-          if (mustResetPassword) {
-            await nav({ href: `/seller/change-password?locale=${locale}`, replace: true });
-          } else if (isOwner && !onboarded) {
-            // New owner, password already rotated: guided setup first.
+          // New onboarding flow: sellers who haven't completed setup go to the
+          // 4-step wizard (personal → store → appearance → credentials).
+          // The wizard's final step replaces temp credentials, so we skip the
+          // legacy change-password page for non-onboarded sellers.
+          if (isOwner && !onboarded) {
             await nav({ href: `/seller/onboarding?locale=${locale}`, replace: true });
+          } else if (mustResetPassword) {
+            // Legacy flow: already-onboarded seller with a pending rotation.
+            await nav({ href: `/seller/change-password?locale=${locale}`, replace: true });
           } else {
             await nav({ href: target, replace: true });
           }
@@ -132,12 +135,13 @@ function SellerLoginPage() {
         setMessage(blockedMessage(t));
         return;
       }
-      // First-time seller (temporary password): force rotation before work.
-      if (mustResetPassword) {
-        await nav({ href: `/seller/change-password?locale=${locale}`, replace: true });
-      } else if (isOwner && !onboarded) {
-        // New owner, password already rotated: guided setup first.
+      // New onboarding flow: non-onboarded sellers go to the 4-step wizard
+      // (its final step replaces temp credentials).
+      if (isOwner && !onboarded) {
         await nav({ href: `/seller/onboarding?locale=${locale}`, replace: true });
+      } else if (mustResetPassword) {
+        // Legacy flow: already-onboarded seller with a pending rotation.
+        await nav({ href: `/seller/change-password?locale=${locale}`, replace: true });
       } else {
         await nav({ href: target, replace: true });
       }
@@ -187,12 +191,7 @@ function SellerLoginPage() {
           </div>
           <p className="mt-3 text-small text-muted-foreground">{mode === "signin" ? t.loginSub : t.forgotSub}</p>
 
-          {checkingSession ? (
-            <p className="mt-7 flex items-center gap-2 text-small text-muted-foreground">
-              <LogIn className="h-4 w-4 animate-pulse" aria-hidden="true" />
-              {t.signingIn}
-            </p>
-          ) : mode === "signin" ? (
+          {mode === "signin" ? (
             <form onSubmit={handleSignIn}>
               <label className="mt-7 block text-small">
                 {t.identifier}

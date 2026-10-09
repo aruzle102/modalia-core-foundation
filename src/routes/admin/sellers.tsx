@@ -30,6 +30,7 @@ import { useAdminLocale } from "@/components/admin/useAdminLocale";
 import { getTranslations } from "@/lib/i18n";
 import { listSellers, updateSellerStatus } from "@/lib/admin-sellers.functions";
 import { SellerOnboardingWizard } from "@/components/admin/SellerOnboardingWizard";
+import { CreateStoreWizard } from "@/components/admin/CreateStoreWizard";
 import { EditSellerDialog } from "@/components/admin/EditSellerDialog";
 import { useAdminT } from "@/components/admin/use-admin-t";
 
@@ -71,6 +72,7 @@ function SellersList() {
   const backParam = useBackParam();
   const queryClient = useQueryClient();
   const [wizardOpen, setWizardOpen] = useState(false);
+  const [storeWizardOpen, setStoreWizardOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   // Deep link: /admin/sellers?create=seller opens the onboarding wizard
   // (the real flow that creates a seller together with their store).
@@ -168,6 +170,10 @@ function SellersList() {
               <Button onClick={() => setWizardOpen(true)}>
                 <UserPlus className="size-4 me-1.5" />
                 Create seller &amp; store
+              </Button>
+              <Button onClick={() => setStoreWizardOpen(true)} variant="secondary">
+                <UserPlus className="size-4 me-1.5" />
+                New: Create Store (quick)
               </Button>
             </div>
           }
@@ -318,6 +324,13 @@ function SellersList() {
             setWizardOpen(open);
             if (!open) url.set({ create: undefined });
           }}
+          onCreated={() => {
+            queryClient.invalidateQueries({ queryKey: ["admin-sellers"] });
+          }}
+        />
+        <CreateStoreWizard
+          open={storeWizardOpen}
+          onOpenChange={setStoreWizardOpen}
           onCreated={() => {
             queryClient.invalidateQueries({ queryKey: ["admin-sellers"] });
           }}

@@ -54,12 +54,8 @@ function SellerOverviewPage() {
   const navigate = useNavigate();
   const session = useSellerSession();
 
-  // Temp password → redirect to password change
-  useEffect(() => {
-    if (session.status === "ready" && session.seller?.mustResetPassword) {
-      void navigate({ to: "/seller/change-password", search: { locale } as any });
-    }
-  }, [session.status, session.seller, navigate, locale]);
+  // Password change is handled via the onboarding wizard (Step 4).
+  // No forced redirect - onboarded sellers go directly to dashboard.
 
   // --- Session gates ---
   if (session.status === "checking") {

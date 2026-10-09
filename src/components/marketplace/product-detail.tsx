@@ -224,7 +224,15 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
     );
   };
 
-  const canPurchase = complete && available;
+  // Availability display states (honest, never misleading):
+  // - No variants configured at all → product cannot be purchased (data issue).
+  // - Options exist but nothing chosen yet → prompt to select (NOT "out of stock").
+  // - Otherwise → the real stock state of the effective variant.
+  const hasVariants = product.variants.length > 0;
+  const hasSelection = selectedValues.length > 0;
+  const needsSelection = hasVariants && product.options.length > 0 && !hasSelection;
+
+  const canPurchase = hasVariants && complete && available;
 
   /** The rating summary links to the reviews tab: activate it, then scroll. */
   const goToReviews = (event: MouseEvent<HTMLAnchorElement>) => {
@@ -495,7 +503,12 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
           ) : null}
 
           <div className="mt-8 border-y border-border py-5" aria-live="polite">
-            {!complete ? (
+            {!hasVariants ? (
+              <p className="inline-flex items-center gap-2 text-small font-medium text-muted-foreground">
+                <span className="size-2 rounded-full bg-muted-foreground/50" aria-hidden />
+                {t.notAvailable}
+              </p>
+            ) : needsSelection || !complete ? (
               <p className="text-small text-muted-foreground">{t.chooseOptions}</p>
             ) : available ? (
               <>
@@ -799,6 +812,19 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
 
       {/* ——— Viewed together (real co-view events; hidden until data exists) ——— */}
       <ViewedTogether productId={product.id} locale={locale} copy={t} />
+
+      {/* ——— More from this store (real storefront products; hidden when none) ——— */}
+      {product.fromStore.length ? (
+        <section className="mt-20 border-t border-[#E5E5E5] pt-12 lg:mt-24">
+          <p className="text-eyebrow text-muted-foreground">{t.fromStoreEyebrow}</p>
+          <h2 className="mt-2 font-display text-3xl font-semibold tracking-tight text-foreground">
+            {t.fromStoreTitle}
+          </h2>
+          <div className="mt-8">
+            <ProductGrid products={product.fromStore} locale={locale} />
+          </div>
+        </section>
+      ) : null}
 
       {/* ——— Sticky mobile purchase bar: appears once the main CTAs scroll out of view.
           Sec 43 (#100): while slid off-screen (`ctaVisible`) the bar is `inert`

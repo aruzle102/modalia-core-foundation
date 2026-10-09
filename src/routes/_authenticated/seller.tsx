@@ -119,17 +119,18 @@ function SellerOverviewPage() {
 }
 
 function DashboardContent({ locale }: { locale: "fr" | "en" | "ar" }) {
-  const { data: overview, isPending: overviewPending, isError: overviewError, refetch } = useQuery(overviewQuery);
+  const { data: overview, isPending: overviewPending, isError: overviewError, error, refetch } = useQuery(overviewQuery);
 
   if (overviewPending) {
     return <SellerShellSkeleton />;
   }
   if (overviewError || !overview) {
+    const errorMsg = error instanceof Error ? error.message : String(error ?? "Unknown error");
     return (
       <SellerGateCard
         icon={<AlertTriangle className="h-6 w-6" />}
         title="Seller overview could not be loaded"
-        description="Please try again. If the problem persists, contact support."
+        description={`Error: ${errorMsg}`}
       >
         <Button variant="outline" onClick={() => void refetch()}>
           <RefreshCw className="mr-2 h-4 w-4" /> Retry

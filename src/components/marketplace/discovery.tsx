@@ -134,7 +134,7 @@ export function ProductCard({
           onTouchStart={handleWishlist}
           aria-pressed={wishlisted}
           aria-label={t.wishlist(product.name)}
-          className="absolute right-2 top-2 z-10 grid size-8 place-items-center rounded-full bg-white text-[#0A0A0A] shadow-[0_2px_10px_rgba(0,0,0,0.12)] transition-transform hover:scale-105 active:scale-95"
+          className="absolute right-2 top-2 z-10 grid size-11 place-items-center rounded-full bg-white text-[#0A0A0A] shadow-[0_2px_10px_rgba(0,0,0,0.12)] transition-transform hover:scale-105 active:scale-95 touch-manipulation"
         >
           <Heart className={`size-4 ${wishlisted ? "fill-[#E53935] text-[#E53935]" : ""}`} aria-hidden="true" />
         </button>
@@ -144,7 +144,7 @@ export function ProductCard({
             onClick={handleQuickAdd}
             onTouchStart={handleQuickAdd}
             aria-label={t.addToCart || "Add to cart"}
-            className="absolute bottom-2 right-2 z-10 grid size-8 place-items-center rounded-full bg-[#0A0A0A] text-white shadow-[0_2px_10px_rgba(0,0,0,0.25)] transition-transform hover:scale-105 active:scale-95"
+            className="absolute bottom-2 right-2 z-10 grid size-11 place-items-center rounded-full bg-[#0A0A0A] text-white shadow-[0_2px_10px_rgba(0,0,0,0.25)] transition-transform hover:scale-105 active:scale-95 touch-manipulation"
           >
             <ShoppingBag className="size-4" aria-hidden="true" />
           </button>

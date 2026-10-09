@@ -16,7 +16,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { requireSeller, type SellerContext } from "@/lib/seller-auth";
+import { requireSeller, requireSellerAllowMustReset, type SellerContext } from "@/lib/seller-auth";
 import { pickLocalizedName } from "@/lib/names";
 
 const sellerOnly = [requireSupabaseAuth] as const;
@@ -34,7 +34,10 @@ const num = (value: unknown): number => {
 async function sellerGuard(context: any): Promise<SellerContext> {
   const userId = context?.userId as string | undefined;
   if (!userId) throw new Error("Unauthorized");
-  return requireSeller({ supabase: context.supabase, userId });
+  // Dashboard is read-only: allow sellers with must_reset_password flag to view.
+  // Write operations use requireSeller (deny variant) separately.
+  // This fixes the systemic lockout where provisioned sellers could never load the dashboard.
+  return requireSellerAllowMustReset({ supabase: context.supabase, userId });
 }
 
 type RpcResult = { data: unknown; error: { message?: string } | null };

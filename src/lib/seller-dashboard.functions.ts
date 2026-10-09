@@ -34,25 +34,10 @@ const num = (value: unknown): number => {
 async function sellerGuard(context: any): Promise<SellerContext> {
   const userId = context?.userId as string | undefined;
   if (!userId) throw new Error("Unauthorized");
-  try {
-    // Dashboard is read-only: allow sellers with must_reset_password flag to view.
-    return requireSellerAllowMustReset({ supabase: context.supabase, userId });
-  } catch (err) {
-    // Ultimate fallback: if seller resolution fails, return minimal context
-    // so the dashboard loads with empty data instead of crashing.
-    // This prevents "Seller overview could not be loaded" for any reason.
-    console.error("[sellerGuard] Resolution failed, using fallback:", err);
-    return {
-      sellerId: "",
-      storeId: null,
-      storeSlug: null,
-      isOwner: false,
-      permissions: [],
-      legalName: "Seller",
-      mustResetPassword: false,
-      onboarded: true,
-    } as SellerContext;
-  }
+  // Dashboard is read-only: allow sellers with must_reset_password flag to view.
+  // Write operations use requireSeller (deny variant) separately.
+  // Fail closed: if identity cannot be resolved, the real error propagates.
+  return requireSellerAllowMustReset({ supabase: context.supabase, userId });
 }
 
 type RpcResult = { data: unknown; error: { message?: string } | null };
@@ -226,24 +211,6 @@ export const getSellerOverview = createServerFn({ method: "GET" })
     const seller = await sellerGuard(context);
     const supabase = context.supabase as SupabaseClient;
     const diagnostics: TableDiagnostic[] = [];
-
-    // If sellerId is empty (fallback mode), skip RPC and return empty overview
-    // This ensures the dashboard ALWAYS renders instead of showing an error
-    if (!seller.sellerId) {
-      return {
-        seller: { legalName: seller.legalName, storeId: null, isOwner: false },
-        currency: "DZD",
-        kpis: {
-          totalDeliveredSales: 0, deliveredCount: 0, ordersCount: 0, averageOrderValue: 0,
-          productsCount: 0, lowStockCount: 0, outOfStockCount: 0, pendingOrdersCount: 0,
-          cancelledSales: 0, returnedSales: 0, commissionPayable: 0, netEarnings: 0,
-          pendingSettlementAmount: 0, settledAmount: 0,
-        },
-        lowStockAlerts: [],
-        onboarded: true,
-        diagnostics: [{ table: "fallback", ok: true, message: "Seller resolution fallback" }],
-      };
-    }
 
     const [rpc, onboardedFlag] = await Promise.all([
       callRpc(supabase, "seller_dashboard_overview", {}),

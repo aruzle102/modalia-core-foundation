@@ -45,18 +45,13 @@ export function ProductCard({
   const soldOut = stock === 0;
   const lowStock = stock != null && stock > 0 && stock <= LOW_STOCK_THRESHOLD;
 
-  const handleQuickAdd = (event: React.MouseEvent<HTMLButtonElement>) => {
+  const handleQuickAdd = (event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
-    startBuyNow(locale, {
-      productId: product.id,
-      slug: product.slug,
-      name: product.name,
-      image: product.imagePath,
-      storeName: product.storeName,
-    }, { mode: "add" });
+    // Navigate to product page for purchase (variant selection + cart work there)
+    window.location.href = `/product/${product.slug}?locale=${locale}`;
   };
 
-  const handleWishlist = (event: React.MouseEvent<HTMLButtonElement>) => {
+  const handleWishlist = (event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
     const added = toggleWishlist({
       productId: product.id,

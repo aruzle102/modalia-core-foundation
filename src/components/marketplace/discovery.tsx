@@ -45,13 +45,13 @@ export function ProductCard({
   const soldOut = stock === 0;
   const lowStock = stock != null && stock > 0 && stock <= LOW_STOCK_THRESHOLD;
 
-  const handleQuickAdd = (event: MouseEvent<HTMLButtonElement>) => {
+  const handleQuickAdd = (event: any) => {
     event.stopPropagation();
     // Navigate to product page for purchase (variant selection + cart work there)
     window.location.href = `/product/${product.slug}?locale=${locale}`;
   };
 
-  const handleWishlist = (event: MouseEvent<HTMLButtonElement>) => {
+  const handleWishlist = (event: any) => {
     event.stopPropagation();
     const added = toggleWishlist({
       productId: product.id,
@@ -131,6 +131,7 @@ export function ProductCard({
         <button
           type="button"
           onClick={handleWishlist}
+          onTouchStart={handleWishlist}
           aria-pressed={wishlisted}
           aria-label={t.wishlist(product.name)}
           className="absolute right-2 top-2 z-10 grid size-8 place-items-center rounded-full bg-white text-[#0A0A0A] shadow-[0_2px_10px_rgba(0,0,0,0.12)] transition-transform hover:scale-105 active:scale-95"
@@ -141,6 +142,7 @@ export function ProductCard({
           <button
             type="button"
             onClick={handleQuickAdd}
+            onTouchStart={handleQuickAdd}
             aria-label={t.addToCart || "Add to cart"}
             className="absolute bottom-2 right-2 z-10 grid size-8 place-items-center rounded-full bg-[#0A0A0A] text-white shadow-[0_2px_10px_rgba(0,0,0,0.25)] transition-transform hover:scale-105 active:scale-95"
           >

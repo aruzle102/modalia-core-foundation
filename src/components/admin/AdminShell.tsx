@@ -2,25 +2,28 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
+  Activity,
   BadgeCheck,
+  BadgePercent,
   BarChart3,
   Bell,
   Building2,
   ChevronDown,
   ExternalLink,
   FileText,
+  FileWarning,
   Flag,
   FolderTree,
   Globe,
   Hammer,
-  HeartPulse,
+  Handshake,
   Images,
-  ImagePlus,
   Layers,
   LayoutDashboard,
   LayoutTemplate,
   LogOut,
   MapPin,
+  Megaphone,
   MousePointerClick,
   Package,
   Percent,
@@ -28,15 +31,17 @@ import {
   Settings,
   ShieldCheck,
   ShoppingBag,
+  Sparkles,
   Star,
   Store,
   Ticket,
   Truck,
+  UserCheck,
+  Wrench,
   UserCog,
   UserRound,
   Users,
   Wallet,
-  Wrench,
 } from "lucide-react";
 import { CommandBar } from "./CommandBar";
 import { QuickCreate } from "./QuickCreate";
@@ -53,7 +58,6 @@ import { cn } from "@/lib/utils";
 import { Crumbs, type Crumb } from "@/components/routing/crumbs";
 
 import type { LinkProps } from "@tanstack/react-router";
-import { ModaliaIntelligenceIcon } from "@/components/marketplace/ModaliaIntelligenceIcon";
 
 type AdminNavStrings = Translation["adminNav"];
 
@@ -107,11 +111,16 @@ function buildNavGroups(t: AdminNavStrings): NavGroup[] {
         { label: items.sellerApplications, to: "/admin/applications", icon: <FileText className={icon} /> },
         { label: items.sellers, to: "/admin/sellers", icon: <Users className={icon} /> },
         { label: items.stores, to: "/admin/stores", icon: <Store className={icon} /> },
-        { label: "Verifications", to: "/admin/verifications" as any, icon: <BadgeCheck className={icon} /> },
         { label: items.customers, to: "/admin/customers", icon: <UserRound className={icon} /> },
-        { label: "Partnerships", to: "/admin/partnerships" as any, icon: <Building2 className={icon} /> },
-        { label: "Partner banners", to: "/admin/partner-banners" as any, icon: <ImagePlus className={icon} /> },
-        { label: "Reports", to: "/admin/reports" as any, icon: <Flag className={icon} /> },
+        { label: items.verifications, to: "/admin/verifications", icon: <UserCheck className={icon} /> },
+      ],
+    },
+    {
+      id: "finance",
+      label: t.groups.finance,
+      items: [
+        { label: items.settlements, to: "/admin/settlements", icon: <Wallet className={icon} /> },
+        { label: items.commissions, to: "/admin/commissions", icon: <Percent className={icon} /> },
       ],
     },
     {
@@ -122,21 +131,24 @@ function buildNavGroups(t: AdminNavStrings): NavGroup[] {
         { label: items.wilayas, to: "/admin/wilayas", icon: <MapPin className={icon} /> },
         { label: items.communes, to: "/admin/communes", icon: <Building2 className={icon} /> },
         { label: items.coupons, to: "/admin/coupons", icon: <Ticket className={icon} /> },
-        { label: items.settlements, to: "/admin/settlements", icon: <Wallet className={icon} /> },
-        { label: items.commissions, to: "/admin/commissions", icon: <Percent className={icon} /> },
+        { label: items.partnerCoupons, to: "/admin/partner-coupons", icon: <BadgePercent className={icon} /> },
         { label: items.notifications, to: "/admin/notifications", icon: <Bell className={icon} /> },
       ],
     },
     {
-      id: "content",
-      label: t.groups.content,
+      id: "growth",
+      label: t.groups.growth,
       items: [
+        { label: items.partnerships, to: "/admin/partnerships", icon: <Handshake className={icon} /> },
+        { label: items.partnerBanners, to: "/admin/partner-banners", icon: <Megaphone className={icon} /> },
+        { label: items.reports, to: "/admin/reports", icon: <FileWarning className={icon} /> },
         { label: items.homepage, to: "/admin/homepage", icon: <LayoutTemplate className={icon} /> },
         { label: items.homepageBuilder, to: "/admin/homepage/builder", icon: <Hammer className={icon} /> },
         { label: items.media, to: "/admin/media", icon: <Images className={icon} /> },
         { label: items.banners, to: "/admin/banners", icon: <Flag className={icon} /> },
         { label: items.collections, to: "/admin/collections", icon: <Layers className={icon} /> },
         { label: items.buttons, to: "/admin/buttons", icon: <MousePointerClick className={icon} /> },
+        { label: items.seo, to: "/admin/seo", icon: <Globe className={icon} /> },
       ],
     },
     {
@@ -144,13 +156,12 @@ function buildNavGroups(t: AdminNavStrings): NavGroup[] {
       label: t.groups.system,
       items: [
         { label: items.team, to: "/admin/team", icon: <UserCog className={icon} /> },
-        { label: items.ai, to: "/admin/ai", icon: <ModaliaIntelligenceIcon size={18} className={icon} /> },
-        { label: items.seo, to: "/admin/seo", icon: <Globe className={icon} /> },
+        { label: items.ai, to: "/admin/ai", icon: <Sparkles className={icon} /> },
         { label: items.settings, to: "/admin/settings", icon: <Settings className={icon} /> },
-        { label: "Maintenance", to: "/admin/maintenance" as any, icon: <Wrench className={icon} /> },
-        { label: "System Health", to: "/admin/system-health" as any, icon: <HeartPulse className={icon} /> },
         { label: items.security, to: "/admin/security", icon: <ShieldCheck className={icon} /> },
         { label: items.auditLogs, to: "/admin/audit", icon: <ScrollText className={icon} /> },
+        { label: items.maintenance, to: "/admin/maintenance", icon: <Wrench className={icon} /> },
+        { label: items.systemHealth, to: "/admin/system-health", icon: <Activity className={icon} /> },
       ],
     },
   ];
@@ -200,11 +211,10 @@ function NavLink({ item, compact }: { item: NavItem; compact?: boolean }) {
   return (
     <Link
       to={item.to}
-      preload="intent"
       {...(item.exact ? { activeOptions: { exact: true } } : {})}
-      activeProps={{ className: "bg-accent text-accent-foreground font-medium" }}
+      activeProps={{ className: "bg-neutral-900 text-white font-medium shadow-sm dark:bg-white dark:text-neutral-900 [&_svg]:text-current" }}
       className={cn(
-        "flex items-center gap-2.5 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground",
+        "group relative flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-all duration-200 hover:bg-neutral-100 hover:text-neutral-900 dark:hover:bg-neutral-800/60 dark:hover:text-neutral-100",
         compact && "shrink-0 whitespace-nowrap py-1.5",
       )}
     >
@@ -258,7 +268,7 @@ function SidebarNav({ groups }: { groups: NavGroup[] }) {
   };
 
   return (
-    <nav className="space-y-1 p-3" aria-label="Admin">
+    <nav className="space-y-4 p-4" aria-label="Admin">
       {groups.map((group) => {
         const open = expanded.includes(group.id);
         const active = group.items.some((item) => itemMatches(item, pathname));
@@ -269,8 +279,8 @@ function SidebarNav({ groups }: { groups: NavGroup[] }) {
               onClick={() => toggle(group.id)}
               aria-expanded={open}
               className={cn(
-                "flex w-full items-center justify-between rounded-md px-3 py-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase transition-colors hover:bg-accent/60 hover:text-foreground",
-                active && "text-foreground",
+                "flex w-full items-center justify-between rounded-lg px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-neutral-500 transition-colors duration-200 hover:bg-neutral-100 hover:text-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-800/60 dark:hover:text-neutral-200",
+                active && "text-neutral-900 dark:text-neutral-100",
               )}
             >
               <span>{group.label}</span>
@@ -402,7 +412,7 @@ export function AdminShell({
       </header>
 
       <div className="flex">
-        <aside className="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-60 shrink-0 self-start overflow-y-auto border-e lg:block">
+        <aside className="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-64 shrink-0 self-start overflow-y-auto border-e border-neutral-200/80 bg-white dark:border-neutral-800/80 dark:bg-neutral-950 lg:block">
           <SidebarNav groups={groups} />
         </aside>
 

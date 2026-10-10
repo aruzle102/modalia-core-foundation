@@ -29,24 +29,20 @@ const num = (value: unknown): number => {
 };
 
 /** Authenticate + authorize, returning the caller's seller context. */
-/* V10: overview is the dashboard landing — any authenticated seller/staff
-   can view it, not just those with analytics.view. */
 async function sellerGuard(context: any): Promise<SellerContext> {
   const userId = context?.userId as string | undefined;
   if (!userId) throw new Error("Unauthorized");
-  // Dashboard is read-only: allow sellers with must_reset_password flag to view.
-  // Write operations use requireSeller (deny variant) separately.
-  // Fail closed: if identity cannot be resolved, the real error propagates.
-  return requireSellerAllowMustReset({ supabase: context.supabase, userId });
+  // Allow dashboard to load even when must_reset_password is set;
+  // the password-change nudge is handled in UI, not by blocking data.
+  return requireSellerAllowMustReset({ supabase: context.supabase, userId }, "analytics.view");
 }
 
 type RpcResult = { data: unknown; error: { message?: string } | null };
 
 /** Call a Postgres RPC that is not (yet) in the generated Supabase types. */
 async function callRpc(client: SupabaseClient, name: string, args: Record<string, unknown>): Promise<RpcResult> {
-  // Call rpc directly on the client to preserve `this` binding.
-  // Detaching the method (const rpc = client.rpc) breaks Supabase internals (this.rest).
-  return client.rpc(name, args) as unknown as Promise<RpcResult>;
+  const rpc = client.rpc as unknown as (n: string, a: Record<string, unknown>) => Promise<RpcResult>;
+  return rpc(name, args);
 }
 
 /** Call an RPC returning a row set; on failure returns an empty set plus the error message. */
@@ -442,7 +438,7 @@ const seriesInput = z.object({ days: z.number().int().min(1).max(120).default(30
 export const getSellerSalesSeries = createServerFn({ method: "GET" })
   .middleware(sellerOnly)
   .validator((data) => seriesInput.parse(data))
-  .handler(async ({ data, context }): Promise<SellerSeriesPoint[]> => {
+  .handler(async ({ data, context }): Promise<SellerSeriesPoint[] | null> => {
     await sellerGuard(context);
     const supabase = context.supabase as SupabaseClient;
     const { rows, errorMessage } = await callRpcRows<{
@@ -450,7 +446,10 @@ export const getSellerSalesSeries = createServerFn({ method: "GET" })
       sales: number | string;
       orders: number | string;
     }>(supabase, "seller_dashboard_sales_series", { p_days: data.days });
-    if (errorMessage) throw new Error("Sales series could not be loaded.");
+    if (errorMessage) {
+      console.error("[seller-dashboard] seller_dashboard_sales_series failed:", errorMessage);
+      return null;
+    }
     return rows.map((r) => ({ date: r.day, sales: num(r.sales), orders: num(r.orders) }));
   });
 
@@ -467,7 +466,7 @@ function itemName(item: { title: unknown; product_snapshot: unknown }, fallback:
 export const getSellerTopProducts = createServerFn({ method: "GET" })
   .middleware(sellerOnly)
   .validator((data) => limitInput.parse(data))
-  .handler(async ({ data, context }): Promise<SellerTopProduct[]> => {
+  .handler(async ({ data, context }): Promise<SellerTopProduct[] | null> => {
     await sellerGuard(context);
     const supabase = context.supabase as SupabaseClient;
     const { rows, errorMessage } = await callRpcRows<{
@@ -477,7 +476,10 @@ export const getSellerTopProducts = createServerFn({ method: "GET" })
       units: number | string;
       revenue: number | string;
     }>(supabase, "seller_dashboard_top_products", { p_limit: data.limit });
-    if (errorMessage) throw new Error("Top products could not be loaded.");
+    if (errorMessage) {
+      console.error("[seller-dashboard] seller_dashboard_top_products failed:", errorMessage);
+      return null;
+    }
     return rows.map((item) => ({
       productId: item.product_id,
       name: itemName(
@@ -517,7 +519,7 @@ export const getSellerTopCategories = createServerFn({ method: "GET" })
 /** Exact per-status counts of this seller's seller_orders via a single SQL GROUP BY (statuses with zero rows are omitted). */
 export const getSellerOrderStatusBreakdown = createServerFn({ method: "GET" })
   .middleware(sellerOnly)
-  .handler(async ({ context }): Promise<SellerStatusCount[]> => {
+  .handler(async ({ context }): Promise<SellerStatusCount[] | null> => {
     await sellerGuard(context);
     const supabase = context.supabase as SupabaseClient;
     const { rows, errorMessage } = await callRpcRows<{ status: string; order_count: number | string }>(
@@ -525,7 +527,10 @@ export const getSellerOrderStatusBreakdown = createServerFn({ method: "GET" })
       "seller_dashboard_order_status_breakdown",
       {},
     );
-    if (errorMessage) throw new Error("Status breakdown could not be loaded.");
+    if (errorMessage) {
+      console.error("[seller-dashboard] seller_dashboard_order_breakdown failed:", errorMessage);
+      return null;
+    }
     return rows
       .map((r) => ({ status: r.status, count: num(r.order_count) }))
       .filter((c) => c.count > 0)
@@ -538,7 +543,7 @@ export const getSellerOrderStatusBreakdown = createServerFn({ method: "GET" })
 export const getSellerRecentOrders = createServerFn({ method: "GET" })
   .middleware(sellerOnly)
   .validator((data) => limitInput.parse(data))
-  .handler(async ({ data, context }): Promise<SellerRecentOrder[]> => {
+  .handler(async ({ data, context }): Promise<SellerRecentOrder[] | null> => {
     const seller = await sellerGuard(context);
     const { data: rows, error } = await context.supabase
       .from("seller_orders")
@@ -546,7 +551,10 @@ export const getSellerRecentOrders = createServerFn({ method: "GET" })
       .eq("seller_id", seller.sellerId)
       .order("created_at", { ascending: false })
       .limit(data.limit);
-    if (error) throw new Error("Recent orders could not be loaded.");
+    if (error) {
+      console.error("[seller-dashboard] seller recent orders failed:", error.message);
+      return null;
+    }
 
     return ((rows ?? []) as SellerRecentOrderRow[]).map((o) => {
       const parent = o.orders;

@@ -36,8 +36,8 @@ type RpcResult = { data: any; error: { message?: string } | null };
 
 /** Call a Postgres RPC that is not (yet) in the generated Supabase types. */
 async function callRpc(client: SupabaseClient, name: string, args: Record<string, unknown>): Promise<RpcResult> {
-  const rpc = client.rpc as unknown as (n: string, a: Record<string, unknown>) => Promise<RpcResult>;
-  return rpc(name, args);
+  // Preserve this-binding: call directly on client.
+  return client.rpc(name, args) as unknown as Promise<RpcResult>;
 }
 
 /** Authenticate + authorize, returning the caller's seller context (session-only). */

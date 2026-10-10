@@ -206,6 +206,7 @@ async function resolveSeller(
       // No seller identity from the session: check for a validated admin
       // support grant (Section 47). A valid grant returns a scoped,
       // read-only support context; otherwise the normal DENIED path stands.
+      const { resolveSupportSeller } = await import("@/lib/seller-support-auth.server");
       const support = await resolveSupportSeller({ supabase, userId });
       if (support) return support;
       throw new Error(DENIED);

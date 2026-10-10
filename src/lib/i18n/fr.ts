@@ -1326,6 +1326,8 @@ export const fr = {
         profileSubtitle: "Affiché aux clients et utilisé pour les versements.",
         legalName: "Nom légal",
         phone: "Téléphone",
+        wilaya: "Wilaya",
+        address: "Adresse",
         phoneHint: "Format algérien, ex. 0550 12 34 56",
         contactEmail: "E-mail de contact",
         saveChanges: "Enregistrer",
@@ -1386,6 +1388,7 @@ export const fr = {
       },
     },
     sellerDashboardV8: {
+      sectionLoadError: "Impossible de charger cette section. Les autres données restent disponibles.",
       nav: {
         overview: "Aperçu",
         orders: "Commandes",

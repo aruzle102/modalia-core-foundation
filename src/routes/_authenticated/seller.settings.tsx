@@ -45,11 +45,11 @@ function SettingsPage() {
 function ProfileForm({ t }: { t: ReturnType<typeof getTranslations>["seller"]["settings"] }) {
   const { data } = useSuspenseQuery(q);
   const qc = useQueryClient();
-  const [form, setForm] = useState({ legalName: data.profile.legalName, phone: data.profile.phone, email: data.profile.email });
+  const [form, setForm] = useState({ legalName: data.profile.legalName, phone: data.profile.phone, email: data.profile.email, wilaya: (data.profile as { wilaya?: string }).wilaya ?? "", address: (data.profile as { address?: string }).address ?? "" });
   const [message, setMessage] = useState<string | null>(null);
 
   const mutation = useMutation({
-    mutationFn: () => updateSellerProfile({ data: { legalName: form.legalName.trim(), phone: form.phone.trim() || undefined, email: form.email.trim() || undefined } }),
+    mutationFn: () => updateSellerProfile({ data: { legalName: form.legalName.trim(), phone: form.phone.trim() || undefined, email: form.email.trim() || undefined, wilaya: form.wilaya.trim() || undefined, address: form.address.trim() || undefined } }),
     onSuccess: (result) => {
       if (result.emailChanged && result.verificationPending) {
         setMessage(t.emailVerificationSent);
@@ -77,6 +77,12 @@ function ProfileForm({ t }: { t: ReturnType<typeof getTranslations>["seller"]["s
           </Field>
           <Field label={t.contactEmail}>
             <Input type="email" dir="ltr" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} disabled={!data.isOwner} />
+          </Field>
+          <Field label={t.wilaya}>
+            <Input value={form.wilaya} onChange={(e) => setForm({ ...form, wilaya: e.target.value })} maxLength={100} disabled={!data.isOwner} />
+          </Field>
+          <Field label={t.address}>
+            <Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} maxLength={500} disabled={!data.isOwner} />
           </Field>
         </div>
         {data.isOwner ? (

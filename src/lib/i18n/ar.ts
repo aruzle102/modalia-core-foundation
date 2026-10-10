@@ -1322,6 +1322,8 @@ export const ar = {
         profileSubtitle: "يُعرَض للزبائن ويُستخدَم للمدفوعات.",
         legalName: "الاسم القانوني",
         phone: "الهاتف",
+        wilaya: "الولاية",
+        address: "العنوان",
         phoneHint: "بالصيغة الجزائرية، مثل 0550 12 34 56",
         contactEmail: "البريد الإلكتروني للتواصل",
         saveChanges: "حفظ التغييرات",
@@ -1382,6 +1384,7 @@ export const ar = {
       },
     },
     sellerDashboardV8: {
+      sectionLoadError: "تعذّر تحميل هذا القسم. البيانات الأخرى ما زالت متاحة.",
       nav: {
         overview: "نظرة عامة",
         orders: "الطلبات",

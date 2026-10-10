@@ -13,10 +13,17 @@ export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async ({ location }) => {
     const { data, error } = await supabase.auth.getUser();
     if (error || !data.user) {
-      const locale = getLocale(new URLSearchParams(location.search).get("locale") ?? undefined);
+      const rawSearch = location.search as Record<string, unknown>;
+      const locale = getLocale(typeof rawSearch["locale"] === "string" ? rawSearch["locale"] : undefined);
       // Preserve the full intended destination (path + search) for the
       // return trip. The login page sanitizes it before navigating.
-      const intended = location.pathname + location.search;
+      const params = new URLSearchParams(
+        Object.entries(rawSearch).flatMap(([key, value]) =>
+          typeof value === "string" ? [[key, value]] : [],
+        ),
+      );
+      const query = params.toString();
+      const intended = `${location.pathname}${query ? `?${query}` : ""}`;
       if (location.pathname.startsWith("/seller")) {
         throw redirect({ to: "/seller/login", search: { locale, redirect: intended } });
       }

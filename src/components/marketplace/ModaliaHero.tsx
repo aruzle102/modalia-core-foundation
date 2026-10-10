@@ -71,6 +71,22 @@ export function ModaliaHero() {
           >
             <Link
               to="/shop"
+              search={{
+                locale,
+                q: "",
+                category: "",
+                sort: "newest",
+                page: 1,
+                view: "",
+                focus: "",
+                brands: [],
+                stores: [],
+                colors: [],
+                sizes: [],
+                gender: "",
+                inStock: false,
+                onSale: false,
+              }}
               className="inline-flex items-center gap-2 rounded-full bg-white px-8 py-3.5 text-sm font-semibold text-neutral-950 transition-all hover:bg-white/90 hover:gap-3 active:scale-[0.98]"
             >
               t.home.heroCta

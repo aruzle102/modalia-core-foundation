@@ -166,8 +166,6 @@ export const ADMIN_NAV_PERMISSIONS: Record<string, AdminPermission | "super_admi
   "/admin/team": "super_admin",
   "/admin/commissions": "super_admin",
   "/admin/settings": "super_admin",
-  "/admin/maintenance": "super_admin",
-  "/admin/system-health": "super_admin",
   "/admin/audit": "super_admin",
   "/admin/security": "super_admin",
 };

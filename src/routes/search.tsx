@@ -136,8 +136,9 @@ function SearchPage() {
 
   const updateFilters = (values: ShopFilterValues) => {
     navigate({
-      search: (previous) => ({
-        ...previous,
+      to: "/search",
+      search: {
+        ...search,
         minPrice: values.minPrice,
         maxPrice: values.maxPrice,
         brands: values.brands,
@@ -145,18 +146,19 @@ function SearchPage() {
         inStock: values.inStock,
         onSale: values.onSale,
         page: 1,
-      }),
+      },
     });
   };
 
   const updateSort = (sort: (typeof SORTS)[number]) => {
-    navigate({ search: (previous) => ({ ...previous, sort, page: 1 }) });
+    navigate({ to: "/search", search: { ...search, sort, page: 1 } });
   };
 
   const clearFilters = () => {
     navigate({
-      search: (previous) => ({
-        ...previous,
+      to: "/search",
+      search: {
+        ...search,
         category: "",
         minPrice: undefined,
         maxPrice: undefined,
@@ -166,7 +168,7 @@ function SearchPage() {
         inStock: false,
         onSale: false,
         page: 1,
-      }),
+      },
     });
   };
 
@@ -198,10 +200,10 @@ function SearchPage() {
           <SearchAutocomplete
             value={search.q}
             onChange={(v) =>
-              navigate({ search: (previous) => ({ ...previous, q: v }) })
+              navigate({ to: "/search", search: { ...search, q: v } })
             }
             onSubmit={(q) =>
-              navigate({ search: (previous) => ({ ...previous, q, page: 1 }) })
+              navigate({ to: "/search", search: { ...search, q, page: 1 } })
             }
             onClose={() => {}}
             inputRef={{ current: null }}
@@ -276,7 +278,8 @@ function SearchPage() {
             className="lg:hidden"
             onClick={() =>
               navigate({
-                search: (previous) => ({ ...previous, filtersOpen: !previous.filtersOpen }),
+                to: "/search",
+                search: { ...search, filtersOpen: !search.filtersOpen },
               })
             }
           >

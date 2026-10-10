@@ -146,7 +146,7 @@ function SearchPage() {
         inStock: values.inStock,
         onSale: values.onSale,
         page: 1,
-      }),
+      },
     });
   };
 
@@ -168,7 +168,7 @@ function SearchPage() {
         inStock: false,
         onSale: false,
         page: 1,
-      }),
+      },
     });
   };
 

@@ -163,3 +163,86 @@ export function SellerShellSkeleton() {
     </div>
   );
 }
+
+/* ------------------------------------------------------------------ */
+/*  Shared dashboard primitives (added 2026-10-09)                     */
+/*  StatCard   — KPI card: title, value, optional icon/description,    */
+/*               loading skeleton. Black/white/gray identity.          */
+/*  SectionHeader — section title + optional description + actions.     */
+/* ------------------------------------------------------------------ */
+
+export interface StatCardProps {
+  /** Card title (e.g. "Net earnings") */
+  title: string;
+  /** Main value — already formatted string or node */
+  value: ReactNode;
+  /** Optional leading icon */
+  icon?: ReactNode;
+  /** Optional description/hint below the value */
+  description?: ReactNode;
+  /** Show skeleton instead of value */
+  loading?: boolean;
+  /** Optional extra classes on the card */
+  className?: string;
+}
+
+export function StatCard({ title, value, icon, description, loading, className }: StatCardProps) {
+  return (
+    <Card
+      className={[
+        "border-neutral-200/80 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)]",
+        "transition-shadow duration-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)]",
+        "dark:border-neutral-800/80 dark:bg-neutral-950",
+        className ?? "",
+      ].join(" ")}
+    >
+      <CardContent className="p-5">
+        <div className="flex items-start justify-between gap-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.08em] text-neutral-500 dark:text-neutral-400">
+            {title}
+          </p>
+          {icon ? (
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300" aria-hidden="true">
+              {icon}
+            </span>
+          ) : null}
+        </div>
+        {loading ? (
+          <div className="mt-3 h-8 w-24 animate-pulse rounded-md bg-neutral-200 dark:bg-neutral-800" aria-label="Loading" />
+        ) : (
+          <p className="mt-2 text-3xl font-bold tabular-nums tracking-tight text-neutral-900 dark:text-white">
+            {value}
+          </p>
+        )}
+        {description ? (
+          <p className="mt-1.5 text-sm text-neutral-500 dark:text-neutral-400">{description}</p>
+        ) : null}
+      </CardContent>
+    </Card>
+  );
+}
+
+export interface SectionHeaderProps {
+  /** Section title */
+  title: string;
+  /** Optional description below the title */
+  description?: ReactNode;
+  /** Optional actions (buttons, links) rendered at the end */
+  actions?: ReactNode;
+  /** Optional extra classes on the wrapper */
+  className?: string;
+}
+
+export function SectionHeader({ title, description, actions, className }: SectionHeaderProps) {
+  return (
+    <div className={["flex flex-wrap items-start justify-between gap-3", className ?? ""].join(" ")}>
+      <div className="min-w-0">
+        <h2 className="text-lg font-semibold tracking-tight text-neutral-900 dark:text-white">{title}</h2>
+        {description ? (
+          <p className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">{description}</p>
+        ) : null}
+      </div>
+      {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
+    </div>
+  );
+}

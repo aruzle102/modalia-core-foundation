@@ -71,6 +71,15 @@ import {
   type AdminCouponRow,
   type ReviewQueue,
 } from "@/lib/admin-catalog.functions";
+
+/**
+ * Coupon row as returned by listOfficialStoreCoupons (which selects a subset
+ * of columns and does not include the partner-coupon extensions).
+ */
+type OfficialStoreCouponRow = Omit<
+  AdminCouponRow,
+  "coupon_type" | "funding_model" | "is_mandatory" | "partner_name" | "partner_logo"
+>;
 import {
   getOfficialStoreStats,
   listOfficialStoreInventory,
@@ -1895,8 +1904,8 @@ function OffersTab({
   const queryClient = useQueryClient();
   const sellerId = official.store.seller_id;
   const [page, setPage] = useState(1);
-  const [editing, setEditing] = useState<AdminCouponRow | "new" | null>(null);
-  const [deleting, setDeleting] = useState<AdminCouponRow | null>(null);
+  const [editing, setEditing] = useState<OfficialStoreCouponRow | "new" | null>(null);
+  const [deleting, setDeleting] = useState<OfficialStoreCouponRow | null>(null);
 
   const couponsQuery = useQuery({
     queryKey: ["admin-official-store-coupons", page],
@@ -2080,7 +2089,7 @@ function CouponDialog({
 }: {
   locale: "ar" | "fr" | "en";
   sellerId: string;
-  coupon: AdminCouponRow | null;
+  coupon: OfficialStoreCouponRow | null;
   onClose: () => void;
   onSaved: () => void;
 }) {

@@ -38,7 +38,13 @@ export type AdminPermission =
   | "settlements.manage"
   | "intelligence.manage"
   | "notifications.view"
-  | "notifications.manage";
+  | "notifications.manage"
+  | "verifications.view"
+  | "verifications.manage"
+  | "partnerships.view"
+  | "partnerships.manage"
+  | "reports.view"
+  | "reports.manage";
 
 export const ALL_ADMIN_PERMISSIONS: readonly AdminPermission[] = [
   "dashboard.view",
@@ -62,6 +68,12 @@ export const ALL_ADMIN_PERMISSIONS: readonly AdminPermission[] = [
   "intelligence.manage",
   "notifications.view",
   "notifications.manage",
+  "verifications.view",
+  "verifications.manage",
+  "partnerships.view",
+  "partnerships.manage",
+  "reports.view",
+  "reports.manage",
 ];
 
 /** Role presets — the starting permission set when a member is created. */
@@ -82,6 +94,12 @@ export const ADMIN_ROLE_PRESETS: Record<AdminRole, readonly AdminPermission[]> =
     "stores.view",
     "customers.view",
     "notifications.view",
+    "verifications.view",
+    "verifications.manage",
+    "partnerships.view",
+    "partnerships.manage",
+    "reports.view",
+    "reports.manage",
   ],
   viewer: [
     "dashboard.view",
@@ -91,6 +109,9 @@ export const ADMIN_ROLE_PRESETS: Record<AdminRole, readonly AdminPermission[]> =
     "sellers.view",
     "stores.view",
     "customers.view",
+    "verifications.view",
+    "partnerships.view",
+    "reports.view",
   ],
 };
 
@@ -127,6 +148,13 @@ export const ADMIN_NAV_PERMISSIONS: Record<string, AdminPermission | "super_admi
   "/admin/coupons": "coupons.manage",
   "/admin/settlements": "settlements.manage",
   "/admin/notifications": "notifications.view",
+  "/admin/verifications": "verifications.view",
+  "/admin/partnerships": "partnerships.view",
+  "/admin/reports": "reports.view",
+  "/admin/partner-banners": "content.manage",
+  "/admin/partner-coupons": "coupons.manage",
+  "/admin/maintenance": "super_admin",
+  "/admin/system-health": "super_admin",
   "/admin/homepage": "content.manage",
   "/admin/homepage/builder": "content.manage",
   "/admin/media": "content.manage",

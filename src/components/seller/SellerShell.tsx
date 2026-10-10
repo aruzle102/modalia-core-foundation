@@ -197,7 +197,7 @@ function getNavGroups(
 
 function SellerNavLink({ item, compact, onNavigate }: { item: NavItem; compact?: boolean; onNavigate?: (() => void) | undefined }) {
   const className = cn(
-    "flex items-center gap-2.5 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground",
+    "group relative flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-all duration-200 hover:bg-neutral-100 hover:text-neutral-900 dark:hover:bg-neutral-800/60 dark:hover:text-neutral-100",
     compact && "shrink-0 whitespace-nowrap py-1.5",
   );
   if (item.href) {
@@ -221,7 +221,7 @@ function SellerNavLink({ item, compact, onNavigate }: { item: NavItem; compact?:
       preload="intent"
       onClick={onNavigate}
       {...(item.exact ? { activeOptions: { exact: true } } : {})}
-      activeProps={{ className: "bg-accent text-accent-foreground font-medium" }}
+      activeProps={{ className: "bg-neutral-900 text-white font-medium shadow-sm dark:bg-white dark:text-neutral-900 [&_svg]:text-current" }}
       className={className}
     >
       {item.icon}
@@ -315,7 +315,7 @@ function SellerSidebarNav({ groups, onNavigate }: { groups: NavGroup[]; onNaviga
   };
 
   return (
-    <nav className="space-y-1 p-3" aria-label="Seller">
+    <nav className="space-y-4 p-4" aria-label="Seller">
       {groups.map((group) => {
         const open = expanded.includes(group.id);
         const active = group.items.some((item) => itemMatches(item, pathname));
@@ -326,8 +326,8 @@ function SellerSidebarNav({ groups, onNavigate }: { groups: NavGroup[]; onNaviga
               onClick={() => toggle(group.id)}
               aria-expanded={open}
               className={cn(
-                "flex w-full items-center justify-between rounded-md px-3 py-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase transition-colors hover:bg-accent/60 hover:text-foreground",
-                active && "text-foreground",
+                "flex w-full items-center justify-between rounded-lg px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-neutral-500 transition-colors duration-200 hover:bg-neutral-100 hover:text-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-800/60 dark:hover:text-neutral-200",
+                active && "text-neutral-900 dark:text-neutral-100",
               )}
             >
               <span>{group.label}</span>
@@ -641,7 +641,7 @@ export function SellerShell({
       </header>
 
       <div className="flex">
-        <aside className="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-60 shrink-0 self-start overflow-y-auto border-e lg:block">
+        <aside className="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-64 shrink-0 self-start overflow-y-auto border-e border-neutral-200/80 bg-white dark:border-neutral-800/80 dark:bg-neutral-950 lg:block">
           <SellerSidebarNav groups={navGroups} />
         </aside>
 

@@ -11,7 +11,6 @@ const id = z.string().uuid();
 export const STAFF_PERMISSIONS: Array<{ key: SellerPermission; group: string; label: string; description: string }> = [
   { key: "products.view", group: "Catalog", label: "View products", description: "See the product catalog and stock levels." },
   { key: "products.edit", group: "Catalog", label: "Create & edit products", description: "Add and edit products (drafts for review)." },
-  { key: "products.edit", group: "Catalog", label: "Edit products", description: "Edit prices, descriptions and media." },
   { key: "products.publish", group: "Catalog", label: "Publish products", description: "Submit products for publication." },
   { key: "orders.view", group: "Orders", label: "View orders", description: "See incoming orders and their details." },
   { key: "orders.update", group: "Orders", label: "Update orders", description: "Accept, process and fulfill orders." },
@@ -33,8 +32,8 @@ export type StaffTitle = (typeof STAFF_TITLES)[number];
 
 /** Sensible default permissions per title (client preselects them; owner can adjust). */
 export const STAFF_TITLE_SUGGESTIONS: Record<StaffTitle, SellerPermission[]> = {
-  Manager: ["products.view", "products.edit", "products.edit", "orders.view", "orders.update", "inventory.manage", "analytics.view", "customers.view", "reviews.manage"],
-  "Product Manager": ["products.view", "products.edit", "products.edit", "products.publish", "inventory.manage", "reviews.manage"],
+  Manager: ["products.view", "products.edit", "orders.view", "orders.update", "inventory.manage", "analytics.view", "customers.view", "reviews.manage"],
+  "Product Manager": ["products.view", "products.edit", "products.publish", "inventory.manage", "reviews.manage"],
   "Order Manager": ["orders.view", "orders.update", "inventory.manage", "customers.view"],
   "Inventory Manager": ["products.view", "inventory.manage"],
   Marketing: ["products.view", "coupons.manage", "analytics.view", "reviews.manage"],

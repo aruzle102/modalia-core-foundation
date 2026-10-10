@@ -24,7 +24,10 @@ export type AnalyticsEventType =
   | "search"
   | "category_view"
   | "add_to_cart"
+  | "cart_remove"
+  | "buy_now_started"
   | "wishlist_add"
+  | "wishlist_remove"
   | "checkout_started"
   | "checkout_completed"
   | "purchase"
@@ -172,6 +175,7 @@ export interface RecentProduct {
   name: string;
   image: string | null;
   price: number;
+  categorySlug?: string | undefined;
 }
 
 /** Record a product view locally for the "Recently viewed" rail. No network. */

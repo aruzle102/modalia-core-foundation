@@ -4,7 +4,14 @@ import { LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
-import { getSellerAccessStatus, type SellerAccessState } from "@/lib/seller-auth";
+import { getSellerAccessStatus } from "@/lib/seller-auth";
+import { resolveUsernameToEmail } from "@/lib/seller-identity";
+import {
+  checkLoginAllowed,
+  clearLoginAttempts,
+  isLoginRateLimitedError,
+  resolveLoginRateLimitMessage,
+} from "@/lib/auth-guard.functions";
 import { getLocale, getTranslations, localeDirections } from "@/lib/i18n";
 import { pageHead } from "@/lib/seo";
 
@@ -34,21 +41,14 @@ function sanitizeRedirect(value: string | undefined): string {
   return value;
 }
 
-function blockedMessage(access: SellerAccessState, t: ReturnType<typeof getTranslations>["sellerAuth"]): string {
-  switch (access) {
-    case "suspended":
-      return t.blockedSuspended;
-    case "disabled":
-      return t.blockedDisabled;
-    case "pending":
-      return t.blockedPending;
-    case "staff-deactivated":
-      return t.blockedStaff;
-    case "no-account":
-      return t.blockedNoAccount;
-    default:
-      return t.signInFailed;
-  }
+/**
+ * V8 Sec 48 — every blocked state (suspended / disabled / pending seller,
+ * deactivated staff, no seller account) is denied fail-closed with ONE
+ * generic message. The sign-in page must never distinguish the states, so a
+ * failed sign-in reveals nothing about the account behind the email.
+ */
+function blockedMessage(t: ReturnType<typeof getTranslations>["sellerAuth"]): string {
+  return t.blockedGeneric;
 }
 
 function SellerLoginPage() {
@@ -58,7 +58,10 @@ function SellerLoginPage() {
   const target = sanitizeRedirect(redirect);
 
   const [mode, setMode] = useState<"signin" | "forgot">("signin");
-  const [email, setEmail] = useState("");
+  // Spec Section 8: sign-in accepts a USERNAME or an email. Usernames map
+  // deterministically to the synthetic auth email; real emails pass through.
+  const [identifier, setIdentifier] = useState("");
+  const [forgotEmail, setForgotEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [messageTone, setMessageTone] = useState<"info" | "error">("info");
@@ -74,19 +77,23 @@ function SellerLoginPage() {
       try {
         const { data } = await supabase.auth.getSession();
         if (cancelled || !data.session) return;
-        const { access, mustResetPassword } = await getSellerAccessStatus();
+        const { access, mustResetPassword, onboarded, isOwner } = await getSellerAccessStatus();
         if (cancelled) return;
         if (access === "active") {
-          // First-time seller (temporary password): force rotation before work.
-          if (mustResetPassword) {
-            await nav({ href: `/seller/change-password?locale=${locale}`, replace: true });
+          // New onboarding flow: sellers who haven't completed setup go to the
+          // 4-step wizard (personal → store → appearance → credentials).
+          // Onboarding flow: non-onboarded owners go to the wizard.
+          // Onboarded sellers go directly to dashboard - the wizard already
+          // handled credential setup. Never force change-password after onboarding.
+          if (isOwner && !onboarded) {
+            await nav({ href: `/seller/onboarding?locale=${locale}`, replace: true });
           } else {
             await nav({ href: target, replace: true });
           }
         } else {
           await supabase.auth.signOut();
           setMessageTone("error");
-          setMessage(blockedMessage(access, t));
+          setMessage(blockedMessage(t));
         }
       } catch {
         // Stay on the login page on unexpected errors.
@@ -105,26 +112,41 @@ function SellerLoginPage() {
     setLoading(true);
     setMessage("");
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      // Spec Section 8: resolve username -> synthetic auth email (or
+      // pass a real email through). Invalid identifiers fail closed with
+      // the same generic message as a bad password.
+      const authEmail = resolveUsernameToEmail(identifier);
+      // V8 Sec 57 #151: server-side brute-force gate BEFORE the password
+      // check. Denied attempts get one generic, non-enumerating message.
+      await checkLoginAllowed({ data: { identifier: identifier.trim() } });
+      const { error } = await supabase.auth.signInWithPassword({ email: authEmail, password });
       if (error) throw error;
+      // Ownership proven: reset the brute-force bucket so stale failed
+      // attempts never lock out a legitimate user. Best-effort.
+      void clearLoginAttempts().catch(() => {});
       // Server-side status check: suspended / disabled / pending sellers and
       // deactivated staff must not enter, with a clear reason.
-      const { access, mustResetPassword } = await getSellerAccessStatus();
+      const { access, mustResetPassword, onboarded, isOwner } = await getSellerAccessStatus();
       if (access !== "active") {
         await supabase.auth.signOut();
         setMessageTone("error");
-        setMessage(blockedMessage(access, t));
+        setMessage(blockedMessage(t));
         return;
       }
-      // First-time seller (temporary password): force rotation before work.
-      if (mustResetPassword) {
-        await nav({ href: `/seller/change-password?locale=${locale}`, replace: true });
+      // New onboarding flow: non-onboarded sellers go to the 4-step wizard.
+      // Onboarded sellers go directly to dashboard (wizard handled credentials).
+      if (isOwner && !onboarded) {
+        await nav({ href: `/seller/onboarding?locale=${locale}`, replace: true });
       } else {
         await nav({ href: target, replace: true });
       }
-    } catch {
+    } catch (err) {
       setMessageTone("error");
-      setMessage(t.signInFailed);
+      setMessage(
+        isLoginRateLimitedError(err)
+          ? resolveLoginRateLimitMessage(locale, t as unknown as Record<string, unknown>)
+          : t.signInFailed,
+      );
     } finally {
       setLoading(false);
     }
@@ -135,7 +157,11 @@ function SellerLoginPage() {
     setLoading(true);
     setMessage("");
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      // Password reset is email-only: usernames have no inbox. The seller
+      // must use the verified real email (post-transition).
+      const resetEmail = forgotEmail.trim().toLowerCase();
+      if (!resetEmail.includes("@")) throw new Error("email-required");
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
         redirectTo: `${window.location.origin}/seller/reset-password?locale=${locale}`,
       });
       if (error) throw error;
@@ -160,16 +186,20 @@ function SellerLoginPage() {
           </div>
           <p className="mt-3 text-small text-muted-foreground">{mode === "signin" ? t.loginSub : t.forgotSub}</p>
 
-          {checkingSession ? (
-            <p className="mt-7 flex items-center gap-2 text-small text-muted-foreground">
-              <LogIn className="h-4 w-4 animate-pulse" aria-hidden="true" />
-              {t.signingIn}
-            </p>
-          ) : mode === "signin" ? (
+          {mode === "signin" ? (
             <form onSubmit={handleSignIn}>
               <label className="mt-7 block text-small">
-                {t.email}
-                <Input className="mt-2" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
+                {t.identifier}
+                <Input
+                  className="mt-2"
+                  type="text"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
+                  required
+                  autoComplete="username"
+                  placeholder={t.identifierPlaceholder}
+                  spellCheck={false}
+                />
               </label>
               <label className="mt-5 block text-small">
                 {t.password}
@@ -213,7 +243,7 @@ function SellerLoginPage() {
             <form onSubmit={handleForgot}>
               <label className="mt-7 block text-small">
                 {t.email}
-                <Input className="mt-2" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
+                <Input className="mt-2" type="email" value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} required autoComplete="email" />
               </label>
               {message ? (
                 <p

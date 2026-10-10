@@ -8,6 +8,7 @@ import {
   LayoutGrid,
   Package,
   PackageMinus,
+  Plus,
   RefreshCw,
   ShieldCheck,
   Truck,
@@ -31,7 +32,7 @@ import {
 import { SalesChart } from "@/components/admin/Charts";
 import { getAdminMetrics } from "@/lib/admin-dashboard.functions";
 import { listAuditLogs } from "@/lib/admin-catalog.functions";
-import { getLocale } from "@/lib/i18n";
+import { getLocale, getTranslations } from "@/lib/i18n";
 import type { SupportedLocale } from "@/config/platform";
 
 /* ---------------------------------------------------------------------------
@@ -66,6 +67,19 @@ const STR = {
     allClear: "كل شيء تحت السيطرة. لا يوجد ما يحتاج انتباهك الآن.",
     sales: "المبيعات",
     salesSubtitle: "آخر 30 يومًا — الطلبات المسلَّمة",
+    orderFunnel: "مسار الطلبات",
+    funnelSubtitle: "توزيع الطلبات الحالي حسب الحالة",
+    funnelTerminal: "حالات نهائية",
+    topProducts: "أفضل المنتجات",
+    topStores: "أفضل المتاجر",
+    soldCount: (n: number) => `${n} مبيع`,
+    ordersCount: (n: number) => `${n} طلبات`,
+    emptyTop: "لا توجد بيانات بعد",
+    createProduct: "إنشاء منتج",
+    createSeller: "إنشاء بائع",
+    createStore: "إنشاء متجر",
+    createCoupon: "إنشاء كوبون",
+    addCategory: "إضافة فئة",
     recentActivity: "النشاط الأخير",
     recentActivitySubtitle: "من سجل التدقيق",
     viewAllAudit: "عرض سجل التدقيق",
@@ -76,7 +90,7 @@ const STR = {
     reviewApplications: "مراجعة طلبات البائعين",
     moderateProducts: "مراجعة المنتجات",
     reviewSettlements: "مراجعة التسويات",
-    homepage: "الصفحة الرئيسية",
+    homepage: "تعديل الصفحة الرئيسية",
   },
   fr: {
     title: "Tableau de bord",
@@ -104,6 +118,19 @@ const STR = {
     allClear: "Tout est sous contrôle. Rien ne demande votre attention pour l'instant.",
     sales: "Ventes",
     salesSubtitle: "30 derniers jours — commandes livrées",
+    orderFunnel: "Entonnoir des commandes",
+    funnelSubtitle: "Répartition actuelle des commandes par statut",
+    funnelTerminal: "Statuts terminaux",
+    topProducts: "Meilleurs produits",
+    topStores: "Meilleures boutiques",
+    soldCount: (n: number) => `${n} vendus`,
+    ordersCount: (n: number) => `${n} commandes`,
+    emptyTop: "Aucune donnée pour l'instant",
+    createProduct: "Créer un produit",
+    createSeller: "Créer un vendeur",
+    createStore: "Créer une boutique",
+    createCoupon: "Créer un coupon",
+    addCategory: "Ajouter une catégorie",
     recentActivity: "Activité récente",
     recentActivitySubtitle: "Depuis le journal d'audit",
     viewAllAudit: "Voir le journal d'audit",
@@ -114,7 +141,7 @@ const STR = {
     reviewApplications: "Voir les demandes vendeurs",
     moderateProducts: "Modérer les produits",
     reviewSettlements: "Voir les règlements",
-    homepage: "Page d'accueil",
+    homepage: "Modifier la page d'accueil",
   },
   en: {
     title: "Dashboard",
@@ -142,6 +169,19 @@ const STR = {
     allClear: "All clear. Nothing needs your attention right now.",
     sales: "Sales",
     salesSubtitle: "Last 30 days — delivered orders",
+    orderFunnel: "Order funnel",
+    funnelSubtitle: "Where orders currently sit, by status",
+    funnelTerminal: "Terminal states",
+    topProducts: "Top products",
+    topStores: "Top stores",
+    soldCount: (n: number) => `${n} sold`,
+    ordersCount: (n: number) => `${n} orders`,
+    emptyTop: "No data yet",
+    createProduct: "Create product",
+    createSeller: "Create seller",
+    createStore: "Create store",
+    createCoupon: "Create coupon",
+    addCategory: "Add category",
     recentActivity: "Recent activity",
     recentActivitySubtitle: "From the audit log",
     viewAllAudit: "View audit log",
@@ -152,7 +192,7 @@ const STR = {
     reviewApplications: "Review seller applications",
     moderateProducts: "Moderate products",
     reviewSettlements: "Review settlements",
-    homepage: "Homepage",
+    homepage: "Edit homepage",
   },
 } as const;
 
@@ -206,7 +246,11 @@ function DashboardContent({ locale }: { locale: Locale }) {
   };
 
   const shell = (content: ReactNode) => (
-    <AdminShell title={s.title} subtitle={s.subtitle}>
+    <AdminShell
+      title={s.title}
+      subtitle={s.subtitle}
+      breadcrumbs={[{ label: getTranslations(locale).adminNav.items.dashboard }]}
+    >
       {content}
     </AdminShell>
   );
@@ -257,23 +301,70 @@ function DashboardContent({ locale }: { locale: Locale }) {
     | { key: string; icon: LucideIcon; label: string; to: "/admin/applications"; search: { q: string; status: string; page: number; application: string } }
     | { key: string; icon: LucideIcon; label: string; to: "/admin/products"; search: { q: string; moderation: string; status: string; sellerId: string; page: number; create: string } }
     | { key: string; icon: LucideIcon; label: string; to: "/admin/settlements"; search: { status: string; sellerId: string; page: number } }
-    | { key: string; icon: LucideIcon; label: string; to: "/admin/homepage"; search: { locale: SupportedLocale; create: string } };
+    | { key: string; icon: LucideIcon; label: string; to: "/admin/homepage/builder"; search: { locale: SupportedLocale; create: string } };
   const quickActions: Array<QuickAction> = [
     { key: "orders", icon: ClipboardList, label: s.reviewOrders, to: "/admin/orders", search: { q: "", status: "", sellerId: "", wilaya: "", paymentMethod: "", minTotal: "", maxTotal: "", from: "", to: "", page: 1 } },
     { key: "applications", icon: Users, label: s.reviewApplications, to: "/admin/applications", search: { q: "", status: "all", page: 1, application: "" } },
     { key: "products", icon: Package, label: s.moderateProducts, to: "/admin/products", search: { q: "", moderation: "pending", status: "all", sellerId: "all", page: 1, create: "" } },
     { key: "settlements", icon: Wallet, label: s.reviewSettlements, to: "/admin/settlements", search: { status: "all", sellerId: "all", page: 1 } },
-    { key: "homepage", icon: LayoutGrid, label: s.homepage, to: "/admin/homepage", search: { locale, create: "" } },
+    { key: "homepage", icon: LayoutGrid, label: s.homepage, to: "/admin/homepage/builder", search: { locale, create: "" } },
+  ];
+
+  type CreateAction =
+    | { key: string; icon: LucideIcon; label: string; to: "/admin/products"; search: { q: string; moderation: string; status: string; sellerId: string; page: number; create: string } }
+    | { key: string; icon: LucideIcon; label: string; to: "/admin/sellers"; search: { q: string; status: string; page: number; create: string } }
+    | { key: string; icon: LucideIcon; label: string; to: "/admin/coupons"; search: { q: string; page: number; create: string } }
+    | { key: string; icon: LucideIcon; label: string; to: "/admin/categories"; search: { create: string; locale: SupportedLocale } };
+  const createActions: Array<CreateAction> = [
+    { key: "create-product", icon: Plus, label: s.createProduct, to: "/admin/products", search: { q: "", moderation: "all", status: "all", sellerId: "all", page: 1, create: "product" } },
+    { key: "create-seller", icon: Plus, label: s.createSeller, to: "/admin/sellers", search: { q: "", status: "all", page: 1, create: "seller" } },
+    // Stores are created together with their seller in the onboarding wizard —
+    // there is no standalone store creation, so this opens the same wizard.
+    { key: "create-store", icon: Plus, label: s.createStore, to: "/admin/sellers", search: { q: "", status: "all", page: 1, create: "seller" } },
+    { key: "create-coupon", icon: Plus, label: s.createCoupon, to: "/admin/coupons", search: { q: "", page: 1, create: "coupon" } },
+    { key: "add-category", icon: Plus, label: s.addCategory, to: "/admin/categories", search: { create: "category", locale } },
   ];
 
   const activityLogs = (activity.data?.logs ?? []).slice(0, 8);
 
+  // Order funnel: canonical pipeline order (not sort-by-count), each stage
+  // linking to the filtered orders list. Terminal states shown separately.
+  const countByStatus = new Map(m.statusBreakdown.map((e) => [e.status, e.count]));
+  const FUNNEL_STAGES = [
+    "pending",
+    "confirmed",
+    "processing",
+    "preparing",
+    "ready_for_shipping",
+    "handed_to_courier",
+    "in_transit",
+    "shipped",
+    "received",
+    "delivered",
+  ];
+  const TERMINAL_STAGES = ["cancelled", "failed_delivery", "returned", "refunded"];
+  const funnelMax = Math.max(1, ...FUNNEL_STAGES.map((st) => countByStatus.get(st) ?? 0));
+  const funnelTotal = FUNNEL_STAGES.reduce((a, st) => a + (countByStatus.get(st) ?? 0), 0);
+  const orderStatusSearch = (status: string) => ({
+    locale,
+    q: "",
+    status,
+    sellerId: "",
+    wilaya: "",
+    paymentMethod: "",
+    minTotal: "",
+    maxTotal: "",
+    from: "",
+    to: "",
+    page: 1,
+  });
+
   return shell(
     <>
       {failedTables.length > 0 ? (
-        <div role="alert" className="mb-6 border border-amber-500/50 bg-amber-500/10 p-5">
+        <div role="alert" className="mb-6 rounded-md border border-brand/40 bg-brand/10 p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="flex items-center gap-2 font-medium text-amber-900 dark:text-amber-200">
+            <p className="flex items-center gap-2 font-medium text-brand">
               <AlertTriangle className="size-4" />
               {s.incomplete(failedTables.length)}
             </p>
@@ -283,7 +374,7 @@ function DashboardContent({ locale }: { locale: Locale }) {
           </div>
           <ul className="mt-3 space-y-1">
             {failedTables.map((diagnostic) => (
-              <li key={diagnostic.table} className="text-small text-amber-900/80 dark:text-amber-200/80">
+              <li key={diagnostic.table} className="text-small text-brand/80">
                 <code className="font-mono text-xs">{diagnostic.table}</code>
                 {diagnostic.message ? `: ${diagnostic.message}` : null}
               </li>
@@ -300,7 +391,7 @@ function DashboardContent({ locale }: { locale: Locale }) {
         </div>
         <div className="grid gap-px overflow-hidden border border-border bg-border sm:grid-cols-2 lg:grid-cols-4">
           <Stat label={s.orders} value={String(m.metrics.ordersTotal)} hint={s.ordersHint} />
-          <Stat label={s.revenue} value={fmtMoney(m.metrics.salesDelivered)} hint={s.revenueHint} />
+          <Stat label={s.revenue} value={fmtMoney(m.metrics.salesDelivered, "DZD", locale)} hint={s.revenueHint} />
           <Stat label={s.activeSellers} value={String(m.metrics.activeSellers)} />
           <Stat label={s.pendingOrders} value={String(pendingOrdersCount)} hint={s.pendingOrdersHint} />
         </div>
@@ -322,7 +413,7 @@ function DashboardContent({ locale }: { locale: Locale }) {
                 <span className="min-w-0 flex-1 truncate font-medium">{item.label}</span>
                 <span
                   className={`shrink-0 rounded-full px-2.5 py-1 text-small font-semibold tabular-nums ${
-                    item.count > 0 ? "bg-amber-500/15 text-amber-900 dark:text-amber-200" : "bg-muted text-muted-foreground"
+                    item.count > 0 ? "bg-brand/15 text-brand" : "bg-muted text-muted-foreground"
                   }`}
                 >
                   {item.count}
@@ -342,6 +433,123 @@ function DashboardContent({ locale }: { locale: Locale }) {
           <SalesChart data={m.series} />
         </AdminCard>
       </section>
+
+      {/* ---------------------------- Order funnel --------------------------- */}
+      <section aria-label={s.orderFunnel} className="mt-10">
+        <AdminCard title={s.orderFunnel} subtitle={s.funnelSubtitle}>
+          {funnelTotal > 0 ? (
+            <ol className="space-y-1">
+              {FUNNEL_STAGES.map((stage) => {
+                const count = countByStatus.get(stage) ?? 0;
+                return (
+                  <li key={stage}>
+                    <Link
+                      to="/admin/orders"
+                      search={orderStatusSearch(stage)}
+                      className="flex items-center gap-3 rounded-md px-2 py-1.5 transition-colors hover:bg-muted/60"
+                    >
+                      <span className="w-40 shrink-0">
+                        <StatusPill status={stage} />
+                      </span>
+                      <span className="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-muted">
+                        <span
+                          className="block h-full rounded-full bg-primary/70"
+                          style={{ width: `${(count / funnelMax) * 100}%` }}
+                        />
+                      </span>
+                      <span className="w-12 shrink-0 text-end text-small font-semibold tabular-nums">
+                        {count}
+                      </span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ol>
+          ) : (
+            <EmptyState title={s.emptyTop} />
+          )}
+          <div className="mt-4 border-t border-border pt-4">
+            <p className="mb-2 text-caption font-medium text-muted-foreground">
+              {s.funnelTerminal}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {TERMINAL_STAGES.map((stage) => (
+                <Link
+                  key={stage}
+                  to="/admin/orders"
+                  search={orderStatusSearch(stage)}
+                  className="flex items-center gap-2 rounded-md border border-border px-3 py-1.5 transition-colors hover:bg-muted/60"
+                >
+                  <StatusPill status={stage} />
+                  <span className="text-small font-semibold tabular-nums">
+                    {countByStatus.get(stage) ?? 0}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </AdminCard>
+      </section>
+
+      {/* --------------------- Top products / Top stores --------------------- */}
+      <div className="mt-10 grid gap-8 lg:grid-cols-2">
+        <AdminCard title={s.topProducts}>
+          {m.topProducts.length > 0 ? (
+            <ol className="divide-y divide-border">
+              {m.topProducts.map((p, i) => (
+                <li key={p.productId} className="flex items-center gap-3 py-2.5">
+                  <span className="w-6 shrink-0 text-small font-semibold tabular-nums text-muted-foreground">
+                    {i + 1}
+                  </span>
+                  <Link
+                    to="/admin/products"
+                    search={{ q: p.slug, moderation: "all", status: "all", sellerId: "all", page: 1, create: "" }}
+                    className="min-w-0 flex-1 truncate text-small font-medium hover:underline"
+                  >
+                    {p.label}
+                  </Link>
+                  <span className="shrink-0 text-small tabular-nums text-muted-foreground">
+                    {s.soldCount(p.qty)}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <EmptyState title={s.emptyTop} />
+          )}
+        </AdminCard>
+        <AdminCard title={s.topStores}>
+          {m.topSellers.length > 0 ? (
+            <ol className="divide-y divide-border">
+              {m.topSellers.map((st, i) => (
+                <li key={st.sellerId} className="flex items-center gap-3 py-2.5">
+                  <span className="w-6 shrink-0 text-small font-semibold tabular-nums text-muted-foreground">
+                    {i + 1}
+                  </span>
+                  <Link
+                    to="/admin/sellers/$sellerId"
+                    params={{ sellerId: st.sellerId }}
+                    search={{ back: "", tab: "overview", q: "", status: "all", page: 1, create: "" }}
+                    className="min-w-0 flex-1 truncate text-small font-medium hover:underline"
+                  >
+                    {st.label}
+                  </Link>
+                  <span className="shrink-0 text-end">
+                    <span className="block text-small font-semibold tabular-nums">
+                      {fmtMoney(st.total, "DZD", locale)}
+                    </span>
+                    <span className="block text-caption tabular-nums text-muted-foreground">
+                      {s.ordersCount(st.orders)}
+                    </span>
+                  </span>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <EmptyState title={s.emptyTop} />
+          )}
+        </AdminCard>
+      </div>
 
       <div className="mt-10 grid gap-8 lg:grid-cols-5">
         {/* --------------------------- Recent activity ------------------------ */}
@@ -365,8 +573,8 @@ function DashboardContent({ locale }: { locale: Locale }) {
                     <div className="min-w-0">
                       <p className="truncate text-small font-medium">{log.action.replace(/_/g, " ")}</p>
                       <p className="text-caption text-muted-foreground">
-                        <StatusPill status={log.resource ?? ""} className="mr-1.5" />
-                        {fmtDateTime(log.created_at)}
+                        <StatusPill status={log.resource ?? ""} className="me-1.5" />
+                        {fmtDateTime(log.created_at, locale)}
                       </p>
                     </div>
                   </li>
@@ -389,6 +597,18 @@ function DashboardContent({ locale }: { locale: Locale }) {
         <div className="lg:col-span-2">
           <h2 className="mb-4 text-h3">{s.quickActions}</h2>
           <div className="grid gap-3">
+            {createActions.map((action) => (
+              <Link
+                key={action.key}
+                to={action.to}
+                search={action.search}
+                className="flex items-center gap-3 border border-primary/30 bg-primary/5 px-4 py-3 transition-colors hover:border-primary/60 hover:bg-primary/10"
+              >
+                <action.icon className="size-5 shrink-0 text-primary" aria-hidden />
+                <span className="flex-1 text-small font-medium">{action.label}</span>
+                <ChevronRight className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+              </Link>
+            ))}
             {quickActions.map((action) => (
               <Link
                 key={action.key}

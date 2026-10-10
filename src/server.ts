@@ -3,6 +3,34 @@ import "./lib/error-capture";
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
 import { getSitemapXml } from "./lib/sitemap";
+import { SITE_URL } from "./lib/seo";
+
+/**
+ * Dynamic robots.txt. The sitemap URL comes from the same single canonical
+ * source as everything else (VITE_SITE_URL / SITE_URL, else the request
+ * origin) — never a hardcoded hosting URL (registry #12 fixed-inline).
+ */
+function renderRobots(requestUrl: string): string {
+  const base = SITE_URL ?? new URL(requestUrl).origin.replace(/\/+$/, "");
+  return [
+    "# Modalia — public crawler policy",
+    "# Private flows (admin, seller, account, checkout, cart, auth) stay out of the index.",
+    "",
+    "User-agent: *",
+    "Allow: /",
+    "Disallow: /admin",
+    "Disallow: /seller",
+    "Disallow: /account",
+    "Disallow: /checkout",
+    "Disallow: /cart",
+    "Disallow: /auth",
+    "Disallow: /order-success",
+    "Disallow: /wishlist",
+    "",
+    `Sitemap: ${base}/sitemap.xml`,
+    "",
+  ].join("\n");
+}
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -51,7 +79,7 @@ export default {
       const url = new URL(request.url);
       if (url.pathname === "/sitemap.xml" && request.method === "GET") {
         try {
-          return new Response(await getSitemapXml(), {
+          return new Response(await getSitemapXml(url.origin), {
             headers: {
               "content-type": "application/xml; charset=utf-8",
               "cache-control": "public, max-age=3600",
@@ -61,6 +89,14 @@ export default {
           console.error(error);
           return new Response("Sitemap unavailable", { status: 503 });
         }
+      }
+      if (url.pathname === "/robots.txt" && request.method === "GET") {
+        return new Response(renderRobots(request.url), {
+          headers: {
+            "content-type": "text/plain; charset=utf-8",
+            "cache-control": "public, max-age=3600",
+          },
+        });
       }
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);

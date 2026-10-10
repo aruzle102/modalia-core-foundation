@@ -59,6 +59,18 @@ export interface StoreCollectionConfig {
   enabled: boolean;
 }
 
+export interface StoreSocialLinks {
+  instagram: string;
+  facebook: string;
+  tiktok: string;
+  website: string;
+}
+
+export interface StoreSeo {
+  title: TrilingualText;
+  description: TrilingualText;
+}
+
 export interface StoreSettings {
   accent: StoreAccentId;
   featured_product_ids: string[];
@@ -67,6 +79,20 @@ export interface StoreSettings {
   announcement: TrilingualText;
   /** Admin-curated collections for the official store (plain text only). */
   official_collections: StoreCollectionConfig[];
+  /** Seller-curated collections for third-party storefronts (plain text only). */
+  seller_collections: StoreCollectionConfig[];
+  /** Seller social profiles / website. Empty string = not set. */
+  social_links: StoreSocialLinks;
+  /** Optional seller-authored SEO overrides (plain text only). */
+  seo: StoreSeo;
+  /** Primary business category of the store (categories.id), or null. */
+  category_id: string | null;
+  /**
+   * Trilingual main store description (plain text only). The legacy
+   * `stores.description` text column remains the read fallback for stores
+   * that never edited it (V8 #231).
+   */
+  description: TrilingualText;
 }
 
 export const storeAccentSchema = z.enum(STORE_ACCENT_IDS);
@@ -93,6 +119,20 @@ export const storeCollectionSchema = z.object({
   enabled: z.boolean(),
 });
 
+/** Social links: http(s) URLs only, empty string = not set. */
+export const storeSocialLinksSchema = z.object({
+  instagram: z.string().trim().max(300).default(""),
+  facebook: z.string().trim().max(300).default(""),
+  tiktok: z.string().trim().max(300).default(""),
+  website: z.string().trim().max(300).default(""),
+});
+
+/** Seller-authored SEO overrides (plain text; rendered escaped by the SEO helpers). */
+export const storeSeoSchema = z.object({
+  title: trilingualSchema(70),
+  description: trilingualSchema(160),
+});
+
 export const storeSettingsSchema = z.object({
   accent: storeAccentSchema.optional(),
   featured_product_ids: z.array(z.string().uuid()).max(50).optional(),
@@ -100,6 +140,11 @@ export const storeSettingsSchema = z.object({
   sections: z.array(storeSectionSchema).max(12).optional(),
   announcement: trilingualSchema(120).optional(),
   official_collections: z.array(storeCollectionSchema).max(20).optional(),
+  seller_collections: z.array(storeCollectionSchema).max(20).optional(),
+  social_links: storeSocialLinksSchema.optional(),
+  seo: storeSeoSchema.optional(),
+  category_id: z.string().uuid().nullable().optional(),
+  description: trilingualSchema(2000).optional(),
 });
 
 export function defaultStoreSettings(): StoreSettings {
@@ -116,6 +161,11 @@ export function defaultStoreSettings(): StoreSettings {
     ],
     announcement: { fr: "", en: "", ar: "" },
     official_collections: [],
+    seller_collections: [],
+    social_links: { instagram: "", facebook: "", tiktok: "", website: "" },
+    seo: { title: { fr: "", en: "", ar: "" }, description: { fr: "", en: "", ar: "" } },
+    category_id: null,
+    description: { fr: "", en: "", ar: "" },
   };
 }
 
@@ -132,6 +182,11 @@ export function normalizeStoreSettings(raw: unknown): StoreSettings {
     sections: data.sections ?? defaults.sections,
     announcement: data.announcement ?? defaults.announcement,
     official_collections: data.official_collections ?? defaults.official_collections,
+    seller_collections: data.seller_collections ?? defaults.seller_collections,
+    social_links: data.social_links ?? defaults.social_links,
+    seo: data.seo ?? defaults.seo,
+    category_id: data.category_id ?? defaults.category_id,
+    description: data.description ?? defaults.description,
   };
 }
 

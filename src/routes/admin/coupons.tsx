@@ -15,6 +15,8 @@ import {
   fmtMoney,
   fmtDateTime,
 } from "@/components/admin/ui";
+import { useAdminLocale } from "@/components/admin/useAdminLocale";
+import { getTranslations } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -55,9 +57,15 @@ export const Route = createFileRoute("/admin/coupons")({
 type CouponRow = AdminCouponRow;
 
 function AdminCouponsPage() {
+  const locale = useAdminLocale();
+  const nav = getTranslations(locale).adminNav.items;
   return (
     <AdminGate>
-      <AdminShell title="Coupons" subtitle="Create and control discount codes for the platform or individual sellers.">
+      <AdminShell
+        title="Coupons"
+        subtitle="Create and control discount codes for the platform or individual sellers."
+        breadcrumbs={[{ label: nav.coupons }]}
+      >
         <CouponsManager />
       </AdminShell>
     </AdminGate>
@@ -65,6 +73,7 @@ function AdminCouponsPage() {
 }
 
 function CouponsManager() {
+  const locale = useAdminLocale();
   const queryClient = useQueryClient();
   const url = useUrlState({ page: 1 });
   const page = numParam(url.search["page"], 1);
@@ -115,7 +124,7 @@ function CouponsManager() {
   const pageSize = couponsQuery.data?.pageSize ?? 25;
 
   const discountLabel = (c: CouponRow) =>
-    c.discount_type === "percentage" ? `${c.discount_value}%` : fmtMoney(Number(c.discount_value));
+    c.discount_type === "percentage" ? `${c.discount_value}%` : fmtMoney(Number(c.discount_value), "DZD", locale);
 
   return (
     <div className="space-y-6">
@@ -135,7 +144,7 @@ function CouponsManager() {
           <EmptyState title="No coupons" text="Create the first discount code to boost sales." />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[820px] text-left text-small">
+            <table className="w-full min-w-[820px] text-start text-small">
               <thead>
                 <tr className="border-b border-border text-caption text-muted-foreground">
                   <th className="px-3 py-2 font-medium">Code</th>
@@ -153,8 +162,8 @@ function CouponsManager() {
                     <td className="px-3 py-3">
                       <p className="font-mono font-semibold">{c.code}</p>
                       <p className="text-caption text-muted-foreground">
-                        {c.min_order_amount != null ? `min ${fmtMoney(Number(c.min_order_amount))}` : "no minimum"}
-                        {c.max_discount_amount != null ? ` · capped ${fmtMoney(Number(c.max_discount_amount))}` : ""}
+                        {c.min_order_amount != null ? `min ${fmtMoney(Number(c.min_order_amount), "DZD", locale)}` : "no minimum"}
+                        {c.max_discount_amount != null ? ` · capped ${fmtMoney(Number(c.max_discount_amount), "DZD", locale)}` : ""}
                       </p>
                     </td>
                     <td className="px-3 py-3 whitespace-nowrap font-medium">{discountLabel(c)}</td>
@@ -164,8 +173,8 @@ function CouponsManager() {
                       {c.per_customer_limit != null ? <span className="block">max {c.per_customer_limit} / customer</span> : null}
                     </td>
                     <td className="px-3 py-3 text-caption">
-                      {c.starts_at ? fmtDateTime(c.starts_at) : "—"}
-                      <span className="block">to {c.ends_at ? fmtDateTime(c.ends_at) : "—"}</span>
+                      {c.starts_at ? fmtDateTime(c.starts_at, locale) : "—"}
+                      <span className="block">to {c.ends_at ? fmtDateTime(c.ends_at, locale) : "—"}</span>
                     </td>
                     <td className="px-3 py-3"><StatusPill status={c.status} /></td>
                     <td className="px-3 py-3">

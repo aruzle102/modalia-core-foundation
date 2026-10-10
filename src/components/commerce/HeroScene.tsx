@@ -1,63 +1,32 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { RotateCcw } from "lucide-react";
 import { getTranslations } from "@/lib/i18n";
+import { useDeviceTier } from "@/hooks/use-device-tier";
 import type { SupportedLocale } from "@/config/platform";
 
 /**
  * HeroScene — a real WebGL (raw three.js, no react-three-fiber) hero scene.
  *
- * Floating product cards rendered as lit MeshStandardMaterial boxes with a
- * key/fill/rim lighting rig, drifting champagne particles, pointer parallax,
+ * A "Spatial Product Showcase": floating 3D cards textured with REAL product
+ * images, drifting in the bronze/editorial luxury language. When no product
+ * images are available the cards fall back to abstract bronze slabs.
+ *
+ * Key/fill/rim lighting rig, drifting champagne particles, pointer parallax,
  * horizontal drag to tilt the card group, and a gentle vertical drift tied to
  * page scroll. Transparent background so it blends into the page design.
+ *
+ * The scene is decorative (`aria-hidden`); keyboard users and screen readers
+ * get the static editorial hero content, which is the real content.
  *
  * Loading: `three` is dynamically imported inside `init()` (lazy chunk, never
  * in the main bundle) and the component stays invisible if the import fails.
  */
 
-type DeviceTier = "high" | "mid" | "low" | "data-saver";
-
-interface DeviceInfo {
-  tier: DeviceTier;
-  reducedMotion: boolean;
-  webgl: boolean;
-}
-
-function detectDeviceInfo(): DeviceInfo {
-  if (typeof window === "undefined") {
-    return { tier: "low", reducedMotion: false, webgl: false };
-  }
-  const reducedMotion =
-    typeof window.matchMedia === "function" &&
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  let webgl = false;
-  try {
-    const canvas = document.createElement("canvas");
-    webgl = canvas.getContext("webgl2") !== null || canvas.getContext("webgl") !== null;
-  } catch {
-    webgl = false;
-  }
-  const nav = navigator as Navigator & {
-    connection?: { saveData?: boolean };
-    deviceMemory?: number;
-  };
-  if (nav.connection?.saveData === true) {
-    return { tier: "data-saver", reducedMotion, webgl };
-  }
-  const cores = navigator.hardwareConcurrency ?? 4;
-  const memoryGb = nav.deviceMemory ?? 4;
-  if (cores >= 8 && memoryGb >= 8) return { tier: "high", reducedMotion, webgl };
-  if (cores >= 6 || memoryGb >= 6) return { tier: "mid", reducedMotion, webgl };
-  return { tier: "low", reducedMotion, webgl };
-}
-
-/** Local fallback for `@/hooks/use-device-tier` — same contract. */
-function useDeviceTier(): DeviceInfo {
-  const [info, setInfo] = useState<DeviceInfo>({ tier: "low", reducedMotion: false, webgl: false });
-  useEffect(() => {
-    setInfo(detectDeviceInfo());
-  }, []);
-  return info;
+/** Real product imagery for the showcase cards. */
+export interface HeroShowcaseProduct {
+  imagePath: string;
+  name: string;
+  slug: string;
 }
 
 // Modalia luxury palette: dark bronze, champagne, ivory, deep charcoal.
@@ -74,10 +43,12 @@ export function HeroScene({
   className,
   locale,
   quality = "full",
+  products = [],
 }: {
   className?: string;
   locale: SupportedLocale;
   quality?: HeroSceneQuality;
+  products?: HeroShowcaseProduct[];
 }) {
   const t = getTranslations(locale).viewer3d;
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -89,6 +60,16 @@ export function HeroScene({
   // Eligible on high (full) and mid (lite) tier devices with WebGL and no
   // reduced motion; low / data-saver keep the static 2.5D CSS fallback.
   const eligible = (tier === "high" || tier === "mid") && webgl && !reducedMotion;
+
+  // Content-derived key for the effect below: both hero call sites rebuild the
+  // `products` array on every render, so keying the effect on the array
+  // identity would tear down the whole WebGL scene (and re-fetch textures) on
+  // any parent re-render. The key only changes when the showcase content
+  // actually changes.
+  const productsKey = useMemo(
+    () => products.map((p) => `${p.imagePath}|${p.name}|${p.slug}`).join("||"),
+    [products],
+  );
 
   useEffect(() => {
     if (!eligible) return;
@@ -149,9 +130,24 @@ export function HeroScene({
 
     async function init() {
       let THREE: typeof import("three");
+      let RoundedBoxGeometry: (new (
+        width: number,
+        height: number,
+        depth: number,
+        segments: number,
+        radius: number,
+      ) => import("three").BoxGeometry) | null = null;
       try {
         // Lazy chunk: `three` is never in the main bundle.
         THREE = await import("three");
+        // Rounded cards feel like products; fall back to sharp boxes if the
+        // addon chunk fails to load.
+        try {
+          const addon = await import("three/addons/geometries/RoundedBoxGeometry.js");
+          RoundedBoxGeometry = addon.RoundedBoxGeometry;
+        } catch {
+          RoundedBoxGeometry = null;
+        }
       } catch {
         return; // three failed to load: stay invisible, never throw.
       }
@@ -188,9 +184,11 @@ export function HeroScene({
       scene.add(rimLight);
       scene.add(rimLight.target);
 
-      // --- Floating product cards. ---
+      // --- Floating product showcase cards. ---
       const world = new THREE.Group();
       scene.add(world);
+
+      const CARD_DEPTH = 0.16;
 
       const cardSpecs = [
         { w: 1.7, h: 2.4, x: -2.9, y: 0.55, z: -0.8, ry: 0.28 },
@@ -198,6 +196,34 @@ export function HeroScene({
         { w: 1.7, h: 2.4, x: 0.95, y: 0.6, z: -0.4, ry: 0.16 },
         { w: 1.9, h: 2.6, x: 2.9, y: -0.35, z: 0.3, ry: -0.24 },
       ];
+
+      const textureLoader = new THREE.TextureLoader();
+      textureLoader.setCrossOrigin("anonymous");
+
+      /** Cover-fit UVs so the product image fills the card face like a photo. */
+      const applyCoverFit = (
+        texture: import("three").Texture,
+        faceW: number,
+        faceH: number,
+      ) => {
+        const image = texture.image as { width?: number; height?: number } | undefined;
+        const iw = image?.width ?? 0;
+        const ih = image?.height ?? 0;
+        if (!iw || !ih) return;
+        const faceAspect = faceW / faceH;
+        const imageAspect = iw / ih;
+        if (imageAspect > faceAspect) {
+          // Image is wider: crop the sides.
+          const repeatX = faceAspect / imageAspect;
+          texture.repeat.set(repeatX, 1);
+          texture.offset.set((1 - repeatX) / 2, 0);
+        } else {
+          // Image is taller: crop top and bottom.
+          const repeatY = imageAspect / faceAspect;
+          texture.repeat.set(1, repeatY);
+          texture.offset.set(0, (1 - repeatY) / 2);
+        }
+      };
 
       const cards: Array<{
         group: import("three").Group;
@@ -209,18 +235,57 @@ export function HeroScene({
 
       cardSpecs.forEach((spec, index) => {
         const group = new THREE.Group();
-        const color = CARD_COLORS[index % CARD_COLORS.length] ?? 0x1b1510;
+        const product = products[index];
 
-        const geometry = track(new THREE.BoxGeometry(spec.w, spec.h, 0.18));
-        const material = track(
+        const geometry = RoundedBoxGeometry
+          ? track(new RoundedBoxGeometry(spec.w, spec.h, CARD_DEPTH, 3, 0.045))
+          : track(new THREE.BoxGeometry(spec.w, spec.h, CARD_DEPTH));
+        const bodyMaterial = track(
           new THREE.MeshStandardMaterial({
-            color,
+            color: CARD_COLORS[index % CARD_COLORS.length] ?? 0x1b1510,
             roughness: 0.42,
             metalness: 0.28,
           }),
         );
-        const card = new THREE.Mesh(geometry, material);
-        group.add(card);
+        group.add(new THREE.Mesh(geometry, bodyMaterial));
+
+        if (product?.imagePath) {
+          // Real product image on the card face, slightly inset.
+          const faceW = spec.w * 0.86;
+          const faceH = spec.h * 0.86;
+          const faceGeo = track(new THREE.PlaneGeometry(faceW, faceH));
+          const faceMat = track(
+            new THREE.MeshStandardMaterial({
+              color: 0x1b1510, // placeholder until the texture arrives
+              roughness: 0.5,
+              metalness: 0.08,
+            }),
+          );
+          const face = new THREE.Mesh(faceGeo, faceMat);
+          face.position.z = CARD_DEPTH / 2 + 0.004;
+          group.add(face);
+
+          textureLoader.load(
+            product.imagePath,
+            (texture) => {
+              if (disposed) {
+                texture.dispose();
+                return;
+              }
+              texture.colorSpace = THREE.SRGBColorSpace;
+              texture.anisotropy = Math.min(4, renderer.capabilities.getMaxAnisotropy());
+              applyCoverFit(texture, faceW, faceH);
+              track(texture);
+              faceMat.map = texture;
+              faceMat.color.set(0xffffff);
+              faceMat.needsUpdate = true;
+            },
+            undefined,
+            () => {
+              // Image failed (CORS/network): keep the bronze placeholder face.
+            },
+          );
+        }
 
         // Thin gold accent strip across the top — reads as a product label.
         const stripGeo = track(new THREE.BoxGeometry(spec.w * 0.62, 0.07, 0.02));
@@ -232,11 +297,11 @@ export function HeroScene({
           }),
         );
         const strip = new THREE.Mesh(stripGeo, stripMat);
-        strip.position.set(0, spec.h / 2 - 0.28, 0.1);
+        strip.position.set(0, spec.h / 2 - 0.28, CARD_DEPTH / 2 + 0.012);
         group.add(strip);
 
         // Subtle edge outline for definition against dark backgrounds.
-        const edgeGeo = track(new THREE.EdgesGeometry(geometry));
+        const edgeGeo = track(new THREE.EdgesGeometry(geometry, 25));
         const edgeMat = track(
           new THREE.LineBasicMaterial({ color: GOLD_ACCENT, transparent: true, opacity: 0.28 }),
         );
@@ -410,7 +475,7 @@ export function HeroScene({
       }
       setReady(false);
     };
-  }, [eligible, quality]);
+  }, [eligible, quality, productsKey]);
 
   if (!eligible) return null;
 

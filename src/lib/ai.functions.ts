@@ -12,24 +12,28 @@ import { z } from "zod";
 import type { Database, Json } from "@/integrations/supabase/types";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireSeller, type SellerContext, type SellerPermission } from "@/lib/seller-auth";
-import { assertAdmin } from "@/lib/admin-auth";
+import { assertAdminPermission } from "@/lib/admin-permissions";
 import { rateLimitEndpoint } from "@/lib/rate-limit";
-import { getAiMode, resolveProvider, buildCatalogSystemPrompt, type AiProvider } from "./ai/provider";
+import { getAiMode } from "./ai/provider";
 import {
   parseQuery,
   intentSummary,
   matchCategory,
+  GENDER_QUERY_WORDS,
   type ParsedIntent,
   type SupportedParseLocale,
   type CatalogCategoryLike,
+  type CatalogBrandLike,
+  type CatalogStoreLike,
 } from "./ai/query-parse";
 import {
   answerWithRules,
-  similarProducts,
   RULE_ASSISTANT_NAME,
   type AiCatalogItem,
   type RuleCategory,
 } from "./ai/fallback";
+import { readIntelligenceToggles } from "./intelligence-settings.functions";
+import { getTranslations } from "@/lib/i18n";
 
 const sellerOnly = [requireSupabaseAuth] as const;
 const adminOnly = [requireSupabaseAuth] as const;
@@ -77,6 +81,8 @@ function publicUrl(path: string | null): string | null {
 }
 
 type RawCategory = { id: string; slug: string; name: LocalizedText };
+type RawBrand = { id: string; slug: string; name: string };
+type RawStore = { id: string; slug: string; name: string };
 
 async function fetchCategories(supabase: ReturnType<typeof createPublicClient>): Promise<RawCategory[]> {
   const result = await supabase
@@ -89,6 +95,30 @@ async function fetchCategories(supabase: ReturnType<typeof createPublicClient>):
   return result.data ?? [];
 }
 
+/** Real active brands (for NL brand matching) — small reference table. */
+async function fetchBrands(supabase: ReturnType<typeof createPublicClient>): Promise<RawBrand[]> {
+  const result = await supabase
+    .from("brands")
+    .select("id,slug,name")
+    .eq("status", "active")
+    .order("name")
+    .limit(500);
+  if (result.error) return [];
+  return (result.data ?? []) as RawBrand[];
+}
+
+/** Real active stores (for NL store matching) — small reference table. */
+async function fetchStores(supabase: ReturnType<typeof createPublicClient>): Promise<RawStore[]> {
+  const result = await supabase
+    .from("stores")
+    .select("id,slug,name")
+    .eq("status", "active")
+    .order("name")
+    .limit(500);
+  if (result.error) return [];
+  return (result.data ?? []) as RawStore[];
+}
+
 function toCategoryLikes(categories: RawCategory[], locale: string): CatalogCategoryLike[] {
   return categories.map((c) => ({
     slug: c.slug,
@@ -98,15 +128,29 @@ function toCategoryLikes(categories: RawCategory[], locale: string): CatalogCate
   }));
 }
 
+function toBrandLikes(brands: RawBrand[]): CatalogBrandLike[] {
+  return brands.map((b) => ({ slug: b.slug, names: [b.name, b.slug].filter(Boolean) }));
+}
+
+function toStoreLikes(stores: RawStore[]): CatalogStoreLike[] {
+  return stores.map((s) => ({ slug: s.slug, names: [s.name, s.slug].filter(Boolean) }));
+}
+
 function toRuleCategories(categories: RawCategory[], locale: string): RuleCategory[] {
   return categories.map((c) => ({ slug: c.slug, name: localized(c.name, locale, c.slug) }));
 }
 
-/** Real, published catalog items for search — capped for performance. */
-async function fetchAiCatalog(
+/**
+ * Hydrate RPC-returned product ids into assistant catalog items, preserving
+ * the database rank order. Applies the public-visibility predicates itself so
+ * nothing unpublished/hidden/unapproved ever reaches the assistant.
+ */
+async function hydrateAiItems(
   supabase: ReturnType<typeof createPublicClient>,
+  ids: string[],
   locale: string,
 ): Promise<AiCatalogItem[]> {
+  if (!ids.length) return [];
   const result = await supabase
     .from("products")
     .select(
@@ -116,10 +160,111 @@ async function fetchAiCatalog(
     .eq("publication_status", "published")
     .eq("moderation_status", "approved")
     .eq("visibility", "public")
-    .order("created_at", { ascending: false })
-    .limit(300);
+    .in("id", ids);
   if (result.error) return [];
-  return (result.data ?? []).map((product) => {
+  const byId = new Map<string, AiCatalogItem>();
+  for (const product of result.data ?? []) {
+    const images = Array.isArray(product.images) ? [...product.images].sort((a, b) => a.sort_order - b.sort_order) : [];
+    const seller = Array.isArray(product.seller) ? product.seller[0] : product.seller;
+    const stores = seller && Array.isArray(seller.stores) ? seller.stores : [];
+    const category = Array.isArray(product.category) ? product.category[0] : product.category;
+    byId.set(product.id, {
+      id: product.id,
+      slug: product.slug,
+      name: localized(product.name, locale, product.slug),
+      description: localized(product.description, locale, "") || null,
+      price: Number(product.base_price),
+      compareAtPrice: product.compare_at_price ?? null,
+      storeName: stores[0]?.name ?? "",
+      storeSlug: stores[0]?.slug ?? null,
+      categorySlug: category?.slug ?? null,
+      categoryName: category ? localized(category.name, locale, category.slug) : null,
+      imagePath: publicUrl(images[0]?.storage_path ?? null),
+    });
+  }
+  // Preserve the RPC's rank order; drop ids that are no longer visible.
+  return ids.map((id) => byId.get(id)).filter((item): item is AiCatalogItem => item !== undefined);
+}
+
+/**
+ * Database-native assistant search: ONE `search_products_fts` RPC call per
+ * user query. Every parsed facet (category, brand, store, price, colors,
+ * sizes) is passed as a structured RPC param — filtering, ranking and
+ * pagination happen in PostgreSQL. No arbitrary catalog caps, no JS-side
+ * full-catalog filtering.
+ *
+ * Returns `null` when the FTS migration has not been applied, so the caller
+ * can use the bounded legacy fallback.
+ */
+async function searchAssistantCatalog(
+  supabase: ReturnType<typeof createPublicClient>,
+  locale: SupportedParseLocale,
+  intent: ParsedIntent,
+): Promise<AiCatalogItem[] | null> {
+  const queryBits = [...intent.keywords];
+  // Gender: structured DB filter via p_gender (V8 #180) — the folded words
+  // stay as a ranking aid so gendered product/category names still score.
+  const genderWords = GENDER_QUERY_WORDS[locale] ?? GENDER_QUERY_WORDS.en;
+  for (const g of intent.genders) {
+    const word = genderWords[g];
+    if (word && !queryBits.includes(word)) queryBits.push(word);
+  }
+  const query = queryBits.join(" ").slice(0, 80);
+  try {
+    const rpcArgs: Record<string, string | number | boolean | string[]> = {
+      p_query: query,
+      p_in_stock: false,
+      p_on_sale: false,
+      p_sort: intent.sort,
+      p_limit: 24,
+      p_offset: 0,
+    };
+    if (intent.categorySlug) rpcArgs["p_category_slug"] = intent.categorySlug;
+    if (intent.brandSlug) rpcArgs["p_brand_slugs"] = [intent.brandSlug];
+    if (intent.storeSlug) rpcArgs["p_store_slugs"] = [intent.storeSlug];
+    if (intent.minPrice !== null) rpcArgs["p_min_price"] = intent.minPrice;
+    if (intent.maxPrice !== null) rpcArgs["p_max_price"] = intent.maxPrice;
+    if (intent.colors.length) rpcArgs["p_color_slugs"] = intent.colors;
+    if (intent.sizes.length) rpcArgs["p_size_values"] = intent.sizes;
+    if (intent.genders[0]) rpcArgs["p_gender"] = intent.genders[0];
+    const { data: payload, error } = await supabase.rpc("search_products_fts", rpcArgs as never);
+    if (error) return null;
+    const ids = (payload as unknown as { ids?: unknown })?.ids;
+    const idList = Array.isArray(ids) ? ids.filter((id): id is string => typeof id === "string") : [];
+    return await hydrateAiItems(supabase, idList, locale);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Bounded legacy fallback (only when the FTS migration is not applied):
+ * a single small keyword query against published products — still
+ * database-native, never a full-catalog load.
+ */
+async function fallbackAssistantSearch(
+  supabase: ReturnType<typeof createPublicClient>,
+  locale: string,
+  intent: ParsedIntent,
+): Promise<AiCatalogItem[]> {
+  const kw = (intent.keywords[0] ?? "").replace(/[%*,()\\]/g, "").slice(0, 60);
+  let query = supabase
+    .from("products")
+    .select(
+      "id,slug,name,description,base_price,compare_at_price,created_at,category:categories(slug,name),seller:sellers(stores(slug,name)),images:product_images(storage_path,sort_order)",
+    )
+    .eq("status", "active")
+    .eq("publication_status", "published")
+    .eq("moderation_status", "approved")
+    .eq("visibility", "public")
+    .order("created_at", { ascending: false })
+    .limit(24);
+  if (kw) {
+    query = query.or(`name->>ar.ilike.%${kw}%,name->>fr.ilike.%${kw}%,name->>en.ilike.%${kw}%`);
+  }
+  const result = await query;
+  if (result.error) return [];
+  const items = (result.data ?? []).map((product) => {
     const images = Array.isArray(product.images) ? [...product.images].sort((a, b) => a.sort_order - b.sort_order) : [];
     const seller = Array.isArray(product.seller) ? product.seller[0] : product.seller;
     const stores = seller && Array.isArray(seller.stores) ? seller.stores : [];
@@ -136,8 +281,9 @@ async function fetchAiCatalog(
       categorySlug: category?.slug ?? null,
       categoryName: category ? localized(category.name, locale, category.slug) : null,
       imagePath: publicUrl(images[0]?.storage_path ?? null),
-    };
+    } satisfies AiCatalogItem;
   });
+  return rankItems(items, intent);
 }
 
 // ---------------------------------------------------------------------------
@@ -169,7 +315,12 @@ function scoreItem(item: AiCatalogItem, intent: ParsedIntent): number {
   return score;
 }
 
-function filterAndRank(items: AiCatalogItem[], intent: ParsedIntent): AiCatalogItem[] {
+/**
+ * Legacy fallback ranking only: the FTS path applies every facet in the
+ * database (see searchAssistantCatalog), so no JS filtering is needed there.
+ * This keeps the small bounded fallback honest when the RPC is unavailable.
+ */
+function rankItems(items: AiCatalogItem[], intent: ParsedIntent): AiCatalogItem[] {
   const filtered = items.filter((item) => {
     if (intent.categorySlug && item.categorySlug !== intent.categorySlug) return false;
     if (intent.minPrice !== null && item.price < intent.minPrice) return false;
@@ -221,40 +372,20 @@ function formatChatPrice(price: number, locale: SupportedParseLocale): string {
 }
 
 /**
- * Detect "similar to X" phrasing and resolve X to a real catalog product.
- * Returns null when the phrasing is absent or X matches nothing.
+ * Detect "similar to X" phrasing and extract the subject X.
+ * Returns null when the phrasing is absent.
  */
-function findSimilarTarget(message: string, catalog: AiCatalogItem[]): AiCatalogItem | null {
+function extractSimilarSubject(message: string): string | null {
   const patterns = [
     /(?:مشابه|شبيه|مثل|زي|كيما)\s+(?:ل|لـ|لهذا|لهاذا)?\s*(.+)/,
     /(?:similar to|like|such as)\s+(?:the\s+)?(.+)/i,
     /(?:similaire à|comme)\s+(?:le|la|les|l')?\s*(.+)/i,
   ];
-  let subject: string | null = null;
   for (const pattern of patterns) {
     const m = pattern.exec(message.trim());
-    if (m?.[1]?.trim()) {
-      subject = m[1].trim().slice(0, 120);
-      break;
-    }
+    if (m?.[1]?.trim()) return m[1].trim().slice(0, 120);
   }
-  if (!subject) return null;
-  const keywords = tokenizeLocal(subject).filter((t) => t.length >= 3).slice(0, 6);
-  if (!keywords.length) return null;
-  let best: AiCatalogItem | null = null;
-  let bestScore = 0;
-  for (const item of catalog) {
-    const nameTokens = new Set(tokenizeLocal(item.name));
-    let score = 0;
-    for (const kw of keywords) {
-      if ([...nameTokens].some((t) => t === kw || t.startsWith(kw) || kw.startsWith(t))) score += 2;
-    }
-    if (score > bestScore) {
-      bestScore = score;
-      best = item;
-    }
-  }
-  return bestScore >= 2 ? best : null;
+  return null;
 }
 
 // ---------------------------------------------------------------------------
@@ -264,45 +395,14 @@ function findSimilarTarget(message: string, catalog: AiCatalogItem[]): AiCatalog
 export const getAiStatus = createServerFn({ method: "GET" })
   .validator((data) => z.object({}).parse(data))
   .handler(async () => {
+    // Production: Modalia Intelligence is deterministic and database-powered.
+    // External AI providers were removed from the execution path (Version 7).
+    // getAiMode() always reports rules mode; no env vars are consulted.
     const mode = getAiMode();
     return {
-      source: mode.mode as "provider" | "rules",
+      source: "rules" as const,
       providerLabel: mode.providerLabel,
       ruleAssistantName: RULE_ASSISTANT_NAME,
-    };
-  });
-
-// ---------------------------------------------------------------------------
-// 2. aiSearchCatalog — natural-language search over the REAL catalog
-// ---------------------------------------------------------------------------
-
-const searchInput = z.object({ q: z.string().trim().min(1).max(200), locale: localeSchema });
-
-export const aiSearchCatalog = createServerFn({ method: "GET" })
-  .validator((data) => searchInput.parse(data))
-  .handler(async ({ data }) => {
-    // Public and expensive (full catalog fetch per query) — throttle per IP.
-    rateLimitEndpoint("aiSearchCatalog", 60);
-    const supabase = createPublicClient();
-    const [categories, catalog] = await Promise.all([
-      fetchCategories(supabase),
-      fetchAiCatalog(supabase, data.locale),
-    ]);
-    const intent = parseQuery(data.q, toCategoryLikes(categories, data.locale));
-    const products = filterAndRank(catalog, intent);
-    return {
-      intent: {
-        keywords: intent.keywords,
-        colors: intent.colors,
-        categorySlug: intent.categorySlug,
-        categoryName: intent.categoryName,
-        minPrice: intent.minPrice,
-        maxPrice: intent.maxPrice,
-        priceHint: intent.priceHint,
-        summary: intentSummary(intent, data.locale),
-      },
-      total: products.length,
-      products: products.map(toChatProduct),
     };
   });
 
@@ -322,77 +422,88 @@ const chatInput = z.object({
 export const aiChat = createServerFn({ method: "POST" })
   .validator((data) => chatInput.parse(data))
   .handler(async ({ data }) => {
-    // Public chat can invoke a paid external LLM provider — throttle per IP.
+    // Public chat — throttle per IP. Modalia Intelligence is deterministic
+    // and database-powered; no external AI provider is ever called.
     rateLimitEndpoint("aiChat", 60);
-    const supabase = createPublicClient();
-    const [categories, catalog] = await Promise.all([
-      fetchCategories(supabase),
-      fetchAiCatalog(supabase, data.locale),
-    ]);
-    const intent = parseQuery(data.message, toCategoryLikes(categories, data.locale));
-    const matches = filterAndRank(catalog, intent);
-    const provider: AiProvider | null = resolveProvider();
-
-    // "Similar to X" requests: resolve X to a real product, then recommend
-    // from the same category / seller / price band (real data only).
-    const similarTarget = findSimilarTarget(data.message, catalog);
-    if (similarTarget) {
-      const similar = similarProducts(similarTarget, catalog, 8);
-      const targetLink = `[${similarTarget.name}](/product/${similarTarget.slug}?locale=${data.locale})`;
-      const intro =
-        data.locale === "ar"
-          ? `منتجات مشابهة لـ ${targetLink} (نفس الفئة/المتجر/نطاق السعر):\n`
-          : data.locale === "fr"
-            ? `Produits similaires à ${targetLink} (même catégorie / boutique / gamme de prix) :\n`
-            : `Products similar to ${targetLink} (same category / store / price band):\n`;
-      const lines = similar
-        .slice(0, 6)
-        .map(
-          (p) =>
-            `- [${p.name}](/product/${p.slug}?locale=${data.locale}) — **${formatChatPrice(p.price, data.locale)}** · ${p.storeName}`,
-        )
-        .join("\n");
-      const empty =
-        data.locale === "ar"
-          ? "لم أجد منتجات مشابهة في الكتالوج الحالي."
-          : data.locale === "fr"
-            ? "Aucun produit similaire dans le catalogue actuel."
-            : "No similar products in the current catalog.";
+    // V8 #177 — server-side gate. The storefront hides the assistant UI when
+    // the toggle is off (site-shell), but the endpoint itself must refuse:
+    // a direct POST must not bypass the admin's switch.
+    const toggles = await readIntelligenceToggles();
+    if (!toggles.smart_shopping_enabled) {
       return {
         source: "rules" as const,
-        text: similar.length ? intro + lines : intro + empty,
-        products: similar.slice(0, 6).map(toChatProduct),
-        intentSummary:
-          data.locale === "ar" ? `مشابه لـ: ${similarTarget.name}` : data.locale === "fr" ? `Similaire à : ${similarTarget.name}` : `Similar to: ${similarTarget.name}`,
+        text: getTranslations(data.locale).assistant.disabledNotice,
+        products: [],
+        intentSummary: null,
       };
     }
+    const supabase = createPublicClient();
+    const [categories, brands, stores] = await Promise.all([
+      fetchCategories(supabase),
+      fetchBrands(supabase),
+      fetchStores(supabase),
+    ]);
+    const categoryLikes = toCategoryLikes(categories, data.locale);
+    const brandLikes = toBrandLikes(brands);
+    const storeLikes = toStoreLikes(stores);
+    const intent = parseQuery(data.message, categoryLikes, brandLikes, storeLikes);
 
-    if (provider) {
-      const catalogContext = matches
-        .slice(0, 12)
-        .map(
-          (p) =>
-            `- ${p.name} | price: ${p.price} DZD${p.compareAtPrice && p.compareAtPrice > p.price ? ` (was ${p.compareAtPrice})` : ""} | store: ${p.storeName} | category: ${p.categoryName ?? "?"} | slug: ${p.slug}`,
-        )
-        .join("\n");
-      const history = (data.history ?? []).slice(-6).map((h) => ({ role: h.role as "user" | "assistant", content: h.content }));
-      const text = await provider.generateText(
-        [
-          { role: "system", content: buildCatalogSystemPrompt(data.locale, catalogContext) },
-          ...history,
-          { role: "user", content: data.message },
-        ],
-        { maxTokens: 500, temperature: 0.3 },
-      );
-      return {
-        source: "provider" as const,
-        text,
-        products: matches.slice(0, 6).map(toChatProduct),
-        intentSummary: intentSummary(intent, data.locale),
-      };
+    // Database-native search: one RPC call, every parsed facet applied as a
+    // structured param. Bounded legacy fallback when FTS is unavailable.
+    const rpcMatches = await searchAssistantCatalog(supabase, data.locale, intent);
+    const matches = rpcMatches ?? (await fallbackAssistantSearch(supabase, data.locale, intent));
+
+    // "Similar to X" requests: resolve X to a real product via the same
+    // DB-native search, then recommend using the deterministic DB-backed
+    // engine (category/brand/store/price/color/trending/recency — real data).
+    const similarSubject = extractSimilarSubject(data.message);
+    if (similarSubject) {
+      const subjectIntent = parseQuery(similarSubject, categoryLikes, brandLikes, storeLikes);
+      const subjectHits =
+        (await searchAssistantCatalog(supabase, data.locale, subjectIntent)) ??
+        (await fallbackAssistantSearch(supabase, data.locale, subjectIntent));
+      const similarTarget = subjectHits[0] ?? null;
+      // V8 #177 — "similar to X" runs on the recommendations engine: when the
+      // admin disabled recommendations, skip it and fall through to the
+      // normal answer path instead of serving gated results.
+      if (similarTarget && toggles.recommendations_enabled) {
+        const { getSimilarProductIds } = await import("./recommendations");
+        const similarIds = await getSimilarProductIds(supabase, similarTarget.id, 8);
+        const similar = await hydrateAiItems(supabase, similarIds, data.locale);
+        const targetLink = `[${similarTarget.name}](/product/${similarTarget.slug}?locale=${data.locale})`;
+        const intro =
+          data.locale === "ar"
+            ? `منتجات مشابهة لـ ${targetLink} (نفس الفئة/العلامة/المتجر/نطاق السعر/اللون):\n`
+            : data.locale === "fr"
+              ? `Produits similaires à ${targetLink} (même catégorie / marque / boutique / gamme de prix / couleur) :\n`
+              : `Products similar to ${targetLink} (same category / brand / store / price band / color):\n`;
+        const lines = similar
+          .slice(0, 6)
+          .map(
+            (p) =>
+              `- [${p.name}](/product/${p.slug}?locale=${data.locale}) — **${formatChatPrice(p.price, data.locale)}** · ${p.storeName}`,
+          )
+          .join("\n");
+        const empty =
+          data.locale === "ar"
+            ? "لم أجد منتجات مشابهة في الكتالوج الحالي."
+            : data.locale === "fr"
+              ? "Aucun produit similaire dans le catalogue actuel."
+              : "No similar products in the current catalog.";
+        return {
+          source: "rules" as const,
+          text: similar.length ? intro + lines : intro + empty,
+          products: similar.slice(0, 6).map(toChatProduct),
+          intentSummary:
+            data.locale === "ar" ? `مشابه لـ: ${similarTarget.name}` : data.locale === "fr" ? `Similaire à : ${similarTarget.name}` : `Similar to: ${similarTarget.name}`,
+        };
+      }
+      // Subject resolved to nothing: fall through to the normal answer path
+      // (which will honestly report no match) instead of inventing a target.
     }
 
     // Rule-based mode: fully local, catalog-grounded, honestly labeled.
+    // This is the ONLY answer path — external providers were removed (V7).
     const answer = answerWithRules({
       raw: data.message,
       intent,
@@ -405,36 +516,6 @@ export const aiChat = createServerFn({ method: "POST" })
       text: answer.text,
       products: answer.products.map(toChatProduct),
       intentSummary: intentSummary(intent, data.locale),
-    };
-  });
-
-// ---------------------------------------------------------------------------
-// 4. aiSimilarProducts — recommendations from real data
-// ---------------------------------------------------------------------------
-
-const similarInput = z.object({
-  slug: z.string().min(1).max(160),
-  locale: localeSchema,
-  limit: z.number().int().min(1).max(12).default(8),
-});
-
-export const aiSimilarProducts = createServerFn({ method: "GET" })
-  .validator((data) => similarInput.parse(data))
-  .handler(async ({ data }) => {
-    rateLimitEndpoint("aiSimilarProducts", 60);
-    const supabase = createPublicClient();
-    const catalog = await fetchAiCatalog(supabase, data.locale);
-    const target = catalog.find((p) => p.slug === data.slug);
-    if (!target) return { products: [], reason: "not_found" as const };
-    const items = similarProducts(target, catalog, data.limit);
-    return {
-      products: items.map(toChatProduct),
-      reason: "same_category_seller_price" as const,
-      basis: {
-        category: target.categoryName,
-        store: target.storeName,
-        price: target.price,
-      },
     };
   });
 
@@ -590,18 +671,7 @@ export const aiSellerDraft = createServerFn({ method: "POST" })
     const facts = await getSellerProductFacts(context, seller.sellerId, data.productId);
     if (!facts) throw new Error("Product not found.");
 
-    const provider: AiProvider | null = resolveProvider();
-
     if (data.kind === "tags") {
-      if (provider) {
-        const tags = await provider.suggestTags({
-          name: facts.name,
-          category: facts.category || null,
-          description: facts.description || null,
-          locale: data.locale,
-        });
-        return { kind: "tags" as const, source: "provider" as const, tags, categories: [] as string[] };
-      }
       return { kind: "tags" as const, source: "rules" as const, tags: ruleTags(facts), categories: [] as string[] };
     }
 
@@ -634,25 +704,7 @@ export const aiSellerDraft = createServerFn({ method: "POST" })
       };
     }
 
-    // description
-    if (provider) {
-      const draft = await provider.generateDescription({
-        name: facts.name,
-        category: facts.category || null,
-        attributes: facts.attributes,
-        price: facts.basePrice,
-        currency: "DZD",
-        locale: data.locale,
-      });
-      return {
-        kind: "description" as const,
-        source: "provider" as const,
-        draft,
-        tags: [] as string[],
-        categories: [] as string[],
-        needsHumanApproval: true,
-      };
-    }
+    // description — rules-based only (external providers removed in V7).
     return {
       kind: "description" as const,
       source: "rules" as const,
@@ -721,7 +773,7 @@ export const aiAdminModerationBrief = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .validator((data) => z.object({ locale: localeSchema }).parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "intelligence.manage");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const [appsResult, productsResult, ticketsResult] = await Promise.all([

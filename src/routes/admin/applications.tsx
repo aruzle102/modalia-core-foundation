@@ -33,6 +33,8 @@ import {
   fmtDateTime,
   timeAgo,
 } from "@/components/admin/ui";
+import { useAdminLocale } from "@/components/admin/useAdminLocale";
+import { getTranslations } from "@/lib/i18n";
 import {
   listApplications,
   getApplication,
@@ -82,6 +84,8 @@ function formatCategories(value: unknown): string[] {
 }
 
 function ApplicationsPage() {
+  const locale = useAdminLocale();
+  const nav = getTranslations(locale).adminNav.items;
   const queryClient = useQueryClient();
   const url = useUrlState({ status: "all", page: 1 });
   const page = numParam(url.search["page"], 1);
@@ -123,6 +127,7 @@ function ApplicationsPage() {
       <AdminShell
         title="Seller Applications"
         subtitle="Review applications, approve sellers, and provision seller accounts."
+        breadcrumbs={[{ label: nav.sellerApplications }]}
       >
         <ModerationBriefCard />
         <AdminCard
@@ -213,8 +218,8 @@ function ApplicationsPage() {
                       <td className="py-3 pe-4">
                         <StatusPill status={app.status} />
                       </td>
-                      <td className="py-3 whitespace-nowrap text-muted-foreground" title={fmtDateTime(app.created_at)}>
-                        {timeAgo(app.created_at)}
+                      <td className="py-3 whitespace-nowrap text-muted-foreground" title={fmtDateTime(app.created_at, locale)}>
+                        {timeAgo(app.created_at, locale)}
                       </td>
                     </tr>
                   ))}
@@ -252,6 +257,7 @@ function ApplicationDrawer({
   onClose: () => void;
   onChanged: () => void;
 }) {
+  const locale = useAdminLocale();
   const queryClient = useQueryClient();
   const [confirmApprove, setConfirmApprove] = useState(false);
   const [confirmReject, setConfirmReject] = useState(false);
@@ -392,8 +398,8 @@ function ApplicationDrawer({
                     <li key={step.key} className="relative">
                       <span className="absolute -start-[21px] top-1 size-2.5 rounded-full bg-primary" />
                       <p className="text-sm font-medium">{TIMELINE_LABELS[step.key] ?? step.key}</p>
-                      <p className="text-xs text-muted-foreground" title={fmtDateTime(step.at)}>
-                        {fmtDateTime(step.at)} · {timeAgo(step.at)}
+                      <p className="text-xs text-muted-foreground" title={fmtDateTime(step.at, locale)}>
+                        {fmtDateTime(step.at, locale)} · {timeAgo(step.at, locale)}
                       </p>
                     </li>
                   ))}
@@ -414,7 +420,7 @@ function ApplicationDrawer({
                   )}
                   {app.reviewed_at && (
                     <p className="mt-2 text-xs text-muted-foreground">
-                      Reviewed {timeAgo(app.reviewed_at)}
+                      Reviewed {timeAgo(app.reviewed_at, locale)}
                     </p>
                   )}
                 </section>
@@ -508,7 +514,7 @@ function ApplicationDrawer({
                   <Link
                     to="/admin/sellers/$sellerId"
                     params={{ sellerId: app.seller_id }}
-                    search={{ back: "", q: "", status: "all", page: 1, create: "" }}
+                    search={{ back: "", tab: "overview", q: "", status: "all", page: 1, create: "" }}
                     className="inline-flex"
                   >
                     <Button variant="outline">

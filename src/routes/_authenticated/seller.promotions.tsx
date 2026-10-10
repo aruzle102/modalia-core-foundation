@@ -227,11 +227,11 @@ function PromotionsPage() {
                           <TableRow key={p.id}>
                             <TableCell className="font-medium">{productName(p.product?.name, locale)}</TableCell>
                             <TableCell className="font-mono text-xs">{p.variant?.sku ?? "All variants"}</TableCell>
-                            <TableCell className="font-semibold">{fmtMoney(p.sale_price)}</TableCell>
-                            <TableCell className="text-muted-foreground line-through">{fmtMoney(baseP)}</TableCell>
+                            <TableCell className="font-semibold">{fmtMoney(p.sale_price, "DZD", locale)}</TableCell>
+                            <TableCell className="text-muted-foreground line-through">{fmtMoney(baseP, "DZD", locale)}</TableCell>
                             <TableCell className="tabular-nums text-green-700 dark:text-green-400">−{off}%</TableCell>
                             <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
-                              {fmtDate(p.starts_at)} → {fmtDate(p.ends_at)}
+                              {fmtDate(p.starts_at, locale)} → {fmtDate(p.ends_at, locale)}
                             </TableCell>
                             <TableCell>
                               <StatusPill status={pillFor(state)} />
@@ -277,7 +277,7 @@ function PromotionsPage() {
                   <SelectContent>
                     {catalog.map((p) => (
                       <SelectItem key={p.id} value={p.id}>
-                        {productName(p.name, locale)} · {fmtMoney(p.base_price)}
+                        {productName(p.name, locale)} · {fmtMoney(p.base_price, "DZD", locale)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -291,7 +291,7 @@ function PromotionsPage() {
                       <SelectItem value="any">All variants</SelectItem>
                       {selectedProduct.variants.map((v) => (
                         <SelectItem key={v.id} value={v.id}>
-                          {v.sku ?? v.id.slice(0, 8)} · {fmtMoney(v.price)}
+                          {v.sku ?? v.id.slice(0, 8)} · {fmtMoney(v.price, "DZD", locale)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -302,7 +302,7 @@ function PromotionsPage() {
                 label="Sale price (DZD)"
                 hint={
                   base > 0
-                    ? `Current price: ${fmtMoney(base)}${discountPct != null ? ` — that's ${discountPct}% off` : " — must be below the current price"}`
+                    ? `Current price: ${fmtMoney(base, "DZD", locale)}${discountPct != null ? ` — that's ${discountPct}% off` : " — must be below the current price"}`
                     : undefined
                 }
               >

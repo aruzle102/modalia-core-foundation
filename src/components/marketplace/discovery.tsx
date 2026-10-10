@@ -1,15 +1,16 @@
 import { useState, type MouseEvent } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Check, Heart, ShoppingBag } from "lucide-react";
+import { ArrowRight, Heart, ShoppingBag, Zap } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatPrice } from "@/lib/i18n/format";
 import { getTranslations } from "@/lib/i18n";
-import { useCart } from "@/lib/cart-store";
 import { isWishlisted, toggleWishlist } from "@/lib/wishlist-store";
 import { microAnimationClass, replayAnimation } from "@/lib/motion";
+import { startBuyNow } from "@/components/marketplace/buy-now";
 import type { CatalogCategory, CatalogProduct, CatalogStore } from "@/lib/catalog.functions";
-import { VerifiedBadge } from "@/components/marketplace/VerifiedBadge";
+import { OfficialStoreBadge, VerifiedSellerBadge } from "@/components/marketplace/StoreBadges";
 import type { SupportedLocale } from "@/config/platform";
+import { motionTw } from "@/lib/motion-tokens";
 
 const NEW_BADGE_DAYS = 14;
 const LOW_STOCK_THRESHOLD = 5;
@@ -32,21 +33,26 @@ export function ProductCard({
   product: CatalogProduct;
   locale: SupportedLocale;
 }) {
-  const { addItem } = useCart();
   const [wishlisted, setWishlisted] = useState(() => isWishlisted(product.id));
-  const [justAdded, setJustAdded] = useState(false);
   const t = getTranslations(locale).card;
+  const sf = getTranslations(locale).home;
 
   // Badges come from real data only: discount from compareAtPrice,
-  // low stock from summed variant inventory, "new" from createdAt.
+  // "new" from createdAt, low stock from summed variant inventory.
   const sale = discountPercent(product.price, product.compareAtPrice);
   const fresh = isNewProduct(product.createdAt);
   const stock = product.totalStock;
   const soldOut = stock === 0;
   const lowStock = stock != null && stock > 0 && stock <= LOW_STOCK_THRESHOLD;
 
-  const handleWishlist = (event: MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
+  const handleQuickAdd = (event: any) => {
+    event.stopPropagation();
+    // Navigate to product page for purchase (variant selection + cart work there)
+    window.location.href = `/product/${product.slug}?locale=${locale}`;
+  };
+
+  const handleWishlist = (event: any) => {
+    event.stopPropagation();
     const added = toggleWishlist({
       productId: product.id,
       slug: product.slug,
@@ -56,59 +62,39 @@ export function ProductCard({
       storeName: product.storeName,
     });
     setWishlisted(added);
-    // Commerce micro-feedback: pop the heart when the item is saved.
     if (added) replayAnimation(event.currentTarget, microAnimationClass.wishlistPop);
   };
 
-  const handleQuickAdd = (event: MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    if (soldOut) return;
-    addItem({
-      productId: product.id,
-      variantId: product.id,
-      slug: product.slug,
-      name: product.name,
-      price: product.price,
-      quantity: 1,
-      image: product.imagePath,
-      storeName: product.storeName,
-    });
-    setJustAdded(true);
-    // Commerce micro-feedback: nudge confirms the item landed in the cart.
-    replayAnimation(event.currentTarget, microAnimationClass.cartNudge);
-    window.setTimeout(() => setJustAdded(false), 1500);
-  };
 
   return (
-    <article className="group relative min-w-0">
-      <div
-        className={`relative aspect-[4/5] overflow-hidden rounded-xl bg-muted shadow-[0_1px_2px_rgba(0,0,0,0.06)] transition-all duration-500 ease-out group-hover:-translate-y-1 group-hover:shadow-[0_28px_56px_-24px_rgba(0,0,0,0.35)] motion-reduce:transition-none motion-reduce:group-hover:translate-y-0 ${soldOut ? "saturate-50" : ""}`}
-      >
+    <article className="group relative min-w-0 overflow-hidden rounded-[14px] border border-[#E5E5E5] bg-white transition-shadow duration-300 hover:shadow-[0_12px_32px_-12px_rgba(0,0,0,0.18)]">
+      {/* Image wrapper — buttons are siblings of the Link, not nested inside */}
+      <div className="relative">
         <Link
           to="/product/$slug"
           params={{ slug: product.slug }}
           search={{ locale }}
-          className="block size-full"
+          className="block"
           aria-label={product.name}
         >
+          {/* Image — 1:1, dominant */}
+          <div className={`relative aspect-square overflow-hidden bg-[#F6F6F4] ${soldOut ? "saturate-50" : ""}`}>
           {product.imagePath ? (
             <img
               src={product.imagePath}
               alt={product.imageAlt || product.name}
               loading="lazy"
-              sizes="(min-width: 1024px) 25vw, 50vw"
-              className={`size-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.06] motion-reduce:transition-none motion-reduce:group-hover:scale-100 ${soldOut ? "opacity-75" : ""}`}
+              className={`size-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.02] motion-reduce:transition-none motion-reduce:group-hover:scale-100 ${soldOut ? "opacity-75" : ""}`}
             />
           ) : product.secondImagePath ? (
             <img
               src={product.secondImagePath}
               alt={product.secondImageAlt || product.name}
               loading="lazy"
-              sizes="(min-width: 1024px) 25vw, 50vw"
               className="size-full object-cover"
             />
           ) : (
-            <div className="flex size-full items-end p-5 text-small text-muted-foreground">
+            <div className="flex size-full items-end p-5 text-sm text-[#666666]">
               Modalia
               <br />
               {product.name}
@@ -120,89 +106,86 @@ export function ProductCard({
               alt=""
               aria-hidden
               loading="lazy"
-              sizes="(min-width: 1024px) 25vw, 50vw"
               className="absolute inset-0 size-full object-cover opacity-0 transition-opacity duration-500 group-hover:opacity-100 motion-reduce:transition-none motion-reduce:group-hover:opacity-0"
             />
           ) : null}
+
+          {/* Badges — real data only */}
+          <div className="pointer-events-none absolute left-2.5 top-2.5 z-10 flex flex-col items-start gap-1.5">
+            {sale != null ? (
+              <span className="rounded-md bg-[#E53935] px-2 py-1 text-[11px] font-bold text-white">
+                -{sale}%
+              </span>
+            ) : null}
+            {fresh ? (
+              <span className="rounded-md bg-[#0A0A0A] px-2 py-1 text-[11px] font-bold uppercase tracking-wide text-white">
+                {t.new}
+              </span>
+            ) : null}
+          </div>
+
+          </div>
         </Link>
-        <div className="pointer-events-none absolute start-3 top-3 z-10 flex flex-col items-start gap-1.5">
-          {sale != null ? (
-            <span className="rounded-full bg-destructive px-2.5 py-1 text-caption font-semibold text-destructive-foreground">
-              −{sale}%
-            </span>
-          ) : null}
-          {fresh ? (
-            <span className="rounded-full bg-foreground px-2.5 py-1 text-caption font-semibold text-background">
-              {t.new}
-            </span>
-          ) : null}
-          {lowStock ? (
-            <span className="rounded-full bg-background/90 px-2.5 py-1 text-caption font-medium text-foreground shadow-sm backdrop-blur-sm">
-              {t.onlyLeft(stock as number)}
-            </span>
-          ) : null}
-          {soldOut ? (
-            <span className="rounded-full bg-background/90 px-2.5 py-1 text-caption font-medium text-muted-foreground shadow-sm backdrop-blur-sm">
-              {t.soldOut}
-            </span>
-          ) : null}
-        </div>
+
+        {/* Action buttons — siblings of Link, positioned over image */}
         <button
           type="button"
           onClick={handleWishlist}
+          onTouchStart={handleWishlist}
           aria-pressed={wishlisted}
           aria-label={t.wishlist(product.name)}
-          className={`card-action ${wishlisted ? "is-active" : ""} absolute end-3 top-3 z-10 grid size-10 place-items-center rounded-full bg-background/85 text-foreground shadow-sm backdrop-blur-sm hover:bg-background`}
+          className="absolute right-2 top-2 z-10 grid size-11 place-items-center rounded-full bg-white text-[#0A0A0A] shadow-[0_2px_10px_rgba(0,0,0,0.12)] transition-transform hover:scale-105 active:scale-95 touch-manipulation"
         >
-          <Heart
-            className={`size-4 transition-colors ${wishlisted ? "fill-destructive text-destructive" : ""}`}
-          />
+          <Heart className={`size-4 ${wishlisted ? "fill-[#E53935] text-[#E53935]" : ""}`} aria-hidden="true" />
         </button>
-        <button
-          type="button"
-          onClick={handleQuickAdd}
-          disabled={soldOut}
-          aria-live="polite"
-          className="card-action absolute inset-x-3 bottom-3 z-10 flex h-11 items-center justify-center gap-2 rounded-lg bg-background/90 text-small font-medium text-foreground shadow-lg backdrop-blur-md hover:bg-background disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {soldOut ? (
-            t.soldOut
-          ) : justAdded ? (
-            <>
-              <Check className="size-4" />
-              {t.added}
-            </>
-          ) : (
-            <>
-              <ShoppingBag className="size-4" />
-              {t.quickAdd}
-            </>
-          )}
-        </button>
-      </div>
-      <div className="mt-3 px-0.5">
-        <p className="truncate text-caption text-muted-foreground ltr:text-[10px] ltr:uppercase ltr:tracking-[0.16em]">
-          {product.storeName}
-        </p>
-        <h3 className="mt-1 line-clamp-1 font-display text-[15px] font-semibold leading-snug text-foreground">
-          <Link
-            to="/product/$slug"
-            params={{ slug: product.slug }}
-            search={{ locale }}
-            className="transition-colors hover:text-foreground/65"
+        {!soldOut ? (
+          <button
+            type="button"
+            onClick={handleQuickAdd}
+            onTouchStart={handleQuickAdd}
+            aria-label="Add to cart"
+            className="absolute bottom-2 right-2 z-10 grid size-11 place-items-center rounded-full bg-[#0A0A0A] text-white shadow-[0_2px_10px_rgba(0,0,0,0.25)] transition-transform hover:scale-105 active:scale-95 touch-manipulation"
           >
-            {product.name}
-          </Link>
-        </h3>
-        <p className="mt-1 flex items-baseline gap-2">
-          <span className="text-price text-foreground">{formatPrice(product.price, locale)}</span>
-          {sale != null && product.compareAtPrice ? (
-            <span className="text-small text-muted-foreground line-through">
-              {formatPrice(product.compareAtPrice, locale)}
-            </span>
-          ) : null}
-        </p>
+            <ShoppingBag className="size-4" aria-hidden="true" />
+          </button>
+        ) : null}
       </div>
+
+      <Link
+        to="/product/$slug"
+        params={{ slug: product.slug }}
+        search={{ locale }}
+        className="block"
+        aria-label={product.name}
+      >
+        {/* Info */}
+        <div className="space-y-1 px-3.5 pb-3.5 pt-3">
+          <p className="truncate text-[10px] font-semibold uppercase tracking-[0.14em] text-[#666666]">
+            {product.storeName}
+          </p>
+          <h3 className="line-clamp-2 min-h-[2.5em] text-[13.5px] font-semibold leading-snug text-[#0A0A0A]">
+            {product.name}
+          </h3>
+          <p className="flex items-baseline gap-1.5 pt-0.5">
+            <span className="text-[16px] font-bold tracking-tight text-[#0A0A0A]">
+              {formatPrice(product.price, locale)}
+            </span>
+            {sale != null && product.compareAtPrice ? (
+              <span className="text-[12.5px] text-[#666666] line-through">
+                {formatPrice(product.compareAtPrice, locale)}
+              </span>
+            ) : null}
+          </p>
+          {lowStock ? (
+            <p className="pt-0.5 text-xs font-medium text-[#E53935]">{t.onlyLeft(stock as number)}</p>
+          ) : null}
+          {soldOut ? (
+            <p className="pt-0.5 text-xs text-[#666666]">{t.soldOut}</p>
+          ) : null}
+
+
+        </div>
+      </Link>
     </article>
   );
 }
@@ -228,7 +211,7 @@ export function CategoryRail({
             className={
               featured
                 ? "group relative flex min-h-72 w-64 shrink-0 flex-col justify-end overflow-hidden rounded-xl bg-ink p-6 text-primary-foreground sm:w-72 lg:col-span-2 lg:row-span-2 lg:w-auto"
-                : "group flex min-h-40 w-40 shrink-0 flex-col justify-between rounded-xl border border-border bg-card p-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-foreground/25 hover:shadow-[0_18px_40px_-20px_rgba(0,0,0,0.3)] motion-reduce:transition-none motion-reduce:hover:translate-y-0 lg:w-auto lg:min-w-0"
+                : `group flex min-h-40 w-40 shrink-0 flex-col justify-between rounded-xl border border-border bg-card p-5 ${motionTw.transition.interactive} ${motionTw.duration.feedback} hover:-translate-y-0.5 hover:border-foreground/25 hover:shadow-[0_18px_40px_-20px_rgba(0,0,0,0.3)] motion-reduce:transition-none motion-reduce:hover:translate-y-0 lg:w-auto lg:min-w-0`
             }
           >
             {featured ? (
@@ -264,7 +247,7 @@ export function CategoryRail({
                 {t.productsCount(category.productCount)}
               </p>
               <ArrowRight
-                className={`${featured ? "text-primary-foreground/70" : "text-muted-foreground"} mt-5 size-4 transition-transform duration-300 group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1 motion-reduce:transition-none`}
+                className={`${featured ? "text-primary-foreground/70" : "text-muted-foreground"} mt-5 size-4 ${motionTw.transition.transform} ${motionTw.duration.feedback} group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1 motion-reduce:transition-none`}
               />
             </div>
           </Link>
@@ -275,14 +258,16 @@ export function CategoryRail({
 }
 
 /**
- * Store cards as brands: banner visual, logo, store name (never translated),
- * the blue verification badge for verified stores, and the real product count.
+ * Store cards as brands — an editorial brand moment, not a generic card.
+ * Wide 21:9 banner, circular logo overlapping the banner's bottom-left,
+ * Manrope store name with the verification badge, and a muted meta line.
+ * The whole card is the link; no buttons.
  */
 export function StoreRail({ stores, locale }: { stores: CatalogStore[]; locale: SupportedLocale }) {
   const t = getTranslations(locale).card;
   const storeT = getTranslations(locale).store;
   return (
-    <div className="grid gap-x-5 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
       {stores.map((store) => (
         <Link
           key={store.id}
@@ -292,55 +277,61 @@ export function StoreRail({ stores, locale }: { stores: CatalogStore[]; locale: 
           className="group block min-w-0"
           aria-label={store.name}
         >
-          <div className="relative aspect-[16/10] overflow-hidden rounded-xl bg-secondary">
-            {store.bannerPath ? (
-              <img
-                src={store.bannerPath}
-                alt=""
-                aria-hidden
-                loading="lazy"
-                sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-                className="size-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
-              />
-            ) : (
-              <div
-                aria-hidden
-                className="flex size-full items-center justify-center bg-[radial-gradient(circle_at_30%_20%,var(--color-muted)_0%,transparent_70%)]"
-              >
-                <span className="font-display text-7xl font-semibold tracking-tight text-foreground/15">
-                  {store.name.slice(0, 1)}
-                </span>
-              </div>
-            )}
-          </div>
-          <div className="mt-4 flex items-start gap-3 px-0.5">
-            {store.logoPath ? (
-              <img
-                src={store.logoPath}
-                alt=""
-                aria-hidden
-                loading="lazy"
-                className="size-11 shrink-0 rounded-full object-cover ring-1 ring-border"
-              />
-            ) : (
-              <div
-                aria-hidden
-                className="grid size-11 shrink-0 place-items-center rounded-full bg-secondary font-display text-base font-semibold text-foreground ring-1 ring-border"
-              >
-                {store.name.slice(0, 1)}
-              </div>
-            )}
-            <div className="min-w-0">
-              <h3 className="flex items-center gap-1.5 font-display text-lg font-semibold leading-snug text-foreground">
-                <span className="truncate transition-colors group-hover:text-foreground/70">
-                  {store.name}
-                </span>
-                <VerifiedBadge verified={store.verified} label={storeT.verifiedStore} />
-              </h3>
-              <p className="mt-0.5 text-caption text-muted-foreground">
-                {t.productsCount(store.productCount)}
-              </p>
+          <div className="relative">
+            <div className="aspect-[21/9] overflow-hidden bg-muted">
+              {store.bannerPath ? (
+                <img
+                  src={store.bannerPath}
+                  alt=""
+                  aria-hidden
+                  loading="lazy"
+
+                  className={`size-full object-cover ${motionTw.transition.transform} ${motionTw.duration.cinematic} ${motionTw.ease.out} group-hover:scale-[1.03] motion-reduce:transition-none motion-reduce:group-hover:scale-100`}
+                />
+              ) : (
+                <div
+                  aria-hidden
+                  className="flex size-full items-center justify-center bg-muted"
+                >
+                  <span className="font-display text-6xl font-semibold tracking-tight text-foreground/10">
+                    {store.name.slice(0, 1)}
+                  </span>
+                </div>
+              )}
             </div>
+            <div className="absolute bottom-0 start-6 translate-y-1/2">
+              {store.logoPath ? (
+                <img
+                  src={store.logoPath}
+                  alt=""
+                  aria-hidden
+                  loading="lazy"
+                  className="size-16 shrink-0 rounded-full bg-background object-cover ring-2 ring-background"
+                />
+              ) : (
+                <div
+                  aria-hidden
+                  className="grid size-16 shrink-0 place-items-center rounded-full bg-secondary font-display text-xl font-semibold text-foreground ring-2 ring-background"
+                >
+                  {store.name.slice(0, 1)}
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="mt-10 px-1">
+            <h3 className="flex items-center gap-2 font-display text-xl font-semibold leading-snug text-foreground">
+              <span className="truncate transition-colors group-hover:text-foreground/70">
+                {store.name}
+              </span>
+              {store.slug === "modalia" ? (
+                <OfficialStoreBadge label={storeT.officialStore} />
+              ) : (
+                <VerifiedSellerBadge verified={store.verified} label={storeT.verifiedStore} />
+              )}
+            </h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {t.productsCount(store.productCount)}
+            </p>
           </div>
         </Link>
       ))}

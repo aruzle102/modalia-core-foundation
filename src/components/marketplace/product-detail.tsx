@@ -1,11 +1,10 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, Box, Heart, Minus, Plus, ShieldCheck, ShoppingBag, Star, Store, Truck } from "lucide-react";
+import { ArrowRight, Box, Heart, Minus, Plus, ShieldCheck, ShoppingBag, Star, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ProductGrid } from "@/components/marketplace/discovery";
-import { VerifiedBadge } from "@/components/marketplace/VerifiedBadge";
+import { OfficialStoreBadge, VerifiedSellerBadge } from "@/components/marketplace/StoreBadges";
 import { ReviewForm } from "@/components/marketplace/review-form";
 import { BackInStockNotify } from "@/components/marketplace/back-in-stock-notify";
 import { formatNumber, formatPrice } from "@/lib/i18n/format";
@@ -13,10 +12,13 @@ import { getTranslations } from "@/lib/i18n";
 import { useCart } from "@/lib/cart-store";
 import { useDeviceTier } from "@/hooks/use-device-tier";
 import { microAnimationClass, replayAnimation } from "@/lib/motion";
+import { motionTw } from "@/lib/motion-tokens";
 import { isWishlisted, toggleWishlist } from "@/lib/wishlist-store";
 import { toast } from "sonner";
 import { getRelatedProducts } from "@/lib/analytics.functions";
 import { recordRecentlyViewed, track } from "@/lib/analytics";
+import { startBuyNow } from "@/components/marketplace/buy-now";
+import { SiteButtons } from "@/components/layout/site-buttons";
 import type { SupportedLocale } from "@/config/platform";
 import type { ProductDetail } from "@/lib/product.functions";
 
@@ -39,7 +41,9 @@ function canMagnify(): boolean {
 
 export function ProductDetailView({ product, locale }: { product: ProductDetail; locale: SupportedLocale }) {
   const t = getTranslations(locale).product;
+  const sf = getTranslations(locale).home;
   const verifiedLabel = getTranslations(locale).store.verifiedStore;
+  const officialLabel = getTranslations(locale).store.officialStore;
   const [selected, setSelected] = useState<Record<string, string>>({});
   const [quantity, setQuantity] = useState(1);
   const [activeMedia, setActiveMedia] = useState(0);
@@ -47,6 +51,8 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
   const [zoomed, setZoomed] = useState(false);
   const [zoomOrigin, setZoomOrigin] = useState("50% 50%");
   const [saved, setSaved] = useState(false);
+  type DetailTab = "description" | "details" | "delivery" | "reviews";
+  const [activeTab, setActiveTab] = useState<DetailTab>("description");
   const { tier } = useDeviceTier();
   const parallaxEnabled =
     typeof window !== "undefined" &&
@@ -54,7 +60,6 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
     window.matchMedia("(pointer: fine)").matches &&
     !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const cart = useCart();
-  const navigate = useNavigate();
   const ctaRef = useRef<HTMLDivElement>(null);
   const [ctaVisible, setCtaVisible] = useState(true);
 
@@ -75,6 +80,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
       name: product.name,
       image: product.media.find((m) => m.isPrimary)?.url ?? product.media[0]?.url ?? null,
       price: product.price,
+      categorySlug: product.category?.slug,
     });
   }, [product.id]);
 
@@ -181,6 +187,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
       quantity,
       image: currentImage?.url ?? null,
       storeName: product.store?.name ?? null,
+      storeSlug: product.store?.slug ?? null,
       options: Object.fromEntries(
         product.options.map((option) => [
           option.code,
@@ -200,23 +207,41 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
   };
 
   const handleBuyNow = () => {
-    addToCart(true);
-    track("add_to_cart", {
-      entityType: "product",
-      entityId: product.id,
-      metadata: {
-        quantity,
-        ...(effectiveVariant ? { variant_id: effectiveVariant.id } : {}),
-        buy_now: true,
+    // Real Buy Now: isolated single-use intent → /checkout?intent=<id>.
+    // Never touches the cart. The BuyNowHost opens the variant sheet when
+    // options are incomplete, or creates the direct intent immediately.
+    startBuyNow(
+      locale,
+      {
+        productId: product.id,
+        slug: product.slug,
+        name: product.name,
+        image: currentImage?.url ?? null,
+        storeName: product.store?.name ?? null,
+        storeSlug: product.store?.slug ?? null,
       },
-    });
-    // SPA navigation keeps the local cart state intact and scrolls to top;
-    // the item is already in the cart store (persisted to localStorage).
-    navigate({ to: "/checkout", search: { locale } });
+      { mode: "buy", preselected: selected, quantity },
+    );
   };
 
-  const actionLabel = product.options.length && !complete ? t.selectOptions : t.addToBag;
-  const canPurchase = complete && available;
+  // Availability display states (honest, never misleading):
+  // - No variants configured at all → product cannot be purchased (data issue).
+  // - Options exist but nothing chosen yet → prompt to select (NOT "out of stock").
+  // - Otherwise → the real stock state of the effective variant.
+  const hasVariants = product.variants.length > 0;
+  const hasSelection = selectedValues.length > 0;
+  const needsSelection = hasVariants && product.options.length > 0 && !hasSelection;
+
+  const canPurchase = hasVariants && complete && available;
+
+  /** The rating summary links to the reviews tab: activate it, then scroll. */
+  const goToReviews = (event: MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault();
+    setActiveTab("reviews");
+    requestAnimationFrame(() => {
+      document.getElementById("reviews")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  };
   // The variant to watch for a back-in-stock alert: the selected one when
   // options are complete, otherwise the first variant of a simple product.
   const alertVariant =
@@ -251,7 +276,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
         {/* ——— Gallery with hover magnifier ——— */}
         <section aria-label={t.productMedia} className="min-w-0">
           <div
-            className="relative aspect-[4/5] cursor-zoom-in overflow-hidden rounded-2xl bg-muted ring-1 ring-border/60"
+            className="relative aspect-[4/5] cursor-zoom-in overflow-hidden rounded-[14px] border border-[#E5E5E5] bg-[#F6F6F4]"
             onMouseMove={handleZoomMove}
             onMouseEnter={() => {
               if (canMagnify()) setZoomed(true);
@@ -279,7 +304,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
                 alt={currentImage.alt || product.name}
                 sizes="(min-width: 1024px) 55vw, 100vw"
                 style={{ transformOrigin: zoomOrigin }}
-                className={`gallery-parallax size-full object-cover transition-transform duration-300 ease-out motion-reduce:transition-none ${
+                className={`gallery-parallax size-full object-cover ${motionTw.transition.transform} ${motionTw.duration.feedback} ${motionTw.ease.out} motion-reduce:transition-none ${
                   zoomed ? "scale-[1.9]" : "scale-100"
                 }`}
               />
@@ -290,7 +315,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
                 {product.name}
               </div>
             )}
-            <span className="pointer-events-none absolute bottom-3 end-3 hidden rounded-full bg-background/85 px-3 py-1 text-caption text-muted-foreground backdrop-blur-sm [@media(pointer:fine)]:block">
+            <span className="pointer-events-none absolute bottom-3 end-3 hidden rounded-full bg-white/85 px-3 py-1 text-caption text-[#666666] backdrop-blur-sm [@media(pointer:fine)]:block">
               {t.zoomHint}
             </span>
           </div>
@@ -310,7 +335,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
                     setView3d(false);
                     setZoomed(false);
                   }}
-                  className="size-16 shrink-0 overflow-hidden p-0 aria-pressed:border-foreground aria-pressed:ring-1 aria-pressed:ring-foreground"
+                  className="size-16 shrink-0 overflow-hidden rounded-[10px] p-0 aria-pressed:border-foreground aria-pressed:ring-1 aria-pressed:ring-foreground"
                 >
                   <span className="block size-full">
                     {item.url ? (
@@ -333,7 +358,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
                     setView3d(true);
                     setZoomed(false);
                   }}
-                  className="grid size-16 shrink-0 place-items-center gap-0.5 p-0 aria-pressed:border-foreground aria-pressed:ring-1 aria-pressed:ring-foreground"
+                  className="grid size-16 shrink-0 place-items-center gap-0.5 rounded-[10px] p-0 aria-pressed:border-foreground aria-pressed:ring-1 aria-pressed:ring-foreground"
                 >
                   <Box className="size-5" aria-hidden />
                   <span className="text-caption font-medium leading-none">3D</span>
@@ -380,14 +405,18 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
               {t.soldBy}{" "}
               <span className="inline-flex items-center gap-1 font-medium text-foreground">
                 {product.store.name}
-                <VerifiedBadge verified={product.store.verified} label={verifiedLabel} />
+                {product.store.slug === "modalia" ? (
+                <OfficialStoreBadge label={officialLabel} />
+              ) : (
+                <VerifiedSellerBadge verified={product.store.verified} label={verifiedLabel} />
+              )}
               </span>
             </Link>
           ) : null}
 
           <div className="mt-5 flex items-center gap-2">
             {product.reviewSummary.average != null ? (
-              <a href="#reviews" className="inline-flex items-center gap-1.5 text-small text-foreground">
+              <a href="#reviews" onClick={goToReviews} className="inline-flex items-center gap-1.5 text-small text-foreground">
                 <span className="inline-flex" aria-hidden>
                   {[1, 2, 3, 4, 5].map((star) => (
                     <Star
@@ -413,7 +442,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
                 <p className="text-body text-muted-foreground line-through">
                   {formatPrice(compareAtPrice, locale)}
                 </p>
-                <span className="rounded-full bg-destructive px-2.5 py-1 text-caption font-semibold text-destructive-foreground">
+                <span className="rounded-md bg-[#E53935] px-2.5 py-1 text-caption font-semibold text-white">
                   −{sale}%
                 </span>
               </>
@@ -446,7 +475,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
                             aria-label={value.label}
                             title={value.label}
                             style={{ backgroundColor: value.hex }}
-                            className={`size-9 rounded-full border border-border transition-all disabled:cursor-not-allowed disabled:opacity-30 motion-reduce:transition-none ${
+                            className={`size-9 rounded-full border border-border ${motionTw.transition.interactive} disabled:cursor-not-allowed disabled:opacity-30 motion-reduce:transition-none ${
                               selected[option.id] === value.id
                                 ? "ring-2 ring-foreground ring-offset-2 ring-offset-background"
                                 : "hover:scale-110"
@@ -474,12 +503,17 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
           ) : null}
 
           <div className="mt-8 border-y border-border py-5" aria-live="polite">
-            {!complete ? (
+            {!hasVariants ? (
+              <p className="inline-flex items-center gap-2 text-small font-medium text-muted-foreground">
+                <span className="size-2 rounded-full bg-muted-foreground/50" aria-hidden />
+                {t.notAvailable}
+              </p>
+            ) : needsSelection || !complete ? (
               <p className="text-small text-muted-foreground">{t.chooseOptions}</p>
             ) : available ? (
               <>
                 <p className="inline-flex items-center gap-2 text-small font-medium text-foreground">
-                  <span className="size-2 rounded-full bg-emerald-500" aria-hidden />
+                  <span className="size-2 rounded-full bg-[#16803C]" aria-hidden />
                   {t.inStock}
                 </p>
                 {lowStock ? (
@@ -499,7 +533,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
           ) : null}
 
           <div className="mt-6 flex items-center gap-3">
-            <div className="flex h-11 items-center rounded-lg border border-border">
+            <div className="flex h-11 items-center rounded-[10px] border border-[#E5E5E5]">
               <Button
                 type="button"
                 variant="ghost"
@@ -530,13 +564,27 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
           </div>
 
           <div ref={ctaRef} className="mt-5 grid grid-cols-2 gap-3">
-            <Button type="button" variant="outline" disabled={!canPurchase} onClick={() => addToCart()} className="h-12">
+            <Button
+              type="button"
+              disabled={!canPurchase}
+              onClick={handleBuyNow}
+              className="h-12 bg-[#0A0A0A] font-semibold text-white hover:bg-black"
+            >
+              {sf.sfBuyNow}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={!canPurchase}
+              onClick={() => addToCart()}
+              className="h-12 border-[#0A0A0A] bg-white text-[#0A0A0A] hover:bg-[#F6F6F4] hover:text-[#0A0A0A]"
+            >
               <ShoppingBag className="size-4" />
-              {actionLabel}
+              {sf.sfAddToCart}
             </Button>
-            <Button type="button" disabled={!canPurchase} onClick={handleBuyNow} className="h-12 font-semibold">
-              {t.buyNow}
-            </Button>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2">
+            <SiteButtons placement="product_cta" locale={locale} variant="link" itemClassName="text-small text-muted-foreground underline underline-offset-4 hover:text-foreground" />
           </div>
 
           <div className="mt-6 grid grid-cols-2 gap-3 text-caption text-muted-foreground">
@@ -550,186 +598,195 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
             </p>
           </div>
 
-          <Accordion type="single" collapsible className="mt-6">
-            <AccordionItem value="details">
-              <AccordionTrigger>{t.details}</AccordionTrigger>
-              <AccordionContent>
-                <dl className="space-y-2 text-small text-muted-foreground">
-                  {product.brand ? (
-                    <div className="flex justify-between gap-4">
-                      <dt>{t.brand}</dt>
-                      <dd className="text-foreground">{product.brand.name}</dd>
-                    </div>
-                  ) : null}
-                  {product.category ? (
-                    <div className="flex justify-between gap-4">
-                      <dt>{t.category}</dt>
-                      <dd className="text-foreground">{product.category.name}</dd>
-                    </div>
-                  ) : null}
-                  {product.weightGrams ? (
-                    <div className="flex justify-between gap-4">
-                      <dt>{t.weight}</dt>
-                      <dd className="text-foreground">{formatNumber(product.weightGrams, locale)} {t.weightUnit}</dd>
-                    </div>
-                  ) : null}
-                </dl>
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="shipping">
-              <AccordionTrigger>{t.shippingTitle}</AccordionTrigger>
-              <AccordionContent className="space-y-2 text-small text-muted-foreground">
-                <p>{t.shippingBody}</p>
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="returns">
-              <AccordionTrigger>{t.returns}</AccordionTrigger>
-              <AccordionContent className="space-y-2 text-small text-muted-foreground">
-                <p>{t.returnsBody}</p>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
         </section>
       </div>
 
-      {/* ——— Editorial storytelling ——— */}
-      {descriptionParagraphs.length ? (
-        <section className="mt-20 border-t border-border pt-12 lg:mt-24">
-          <div className="grid gap-8 lg:grid-cols-[minmax(0,0.7fr)_minmax(0,1.3fr)]">
-            <div className="lg:sticky lg:top-24 lg:self-start">
-              <p className="text-eyebrow text-muted-foreground">{t.storyEyebrow}</p>
-              <h2 className="mt-2 font-display text-3xl font-semibold tracking-tight text-foreground">
-                {t.storyTitle}
-              </h2>
-              {product.store ? (
-                <Link
-                  to="/store/$slug"
-                  params={{ slug: product.store.slug }}
-                  search={{ locale }}
-                  className="mt-6 inline-flex items-center gap-3 rounded-xl border border-border p-4 transition-colors hover:border-foreground/25"
-                >
-                  {product.store.logoUrl ? (
-                    <img src={product.store.logoUrl} alt="" loading="lazy" className="size-10 rounded-full object-cover" />
-                  ) : (
-                    <span className="grid size-10 place-items-center rounded-full bg-secondary text-small font-semibold">
-                      <Store className="size-4" aria-hidden />
-                    </span>
-                  )}
-                  <span>
-                    <span className="flex items-center gap-1.5 text-small font-medium text-foreground">
-                      {product.store.name}
-                      <VerifiedBadge verified={product.store.verified} label={verifiedLabel} />
-                    </span>
-                    <span className="mt-0.5 inline-flex items-center gap-1 text-caption text-muted-foreground">
-                      {t.visitStore}
-                      <ArrowRight className="size-3 rtl:rotate-180" aria-hidden />
-                    </span>
-                  </span>
-                </Link>
-              ) : null}
-            </div>
-            <div className="max-w-3xl space-y-6">
-              {descriptionParagraphs.map((paragraph, index) => (
-                <p
-                  key={index}
-                  className={`text-body leading-loose text-muted-foreground ${
-                    index === 0
-                      ? "text-foreground/90 first-letter:float-start first-letter:me-3 first-letter:font-display first-letter:text-5xl first-letter:font-semibold first-letter:leading-[0.9]"
-                      : ""
+      {/* ——— Product information tabs ——— */}
+      <section className="mt-16 scroll-mt-24 border-t border-[#E5E5E5] pt-10 lg:mt-20">
+        <div
+          role="tablist"
+          aria-label={product.name}
+          className="flex gap-7 overflow-x-auto border-b border-[#E5E5E5]"
+        >
+          {(
+            [
+              { id: "description", label: sf.sfTabDescription },
+              { id: "details", label: sf.sfTabDetails },
+              { id: "delivery", label: sf.sfTabDelivery },
+              { id: "reviews", label: sf.sfTabReviews },
+            ] as const
+          ).map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                id={`tab-${tab.id}`}
+                aria-selected={isActive}
+                aria-controls={`tab-panel-${tab.id}`}
+                onClick={() => setActiveTab(tab.id)}
+                className={`relative shrink-0 pb-3 text-small transition-colors ${
+                  isActive ? "text-[#0A0A0A]" : "text-[#666666] hover:text-[#0A0A0A]"
+                }`}
+              >
+                <span className={isActive ? "font-semibold" : "font-medium"}>{tab.label}</span>
+                <span
+                  aria-hidden
+                  className={`absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-[#0A0A0A] ${motionTw.transition.opacity} ${motionTw.duration.feedback} ${
+                    isActive ? "opacity-100" : "opacity-0"
                   }`}
-                >
-                  {paragraph}
-                </p>
-              ))}
-            </div>
-          </div>
-        </section>
-      ) : null}
-
-      {/* ——— Reviews ——— */}
-      <section id="reviews" className="mt-20 scroll-mt-24 border-t border-border pt-12 lg:mt-24">
-        <p className="text-eyebrow text-muted-foreground">{t.customerReviews}</p>
-        <div className="mt-2 flex flex-wrap items-end justify-between gap-4">
-          <h2 className="font-display text-3xl font-semibold tracking-tight text-foreground">{t.reviewsTitle}</h2>
-          {product.reviewSummary.average != null ? (
-            <p className="inline-flex items-center gap-2 text-price text-foreground">
-              <Star className="size-5 fill-current" aria-hidden />
-              {product.reviewSummary.average.toFixed(1)}
-              <span className="text-small font-normal text-muted-foreground">
-                / 5 · {t.reviews(product.reviewSummary.count)}
-              </span>
-            </p>
-          ) : null}
+                />
+              </button>
+            );
+          })}
         </div>
 
-        {product.reviewSummary.count ? (
-          <>
-            <div className="mt-8 max-w-md space-y-2">
-              {[5, 4, 3, 2, 1].map((star) => {
-                const count = product.reviewSummary.distribution[star] ?? 0;
-                const percent =
-                  product.reviewSummary.count > 0 ? (count / product.reviewSummary.count) * 100 : 0;
-                return (
-                  <div key={star} className="flex items-center gap-3 text-caption text-muted-foreground">
-                    <span className="inline-flex w-8 items-center gap-1">
-                      {star}
-                      <Star className="size-3 fill-current" aria-hidden />
-                    </span>
-                    <div
-                      className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted"
-                      role="img"
-                      aria-label={`${count} ${t.reviews(count)}`}
+        <div className="mt-6 rounded-[14px] border border-[#E5E5E5] bg-white p-6 sm:p-8">
+          {activeTab === "description" ? (
+            <div role="tabpanel" id="tab-panel-description" aria-labelledby="tab-description">
+              {descriptionParagraphs.length ? (
+                <div className="max-w-3xl space-y-5">
+                  {descriptionParagraphs.map((paragraph, index) => (
+                    <p
+                      key={index}
+                      className={`text-body leading-loose text-[#666666] ${
+                        index === 0
+                          ? "text-[#0A0A0A]/90 first-letter:float-start first-letter:me-3 first-letter:font-display first-letter:text-5xl first-letter:font-semibold first-letter:leading-[0.9]"
+                          : ""
+                      }`}
                     >
-                      <div className="h-full rounded-full bg-foreground" style={{ width: `${percent}%` }} />
-                    </div>
-                    <span className="w-8 text-end">{count}</span>
-                  </div>
-                );
-              })}
+                      {paragraph}
+                    </p>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-body text-[#666666]">{sf.sfNoDescription}</p>
+              )}
             </div>
-            <div className="mt-8 grid gap-x-8 gap-y-2 md:grid-cols-2">
-              {product.reviews.map((review) => (
-                <article key={review.id} className="border-t border-border py-6">
-                  <div className="flex items-center justify-between gap-4">
-                    <p className="text-nav text-foreground">{review.firstName ?? "Modalia"}</p>
-                    <span className="inline-flex" aria-label={`${review.rating} / 5`}>
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Star
-                          key={star}
-                          aria-hidden
-                          className={`size-3.5 ${star <= review.rating ? "fill-current text-foreground" : "text-muted-foreground/30"}`}
-                        />
-                      ))}
-                    </span>
-                  </div>
-                  {review.verifiedPurchase ? (
-                    <p className="mt-1.5 text-caption text-muted-foreground">{t.verified}</p>
-                  ) : null}
-                  {review.body ? (
-                    <p className="mt-3 text-small leading-relaxed text-muted-foreground">{review.body}</p>
-                  ) : null}
-                  {review.imageUrl ? (
-                    <img
-                      src={review.imageUrl}
-                      alt=""
-                      loading="lazy"
-                      className="mt-3 size-20 rounded-xl border border-border object-cover"
-                    />
-                  ) : null}
-                </article>
-              ))}
-            </div>
-          </>
-        ) : (
-          <p className="mt-6 text-body text-muted-foreground">{t.noPublishedReviews}</p>
-        )}
+          ) : null}
 
-        <ReviewForm productId={product.id} locale={locale} />
+          {activeTab === "details" ? (
+            <div role="tabpanel" id="tab-panel-details" aria-labelledby="tab-details">
+              <dl className="max-w-xl space-y-3 text-small">
+                {product.brand ? (
+                  <div className="flex justify-between gap-4 border-b border-[#F6F6F4] pb-3">
+                    <dt className="text-[#666666]">{t.brand}</dt>
+                    <dd className="font-medium text-[#0A0A0A]">{product.brand.name}</dd>
+                  </div>
+                ) : null}
+                {product.category ? (
+                  <div className="flex justify-between gap-4 border-b border-[#F6F6F4] pb-3">
+                    <dt className="text-[#666666]">{t.category}</dt>
+                    <dd className="font-medium text-[#0A0A0A]">{product.category.name}</dd>
+                  </div>
+                ) : null}
+                {product.weightGrams ? (
+                  <div className="flex justify-between gap-4">
+                    <dt className="text-[#666666]">{t.weight}</dt>
+                    <dd className="font-medium text-[#0A0A0A]">{formatNumber(product.weightGrams, locale)} {t.weightUnit}</dd>
+                  </div>
+                ) : null}
+              </dl>
+            </div>
+          ) : null}
+
+          {activeTab === "delivery" ? (
+            <div role="tabpanel" id="tab-panel-delivery" aria-labelledby="tab-delivery" className="max-w-3xl">
+              <h3 className="text-nav font-medium text-[#0A0A0A]">{t.shippingTitle}</h3>
+              <p className="mt-2 text-small leading-relaxed text-[#666666]">{t.shippingBody}</p>
+              <h3 className="mt-6 text-nav font-medium text-[#0A0A0A]">{t.returns}</h3>
+              <p className="mt-2 text-small leading-relaxed text-[#666666]">{t.returnsBody}</p>
+            </div>
+          ) : null}
+
+          {activeTab === "reviews" ? (
+            <div role="tabpanel" id="reviews" aria-labelledby="tab-reviews" className="scroll-mt-24">
+              <p className="text-eyebrow text-[#666666]">{t.customerReviews}</p>
+              <div className="mt-2 flex flex-wrap items-end justify-between gap-4">
+                <h2 className="font-display text-3xl font-semibold tracking-tight text-[#0A0A0A]">{t.reviewsTitle}</h2>
+                {product.reviewSummary.average != null ? (
+                  <p className="inline-flex items-center gap-2 text-price text-[#0A0A0A]">
+                    <Star className="size-5 fill-current" aria-hidden />
+                    {product.reviewSummary.average.toFixed(1)}
+                    <span className="text-small font-normal text-[#666666]">
+                      / 5 · {t.reviews(product.reviewSummary.count)}
+                    </span>
+                  </p>
+                ) : null}
+              </div>
+
+              {product.reviewSummary.count ? (
+                <>
+                  <div className="mt-8 max-w-md space-y-2">
+                    {[5, 4, 3, 2, 1].map((star) => {
+                      const count = product.reviewSummary.distribution[star] ?? 0;
+                      const percent =
+                        product.reviewSummary.count > 0 ? (count / product.reviewSummary.count) * 100 : 0;
+                      return (
+                        <div key={star} className="flex items-center gap-3 text-caption text-[#666666]">
+                          <span className="inline-flex w-8 items-center gap-1">
+                            {star}
+                            <Star className="size-3 fill-current" aria-hidden />
+                          </span>
+                          <div
+                            className="h-1.5 flex-1 overflow-hidden rounded-full bg-[#F6F6F4]"
+                            role="img"
+                            aria-label={`${count} ${t.reviews(count)}`}
+                          >
+                            <div className="h-full rounded-full bg-[#0A0A0A]" style={{ width: `${percent}%` }} />
+                          </div>
+                          <span className="w-8 text-end">{count}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="mt-8 grid gap-x-8 gap-y-2 md:grid-cols-2">
+                    {product.reviews.map((review) => (
+                      <article key={review.id} className="border-t border-[#E5E5E5] py-6">
+                        <div className="flex items-center justify-between gap-4">
+                          <p className="text-nav text-[#0A0A0A]">{review.firstName ?? t.anonymousReviewer}</p>
+                          <span className="inline-flex" aria-label={`${review.rating} / 5`}>
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <Star
+                                key={star}
+                                aria-hidden
+                                className={`size-3.5 ${star <= review.rating ? "fill-current text-[#0A0A0A]" : "text-[#E5E5E5]"}`}
+                              />
+                            ))}
+                          </span>
+                        </div>
+                        {review.verifiedPurchase ? (
+                          <p className="mt-1.5 text-caption text-[#666666]">{t.verified}</p>
+                        ) : null}
+                        {review.body ? (
+                          <p className="mt-3 text-small leading-relaxed text-[#666666]">{review.body}</p>
+                        ) : null}
+                        {review.imageUrl ? (
+                          <img
+                            src={review.imageUrl}
+                            alt=""
+                            loading="lazy"
+                            className="mt-3 size-20 rounded-[10px] border border-[#E5E5E5] object-cover"
+                          />
+                        ) : null}
+                      </article>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <p className="mt-6 text-body text-[#666666]">{t.noPublishedReviews}</p>
+              )}
+
+              <ReviewForm productId={product.id} locale={locale} />
+            </div>
+          ) : null}
+        </div>
       </section>
 
       {/* ——— Related ——— */}
       {product.related.length ? (
-        <section className="mt-20 border-t border-border pt-12 lg:mt-24">
+        <section className="mt-20 border-t border-[#E5E5E5] pt-12 lg:mt-24">
           <p className="text-eyebrow text-muted-foreground">{t.relatedEyebrow}</p>
           <h2 className="mt-2 font-display text-3xl font-semibold tracking-tight text-foreground">
             {t.relatedTitle}
@@ -742,7 +799,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
 
       {/* ——— Similar (same category, closest price — no store priority) ——— */}
       {product.similar.length ? (
-        <section className="mt-20 border-t border-border pt-12 lg:mt-24">
+        <section className="mt-20 border-t border-[#E5E5E5] pt-12 lg:mt-24">
           <p className="text-eyebrow text-muted-foreground">{t.similarEyebrow}</p>
           <h2 className="mt-2 font-display text-3xl font-semibold tracking-tight text-foreground">
             {t.similarTitle}
@@ -756,11 +813,29 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
       {/* ——— Viewed together (real co-view events; hidden until data exists) ——— */}
       <ViewedTogether productId={product.id} locale={locale} copy={t} />
 
-      {/* ——— Sticky mobile purchase bar: appears once the main CTAs scroll out of view ——— */}
+      {/* ——— More from this store (real storefront products; hidden when none) ——— */}
+      {product.fromStore.length ? (
+        <section className="mt-20 border-t border-[#E5E5E5] pt-12 lg:mt-24">
+          <p className="text-eyebrow text-muted-foreground">{t.fromStoreEyebrow}</p>
+          <h2 className="mt-2 font-display text-3xl font-semibold tracking-tight text-foreground">
+            {t.fromStoreTitle}
+          </h2>
+          <div className="mt-8">
+            <ProductGrid products={product.fromStore} locale={locale} />
+          </div>
+        </section>
+      ) : null}
+
+      {/* ——— Sticky mobile purchase bar: appears once the main CTAs scroll out of view.
+          Sec 43 (#100): while slid off-screen (`ctaVisible`) the bar is `inert`
+          as well as `aria-hidden`, so its Buy Now button can never receive
+          keyboard focus off-screen. `inert` flips synchronously with the
+          tokenized slide transition (`motionTw.duration.base`). ——— */}
       {canPurchase ? (
         <div
           aria-hidden={ctaVisible}
-          className={`fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 backdrop-blur transition-transform duration-200 motion-reduce:transition-none md:hidden ${
+          inert={ctaVisible}
+          className={`fixed inset-x-0 bottom-0 z-40 border-t border-[#E5E5E5] bg-white/95 backdrop-blur ${motionTw.transition.transform} ${motionTw.duration.base} motion-reduce:transition-none md:hidden ${
             ctaVisible ? "translate-y-full" : "translate-y-0"
           }`}
         >
@@ -775,8 +850,8 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
               <p className="truncate text-small font-medium text-foreground">{product.name}</p>
               <p className="text-small font-semibold text-foreground">{formatPrice(price, locale)}</p>
             </div>
-            <Button type="button" onClick={handleBuyNow} className="h-11 shrink-0 font-semibold">
-              {t.buyNow}
+            <Button type="button" onClick={handleBuyNow} className="h-11 shrink-0 bg-[#0A0A0A] font-semibold text-white hover:bg-black">
+              {sf.sfBuyNow}
             </Button>
           </div>
         </div>
@@ -806,7 +881,7 @@ function ViewedTogether({
   });
   if (!data?.hasData || data.products.length === 0) return null;
   return (
-    <section className="mt-20 border-t border-border pt-12 lg:mt-24">
+    <section className="mt-20 border-t border-[#E5E5E5] pt-12 lg:mt-24">
       <p className="text-eyebrow text-muted-foreground">{copy.viewedTogetherEyebrow}</p>
       <h2 className="mt-2 font-display text-3xl font-semibold tracking-tight text-foreground">
         {copy.viewedTogetherTitle}

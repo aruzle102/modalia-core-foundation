@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database, Json } from "@/integrations/supabase/types";
-import { assertAdmin } from "@/lib/admin-auth";
+import { assertAdminPermission } from "@/lib/admin-permissions";
 import {
   normalizeStoreSettings,
   STORE_ACCENT_IDS,
@@ -65,11 +65,14 @@ const uuid = z.string().uuid();
 
 /** Plain text only: strip HTML tags and collapse whitespace. */
 function cleanText(value: string): string {
-  return value
-    .replace(/<[^>]*>/g, "")
-    .replace(/[\u0000-\u001F\u007F]/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
+  return (
+    value
+      .replace(/<[^>]*>/g, "")
+      // eslint-disable-next-line no-control-regex -- intentional: strip control chars for sanitization
+      .replace(/[\u0000-\u001F\u007F]/g, "")
+      .replace(/\s+/g, " ")
+      .trim()
+  );
 }
 
 const trilingualText = z.object({
@@ -98,7 +101,7 @@ export const listOfficialStoreProductsLite = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .inputValidator((data) => z.object({}).parse(data))
   .handler(async ({ context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
     const sb = await adminClient();
     const ref = await officialStoreRef(sb);
     const { data: rows, error } = await sb
@@ -129,7 +132,7 @@ export const getOfficialStoreStats = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .inputValidator((data) => z.object({}).parse(data))
   .handler(async ({ context }): Promise<{ stats: OfficialStoreStats }> => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
     const sb = await adminClient();
     const ref = await officialStoreRef(sb);
 
@@ -150,10 +153,15 @@ export const getOfficialStoreStats = createServerFn({ method: "GET" })
         .limit(5000),
       sb
         .from("inventory")
-        .select("quantity, reserved_quantity, low_stock_threshold, product_variants!inner(products!inner(seller_id))")
+        .select(
+          "quantity, reserved_quantity, low_stock_threshold, product_variants!inner(products!inner(seller_id))",
+        )
         .eq("product_variants.products.seller_id", ref.seller_id)
         .limit(5000),
-      sb.from("seller_orders").select("id", { count: "exact", head: true }).eq("seller_id", ref.seller_id),
+      sb
+        .from("seller_orders")
+        .select("id", { count: "exact", head: true })
+        .eq("seller_id", ref.seller_id),
       sb
         .from("reviews")
         .select("rating, moderation_status, products!inner(seller_id)")
@@ -242,7 +250,7 @@ export const listOfficialStoreInventory = createServerFn({ method: "GET" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
     const sb = await adminClient();
     const ref = await officialStoreRef(sb);
 
@@ -298,10 +306,11 @@ export const listOfficialStoreInventory = createServerFn({ method: "GET" })
         reserved,
         available,
         threshold,
-        status: (available <= 0 ? "out" : threshold > 0 && available <= threshold ? "low" : "ok") as
-          | "ok"
-          | "low"
-          | "out",
+        status: (available <= 0
+          ? "out"
+          : threshold > 0 && available <= threshold
+            ? "low"
+            : "ok") as "ok" | "low" | "out",
       };
     });
 
@@ -336,7 +345,7 @@ export const adjustOfficialStoreInventory = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
     const sb = await adminClient();
     const ref = await officialStoreRef(sb);
 
@@ -366,17 +375,26 @@ export const adjustOfficialStoreInventory = createServerFn({ method: "POST" })
     const patch: { quantity?: number; low_stock_threshold?: number } = {};
     if (data.quantity !== undefined) patch.quantity = data.quantity;
     if (data.lowStockThreshold !== undefined) patch.low_stock_threshold = data.lowStockThreshold;
-    const { error: upErr } = await sb.from("inventory").update(patch).eq("variant_id", data.variantId);
+    const { error: upErr } = await sb
+      .from("inventory")
+      .update(patch)
+      .eq("variant_id", data.variantId);
     if (upErr) throw new Error(upErr.message);
 
-    await auditLog(context.userId ?? null, "official_store.inventory_adjusted", "inventory", data.variantId, {
-      seller_id: ref.seller_id,
-      before: { quantity: before.quantity, low_stock_threshold: before.low_stock_threshold },
-      after: {
-        quantity: data.quantity ?? before.quantity,
-        low_stock_threshold: data.lowStockThreshold ?? before.low_stock_threshold,
+    await auditLog(
+      context.userId ?? null,
+      "official_store.inventory_adjusted",
+      "inventory",
+      data.variantId,
+      {
+        seller_id: ref.seller_id,
+        before: { quantity: before.quantity, low_stock_threshold: before.low_stock_threshold },
+        after: {
+          quantity: data.quantity ?? before.quantity,
+          low_stock_threshold: data.lowStockThreshold ?? before.low_stock_threshold,
+        },
       },
-    });
+    );
     return { ok: true as const };
   });
 
@@ -397,7 +415,7 @@ export const listOfficialStoreReviews = createServerFn({ method: "GET" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
     const sb = await adminClient();
     const ref = await officialStoreRef(sb);
     const from = (data.page - 1) * PAGE_SIZE;
@@ -429,11 +447,15 @@ export const listOfficialStoreCoupons = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .inputValidator((data) => pageInput.parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
     const sb = await adminClient();
     const ref = await officialStoreRef(sb);
     const from = (data.page - 1) * PAGE_SIZE;
-    const { data: rows, error, count } = await sb
+    const {
+      data: rows,
+      error,
+      count,
+    } = await sb
       .from("coupons")
       .select(
         "id, code, discount_type, discount_value, min_order_amount, max_discount_amount, usage_limit, usage_count, per_customer_limit, starts_at, ends_at, seller_id, status, created_at, updated_at",
@@ -454,18 +476,22 @@ export const listOfficialStoreCategories = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .inputValidator((data) => z.object({}).parse(data))
   .handler(async ({ context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
     const sb = await adminClient();
     const ref = await officialStoreRef(sb);
-    const [{ data: categories, error: catErr }, { data: products, error: prodErr }] = await Promise.all([
-      sb.from("categories").select("id, parent_id, slug, name, status, sort_order").order("sort_order"),
-      sb
-        .from("products")
-        .select("id, category_id, status")
-        .eq("seller_id", ref.seller_id)
-        .not("category_id", "is", null)
-        .limit(5000),
-    ]);
+    const [{ data: categories, error: catErr }, { data: products, error: prodErr }] =
+      await Promise.all([
+        sb
+          .from("categories")
+          .select("id, parent_id, slug, name, status, sort_order")
+          .order("sort_order"),
+        sb
+          .from("products")
+          .select("id, category_id, status")
+          .eq("seller_id", ref.seller_id)
+          .not("category_id", "is", null)
+          .limit(5000),
+      ]);
     if (catErr) throw new Error(catErr.message);
     if (prodErr) throw new Error(prodErr.message);
     const counts = new Map<string, { total: number; published: number }>();
@@ -508,7 +534,7 @@ export const getOfficialStoreAppearance = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .inputValidator((data) => z.object({}).parse(data))
   .handler(async ({ context }): Promise<{ appearance: OfficialStoreAppearance }> => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
     const sb = await adminClient();
     const ref = await officialStoreRef(sb);
     const { data: store, error } = await sb
@@ -562,7 +588,7 @@ export const updateOfficialStoreAppearance = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
     const sb = await adminClient();
     const ref = await officialStoreRef(sb);
     await writeStoreSettings(
@@ -595,21 +621,29 @@ export const updateOfficialStoreSections = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
     const sb = await adminClient();
     const ref = await officialStoreRef(sb);
 
     // Featured products must belong to the official store's seller; categories must exist.
     const [ownedProducts, existingCategories] = await Promise.all([
       data.featuredProductIds.length
-        ? sb.from("products").select("id").eq("seller_id", ref.seller_id).in("id", data.featuredProductIds)
+        ? sb
+            .from("products")
+            .select("id")
+            .eq("seller_id", ref.seller_id)
+            .in("id", data.featuredProductIds)
         : Promise.resolve({ data: [] as { id: string }[] }),
       data.featuredCategoryIds.length
         ? sb.from("categories").select("id").in("id", data.featuredCategoryIds)
         : Promise.resolve({ data: [] as { id: string }[] }),
     ]);
-    const ownedProductIds = new Set(((ownedProducts.data ?? []) as { id: string }[]).map((row) => row.id));
-    const existingCategoryIds = new Set(((existingCategories.data ?? []) as { id: string }[]).map((row) => row.id));
+    const ownedProductIds = new Set(
+      ((ownedProducts.data ?? []) as { id: string }[]).map((row) => row.id),
+    );
+    const existingCategoryIds = new Set(
+      ((existingCategories.data ?? []) as { id: string }[]).map((row) => row.id),
+    );
 
     await writeStoreSettings(
       sb,
@@ -623,7 +657,8 @@ export const updateOfficialStoreSections = createServerFn({ method: "POST" })
       {
         sections: data.sections.map((s) => s.kind) as unknown as Json,
         featured_products: data.featuredProductIds.filter((id) => ownedProductIds.has(id)).length,
-        featured_categories: data.featuredCategoryIds.filter((id) => existingCategoryIds.has(id)).length,
+        featured_categories: data.featuredCategoryIds.filter((id) => existingCategoryIds.has(id))
+          .length,
       },
       context.userId ?? null,
     );
@@ -646,7 +681,7 @@ export const upsertOfficialCollection = createServerFn({ method: "POST" })
   .middleware(adminOnly)
   .inputValidator((data) => collectionInput.parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
     const sb = await adminClient();
     const ref = await officialStoreRef(sb);
 
@@ -698,7 +733,7 @@ export const deleteOfficialCollection = createServerFn({ method: "POST" })
   .middleware(adminOnly)
   .inputValidator((data) => z.object({ id: z.string().max(64) }).parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
     const sb = await adminClient();
     const ref = await officialStoreRef(sb);
     const { data: store, error: readError } = await sb
@@ -708,7 +743,9 @@ export const deleteOfficialCollection = createServerFn({ method: "POST" })
       .single();
     if (readError || !store) throw new Error("Store not found.");
     const raw = (store.settings as Record<string, unknown> | null) ?? {};
-    const collections = parseCollections(raw["official_collections"]).filter((c) => c.id !== data.id);
+    const collections = parseCollections(raw["official_collections"]).filter(
+      (c) => c.id !== data.id,
+    );
     await writeStoreSettings(
       sb,
       ref.id,
@@ -718,4 +755,197 @@ export const deleteOfficialCollection = createServerFn({ method: "POST" })
       context.userId ?? null,
     );
     return { ok: true as const };
+  });
+
+/* ------------------------------------------------------------------ */
+/* Official store overview (consolidated — single source of truth)     */
+/* ------------------------------------------------------------------ */
+
+type StoreRow = Database["public"]["Tables"]["stores"]["Row"];
+
+export type OfficialStoreOverview = {
+  store: StoreRow;
+  seller_legal_name: string | null;
+  product_count: number;
+  published_count: number;
+  recent_products: { id: string; slug: string; name: Json; base_price: number; status: string }[];
+} | null;
+
+/**
+ * Admin-only lookup of the store flagged as the platform's official store
+ * (`stores.settings.official === true`). Returns `{ official: null }` when no
+ * store is flagged yet — the UI must say so honestly instead of guessing.
+ * This is the single canonical implementation (previously duplicated in
+ * admin-ops.functions.ts and admin-search.functions.ts with different shapes).
+ */
+export const getOfficialStore = createServerFn({ method: "GET" })
+  .middleware(adminOnly)
+  .inputValidator((data) => z.object({}).parse(data))
+  .handler(async ({ context }): Promise<{ official: OfficialStoreOverview }> => {
+    await assertAdminPermission(context, "content.manage");
+    const supabaseAdmin = await adminClient();
+    const { data: store, error } = await supabaseAdmin
+      .from("stores")
+      .select("*, sellers(legal_name)")
+      .contains("settings", { official: true })
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!store) return { official: null };
+
+    const sellerId = (store as StoreRow).seller_id;
+    const [{ data: products }, { data: sellerProducts }] = await Promise.all([
+      supabaseAdmin
+        .from("products")
+        .select("id,slug,name,base_price,status,publication_status")
+        .eq("seller_id", sellerId)
+        .order("created_at", { ascending: false })
+        .limit(8),
+      supabaseAdmin.from("products").select("id,status").eq("seller_id", sellerId).limit(2000),
+    ]);
+
+    const published = (sellerProducts ?? []).filter((p) => p.status === "active").length;
+
+    return {
+      official: {
+        store: store as StoreRow,
+        seller_legal_name:
+          (store as { sellers?: { legal_name?: string | null } | null }).sellers?.legal_name ??
+          null,
+        product_count: (sellerProducts ?? []).length,
+        published_count: published,
+        recent_products: (products ?? []).map((p) => ({
+          id: p.id,
+          slug: p.slug,
+          name: p.name,
+          base_price: Number(p.base_price) || 0,
+          status: p.status,
+        })),
+      },
+    };
+  });
+
+/* ------------------------------------------------------------------ */
+/* Official store — seller dashboard access                             */
+/* ------------------------------------------------------------------ */
+
+const SYSTEM_SELLER_GUARD = "Refusing: the official store is not attached to the platform system seller.";
+
+/**
+ * One-click access to the official store's seller dashboard.
+ *
+ * The official store is owned by a platform "system" seller (owner_id = its
+ * own id — no real login). This links the calling SUPER_ADMIN's auth user as
+ * the seller owner, so opening /seller with the admin's own session resolves
+ * the full seller dashboard (products, orders, finance, …) for the official
+ * store — editable, not read-only. Reversible via unlinkOfficialStoreOwner.
+ *
+ * Safety: refuses unless the seller is the self-owned system seller, so a
+ * real merchant's seller row can never be reassigned.
+ */
+export const linkOfficialStoreOwner = createServerFn({ method: "POST" })
+  .middleware(adminOnly)
+  .inputValidator((data) => z.object({}).parse(data))
+  .handler(async ({ context }) => {
+    const { data: isSuper } = await context.supabase.rpc("is_super_admin");
+    if (isSuper !== true) throw new Error("Forbidden: super admin only.");
+    const supabaseAdmin = await adminClient();
+
+    const { data: store, error: storeError } = await supabaseAdmin
+      .from("stores")
+      .select("seller_id")
+      .contains("settings", { official: true })
+      .maybeSingle();
+    if (storeError || !store?.seller_id) throw new Error("No official store designated.");
+
+    const { data: seller, error: sellerError } = await supabaseAdmin
+      .from("sellers")
+      .select("id, owner_id, onboarded_at")
+      .eq("id", store.seller_id)
+      .single();
+    if (sellerError || !seller) throw new Error("Official seller not found.");
+    if (seller.owner_id !== seller.id && seller.owner_id !== context.userId) {
+      throw new Error(SYSTEM_SELLER_GUARD);
+    }
+
+    const { error: linkError } = await supabaseAdmin
+      .from("sellers")
+      .update({ owner_id: context.userId })
+      .eq("id", seller.id);
+    if (linkError) throw new Error(linkError.message);
+
+    // The admin manages the store profile from /admin/official-store, so mark
+    // onboarding complete — the seller dashboard opens directly.
+    if (!seller.onboarded_at) {
+      await supabaseAdmin
+        .from("sellers")
+        .update({ onboarded_at: new Date().toISOString() })
+        .eq("id", seller.id);
+    }
+
+    await supabaseAdmin.from("audit_logs").insert({
+      actor_id: context.userId,
+      action: "official_store_owner_linked",
+      resource: "seller",
+      resource_id: seller.id,
+      metadata: { owner_id: context.userId },
+    });
+    return { ok: true as const };
+  });
+
+/** Reverse linkOfficialStoreOwner: the system seller owns itself again. */
+export const unlinkOfficialStoreOwner = createServerFn({ method: "POST" })
+  .middleware(adminOnly)
+  .inputValidator((data) => z.object({}).parse(data))
+  .handler(async ({ context }) => {
+    const { data: isSuper } = await context.supabase.rpc("is_super_admin");
+    if (isSuper !== true) throw new Error("Forbidden: super admin only.");
+    const supabaseAdmin = await adminClient();
+
+    const { data: store } = await supabaseAdmin
+      .from("stores")
+      .select("seller_id")
+      .contains("settings", { official: true })
+      .maybeSingle();
+    if (!store?.seller_id) throw new Error("No official store designated.");
+
+    const { data: seller } = await supabaseAdmin
+      .from("sellers")
+      .select("id, owner_id")
+      .eq("id", store.seller_id)
+      .single();
+    if (!seller) throw new Error("Official seller not found.");
+    if (seller.owner_id !== context.userId && seller.owner_id !== seller.id) {
+      throw new Error(SYSTEM_SELLER_GUARD);
+    }
+
+    const { error } = await supabaseAdmin
+      .from("sellers")
+      .update({ owner_id: seller.id })
+      .eq("id", seller.id);
+    if (error) throw new Error(error.message);
+
+    await supabaseAdmin.from("audit_logs").insert({
+      actor_id: context.userId,
+      action: "official_store_owner_unlinked",
+      resource: "seller",
+      resource_id: seller.id,
+    });
+    return { ok: true as const };
+  });
+
+/** Whether the calling super_admin is currently linked as the official store owner. */
+export const getOfficialStoreLinkStatus = createServerFn({ method: "GET" })
+  .middleware(adminOnly)
+  .inputValidator((data) => z.object({}).parse(data))
+  .handler(async ({ context }) => {
+    const { data: isSuper } = await context.supabase.rpc("is_super_admin");
+    if (isSuper !== true) return { linked: false };
+    const supabaseAdmin = await adminClient();
+    const { data: store } = await supabaseAdmin
+      .from("stores")
+      .select("seller_id, sellers!inner(id, owner_id)")
+      .contains("settings", { official: true })
+      .maybeSingle();
+    const ownerId = (store as unknown as { sellers?: { owner_id?: string } } | null)?.sellers?.owner_id;
+    return { linked: ownerId === context.userId };
   });

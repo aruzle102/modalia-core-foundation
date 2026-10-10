@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import type { Database, Json } from "@/integrations/supabase/types";
+import { storagePublicUrl } from "@/lib/store.functions";
 
 type LocalizedText = Json | null;
 
@@ -29,6 +30,12 @@ export type CatalogCategory = {
   slug: string;
   name: string;
   productCount: number;
+  /** V8 taxonomy (#167): merchandising + SEO fields, null when unset. */
+  imageUrl: string | null;
+  gender: "men" | "women" | "kids" | "unisex" | null;
+  featured: boolean;
+  seoTitle: string | null;
+  seoDescription: string | null;
 };
 
 export type CatalogStore = {
@@ -73,6 +80,8 @@ const browseInput = z.object({
   colors: z.array(z.string()).optional(),
   /** Size display values (sizes.value, e.g. "M"). */
   sizes: z.array(z.string()).optional(),
+  /** Merchandising gender (categories.gender: men|women|kids|unisex). */
+  gender: z.string().optional(),
   inStock: z.boolean().optional(),
   onSale: z.boolean().optional(),
 });
@@ -189,10 +198,20 @@ function emptyBrowse(page: number, pageSize: number, categories: CatalogCategory
 /** Top-level categories with real product counts (children roll up to their parent). */
 async function fetchTopCategories(client: PublicClient, locale: string): Promise<CatalogCategory[]> {
   const [categoryResult, countResult] = await Promise.all([
-    client.from("categories").select("id,slug,name,parent_id").eq("status", "active").order("sort_order"),
+    client.from("categories").select("id,slug,name,parent_id,image_url,gender,featured,seo_title,seo_description").eq("status", "active").order("sort_order"),
     publishedFilter(client, "id,category_id").limit(5000),
   ]);
-  const categories = (categoryResult.data ?? []) as { id: string; slug: string; name: LocalizedText; parent_id: string | null }[];
+  const categories = (categoryResult.data ?? []) as {
+    id: string;
+    slug: string;
+    name: LocalizedText;
+    parent_id: string | null;
+    image_url: string | null;
+    gender: string | null;
+    featured: boolean | null;
+    seo_title: string | null;
+    seo_description: string | null;
+  }[];
   const parentById = new Map<string, string | null>(categories.map((category) => [category.id, category.parent_id] as [string, string | null]));
   const topLevel = categories.filter((category) => category.parent_id === null);
   const rootOf = (categoryId: string | null): string | null => {
@@ -216,7 +235,18 @@ async function fetchTopCategories(client: PublicClient, locale: string): Promise
     slug: category.slug,
     name: localized(category.name, locale, category.slug),
     productCount: counts.get(category.id) ?? 0,
+    imageUrl: category.image_url,
+    gender: isCategoryGender(category.gender) ? category.gender : null,
+    featured: category.featured === true,
+    seoTitle: category.seo_title,
+    seoDescription: category.seo_description,
   }));
+}
+
+const CATEGORY_GENDERS = new Set(["men", "women", "kids", "unisex"]);
+
+function isCategoryGender(value: string | null): value is "men" | "women" | "kids" | "unisex" {
+  return value !== null && CATEGORY_GENDERS.has(value);
 }
 
 /** Hydrate a page of BrowseRows into full CatalogProducts (images, store names, stock). */
@@ -287,7 +317,7 @@ function localized(value: LocalizedText, locale: string, fallback: string) {
 function publicUrl(path: string | null) {
   if (!path) return null;
   if (path.startsWith("http://") || path.startsWith("https://")) return path;
-  return null;
+  return storagePublicUrl(path);
 }
 
 function createPublicClient() {
@@ -305,7 +335,7 @@ async function fetchDiscoveryData(locale: string): Promise<DiscoveryData> {
     const supabase = createPublicClient();
     const [sectionResult, categoryResult, productResult, storeResult] = await Promise.all([
       supabase.from("homepage_sections").select("section_key,kind,title,subtitle,content").eq("enabled", true).order("sort_order"),
-      supabase.from("categories").select("id,slug,name").eq("status", "active").is("parent_id", null).order("sort_order"),
+      supabase.from("categories").select("id,slug,name,image_url,gender,featured,seo_title,seo_description").eq("status", "active").is("parent_id", null).order("sort_order"),
       supabase.from("products").select("id,slug,name,base_price,compare_at_price,created_at,category:categories(slug),seller:sellers(stores(name)),images:product_images(storage_path,alt_text,sort_order)").eq("status", "active").eq("publication_status", "published").eq("moderation_status", "approved").eq("visibility", "public").order("created_at", { ascending: false }).limit(24),
       supabase.from("stores").select("id,slug,name,description,logo_path,banner_path,seller_id,verification_status").eq("status", "active").order("created_at", { ascending: false }).limit(12),
     ]);
@@ -363,7 +393,20 @@ async function fetchDiscoveryData(locale: string): Promise<DiscoveryData> {
     products.forEach((product) => storeCounts.set(product.storeName, (storeCounts.get(product.storeName) ?? 0) + 1));
     return {
       sections: (sectionResult.data ?? []).map((section) => ({ sectionKey: section.section_key, kind: section.kind, title: localized(section.title, locale, ""), subtitle: localized(section.subtitle, locale, ""), content: section.content })),
-      categories: (categoryResult.data ?? []).map((category) => ({ id: category.id, slug: category.slug, name: localized(category.name, locale, category.slug), productCount: categoryCounts.get(category.slug) ?? 0 })),
+      categories: (categoryResult.data ?? []).map((category: { id: string; slug: string; name: LocalizedText; image_url?: string | null; gender?: string | null; featured?: boolean | null; seo_title?: string | null; seo_description?: string | null }) => {
+        const gender = category.gender ?? null;
+        return {
+          id: category.id,
+          slug: category.slug,
+          name: localized(category.name, locale, category.slug),
+          productCount: categoryCounts.get(category.slug) ?? 0,
+          imageUrl: category.image_url ?? null,
+          gender: isCategoryGender(gender) ? gender : null,
+          featured: category.featured === true,
+          seoTitle: category.seo_title ?? null,
+          seoDescription: category.seo_description ?? null,
+        };
+      }),
       products,
       stores: (storeResult.data ?? []).map((store) => ({ id: store.id, slug: store.slug, name: store.name, description: store.description, logoPath: publicUrl(store.logo_path), bannerPath: publicUrl(store.banner_path), productCount: storeCounts.get(store.name) ?? 0, verified: store.verification_status === "verified" })),
     };
@@ -372,6 +415,14 @@ async function fetchDiscoveryData(locale: string): Promise<DiscoveryData> {
 export const getDiscoveryData = createServerFn({ method: "GET" })
   .validator((data) => discoveryInput.parse(data))
   .handler(async ({ data }) => fetchDiscoveryData(data.locale));
+
+/** Lightweight top-level categories for the site header dropdown (no product data). */
+export const getHeaderCategories = createServerFn({ method: "GET" })
+  .validator((data) => z.object({ locale: z.enum(["ar", "fr", "en"]).default("fr") }).parse(data))
+  .handler(async ({ data }) => {
+    const client = createPublicClient();
+    return { categories: await fetchTopCategories(client, data.locale) };
+  });
 
 export const browseCatalog = createServerFn({ method: "GET" })
   .validator((data) => browseInput.parse(data))
@@ -384,7 +435,18 @@ export const browseCatalog = createServerFn({ method: "GET" })
 
     const categories = await fetchTopCategories(client, locale);
 
-    // ——— Phase 1: direct filters (category, brand, store, price, search) ———
+    // ——— Database-native path: FTS + structured filters + DB pagination ———
+    // Every filter (category, brand, store, price, color, size, gender,
+    // in-stock, on-sale) is passed as an RPC param — no 2000-row JS prefetch.
+    // The RPC also accepts an empty query (published products, newest first).
+    try {
+      return await runFtsSearch(client, data, locale, categories, { allowEmptyQuery: true });
+    } catch (err) {
+      if (!(err instanceof FtsUnavailableError)) throw err;
+      console.warn("FTS browse unavailable, falling back to legacy browse:", err.message);
+    }
+
+    // ——— Legacy fallback (FTS migration not applied): direct filters ———
     let rows: BrowseRow[];
     try {
       let query = publishedFilter(
@@ -393,33 +455,75 @@ export const browseCatalog = createServerFn({ method: "GET" })
       );
 
       const categorySlug = data.category?.trim();
-      if (categorySlug) {
-        const categoryResult = await client
+      // V8 #228: gender is allowlisted at the boundary (same canonical set
+      // as the FTS p_gender param); anything else = no gender filter.
+      const legacyGender =
+        data.gender === "men" ||
+        data.gender === "women" ||
+        data.gender === "kids" ||
+        data.gender === "unisex"
+          ? data.gender
+          : null;
+      // Category tree (with gender) is shared by the category filter and the
+      // gender filter; built once when either is active.
+      type CategoryTree = {
+        rows: Array<{ id: string; parent_id: string | null; gender: string | null }>;
+        childrenByParent: Map<string, string[]>;
+      };
+      const buildCategoryTree = async (): Promise<CategoryTree> => {
+        const allCategories = await client
           .from("categories")
-          .select("id,parent_id")
-          .eq("slug", categorySlug)
+          .select("id,parent_id,gender")
           .eq("status", "active");
-        const allCategories = await client.from("categories").select("id,parent_id").eq("status", "active");
+        const rows = (allCategories.data ?? []) as CategoryTree["rows"];
         const childrenByParent = new Map<string, string[]>();
-        for (const category of allCategories.data ?? []) {
+        for (const category of rows) {
           if (category.parent_id) {
             const list = childrenByParent.get(category.parent_id) ?? [];
             list.push(category.id);
             childrenByParent.set(category.parent_id, list);
           }
         }
-        const categoryIds = new Set<string>();
-        for (const root of categoryResult.data ?? []) {
-          const queue = [root.id];
-          while (queue.length) {
-            const current = queue.pop() as string;
-            if (categoryIds.has(current)) continue;
-            categoryIds.add(current);
-            queue.push(...(childrenByParent.get(current) ?? []));
-          }
+        return { rows, childrenByParent };
+      };
+      let categoryTree: CategoryTree | null = null;
+      const ensureCategoryTree = async (): Promise<CategoryTree> =>
+        categoryTree ?? (categoryTree = await buildCategoryTree());
+      const descendantClosure = (tree: CategoryTree, roots: string[]): Set<string> => {
+        const ids = new Set<string>();
+        const queue = [...roots];
+        while (queue.length) {
+          const current = queue.pop() as string;
+          if (ids.has(current)) continue;
+          ids.add(current);
+          queue.push(...(tree.childrenByParent.get(current) ?? []));
         }
+        return ids;
+      };
+      if (categorySlug) {
+        const categoryResult = await client
+          .from("categories")
+          .select("id,parent_id")
+          .eq("slug", categorySlug)
+          .eq("status", "active");
+        const tree = await ensureCategoryTree();
+        const categoryIds = descendantClosure(
+          tree,
+          (categoryResult.data ?? []).map((category) => category.id),
+        );
         if (!categoryIds.size) return emptyBrowse(page, pageSize, categories);
         query = query.in("category_id", [...categoryIds]);
+      }
+      if (legacyGender) {
+        // Mirrors the RPC's descendant-closure semantics: a product matches
+        // iff its category or any ancestor carries the gender.
+        const tree = await ensureCategoryTree();
+        const genderRoots = tree.rows
+          .filter((category) => category.gender === legacyGender)
+          .map((category) => category.id);
+        const genderedIds = descendantClosure(tree, genderRoots);
+        if (!genderedIds.size) return emptyBrowse(page, pageSize, categories);
+        query = query.in("category_id", [...genderedIds]);
       }
 
       if (data.brands?.length) {
@@ -447,7 +551,7 @@ export const browseCatalog = createServerFn({ method: "GET" })
       if (data.minPrice !== undefined) query = query.gte("base_price", data.minPrice);
       if (data.maxPrice !== undefined) query = query.lte("base_price", data.maxPrice);
 
-      // Server-side search across localized names (PostgREST ->> JSON operator).
+      // Legacy ilike search (FTS migration not applied).
       const rawQuery = data.q?.trim() ?? "";
       const safeQuery = rawQuery.replace(/[%*,()\\]/g, "").slice(0, 80);
       if (safeQuery) {
@@ -674,6 +778,201 @@ export const browseCatalog = createServerFn({ method: "GET" })
       total,
     };
   });
+
+/**
+ * Thrown when the database-native FTS path cannot be used (RPC missing,
+ * migration not applied, or query error). Callers fall back to ilike search.
+ */
+export class FtsUnavailableError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "FtsUnavailableError";
+  }
+}
+
+type FtsFacetBrand = { id: string; slug: string; name: string; count: number };
+type FtsFacetStore = {
+  id: string;
+  slug: string;
+  name: string;
+  verified: boolean;
+  count: number;
+};
+type FtsFacetColor = {
+  id: string;
+  slug: string;
+  name: LocalizedText;
+  hex: string | null;
+  count: number;
+};
+type FtsFacetSize = {
+  id: string;
+  value: string;
+  label: LocalizedText;
+  count: number;
+};
+
+type FtsPayload = {
+  total: number;
+  ids: string[];
+  facets: {
+    brands: FtsFacetBrand[];
+    stores: FtsFacetStore[];
+    colors: FtsFacetColor[];
+    sizes: FtsFacetSize[];
+    price_bounds: { min: number; max: number } | null;
+  };
+};
+
+/**
+ * Database-native full-text search via the `search_products_fts` RPC.
+ * All filtering, ranking (ts_rank + trigram fallback), and pagination happen
+ * in PostgreSQL — no multi-thousand-row fetch with JS post-filtering.
+ * Throws FtsUnavailableError when the RPC is unavailable so callers can
+ * fall back to the legacy ilike path.
+ */
+async function runFtsSearch(
+  client: PublicClient,
+  data: z.infer<typeof browseInput>,
+  locale: string,
+  categories: CatalogCategory[],
+  opts?: { allowEmptyQuery?: boolean },
+): Promise<BrowseResult> {
+  const page = data.page ?? 1;
+  const pageSize = data.pageSize ?? DEFAULT_PAGE_SIZE;
+  const sort =
+    data.sort === "price_asc" || data.sort === "price_desc"
+      ? data.sort
+      : data.sort === "newest"
+        ? "newest"
+        : "relevance";
+
+  const rawQuery = data.q?.trim() ?? "";
+  const safeQuery = rawQuery.replace(/[%*,()\\]/g, "").slice(0, 80);
+  // The RPC handles an empty query itself (lists published products, newest
+  // first). The public search endpoint keeps the strict behavior; the browse
+  // path allows it so color/size/stock/sale filters reach the DB without a
+  // 2000-row JS prefetch.
+  if (!safeQuery && !opts?.allowEmptyQuery) throw new FtsUnavailableError("empty query");
+
+  // Gender: structured DB filter (V8 #180/#228) — allowlisted at the boundary
+  // so a malformed URL value degrades to "no gender filter" instead of
+  // throwing. Matches categories.gender ('men'|'women'|'kids'|'unisex').
+  const gender =
+    data.gender === "men" ||
+    data.gender === "women" ||
+    data.gender === "kids" ||
+    data.gender === "unisex"
+      ? data.gender
+      : null;
+
+  const rpcArgs: Record<string, string | number | boolean | string[]> = {
+    p_query: safeQuery,
+    p_in_stock: data.inStock ?? false,
+    p_on_sale: data.onSale ?? false,
+    p_sort: sort,
+    p_limit: pageSize,
+    p_offset: (page - 1) * pageSize,
+  };
+  const categorySlug = data.category?.trim();
+  if (categorySlug) rpcArgs["p_category_slug"] = categorySlug;
+  if (data.brands?.length) rpcArgs["p_brand_slugs"] = data.brands;
+  if (data.stores?.length) rpcArgs["p_store_slugs"] = data.stores;
+  if (data.minPrice !== undefined) rpcArgs["p_min_price"] = data.minPrice;
+  if (data.maxPrice !== undefined) rpcArgs["p_max_price"] = data.maxPrice;
+  if (data.colors?.length) rpcArgs["p_color_slugs"] = data.colors;
+  if (data.sizes?.length) rpcArgs["p_size_values"] = data.sizes;
+  if (gender) rpcArgs["p_gender"] = gender;
+  const { data: payload, error } = await client.rpc("search_products_fts", rpcArgs as never);
+  if (error) throw new FtsUnavailableError(error.message);
+
+  const result = payload as unknown as FtsPayload;
+  const ids: string[] = Array.isArray(result?.ids) ? result.ids : [];
+  const total = Number(result?.total ?? 0);
+
+  // Fetch card rows for this page, preserving the RPC's rank order.
+  // Visibility predicates are re-applied on the re-fetch (defense in depth —
+  // the RPC already enforced them when producing the ids).
+  let rows: BrowseRow[] = [];
+  if (ids.length) {
+    const rowResult = await client
+      .from("products")
+      .select(
+        "id,slug,name,base_price,compare_at_price,created_at,published_at,brand_id,store_id,category_id",
+      )
+      .eq("status", "active")
+      .eq("publication_status", "published")
+      .eq("moderation_status", "approved")
+      .eq("visibility", "public")
+      .in("id", ids);
+    if (rowResult.error) throw new FtsUnavailableError(rowResult.error.message);
+    const byId = new Map(
+      ((rowResult.data ?? []) as unknown as BrowseRow[]).map((row) => [row.id, row] as const),
+    );
+    rows = ids
+      .map((id) => byId.get(id))
+      .filter((row): row is BrowseRow => row !== undefined);
+  }
+
+  const products = await hydrateCards(client, locale, rows);
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const facets = result?.facets;
+
+  return {
+    products,
+    categories,
+    brands: (facets?.brands ?? []).map((brand) => ({
+      id: brand.id,
+      slug: brand.slug,
+      name: brand.name,
+      productCount: brand.count,
+    })),
+    stores: (facets?.stores ?? []).map((store) => ({
+      id: store.id,
+      slug: store.slug,
+      name: store.name,
+      description: null,
+      logoPath: null,
+      bannerPath: null,
+      productCount: store.count,
+      verified: store.verified,
+    })),
+    colors: (facets?.colors ?? []).map((color) => ({
+      id: color.id,
+      slug: color.slug,
+      name: localized(color.name, locale, color.slug),
+      hex: color.hex,
+      productCount: color.count,
+    })),
+    sizes: (facets?.sizes ?? []).map((size) => ({
+      id: size.id,
+      value: size.value,
+      label: localized(size.label, locale, size.value),
+      productCount: size.count,
+    })),
+    priceBounds: facets?.price_bounds ?? { min: 0, max: 0 },
+    page: safePage,
+    pageSize,
+    total,
+  };
+}
+
+/**
+ * Public full-text product search. Uses database-native FTS
+ * (`search_products_fts` RPC: tsvector + ts_rank with trigram fallback,
+ * DB-level filters, DB-level pagination). Throws FtsUnavailableError when
+ * the FTS migration has not been applied.
+ */
+export const searchProductsFTS = createServerFn({ method: "GET" })
+  .validator((data) => browseInput.parse(data))
+  .handler(async ({ data }): Promise<BrowseResult> => {
+    const locale = data.locale ?? "fr";
+    const client = createPublicClient();
+    const categories = await fetchTopCategories(client, locale);
+    return runFtsSearch(client, data, locale, categories);
+  });
+
 /** Public store directory: active stores with real published-product counts and verification flags. */
 export const getStoreDirectory = createServerFn({ method: "GET" })
   .validator((data) => z.object({ locale: z.string().optional() }).parse(data))

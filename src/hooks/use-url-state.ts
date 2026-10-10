@@ -12,9 +12,14 @@ import { useLocation, useNavigate, useSearch } from "@tanstack/react-router";
  * Use the `strParam` / `numParam` coercers there.
  */
 
-/** Coerce a raw search value to a string. */
+/**
+ * Coerce a raw search value to a string.
+ * An empty string is treated as missing (returns the fallback) so enum
+ * filters like `?status=` degrade to their "all" default instead of failing
+ * zod validation downstream.
+ */
 export function strParam(value: unknown, fallback = ""): string {
-  return typeof value === "string" ? value : fallback;
+  return typeof value === "string" && value !== "" ? value : fallback;
 }
 
 /** Coerce a raw search value to a finite integer >= min (default min 1). */

@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
+import { Link, useLocation } from "@tanstack/react-router";
 import type { Session } from "@supabase/supabase-js";
 import { Loader2, LogIn, LogOut, RefreshCw, ShieldAlert } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { checkAdminAccess } from "@/lib/admin-session.functions";
+import { getLocale } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -48,17 +49,24 @@ export function useAdminSession(): AdminSession {
     queryFn: () => checkAdminAccess(),
     enabled: signedIn,
     retry: false,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 
   const queryErrorMessage =
-    access.error instanceof Error ? access.error.message : access.error ? String(access.error) : null;
+    access.error instanceof Error
+      ? access.error.message
+      : access.error
+        ? String(access.error)
+        : null;
 
   let status: AdminSessionStatus = "checking";
   if (!sessionReady) {
     status = "checking";
   } else if (!session) {
     status = "signed-out";
-  } else if (access.isPending || access.isFetching) {
+  } else if (access.isPending) {
+    // Only block on initial load, not background refetches
     status = "checking";
   } else if (access.isError) {
     status = queryErrorMessage?.includes("Forbidden") ? "denied" : "error";
@@ -92,20 +100,24 @@ function GateCard({
     <div className="flex min-h-[60vh] items-center justify-center px-4 py-12">
       <Card className="w-full max-w-md">
         <CardHeader className="items-center text-center">
-          <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-muted">{icon}</div>
+          <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+            {icon}
+          </div>
           <CardTitle className="text-lg">{title}</CardTitle>
           {description ? <CardDescription>{description}</CardDescription> : null}
         </CardHeader>
-        <CardContent className="flex flex-col items-center gap-3 text-center">{children}</CardContent>
+        <CardContent className="flex flex-col items-center gap-3 text-center">
+          {children}
+        </CardContent>
       </Card>
     </div>
   );
 }
 
 /** Sign out and land on the sign-in page (used to switch accounts). */
-async function switchAccount() {
+async function switchAccount(locale: string) {
   await supabase.auth.signOut();
-  window.location.assign("/auth?locale=en");
+  window.location.assign(`/auth?locale=${encodeURIComponent(locale)}`);
 }
 
 /**
@@ -117,10 +129,24 @@ async function switchAccount() {
  */
 export function AdminGate({ children }: { children: ReactNode }) {
   const { status, userEmail, retry } = useAdminSession();
+  const location = useLocation();
+  // Preserve the originally requested admin page so sign-in returns here,
+  // not to the homepage. Never trust a redirect blindly — /auth sanitizes it.
+  const searchObj =
+    typeof location.search === "object" && location.search !== null
+      ? (location.search as Record<string, unknown>)
+      : undefined;
+  const locale = getLocale(
+    typeof searchObj?.["locale"] === "string" ? searchObj["locale"] : undefined,
+  );
+  const redirectBack = location.pathname + (location.searchStr ? `?${location.searchStr}` : "");
 
   if (status === "checking") {
     return (
-      <GateCard icon={<Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />} title="Checking access…">
+      <GateCard
+        icon={<Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />}
+        title="Checking access…"
+      >
         <p className="text-sm text-muted-foreground">Verifying your admin session.</p>
       </GateCard>
     );
@@ -134,7 +160,9 @@ export function AdminGate({ children }: { children: ReactNode }) {
         description="You need to sign in to access the admin area."
       >
         <Button asChild>
-          <Link to="/auth" search={{ locale: "en" }}>Sign in</Link>
+          <Link to="/auth" search={{ locale, redirect: redirectBack }}>
+            Sign in
+          </Link>
         </Button>
       </GateCard>
     );
@@ -157,9 +185,11 @@ export function AdminGate({ children }: { children: ReactNode }) {
         </p>
         <div className="flex flex-wrap items-center justify-center gap-2">
           <Button asChild variant="outline">
-            <Link to="/" search={{ locale: "en" }}>Back to store</Link>
+            <Link to="/" search={{ locale }}>
+              Back to store
+            </Link>
           </Button>
-          <Button type="button" variant="ghost" onClick={() => void switchAccount()}>
+          <Button type="button" variant="ghost" onClick={() => void switchAccount(locale)}>
             <LogOut className="me-2 h-4 w-4" />
             Switch account
           </Button>

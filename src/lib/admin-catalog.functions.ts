@@ -4,6 +4,8 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database, Json } from "@/integrations/supabase/types";
 import { emitSellerNotification } from "@/lib/notifications.functions";
 import { assertAdmin } from "@/lib/admin-auth";
+import { assertAdminPermission } from "@/lib/admin-permissions";
+import { scanProductForModerationFlags, type ModerationFlag } from "@/lib/moderation-rules";
 
 type ProductUpdate = Database["public"]["Tables"]["products"]["Update"];
 type ProductInsert = Database["public"]["Tables"]["products"]["Insert"];
@@ -70,7 +72,7 @@ export type CategoryRow = Database["public"]["Tables"]["categories"]["Row"];
 export const listAdminSellersLite = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .handler(async ({ context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "sellers.view");
     const { data, error } = await context.supabase
       .from("sellers")
       .select("id, legal_name, account_status")
@@ -100,12 +102,12 @@ export const listAdminProducts = createServerFn({ method: "GET" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "products.view");
     const from = (data.page - 1) * PAGE_SIZE;
     let query = context.supabase
       .from("products")
       .select(
-        "id, slug, name, base_price, compare_at_price, status, moderation_status, publication_status, visibility, featured, seller_id, category_id, weight_grams, moderation_reason, created_at",
+        "id, slug, name, description, base_price, compare_at_price, status, moderation_status, publication_status, visibility, featured, seller_id, category_id, weight_grams, moderation_reason, created_at",
         { count: "exact" },
       )
       .order("created_at", { ascending: false })
@@ -125,13 +127,41 @@ export const listAdminProducts = createServerFn({ method: "GET" })
 
     const { data: rows, error, count } = await query;
     if (error) throw new Error(error.message);
+    // Rule-based moderation ASSISTANCE: deterministic keyword/regex scan of
+    // name + description for products awaiting review. Flags are informational
+    // only — they never approve, reject or hide anything.
+    const products = (rows ?? []).map((row) => {
+      let flags: ModerationFlag[] = [];
+      if (row.moderation_status === "pending") {
+        flags = scanProductForModerationFlags(
+          localeTextOf(row.name),
+          localeTextOf(row.description),
+        );
+      }
+      return { ...row, flags };
+    });
     return {
-      products: rows ?? [],
+      products,
       total: count ?? 0,
       page: data.page,
       pageSize: PAGE_SIZE,
     };
   });
+
+/** Flatten a trilingual {fr,en,ar} jsonb value into searchable plain text. */
+function localeTextOf(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return (["fr", "en", "ar"] as const)
+      .map((k) => {
+        const v = (value as Record<string, unknown>)[k];
+        return typeof v === "string" ? v : "";
+      })
+      .filter(Boolean)
+      .join("\n");
+  }
+  return "";
+}
 
 export const moderateAdminProduct = createServerFn({ method: "POST" })
   .middleware(adminOnly)
@@ -145,7 +175,7 @@ export const moderateAdminProduct = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "products.manage");
     const now = new Date().toISOString();
     const base = {
       moderated_by: context.userId ?? null,
@@ -181,7 +211,11 @@ export const moderateAdminProduct = createServerFn({ method: "POST" })
 
     // Notify the seller about the moderation decision (best-effort).
     try {
-      const productRow = await supabaseAdmin.from("products").select("id,seller_id,name").eq("id", data.id).maybeSingle();
+      const productRow = await supabaseAdmin
+        .from("products")
+        .select("id,seller_id,name")
+        .eq("id", data.id)
+        .maybeSingle();
       const sellerId = productRow.data?.seller_id;
       if (sellerId) {
         const rawName = productRow.data?.name as Record<string, unknown> | string | null;
@@ -194,7 +228,12 @@ export const moderateAdminProduct = createServerFn({ method: "POST" })
                 ? (rawName["en"] as string)
                 : "Product";
         await emitSellerNotification(sellerId, {
-          type: data.decision === "approve" ? "product_approved" : data.decision === "reject" ? "product_rejected" : "product_hidden",
+          type:
+            data.decision === "approve"
+              ? "product_approved"
+              : data.decision === "reject"
+                ? "product_rejected"
+                : "product_hidden",
           params: { productName, reason: data.reason?.trim() || undefined },
           link: `/seller/products/${data.id}`,
           payload: { product_id: data.id, decision: data.decision },
@@ -226,7 +265,7 @@ export const updateAdminProduct = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "products.manage");
     const supabaseAdmin = await adminClient();
 
     // Fetch current row so cross-field checks (compare_at_price > base_price)
@@ -240,7 +279,9 @@ export const updateAdminProduct = createServerFn({ method: "POST" })
 
     const newBase = data.patch.base_price ?? Number(current.base_price);
     const newCompare =
-      data.patch.compare_at_price !== undefined ? data.patch.compare_at_price : current.compare_at_price;
+      data.patch.compare_at_price !== undefined
+        ? data.patch.compare_at_price
+        : current.compare_at_price;
     if (newCompare !== null && newCompare !== undefined && Number(newCompare) <= newBase) {
       throw new Error("Compare-at price must be higher than the selling price.");
     }
@@ -255,14 +296,17 @@ export const updateAdminProduct = createServerFn({ method: "POST" })
 
     const update: ProductUpdate = { updated_at: new Date().toISOString() };
     if (data.patch.base_price !== undefined) update.base_price = data.patch.base_price;
-    if (data.patch.compare_at_price !== undefined) update.compare_at_price = data.patch.compare_at_price;
+    if (data.patch.compare_at_price !== undefined)
+      update.compare_at_price = data.patch.compare_at_price;
     if (data.patch.weight_grams !== undefined) update.weight_grams = data.patch.weight_grams;
     if (data.patch.featured !== undefined) update.featured = data.patch.featured;
     if (data.patch.category_id !== undefined) update.category_id = data.patch.category_id;
 
     const { error } = await supabaseAdmin.from("products").update(update).eq("id", data.id);
     if (error) throw new Error(error.message);
-    await auditLog(context.userId ?? null, "product_updated", "product", data.id, { patch: update });
+    await auditLog(context.userId ?? null, "product_updated", "product", data.id, {
+      patch: update,
+    });
     return { ok: true as const };
   });
 
@@ -274,7 +318,7 @@ export const setProductStatus = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "products.manage");
     const supabaseAdmin = await adminClient();
     const update: ProductUpdate = { status: data.status, updated_at: new Date().toISOString() };
     if (data.status === "archived") {
@@ -323,7 +367,7 @@ export const createAdminProduct = createServerFn({ method: "POST" })
   .middleware(adminOnly)
   .inputValidator((data) => createAdminProductInput.parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "products.manage");
     const supabaseAdmin = await adminClient();
 
     const { data: seller, error: sellerError } = await supabaseAdmin
@@ -368,7 +412,11 @@ export const createAdminProduct = createServerFn({ method: "POST" })
       slug = `${base}-${Math.random().toString(36).slice(2, 8)}`;
     }
     {
-      const { data: clash } = await supabaseAdmin.from("products").select("id").eq("slug", slug).maybeSingle();
+      const { data: clash } = await supabaseAdmin
+        .from("products")
+        .select("id")
+        .eq("slug", slug)
+        .maybeSingle();
       if (clash) throw new Error("Could not generate a unique slug. Please try again.");
     }
 
@@ -387,7 +435,8 @@ export const createAdminProduct = createServerFn({ method: "POST" })
       .insert(insert)
       .select("id,slug")
       .single();
-    if (insertError || !created) throw new Error(insertError?.message ?? "Could not create the product.");
+    if (insertError || !created)
+      throw new Error(insertError?.message ?? "Could not create the product.");
 
     await auditLog(context.userId ?? null, "product_created", "product", created.id, {
       slug,
@@ -406,10 +455,10 @@ export type CategoryNode = CategoryRow & { children: CategoryNode[] };
 export const listAdminCategories = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .handler(async ({ context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "categories.manage");
     const { data, error } = await context.supabase
       .from("categories")
-      .select("id, parent_id, slug, name, status, sort_order")
+      .select("id, parent_id, slug, name, status, sort_order, image_url, gender, featured, seo_title, seo_description")
       .order("sort_order", { ascending: true });
     if (error) throw new Error(error.message);
     const rows = (data ?? []) as CategoryRow[];
@@ -436,17 +485,26 @@ export const upsertCategory = createServerFn({ method: "POST" })
           .string()
           .min(2)
           .max(80)
-          .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug must be lowercase letters, digits and hyphens."),
+          .regex(
+            /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+            "Slug must be lowercase letters, digits and hyphens.",
+          ),
         name: nameJson.refine((n) => n.fr || n.en || n.ar, {
           message: "At least one name (fr/en/ar) is required.",
         }),
         status: z.enum(["active", "inactive"]).default("active"),
         sort_order: z.number().int().min(0).max(10_000).default(0),
+        // V8 taxonomy (#166): merchandising + SEO fields, all optional.
+        image_url: z.string().trim().max(500).nullable().optional(),
+        gender: z.enum(["men", "women", "kids", "unisex"]).nullable().optional(),
+        featured: z.boolean().default(false),
+        seo_title: z.string().trim().max(120).nullable().optional(),
+        seo_description: z.string().trim().max(300).nullable().optional(),
       })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "categories.manage");
     const supabaseAdmin = await adminClient();
     if (data.parent_id) {
       if (data.id && data.parent_id === data.id) {
@@ -471,17 +529,31 @@ export const upsertCategory = createServerFn({ method: "POST" })
       name: { fr: data.name.fr ?? "", en: data.name.en ?? "", ar: data.name.ar ?? "" },
       status: data.status,
       sort_order: data.sort_order,
+      // V8 taxonomy (#166): empty strings clear the field (stored as NULL).
+      image_url: data.image_url?.trim() ? data.image_url.trim() : null,
+      gender: data.gender ?? null,
+      featured: data.featured,
+      seo_title: data.seo_title?.trim() ? data.seo_title.trim() : null,
+      seo_description: data.seo_description?.trim() ? data.seo_description.trim() : null,
       updated_at: new Date().toISOString(),
     };
     if (data.id) {
       const { error } = await supabaseAdmin.from("categories").update(payload).eq("id", data.id);
       if (error) throw new Error(error.message);
-      await auditLog(context.userId ?? null, "category_updated", "category", data.id, { slug: data.slug });
+      await auditLog(context.userId ?? null, "category_updated", "category", data.id, {
+        slug: data.slug,
+      });
       return { id: data.id };
     }
-    const { data: created, error } = await supabaseAdmin.from("categories").insert(payload).select("id").single();
+    const { data: created, error } = await supabaseAdmin
+      .from("categories")
+      .insert(payload)
+      .select("id")
+      .single();
     if (error || !created) throw new Error(error?.message ?? "Could not create category.");
-    await auditLog(context.userId ?? null, "category_created", "category", created.id, { slug: data.slug });
+    await auditLog(context.userId ?? null, "category_created", "category", created.id, {
+      slug: data.slug,
+    });
     return { id: created.id as string };
   });
 
@@ -489,7 +561,7 @@ export const deleteCategory = createServerFn({ method: "POST" })
   .middleware(adminOnly)
   .inputValidator((data) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "categories.manage");
     const supabaseAdmin = await adminClient();
     const { count: childCount, error: childError } = await supabaseAdmin
       .from("categories")
@@ -497,7 +569,9 @@ export const deleteCategory = createServerFn({ method: "POST" })
       .eq("parent_id", data.id);
     if (childError) throw new Error(childError.message);
     if ((childCount ?? 0) > 0) {
-      throw new Error(`Cannot delete: this category has ${childCount} sub-categorie(s). Move or delete them first.`);
+      throw new Error(
+        `Cannot delete: this category has ${childCount} sub-categorie(s). Move or delete them first.`,
+      );
     }
     const { count: productCount, error: productError } = await supabaseAdmin
       .from("products")
@@ -505,7 +579,9 @@ export const deleteCategory = createServerFn({ method: "POST" })
       .eq("category_id", data.id);
     if (productError) throw new Error(productError.message);
     if ((productCount ?? 0) > 0) {
-      throw new Error(`Cannot delete: ${productCount} product(s) still use this category. Reassign them first.`);
+      throw new Error(
+        `Cannot delete: ${productCount} product(s) still use this category. Reassign them first.`,
+      );
     }
     const { error } = await supabaseAdmin.from("categories").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
@@ -532,13 +608,37 @@ export const reorderCategories = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "categories.manage");
     const supabaseAdmin = await adminClient();
+    // V8 #36: reject unknown parent_ids BEFORE writing — a typo'd UUID would
+    // otherwise silently orphan the category under a non-existent parent.
+    const parentIds = [
+      ...new Set(
+        data.orders.map((o) => o.parent_id).filter((p): p is string => p !== null),
+      ),
+    ];
+    if (parentIds.length) {
+      const { data: parents, error: parentError } = await supabaseAdmin
+        .from("categories")
+        .select("id")
+        .in("id", parentIds);
+      if (parentError) throw new Error(parentError.message);
+      const known = new Set((parents ?? []).map((p) => p.id));
+      for (const order of data.orders) {
+        if (order.parent_id !== null && !known.has(order.parent_id)) {
+          throw new Error(`Unknown parent category: ${order.parent_id}.`);
+        }
+      }
+    }
     for (const order of data.orders) {
       if (order.parent_id === order.id) throw new Error("A category cannot be its own parent.");
       const { error } = await supabaseAdmin
         .from("categories")
-        .update({ sort_order: order.sort_order, parent_id: order.parent_id, updated_at: new Date().toISOString() })
+        .update({
+          sort_order: order.sort_order,
+          parent_id: order.parent_id,
+          updated_at: new Date().toISOString(),
+        })
         .eq("id", order.id);
       if (error) throw new Error(error.message);
     }
@@ -565,7 +665,7 @@ export const listAdminReviews = createServerFn({ method: "GET" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "reviews.manage");
     const from = (data.page - 1) * PAGE_SIZE;
     let query = context.supabase
       .from("reviews")
@@ -622,9 +722,10 @@ export const moderateReview = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "reviews.manage");
     const update = {
-      moderation_status: data.decision === "approve" ? "approved" : data.decision === "hide" ? "hidden" : "rejected",
+      moderation_status:
+        data.decision === "approve" ? "approved" : data.decision === "hide" ? "hidden" : "rejected",
       moderation_reason: data.reason?.trim() || null,
       moderated_by: context.userId ?? null,
       moderated_at: new Date().toISOString(),
@@ -670,20 +771,51 @@ export type AdminCouponRow = Database["public"]["Tables"]["coupons"]["Row"] & {
 /** List shapes matching the selects below (keeps route code type-safe). */
 export type AdminProductListItem = Pick<
   Database["public"]["Tables"]["products"]["Row"],
-  | "id" | "slug" | "name" | "base_price" | "compare_at_price" | "status"
-  | "moderation_status" | "publication_status" | "visibility" | "featured"
-  | "seller_id" | "category_id" | "weight_grams" | "moderation_reason" | "created_at"
+  | "id"
+  | "slug"
+  | "name"
+  | "base_price"
+  | "compare_at_price"
+  | "status"
+  | "moderation_status"
+  | "publication_status"
+  | "visibility"
+  | "featured"
+  | "seller_id"
+  | "category_id"
+  | "weight_grams"
+  | "moderation_reason"
+  | "created_at"
 >;
 export type AdminSettlementListItem = Pick<
   Database["public"]["Tables"]["seller_settlements"]["Row"],
-  | "id" | "seller_id" | "amount" | "currency" | "period_start" | "period_end"
-  | "status" | "payment_reference" | "payment_proof_path" | "verified_by" | "verified_at" | "settled_at"
-  | "notes" | "created_at"
+  | "id"
+  | "seller_id"
+  | "amount"
+  | "currency"
+  | "period_start"
+  | "period_end"
+  | "status"
+  | "payment_reference"
+  | "payment_proof_path"
+  | "verified_by"
+  | "verified_at"
+  | "settled_at"
+  | "notes"
+  | "created_at"
 >;
 export type AdminShippingRuleListItem = Pick<
   Database["public"]["Tables"]["shipping_rules"]["Row"],
-  | "id" | "seller_id" | "wilaya_id" | "commune_id" | "delivery_method" | "price"
-  | "min_weight_grams" | "max_weight_grams" | "enabled" | "status"
+  | "id"
+  | "seller_id"
+  | "wilaya_id"
+  | "commune_id"
+  | "delivery_method"
+  | "price"
+  | "min_weight_grams"
+  | "max_weight_grams"
+  | "enabled"
+  | "status"
 > & {
   wilayas: { id: string; code: string; name: Json } | null;
   communes: { id: string; code: string; name: Json } | null;
@@ -694,18 +826,21 @@ const couponDates = z
     starts_at: z.string().datetime().nullable().optional(),
     ends_at: z.string().datetime().nullable().optional(),
   })
-  .refine(
-    (d) => !d.starts_at || !d.ends_at || new Date(d.starts_at) < new Date(d.ends_at),
-    { message: "Start date must be before the end date." },
-  );
+  .refine((d) => !d.starts_at || !d.ends_at || new Date(d.starts_at) < new Date(d.ends_at), {
+    message: "Start date must be before the end date.",
+  });
 
 export const listAdminCoupons = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .inputValidator((data) => pageInput.parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "coupons.manage");
     const from = (data.page - 1) * PAGE_SIZE;
-    const { data: rows, error, count } = await context.supabase
+    const {
+      data: rows,
+      error,
+      count,
+    } = await context.supabase
       .from("coupons")
       .select(
         "id, code, discount_type, discount_value, min_order_amount, max_discount_amount, usage_limit, usage_count, per_customer_limit, starts_at, ends_at, seller_id, status, created_at",
@@ -756,7 +891,7 @@ export const upsertCoupon = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "coupons.manage");
     const supabaseAdmin = await adminClient();
 
     // Code is uppercase + unique platform-wide.
@@ -793,30 +928,35 @@ export const upsertCoupon = createServerFn({ method: "POST" })
     };
 
     if (data.id) {
-      const { error } = await supabaseAdmin.from("coupons").update(payload as any).eq("id", data.id);
+      const { error } = await supabaseAdmin
+        .from("coupons")
+        .update(payload as Database["public"]["Tables"]["coupons"]["Update"])
+        .eq("id", data.id);
       if (error) throw new Error(error.message);
-      await auditLog(context.userId ?? null, "coupon_updated", "coupon", data.id, { code: data.code });
+      await auditLog(context.userId ?? null, "coupon_updated", "coupon", data.id, {
+        code: data.code,
+      });
       return { id: data.id };
     }
     const { data: created, error } = await supabaseAdmin
       .from("coupons")
-      .insert(payload as any)
+      .insert(payload as Database["public"]["Tables"]["coupons"]["Insert"])
       .select("id")
       .single();
     if (error || !created) throw new Error(error?.message ?? "Could not create coupon.");
-    await auditLog(context.userId ?? null, "coupon_created", "coupon", created.id, { code: data.code });
+    await auditLog(context.userId ?? null, "coupon_created", "coupon", created.id, {
+      code: data.code,
+    });
     return { id: created.id as string };
   });
 
 export const setCouponStatus = createServerFn({ method: "POST" })
   .middleware(adminOnly)
   .inputValidator((data) =>
-    z
-      .object({ id: z.string().uuid(), status: z.enum(["active", "inactive"]) })
-      .parse(data),
+    z.object({ id: z.string().uuid(), status: z.enum(["active", "inactive"]) }).parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "coupons.manage");
     const supabaseAdmin = await adminClient();
     const { error } = await supabaseAdmin
       .from("coupons")
@@ -833,9 +973,13 @@ export const deleteCoupon = createServerFn({ method: "POST" })
   .middleware(adminOnly)
   .inputValidator((data) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "coupons.manage");
     const supabaseAdmin = await adminClient();
-    const { data: coupon } = await supabaseAdmin.from("coupons").select("code").eq("id", data.id).maybeSingle();
+    const { data: coupon } = await supabaseAdmin
+      .from("coupons")
+      .select("code")
+      .eq("id", data.id)
+      .maybeSingle();
     const { error } = await supabaseAdmin.from("coupons").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     await auditLog(context.userId ?? null, "coupon_deleted", "coupon", data.id, {
@@ -848,10 +992,15 @@ export const deleteCoupon = createServerFn({ method: "POST" })
 // Shipping
 // ---------------------------------------------------------------------------
 
+/**
+ * Lite wilaya list for dropdowns/filters (id, code, name, active only).
+ * For the management page with commune/rule counts, use `listAdminWilayas`
+ * in admin-ops.functions.ts instead.
+ */
 export const listWilayas = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .handler(async ({ context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "shipping.manage");
     const { data, error } = await context.supabase
       .from("wilayas")
       .select("id, code, name, active")
@@ -860,11 +1009,15 @@ export const listWilayas = createServerFn({ method: "GET" })
     return { wilayas: data ?? [] };
   });
 
+/**
+ * Lite commune list for dropdowns (by wilaya). For the searchable/paginated
+ * management table, use `listAdminCommunes` in admin-ops.functions.ts instead.
+ */
 export const listCommunes = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .inputValidator((data) => z.object({ wilayaId: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "shipping.manage");
     const { data: rows, error } = await context.supabase
       .from("communes")
       .select("id, wilaya_id, code, name, active")
@@ -885,7 +1038,7 @@ export const listShippingRules = createServerFn({ method: "GET" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "shipping.manage");
     let query = context.supabase
       .from("shipping_rules")
       .select(
@@ -920,7 +1073,7 @@ export const upsertShippingRule = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "shipping.manage");
     const supabaseAdmin = await adminClient();
 
     const { data: wilaya, error: wilayaError } = await supabaseAdmin
@@ -965,7 +1118,10 @@ export const upsertShippingRule = createServerFn({ method: "POST" })
     };
 
     if (data.id) {
-      const { error } = await supabaseAdmin.from("shipping_rules").update(payload).eq("id", data.id);
+      const { error } = await supabaseAdmin
+        .from("shipping_rules")
+        .update(payload)
+        .eq("id", data.id);
       if (error) throw new Error(error.message);
       await auditLog(context.userId ?? null, "shipping_rule_updated", "shipping_rule", data.id, {
         wilaya_id: data.wilaya_id,
@@ -990,18 +1146,22 @@ export const upsertShippingRule = createServerFn({ method: "POST" })
 
 export const setShippingRuleEnabled = createServerFn({ method: "POST" })
   .middleware(adminOnly)
-  .inputValidator((data) =>
-    z.object({ id: z.string().uuid(), enabled: z.boolean() }).parse(data),
-  )
+  .inputValidator((data) => z.object({ id: z.string().uuid(), enabled: z.boolean() }).parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "shipping.manage");
     const supabaseAdmin = await adminClient();
     const { error } = await supabaseAdmin
       .from("shipping_rules")
       .update({ enabled: data.enabled, updated_at: new Date().toISOString() })
       .eq("id", data.id);
     if (error) throw new Error(error.message);
-    await auditLog(context.userId ?? null, `shipping_rule_${data.enabled ? "enabled" : "disabled"}`, "shipping_rule", data.id, {});
+    await auditLog(
+      context.userId ?? null,
+      `shipping_rule_${data.enabled ? "enabled" : "disabled"}`,
+      "shipping_rule",
+      data.id,
+      {},
+    );
     return { ok: true as const };
   });
 
@@ -1011,14 +1171,20 @@ export const setWilayaActive = createServerFn({ method: "POST" })
     z.object({ wilayaId: z.string().uuid(), active: z.boolean() }).parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "shipping.manage");
     const supabaseAdmin = await adminClient();
     const { error } = await supabaseAdmin
       .from("wilayas")
       .update({ active: data.active, updated_at: new Date().toISOString() })
       .eq("id", data.wilayaId);
     if (error) throw new Error(error.message);
-    await auditLog(context.userId ?? null, `wilaya_${data.active ? "activated" : "deactivated"}`, "wilaya", data.wilayaId, {});
+    await auditLog(
+      context.userId ?? null,
+      `wilaya_${data.active ? "activated" : "deactivated"}`,
+      "wilaya",
+      data.wilayaId,
+      {},
+    );
     return { ok: true as const };
   });
 
@@ -1028,14 +1194,20 @@ export const setCommuneActive = createServerFn({ method: "POST" })
     z.object({ communeId: z.string().uuid(), active: z.boolean() }).parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "shipping.manage");
     const supabaseAdmin = await adminClient();
     const { error } = await supabaseAdmin
       .from("communes")
       .update({ active: data.active, updated_at: new Date().toISOString() })
       .eq("id", data.communeId);
     if (error) throw new Error(error.message);
-    await auditLog(context.userId ?? null, `commune_${data.active ? "activated" : "deactivated"}`, "commune", data.communeId, {});
+    await auditLog(
+      context.userId ?? null,
+      `commune_${data.active ? "activated" : "deactivated"}`,
+      "commune",
+      data.communeId,
+      {},
+    );
     return { ok: true as const };
   });
 
@@ -1073,7 +1245,7 @@ export const listSettlements = createServerFn({ method: "GET" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "settlements.manage");
     const from = (data.page - 1) * PAGE_SIZE;
     let query = context.supabase
       .from("seller_settlements")
@@ -1099,7 +1271,7 @@ export const settlementReference = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .inputValidator((data) => z.object({ sellerId: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "settlements.manage");
     const s = context.supabase;
 
     const { data: orders, error: ordersError } = await s
@@ -1142,14 +1314,13 @@ export const createSettlement = createServerFn({ method: "POST" })
         period_end: z.string().date().nullable().optional(),
         notes: z.string().max(1000).optional(),
       })
-      .refine(
-        (d) => !d.period_start || !d.period_end || d.period_start <= d.period_end,
-        { message: "Period start must be before or on the period end." },
-      )
+      .refine((d) => !d.period_start || !d.period_end || d.period_start <= d.period_end, {
+        message: "Period start must be before or on the period end.",
+      })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "settlements.manage");
     const supabaseAdmin = await adminClient();
     const { data: seller, error: sellerError } = await supabaseAdmin
       .from("sellers")
@@ -1198,7 +1369,7 @@ export const updateSettlementStatus = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "settlements.manage");
     const supabaseAdmin = await adminClient();
     const { data: settlement, error: fetchError } = await supabaseAdmin
       .from("seller_settlements")
@@ -1209,17 +1380,17 @@ export const updateSettlementStatus = createServerFn({ method: "POST" })
 
     const allowed = SETTLEMENT_TRANSITIONS[settlement.status as string] ?? [];
     if (!allowed.includes(data.status)) {
-      throw new Error(
-        `Cannot move settlement from "${settlement.status}" to "${data.status}".`,
-      );
+      throw new Error(`Cannot move settlement from "${settlement.status}" to "${data.status}".`);
     }
 
     const update: SettlementUpdate = {
       status: data.status,
       updated_at: new Date().toISOString(),
     };
-    if (data.payment_reference !== undefined) update.payment_reference = data.payment_reference.trim() || null;
-    if (data.payment_proof_path !== undefined) update.payment_proof_path = data.payment_proof_path?.trim() || null;
+    if (data.payment_reference !== undefined)
+      update.payment_reference = data.payment_reference.trim() || null;
+    if (data.payment_proof_path !== undefined)
+      update.payment_proof_path = data.payment_proof_path?.trim() || null;
     if (data.notes !== undefined) update.notes = data.notes.trim() || null;
     if (data.status === "paid") update.settled_at = new Date().toISOString();
     if (data.status === "approved") {
@@ -1227,14 +1398,23 @@ export const updateSettlementStatus = createServerFn({ method: "POST" })
       update.verified_at = new Date().toISOString();
     }
 
-    const { error } = await supabaseAdmin.from("seller_settlements").update(update).eq("id", data.id);
+    const { error } = await supabaseAdmin
+      .from("seller_settlements")
+      .update(update)
+      .eq("id", data.id);
     if (error) throw new Error(error.message);
-    await auditLog(context.userId ?? null, `settlement_${data.status}`, "seller_settlement", data.id, {
-      from: settlement.status,
-      to: data.status,
-      payment_reference: data.payment_reference ?? null,
-      payment_proof_attached: data.payment_proof_path != null && data.payment_proof_path !== "",
-    });
+    await auditLog(
+      context.userId ?? null,
+      `settlement_${data.status}`,
+      "seller_settlement",
+      data.id,
+      {
+        from: settlement.status,
+        to: data.status,
+        payment_reference: data.payment_reference ?? null,
+        payment_proof_attached: data.payment_proof_path != null && data.payment_proof_path !== "",
+      },
+    );
 
     // Notify the seller about the settlement decision (best-effort).
     try {
@@ -1271,7 +1451,9 @@ export const listAuditLogs = createServerFn({ method: "GET" })
     const from = (data.page - 1) * PAGE_SIZE;
     let query = context.supabase
       .from("audit_logs")
-      .select("id, actor_id, action, resource, resource_id, metadata, created_at", { count: "exact" })
+      .select("id, actor_id, action, resource, resource_id, metadata, created_at", {
+        count: "exact",
+      })
       .order("created_at", { ascending: false })
       .range(from, from + PAGE_SIZE - 1);
     if (data.action) query = query.ilike("action", `%${data.action.trim().replace(/[%_,]/g, "")}%`);
@@ -1305,7 +1487,7 @@ export const bulkModerateAdminProducts = createServerFn({ method: "POST" })
   .middleware(adminOnly)
   .inputValidator((data) => bulkModerateInput.parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "products.manage");
     const supabaseAdmin = await adminClient();
     const now = new Date().toISOString();
     const base = {
@@ -1354,7 +1536,10 @@ export const bulkModerateAdminProducts = createServerFn({ method: "POST" })
               : data.decision === "reject"
                 ? "product_rejected"
                 : "product_hidden",
-          params: { productName: `${affected.length} products`, reason: data.reason?.trim() || undefined },
+          params: {
+            productName: `${affected.length} products`,
+            reason: data.reason?.trim() || undefined,
+          },
           link: "/seller/products",
           payload: { decision: data.decision, bulk: true },
         });
@@ -1375,7 +1560,7 @@ export const bulkSetProductStatus = createServerFn({ method: "POST" })
   .middleware(adminOnly)
   .inputValidator((data) => bulkStatusInput.parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "products.manage");
     const supabaseAdmin = await adminClient();
     const { data: rows, error } = await supabaseAdmin
       .from("products")
@@ -1405,7 +1590,7 @@ export const getSettlementProofUrl = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .inputValidator((data) => proofUrlInput.parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "settlements.manage");
     const supabaseAdmin = await adminClient();
     const { data: settlement, error } = await supabaseAdmin
       .from("seller_settlements")
@@ -1463,9 +1648,11 @@ export const listAdminCommissions = createServerFn({ method: "GET" })
       .from("sellers")
       .select("id, legal_name, email, commission_rate", { count: "exact" });
     if (q) query = query.or(`legal_name.ilike.%${q}%,email.ilike.%${q}%`);
-    const { data: sellers, error, count } = await query
-      .order("legal_name")
-      .range(from, from + PAGE_SIZE - 1);
+    const {
+      data: sellers,
+      error,
+      count,
+    } = await query.order("legal_name").range(from, from + PAGE_SIZE - 1);
     if (error) throw new Error(error.message);
     const sellerIds = (sellers ?? []).map((s) => s.id);
 
@@ -1476,14 +1663,31 @@ export const listAdminCommissions = createServerFn({ method: "GET" })
             .select("seller_id, subtotal, commission_total, status")
             .in("seller_id", sellerIds)
             .in("status", ["delivered", "fulfilled"])
-        : Promise.resolve({ data: [] as { seller_id: string; subtotal: number | null; commission_total: number | null; status: string }[], error: null }),
+        : Promise.resolve({
+            data: [] as {
+              seller_id: string;
+              subtotal: number | null;
+              commission_total: number | null;
+              status: string;
+            }[],
+            error: null,
+          }),
       sellerIds.length
         ? supabaseAdmin
             .from("seller_commission_history")
             .select("id, seller_id, rate, effective_from, changed_by")
             .in("seller_id", sellerIds)
             .order("effective_from", { ascending: false })
-        : Promise.resolve({ data: [] as { id: string; seller_id: string; rate: number; effective_from: string; changed_by: string | null }[], error: null }),
+        : Promise.resolve({
+            data: [] as {
+              id: string;
+              seller_id: string;
+              rate: number;
+              effective_from: string;
+              changed_by: string | null;
+            }[],
+            error: null,
+          }),
     ]);
     if (ordersRes.error) throw new Error(ordersRes.error.message);
     if (historyRes.error) throw new Error(historyRes.error.message);
@@ -1524,4 +1728,110 @@ export const listAdminCommissions = createServerFn({ method: "GET" })
     });
 
     return { rows, total: count ?? 0, page: data.page, pageSize: PAGE_SIZE };
+  });
+
+/* ── Seller product deletion + warnings ─────────────────────────── */
+
+/** Admin: permanently delete a seller's product + record a violation warning. */
+export const deleteSellerProduct = createServerFn({ method: "POST" })
+  .middleware(adminOnly)
+  .validator((d) =>
+    z
+      .object({
+        productId: z.string().uuid(),
+        reason: z.string().min(3).max(1000),
+      })
+      .parse(d)
+  )
+  .handler(async ({ data, context }): Promise<{ ok: boolean }> => {
+    await assertAdminPermission(context, "products.manage");
+    const supabaseAdmin = await adminClient();
+
+    const { data: product, error: prodError } = await supabaseAdmin
+      .from("products")
+      .select("id, seller_id, name")
+      .eq("id", data.productId)
+      .maybeSingle();
+    if (prodError || !product) throw new Error("Product not found");
+
+    const rawName = product.name as Record<string, unknown> | string | null;
+    const productName =
+      typeof rawName === "string"
+        ? rawName
+        : typeof rawName?.["fr"] === "string"
+          ? (rawName["fr"] as string)
+          : typeof rawName?.["en"] === "string"
+            ? (rawName["en"] as string)
+            : "Product";
+
+    // Record the warning first (keeps product_id for the record)
+    const { error: warnError } = await supabaseAdmin.from("seller_warnings").insert({
+      seller_id: product.seller_id,
+      product_id: product.id,
+      reason: data.reason.trim(),
+      action_taken: "product_deleted",
+      issued_by: (context as any)?.userId ?? null,
+    });
+    if (warnError) throw new Error(warnError.message);
+
+    // Delete the product
+    const { error: delError } = await supabaseAdmin.from("products").delete().eq("id", data.productId);
+    if (delError) throw new Error(delError.message);
+
+    await auditLog((context as any)?.userId ?? null, "product_deleted", "product", data.productId, {
+      reason: data.reason,
+    });
+
+    // Notify the seller
+    try {
+      await emitSellerNotification(product.seller_id, {
+        type: "product_rejected",
+        params: { productName, reason: data.reason.trim() },
+        payload: { product_id: data.productId, action: "deleted" },
+      });
+    } catch {
+      /* best-effort */
+    }
+    return { ok: true };
+  });
+
+/** Admin: issue a warning to a seller without deleting (notice only). */
+export const issueSellerWarning = createServerFn({ method: "POST" })
+  .middleware(adminOnly)
+  .validator((d) =>
+    z
+      .object({
+        sellerId: z.string().uuid(),
+        productId: z.string().uuid().optional(),
+        reason: z.string().min(3).max(1000),
+      })
+      .parse(d)
+  )
+  .handler(async ({ data, context }): Promise<{ ok: boolean }> => {
+    await assertAdminPermission(context, "products.manage");
+    const supabaseAdmin = await adminClient();
+
+    const { error } = await supabaseAdmin.from("seller_warnings").insert({
+      seller_id: data.sellerId,
+      product_id: data.productId ?? null,
+      reason: data.reason.trim(),
+      action_taken: "notice",
+      issued_by: (context as any)?.userId ?? null,
+    });
+    if (error) throw new Error(error.message);
+
+    await auditLog((context as any)?.userId ?? null, "seller_warned", "seller", data.sellerId, {
+      reason: data.reason,
+    });
+
+    try {
+      await emitSellerNotification(data.sellerId, {
+        type: "product_rejected",
+        params: { reason: data.reason.trim() },
+        payload: { action: "warning" },
+      });
+    } catch {
+      /* best-effort */
+    }
+    return { ok: true };
   });

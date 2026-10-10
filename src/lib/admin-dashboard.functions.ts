@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { assertAdmin } from "@/lib/admin-auth";
+import { assertAdminPermission } from "@/lib/admin-permissions";
 
 const adminOnly = [requireSupabaseAuth] as const;
 
@@ -65,6 +65,7 @@ type OrderItemRow = { product_id: string | null; quantity: number; total: number
 type ProductLiteRow = { id: string; slug: string; name: Record<string, string> | null; category_id: string | null };
 type CategoryLiteRow = { id: string; name: Record<string, string> | null; slug: string };
 type SellerLiteRow = { id: string; legal_name: string };
+type StoreLiteRow = { id: string; seller_id: string; name: string };
 
 export type AdminMetricsResult = {
   metrics: {
@@ -98,8 +99,8 @@ export type AdminMetricsResult = {
   };
   /** Last 30 days (oldest -> newest): { date: 'YYYY-MM-DD', orders, sales }. sales = delivered orders' grand_total per day. */
   series: { date: string; orders: number; sales: number }[];
-  topProducts: { productId: string; label: string; slug: string; value: string; hint?: string }[];
-  topSellers: { sellerId: string; label: string; value: string; hint?: string }[];
+  topProducts: { productId: string; label: string; slug: string; qty: number; hint?: string }[];
+  topSellers: { sellerId: string; label: string; orders: number; total: number; hint?: string }[];
   topCategories: { categoryId: string; label: string; value: string; hint?: string }[];
   statusBreakdown: { status: string; count: number }[];
   recentOrders: { id: string; orderNumber: string; customer: string; total: number; status: string; createdAt: string }[];
@@ -117,7 +118,7 @@ const WINDOW_DAYS = 30;
 const AGG_LIMIT = 50000;
 
 export const getAdminMetrics = createServerFn({ method: "GET" }).middleware(adminOnly).handler(async ({ context }): Promise<AdminMetricsResult> => {
-  await assertAdmin(context);
+  await assertAdminPermission(context, "dashboard.view");
   const supabase = context.supabase;
   const diagnostics: TableDiagnostic[] = [];
 
@@ -131,7 +132,6 @@ export const getAdminMetrics = createServerFn({ method: "GET" }).middleware(admi
     deliveredAgg,
     windowOrders,
     commissionRows,
-    deliveredSellerOrders,
     pendingSettlementsRows,
     pendingSettlementsCount,
     activeSellers,
@@ -146,6 +146,7 @@ export const getAdminMetrics = createServerFn({ method: "GET" }).middleware(admi
     categories,
     sellersLite,
     recentOrdersRows,
+    storesLite,
   ] = await Promise.all([
     // 0: exact per-status parent-order counts (14 parallel head queries)
     Promise.all(
@@ -157,10 +158,9 @@ export const getAdminMetrics = createServerFn({ method: "GET" }).middleware(admi
     fetchTable<OrderAggRow>("orders:delivered_sales", diagnostics, supabase.from("orders").select("id,status,grand_total,created_at").eq("status", "delivered").limit(AGG_LIMIT)),
     // 2: 30-day window orders for the time series (bounded)
     fetchTable<OrderAggRow>("orders:window_30d", diagnostics, supabase.from("orders").select("id,status,grand_total,created_at").gte("created_at", windowStartIso).limit(AGG_LIMIT)),
-    // 3: commission payable = seller_orders delivered/fulfilled (bounded)
+    // 3: commission payable = seller_orders delivered/fulfilled (bounded).
+    // Also reused for top sellers (was an identical duplicate query).
     fetchTable<SellerOrderRow>("seller_orders:commission", diagnostics, supabase.from("seller_orders").select("id,seller_id,status,commission_total,subtotal").in("status", ["delivered", "fulfilled"]).limit(AGG_LIMIT)),
-    // 4: delivered seller orders for top sellers (bounded)
-    fetchTable<SellerOrderRow>("seller_orders:top_sellers", diagnostics, supabase.from("seller_orders").select("id,seller_id,status,commission_total,subtotal").in("status", ["delivered", "fulfilled"]).limit(AGG_LIMIT)),
     // 5: pending settlements list (bounded, latest 100)
     fetchTable<SettlementRow>("seller_settlements:pending", diagnostics, supabase.from("seller_settlements").select("id,seller_id,amount,status,period_start,period_end,created_at,payment_reference").eq("status", "pending").order("created_at", { ascending: false }).limit(100)),
     // 6: pending settlements count (exact)
@@ -189,6 +189,8 @@ export const getAdminMetrics = createServerFn({ method: "GET" }).middleware(admi
     fetchTable<SellerLiteRow>("sellers:labels", diagnostics, supabase.from("sellers").select("id,legal_name").limit(5000)),
     // 18: 8 latest parent orders
     fetchTable<RecentOrderRow>("orders:recent", diagnostics, supabase.from("orders").select("id,order_number,first_name,last_name,grand_total,status,created_at").order("created_at", { ascending: false }).limit(8)),
+    // 19: store labels so "top stores" shows real store names (bounded)
+    fetchTable<StoreLiteRow>("stores:labels", diagnostics, supabase.from("stores").select("id,seller_id,name").limit(5000)),
   ]);
 
   const statusMap = new Map<string, number>(ORDER_STATUSES.map((s, i) => [s, statusCounts[i] ?? 0]));
@@ -264,14 +266,16 @@ export const getAdminMetrics = createServerFn({ method: "GET" }).middleware(admi
         productId,
         label: pickName(p?.name, p?.slug ?? productId.slice(0, 8)),
         slug: p?.slug ?? "",
-        value: `${agg.qty} sold`,
+        qty: agg.qty,
       };
     });
 
-  // Top sellers by delivered seller_orders subtotal
+  // Top stores by delivered seller_orders subtotal (real store names; the
+  // dashboard section is honestly titled "Top stores").
   const sellerLabels = new Map(sellersLite.map((s) => [s.id, s.legal_name]));
+  const storeNameBySeller = new Map(storesLite.map((st) => [st.seller_id, st.name]));
   const sellerTotals = new Map<string, number>();
-  for (const so of deliveredSellerOrders) {
+  for (const so of commissionRows) {
     sellerTotals.set(so.seller_id, (sellerTotals.get(so.seller_id) ?? 0) + num(so.subtotal));
   }
   const topSellers = [...sellerTotals.entries()]
@@ -279,8 +283,9 @@ export const getAdminMetrics = createServerFn({ method: "GET" }).middleware(admi
     .slice(0, 5)
     .map(([sellerId, total]) => ({
       sellerId,
-      label: sellerLabels.get(sellerId) ?? sellerId.slice(0, 8),
-      value: `${deliveredSellerOrders.filter((so) => so.seller_id === sellerId).length} orders`,
+      label: storeNameBySeller.get(sellerId) ?? sellerLabels.get(sellerId) ?? sellerId.slice(0, 8),
+      orders: commissionRows.filter((so) => so.seller_id === sellerId).length,
+      total,
     }));
 
   // Top categories by product count

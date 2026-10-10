@@ -138,30 +138,3 @@ export function answerWithRules(opts: {
   const text = t.found(matches.length, summary) + lines + t.disclaimer;
   return { text, products: shown };
 }
-
-/**
- * Rule-based similar products: same category first, then same seller,
- * then nearby price band. All from real data — no invented relations.
- */
-export function similarProducts(
-  target: AiCatalogItem,
-  catalog: AiCatalogItem[],
-  limit = 8,
-): AiCatalogItem[] {
-  const scored = catalog
-    .filter((p) => p.id !== target.id)
-    .map((p) => {
-      let score = 0;
-      if (p.categorySlug && p.categorySlug === target.categorySlug) score += 5;
-      if (p.storeSlug && p.storeSlug === target.storeSlug) score += 3;
-      if (target.price > 0) {
-        const ratio = Math.min(p.price, target.price) / Math.max(p.price, target.price);
-        if (ratio >= 0.7) score += 2;
-        else if (ratio >= 0.4) score += 1;
-      }
-      return { p, score };
-    })
-    .filter((s) => s.score > 0)
-    .sort((a, b) => b.score - a.score || a.p.price - b.p.price);
-  return scored.slice(0, limit).map((s) => s.p);
-}

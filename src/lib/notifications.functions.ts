@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireSeller } from "@/lib/seller-auth";
-import { assertAdmin } from "@/lib/admin-auth";
+import { assertAdminPermission, type AdminPermission } from "@/lib/admin-permissions";
 import type { Json } from "@/integrations/supabase/types";
 
 /**
@@ -91,11 +91,15 @@ type Recipient =
  * customer = auth user, seller = session-resolved seller (owner or active
  * staff), admin = super_admin RPC.
  */
-async function resolveRecipient(context: any, scope: NotificationScope): Promise<Recipient> {
+async function resolveRecipient(
+  context: any,
+  scope: NotificationScope,
+  adminPerm: AdminPermission = "notifications.view",
+): Promise<Recipient> {
   const userId = context?.userId;
   if (typeof userId !== "string" || !userId) throw new Error("Unauthorized");
   if (scope === "admin") {
-    await assertAdmin(context);
+    await assertAdminPermission(context, adminPerm);
     return { kind: "admin" };
   }
   if (scope === "seller") {
@@ -162,7 +166,7 @@ export const listNotifications = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((data) => scopeInput.merge(pageInput).parse(data))
   .handler(async ({ data, context }) => {
-    const recipient = await resolveRecipient(context, data.scope);
+    const recipient = await resolveRecipient(context, data.scope, "notifications.view");
     const sb = await adminClient();
     const from = (data.page - 1) * data.pageSize;
     const result = await scopedQuery(sb, recipient)
@@ -182,7 +186,7 @@ export const unreadCount = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((data) => scopeInput.parse(data))
   .handler(async ({ data, context }) => {
-    const recipient = await resolveRecipient(context, data.scope);
+    const recipient = await resolveRecipient(context, data.scope, "notifications.view");
     const sb = await adminClient();
     const result = await scopedQuery(sb, recipient)
       .select("id", { count: "exact", head: true })
@@ -195,7 +199,7 @@ export const markRead = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((data) => scopeInput.merge(z.object({ id: z.string().uuid() })).parse(data))
   .handler(async ({ data, context }) => {
-    const recipient = await resolveRecipient(context, data.scope);
+    const recipient = await resolveRecipient(context, data.scope, "notifications.manage");
     const sb = await adminClient();
     const result = await scopedQuery(sb, recipient)
       .update({ read_at: new Date().toISOString() })
@@ -210,7 +214,7 @@ export const markAllRead = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((data) => scopeInput.parse(data))
   .handler(async ({ data, context }) => {
-    const recipient = await resolveRecipient(context, data.scope);
+    const recipient = await resolveRecipient(context, data.scope, "notifications.manage");
     const sb = await adminClient();
     const result = await scopedQuery(sb, recipient)
       .update({ read_at: new Date().toISOString() })

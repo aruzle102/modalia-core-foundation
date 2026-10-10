@@ -14,8 +14,9 @@ import { browseCatalog, getStoreDirectory } from "@/lib/catalog.functions";
 import { parseQuery, intentSummary, type CatalogCategoryLike } from "@/lib/ai/query-parse";
 import { getLocale, getTranslations, localeDirections } from "@/lib/i18n";
 import { track } from "@/lib/analytics";
-import { pageHead } from "@/lib/seo";
+import { pageHead, pageHeadCopy, prefetchSeoSettings, seoRobotsFromHeadCtx } from "@/lib/seo";
 import type { SupportedLocale } from "@/config/platform";
+import { motionTw } from "@/lib/motion-tokens";
 
 const SORTS = ["newest", "price_asc", "price_desc"] as const;
 const VIEWS = ["", "categories", "stores"] as const;
@@ -51,6 +52,8 @@ type ShopSearch = {
   stores: string[];
   colors: string[];
   sizes: string[];
+  /** Canonical gender key (men|women|kids|unisex); undefined/"" = no filter. */
+  gender?: string | undefined;
   inStock: boolean;
   onSale: boolean;
 };
@@ -67,6 +70,7 @@ const shopQuery = (input: {
   stores: string[];
   colors: string[];
   sizes: string[];
+  gender?: string | undefined;
   inStock: boolean;
   onSale: boolean;
 }) =>
@@ -125,6 +129,7 @@ export const Route = createFileRoute("/shop")({
     stores: toStringArray(search["stores"]),
     colors: toStringArray(search["colors"]),
     sizes: toStringArray(search["sizes"]),
+    gender: typeof search["gender"] === "string" ? search["gender"] : "",
     inStock: toBoolean(search["inStock"]),
     onSale: toBoolean(search["onSale"]),
   }),
@@ -140,6 +145,7 @@ export const Route = createFileRoute("/shop")({
     stores: search.stores,
     colors: search.colors,
     sizes: search.sizes,
+    gender: search.gender,
     inStock: search.inStock,
     onSale: search.onSale,
   }),
@@ -147,17 +153,22 @@ export const Route = createFileRoute("/shop")({
     Promise.all([
       context.queryClient.ensureQueryData(shopQuery(deps)),
       context.queryClient.ensureQueryData(storeDirectoryQuery(deps.locale)),
+      prefetchSeoSettings(context.queryClient),
     ]),
   pendingComponent: ShopLoading,
   errorComponent: ShopError,
   notFoundComponent: ShopNotFound,
-  head: () =>
-    pageHead({
-      title: "Shop — Modalia",
-      description:
-        "Browse approved products from Modalia’s independent stores. Cash on delivery across Algeria.",
+  head: (context) => {
+    const rawSearch = (context as unknown as { search?: Record<string, unknown> }).search ?? {};
+    const locale = getLocale(typeof rawSearch["locale"] === "string" ? rawSearch["locale"] : undefined);
+    const copy = pageHeadCopy(locale, "shop");
+    return pageHead({
+      title: copy.title,
+      description: copy.description,
       path: "/shop",
-    }),
+      robots: seoRobotsFromHeadCtx(context),
+    });
+  },
   component: ShopPage,
 });
 
@@ -174,19 +185,24 @@ type SmartFilterPatch = {
   minPrice?: number | undefined;
   maxPrice?: number | undefined;
   colors?: string[];
+  sizes?: string[];
+  /** Canonical gender key (men|women|kids|unisex) from the NL parser. */
+  gender?: string;
 };
 
 /**
  * Smart search: interprets a natural-language query (ar/fr/en) with the
  * client-safe parser and offers to apply the detected category / price /
- * color signals as real shop filters. Nothing is ever applied silently —
- * the shopper reviews the "understood" summary and confirms.
+ * color / size / gender signals as real shop filters. Nothing is ever
+ * applied silently — the shopper reviews the "understood" summary and
+ * confirms.
  */
 function SmartSearchBanner({
   q,
   locale,
   categories,
   colors,
+  sizes,
   current,
   onApply,
 }: {
@@ -194,7 +210,15 @@ function SmartSearchBanner({
   locale: SupportedLocale;
   categories: Array<{ slug: string; name: string }>;
   colors: Array<{ slug: string; name: string }>;
-  current: { category: string; minPrice?: number | undefined; maxPrice?: number | undefined; colors: string[] };
+  sizes: Array<{ value: string; label: string }>;
+  current: {
+    category: string;
+    minPrice?: number | undefined;
+    maxPrice?: number | undefined;
+    colors: string[];
+    sizes: string[];
+    gender: string;
+  };
   onApply: (patch: SmartFilterPatch) => void;
 }) {
   const [dismissedFor, setDismissedFor] = useState<string | null>(null);
@@ -209,25 +233,35 @@ function SmartSearchBanner({
     const colorSlugs = intent.colors
       .map((key) => colors.find((c) => c.slug.toLowerCase() === key || c.slug.toLowerCase().includes(key))?.slug)
       .filter((slug): slug is string => slug !== undefined && !current.colors.includes(slug));
+    // Map parsed size words to REAL size values from the catalog facets.
+    const sizeValues = intent.sizes
+      .map((key) => sizes.find((s) => s.value.toLowerCase() === key.toLowerCase())?.value)
+      .filter((value): value is string => value !== undefined && !current.sizes.includes(value));
     const patch: SmartFilterPatch = {};
     if (intent.categorySlug && current.category !== intent.categorySlug) patch.category = intent.categorySlug;
     if (intent.minPrice !== null && current.minPrice !== intent.minPrice) patch.minPrice = intent.minPrice;
     if (intent.maxPrice !== null && current.maxPrice !== intent.maxPrice) patch.maxPrice = intent.maxPrice;
     if (colorSlugs.length) patch.colors = [...current.colors, ...colorSlugs];
+    if (sizeValues.length) patch.sizes = [...current.sizes, ...sizeValues];
+    // Gender reaches the DB as a structured p_gender filter (V8 #228) —
+    // category or ancestor chain carries the gender. Only the first parsed
+    // gender is used, matching the assistant drawer.
+    const parsedGender = intent.genders[0];
+    if (parsedGender && current.gender !== parsedGender) patch.gender = parsedGender;
     if (Object.keys(patch).length === 0) return null;
     const summary = intentSummary(intent, locale);
     if (!summary) return null;
     return { summary, patch };
-  }, [q, dismissedFor, locale, categories, colors, current]);
+  }, [q, dismissedFor, locale, categories, colors, sizes, current]);
 
   if (!suggestion) return null;
   return (
     <div
-      className="mt-4 flex flex-wrap items-center gap-3 rounded-2xl border border-sky-500/30 bg-sky-500/10 px-4 py-3"
+      className="mt-4 flex flex-wrap items-center gap-3 rounded-[14px] border border-[#E5E5E5] bg-white px-4 py-3"
       role="status"
     >
-      <Sparkles className="size-4 shrink-0 text-sky-600 dark:text-sky-400" aria-hidden />
-      <p className="min-w-0 flex-1 text-sm text-sky-900 dark:text-sky-200">
+      <Sparkles className="size-4 shrink-0 text-[#0A0A0A]" aria-hidden />
+      <p className="min-w-0 flex-1 text-sm text-[#0A0A0A]">
         {ts.smartUnderstood(suggestion.summary)}
       </p>
       <div className="flex items-center gap-2">
@@ -275,7 +309,7 @@ function CategoryTab({
       ) : null}
       <span
         aria-hidden
-        className={`absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-foreground transition-opacity duration-300 ${
+        className={`absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-foreground ${motionTw.transition.opacity} ${motionTw.duration.feedback} ${
           active ? "opacity-100" : "opacity-0"
         }`}
       />
@@ -294,7 +328,20 @@ function ShopPage() {
   const q = search.q.trim();
 
   useEffect(() => {
-    if (q) track("search", { metadata: { query: q.slice(0, 120) } });
+    if (q) {
+      // Attribute the search to the seller when the shopper filtered to a
+      // single store: the seller-scoped RPC picks these events up by
+      // entity_type='store' + the store's id (no RPC change needed).
+      const onlyStore =
+        search.stores.length === 1
+          ? storeDirectory.find((s) => s.slug === search.stores[0])
+          : undefined;
+      track("search", {
+        ...(onlyStore ? { entityType: "store" as const, entityId: onlyStore.id } : {}),
+        metadata: { query: q.slice(0, 120) },
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q]);
 
   const filterValues: ShopFilterValues = {
@@ -334,6 +381,8 @@ function ShopPage() {
         minPrice: patch.minPrice ?? previous.minPrice,
         maxPrice: patch.maxPrice ?? previous.maxPrice,
         colors: patch.colors ?? previous.colors,
+        sizes: patch.sizes ?? previous.sizes,
+        gender: patch.gender ?? previous.gender,
         page: 1,
       }),
     });
@@ -346,6 +395,16 @@ function ShopPage() {
     data.sizes.find((size) => size.value === value)?.label ?? value;
   const categoryName = (slug: string) =>
     data.categories.find((category) => category.slug === slug)?.name ?? slug;
+  const genderLabel = (gender: string) =>
+    gender === "men"
+      ? t.category.genderMen
+      : gender === "women"
+        ? t.category.genderWomen
+        : gender === "kids"
+          ? t.category.genderKids
+          : gender === "unisex"
+            ? t.category.genderUnisex
+            : gender;
 
   const chips: { key: string; label: string; clear: () => void }[] = [];
   if (q) chips.push({ key: "q", label: `“${q}”`, clear: () => navigate({ search: (p) => ({ ...p, q: "", page: 1 }) }) });
@@ -389,6 +448,12 @@ function ShopPage() {
       clear: () => updateFilters({ ...filterValues, sizes: filterValues.sizes.filter((s) => s !== value) }),
     }),
   );
+  if (search.gender)
+    chips.push({
+      key: "gender",
+      label: genderLabel(search.gender),
+      clear: () => navigate({ search: (p) => ({ ...p, gender: "", page: 1 }) }),
+    });
   if (search.inStock)
     chips.push({
       key: "instock",
@@ -414,6 +479,7 @@ function ShopPage() {
         stores: [],
         colors: [],
         sizes: [],
+        gender: "",
         inStock: false,
         onSale: false,
         page: 1,
@@ -437,11 +503,10 @@ function ShopPage() {
   );
 
   return (
-    <div dir={localeDirections[search.locale]} lang={search.locale} className="min-h-screen bg-background">
+    <div dir={localeDirections[search.locale]} lang={search.locale} className="min-h-screen bg-[#F6F6F4]">
       <SiteHeader locale={search.locale} t={t} />
       <main id="main-content" tabIndex={-1} className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <p className="text-eyebrow text-muted-foreground">{ts.eyebrow}</p>
-        <h1 className="mt-2 text-display text-foreground">{ts.title}</h1>
+        <h1 className="text-display tracking-tight text-[#0A0A0A]">SHOP</h1>
 
         <form
           onSubmit={(event) => {
@@ -465,7 +530,7 @@ function ShopPage() {
             name="q"
             defaultValue={search.q}
             placeholder={ts.searchPlaceholder}
-            className="h-11 ps-10"
+            className="h-11 rounded-[10px] border-[#E5E5E5] bg-white ps-10"
           />
         </form>
 
@@ -474,16 +539,19 @@ function ShopPage() {
           locale={search.locale}
           categories={data.categories}
           colors={data.colors}
+          sizes={data.sizes}
           current={{
             category: search.category,
             minPrice: search.minPrice,
             maxPrice: search.maxPrice,
             colors: search.colors,
+            sizes: search.sizes,
+            gender: search.gender ?? "",
           }}
           onApply={applySmartFilters}
         />
 
-        <div className="mt-8 flex flex-wrap items-center gap-2 border-b border-border pb-4" aria-label={ts.filters}>
+        <div className="mt-8 flex flex-wrap items-center gap-2 border-b border-[#E5E5E5] pb-4" aria-label={ts.filters}>
           {views.map((view) => (
             <Button
               key={view.value || "all"}
@@ -509,7 +577,7 @@ function ShopPage() {
           </div>
         ) : (
           <>
-            <div className="mt-8 flex gap-7 overflow-x-auto border-b border-border" role="tablist" aria-label={ts.filters}>
+            <div className="mt-8 flex gap-7 overflow-x-auto border-b border-[#E5E5E5]" role="tablist" aria-label={ts.filters}>
               <CategoryTab
                 active={search.category === ""}
                 label={ts.all}
@@ -532,7 +600,7 @@ function ShopPage() {
               ))}
             </div>
 
-            <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-y border-border py-3">
+            <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-y border-[#E5E5E5] py-3">
               <div className="flex items-center gap-3">
                 <Button
                   type="button"
@@ -563,7 +631,7 @@ function ShopPage() {
                       }),
                     })
                   }
-                  className="h-9 bg-background text-small text-foreground outline-none"
+                  className="h-10 rounded-[10px] border border-[#E5E5E5] bg-white px-3 text-small text-[#0A0A0A] outline-none"
                 >
                   <option value="newest">{ts.sortNewest}</option>
                   <option value="price_asc">{ts.sortPriceAsc}</option>
@@ -579,7 +647,7 @@ function ShopPage() {
                     key={chip.key}
                     type="button"
                     onClick={chip.clear}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/60 py-1 pe-2 ps-3 text-caption text-foreground transition-colors hover:border-foreground/30"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-[#E5E5E5] bg-white py-1 pe-2 ps-3 text-caption text-[#0A0A0A] transition-colors hover:border-[#0A0A0A]/30"
                   >
                     {chip.label}
                     <X className="size-3.5 text-muted-foreground" aria-hidden />
@@ -597,7 +665,7 @@ function ShopPage() {
 
             <div className="mt-8 grid gap-10 lg:grid-cols-[15rem_minmax(0,1fr)]">
               <aside className="hidden lg:block">
-                <div className="sticky top-24">{filtersPanel}</div>
+                <div className="sticky top-24 rounded-[14px] border border-[#E5E5E5] bg-white p-5">{filtersPanel}</div>
               </aside>
               <div className="min-w-0">
                 <ProductGrid
@@ -673,9 +741,9 @@ function ShopPage() {
             className="absolute inset-0 cursor-default bg-black/50"
             onClick={() => setFiltersOpen(false)}
           />
-          <div className="absolute inset-y-0 start-0 flex w-80 max-w-[85vw] flex-col bg-background shadow-xl">
-            <div className="flex items-center justify-between border-b border-border p-4">
-              <h2 className="text-h3 text-foreground">{ts.filters}</h2>
+          <div className="absolute inset-y-0 start-0 flex w-80 max-w-[85vw] flex-col bg-white shadow-xl">
+            <div className="flex items-center justify-between border-b border-[#E5E5E5] p-4">
+              <h2 className="text-h3 text-[#0A0A0A]">{ts.filters}</h2>
               <Button type="button" variant="ghost" size="icon" onClick={() => setFiltersOpen(false)} aria-label={ts.hideFilters}>
                 <X className="size-5" />
               </Button>

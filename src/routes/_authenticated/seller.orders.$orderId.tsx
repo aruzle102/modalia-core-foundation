@@ -6,8 +6,19 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { AdminCard, StatusPill, EmptyState, Field, fmtDateTime, fmtMoney } from "@/components/admin/ui";
-import { getSellerOrderDetail, updateSellerOrderStatus, addSellerOrderNote } from "@/lib/seller-orders.functions";
+import {
+  AdminCard,
+  StatusPill,
+  EmptyState,
+  Field,
+  fmtDateTime,
+  fmtMoney,
+} from "@/components/admin/ui";
+import {
+  getSellerOrderDetail,
+  updateSellerOrderStatus,
+  addSellerOrderNote,
+} from "@/lib/seller-orders.functions";
 import { getLocale } from "@/lib/i18n";
 import { strParam } from "@/hooks/use-url-state";
 import { BackLink } from "@/components/routing/back-link";
@@ -27,13 +38,28 @@ export const Route = createFileRoute("/_authenticated/seller/orders/$orderId")({
     back: strParam(search["back"]),
   }),
   loader: ({ context, params }) => context.queryClient.ensureQueryData(detailQuery(params.orderId)),
-  head: () => ({ meta: [{ name: "robots", content: "noindex,nofollow" }, { title: "Order detail — Seller — Modalia" }] }),
+  head: () => ({
+    meta: [
+      { name: "robots", content: "noindex,nofollow" },
+      { title: "Order detail — Seller — Modalia" },
+    ],
+  }),
+  pendingComponent: () => (
+    <SellerShell eyebrow="Seller workspace" title="Order">
+      <div className="space-y-4" aria-busy="true">
+        <div className="h-8 w-1/3 animate-pulse rounded bg-muted" />
+        <div className="h-64 animate-pulse rounded-xl bg-muted" />
+      </div>
+    </SellerShell>
+  ),
   errorComponent: () => (
-    <SellerShell
-      eyebrow="Seller workspace"
-      title="Order"
-    >
-      <AdminCard><EmptyState title="Order could not be loaded" text="Please check your connection and try again." /></AdminCard>
+    <SellerShell eyebrow="Seller workspace" title="Order">
+      <AdminCard>
+        <EmptyState
+          title="Order could not be loaded"
+          text="Please check your connection and try again."
+        />
+      </AdminCard>
     </SellerShell>
   ),
   component: SellerOrderDetailPage,
@@ -56,7 +82,13 @@ function SellerOrderDetailPage() {
 
   const transition = useMutation({
     mutationFn: (payload: { status: string; note?: string }) =>
-      updateSellerOrderStatus({ data: { sellerOrderId: orderId, status: payload.status, ...(payload.note ? { note: payload.note } : {}) } }),
+      updateSellerOrderStatus({
+        data: {
+          sellerOrderId: orderId,
+          status: payload.status,
+          ...(payload.note ? { note: payload.note } : {}),
+        },
+      }),
     onSuccess: (result) => {
       toast.success(`Order moved to ${result.status.replace(/_/g, " ")}.`);
       setPendingTransition(null);
@@ -78,11 +110,13 @@ function SellerOrderDetailPage() {
 
   if (!data) {
     return (
-      <SellerShell
-      eyebrow="Seller workspace"
-      title="Order"
-    >
-        <AdminCard><EmptyState title="Order not found" text="This order does not exist or does not belong to your store." /></AdminCard>
+      <SellerShell eyebrow="Seller workspace" title="Order">
+        <AdminCard>
+          <EmptyState
+            title="Order not found"
+            text="This order does not exist or does not belong to your store."
+          />
+        </AdminCard>
       </SellerShell>
     );
   }
@@ -107,21 +141,20 @@ function SellerOrderDetailPage() {
         </Button>
       }
     >
-      <p className="text-body text-muted-foreground">{`Placed ${fmtDateTime(data.createdAt)} · Marketplace status: ${data.parentStatus.replace(/_/g, " ")}`}</p>
+      <p className="text-body text-muted-foreground">{`Placed ${fmtDateTime(data.createdAt, locale)} · Marketplace status: ${data.parentStatus.replace(/_/g, " ")}`}</p>
       {/* Status + allowed transitions */}
-      <AdminCard
-        title="Fulfilment status"
-        actions={<StatusPill status={data.status} />}
-      >
+      <AdminCard title="Fulfilment status" actions={<StatusPill status={data.status} />}>
         {data.allowedTransitions.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            This order is in a final state for sellers. Further updates (courier scan, delivery) are handled by the platform.
+            This order is in a final state for sellers. Further updates (courier scan, delivery) are
+            handled by the platform.
           </p>
         ) : pendingTransition ? (
           <div className="space-y-4 rounded-2xl border border-border p-4">
             <p className="text-sm font-medium">
-              Move order to <span className="font-semibold">“{pendingTransition.replace(/_/g, " ")}”</span>?
-              This is recorded in the order timeline.
+              Move order to{" "}
+              <span className="font-semibold">“{pendingTransition.replace(/_/g, " ")}”</span>? This
+              is recorded in the order timeline.
             </p>
             <Field label="Note for the timeline (optional)">
               <Input
@@ -136,11 +169,23 @@ function SellerOrderDetailPage() {
                 size="sm"
                 variant={pendingTransition === "cancelled" ? "destructive" : "default"}
                 disabled={transition.isPending}
-                onClick={() => transition.mutate({ status: pendingTransition, ...(transitionNote.trim() ? { note: transitionNote.trim() } : {}) })}
+                onClick={() =>
+                  transition.mutate({
+                    status: pendingTransition,
+                    ...(transitionNote.trim() ? { note: transitionNote.trim() } : {}),
+                  })
+                }
               >
                 {transition.isPending ? "Updating…" : "Confirm"}
               </Button>
-              <Button size="sm" variant="outline" onClick={() => { setPendingTransition(null); setTransitionNote(""); }}>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  setPendingTransition(null);
+                  setTransitionNote("");
+                }}
+              >
                 Back
               </Button>
             </div>
@@ -174,7 +219,9 @@ function SellerOrderDetailPage() {
             </div>
             <div>
               <dt className="text-xs uppercase tracking-wide text-muted-foreground">Phone</dt>
-              <dd className="mt-0.5" dir="ltr">{data.phone ?? "—"}</dd>
+              <dd className="mt-0.5" dir="ltr">
+                {data.phone ?? "—"}
+              </dd>
             </div>
             {data.email ? (
               <div>
@@ -183,20 +230,26 @@ function SellerOrderDetailPage() {
               </div>
             ) : null}
             <div>
-              <dt className="text-xs uppercase tracking-wide text-muted-foreground">Delivery address</dt>
+              <dt className="text-xs uppercase tracking-wide text-muted-foreground">
+                Delivery address
+              </dt>
               <dd className="mt-0.5">
                 {[data.wilaya, data.commune, data.addressLine].filter(Boolean).join(" · ") || "—"}
               </dd>
             </div>
             {data.deliveryMethod ? (
               <div>
-                <dt className="text-xs uppercase tracking-wide text-muted-foreground">Delivery method</dt>
+                <dt className="text-xs uppercase tracking-wide text-muted-foreground">
+                  Delivery method
+                </dt>
                 <dd className="mt-0.5">{data.deliveryMethod.replace(/_/g, " ")}</dd>
               </div>
             ) : null}
             {data.customerNote ? (
               <div>
-                <dt className="text-xs uppercase tracking-wide text-muted-foreground">Customer note</dt>
+                <dt className="text-xs uppercase tracking-wide text-muted-foreground">
+                  Customer note
+                </dt>
                 <dd className="mt-0.5 rounded-lg bg-muted p-3 text-sm">{data.customerNote}</dd>
               </div>
             ) : null}
@@ -208,29 +261,42 @@ function SellerOrderDetailPage() {
           <dl className="space-y-2.5 text-sm">
             <div className="flex justify-between">
               <dt className="text-muted-foreground">Items subtotal</dt>
-              <dd className="tabular-nums">{fmtMoney(data.subtotal, data.currency)}</dd>
+              <dd className="tabular-nums">{fmtMoney(data.subtotal, data.currency, locale)}</dd>
             </div>
             <div className="flex justify-between">
               <dt className="text-muted-foreground">Shipping</dt>
-              <dd className="tabular-nums">{fmtMoney(data.shippingTotal, data.currency)}</dd>
+              <dd className="tabular-nums">{fmtMoney(data.shippingTotal, data.currency, locale)}</dd>
             </div>
             <div className="flex justify-between">
               <dt className="text-muted-foreground">Platform commission</dt>
-              <dd className="tabular-nums text-destructive">−{fmtMoney(data.commissionTotal, data.currency)}</dd>
+              <dd className="tabular-nums text-destructive">
+                −{fmtMoney(data.commissionTotal, data.currency, locale)}
+              </dd>
             </div>
             <div className="flex justify-between border-t border-border pt-2.5 font-semibold">
               <dt>Your estimated payout</dt>
-              <dd className="tabular-nums">{fmtMoney(data.estimatedPayout, data.currency)}</dd>
+              <dd className="tabular-nums">{fmtMoney(data.estimatedPayout, data.currency, locale)}</dd>
             </div>
           </dl>
           <div className="mt-4 space-y-1.5 text-xs text-muted-foreground">
-            <p>Payment method: <span className="font-medium text-foreground">{data.paymentMethod}</span></p>
-            <p>Payment status: <span className="font-medium text-foreground">{data.paymentStatus}</span></p>
+            <p>
+              Payment method:{" "}
+              <span className="font-medium text-foreground">{data.paymentMethod}</span>
+            </p>
+            <p>
+              Payment status:{" "}
+              <span className="font-medium text-foreground">{data.paymentStatus}</span>
+            </p>
           </div>
           {data.shippingSnapshot ? (
             <details className="mt-4">
-              <summary className="cursor-pointer text-xs font-medium text-muted-foreground">Shipping snapshot (as booked)</summary>
-              <pre className="mt-2 max-h-48 overflow-auto rounded-lg bg-muted p-3 text-[11px] leading-5" dir="ltr">
+              <summary className="cursor-pointer text-xs font-medium text-muted-foreground">
+                Shipping snapshot (as booked)
+              </summary>
+              <pre
+                className="mt-2 max-h-48 overflow-auto rounded-lg bg-muted p-3 text-[11px] leading-5"
+                dir="ltr"
+              >
                 {JSON.stringify(data.shippingSnapshot, null, 2)}
               </pre>
             </details>
@@ -260,10 +326,16 @@ function SellerOrderDetailPage() {
                     <p className="font-medium">{item.title}</p>
                     {renderOptions(item.options)}
                   </td>
-                  <td className="py-3 pe-4 text-xs text-muted-foreground" dir="ltr">{item.sku ?? "—"}</td>
+                  <td className="py-3 pe-4 text-xs text-muted-foreground" dir="ltr">
+                    {item.sku ?? "—"}
+                  </td>
                   <td className="py-3 pe-4 tabular-nums">{item.quantity}</td>
-                  <td className="py-3 pe-4 tabular-nums">{fmtMoney(item.unitPrice, data.currency)}</td>
-                  <td className="py-3 tabular-nums font-medium">{fmtMoney(item.total, data.currency)}</td>
+                  <td className="py-3 pe-4 tabular-nums">
+                    {fmtMoney(item.unitPrice, data.currency, locale)}
+                  </td>
+                  <td className="py-3 tabular-nums font-medium">
+                    {fmtMoney(item.total, data.currency, locale)}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -284,11 +356,14 @@ function SellerOrderDetailPage() {
                   <div className="flex flex-wrap items-center gap-2">
                     <StatusPill status={entry.newStatus} />
                     <span className="text-xs text-muted-foreground">
-                      {entry.actorType === "seller" ? "You" : entry.actorType} · {fmtDateTime(entry.createdAt)}
+                      {entry.actorType === "seller" ? "You" : entry.actorType} ·{" "}
+                      {fmtDateTime(entry.createdAt, locale)}
                     </span>
                   </div>
                   {entry.previousStatus ? (
-                    <p className="mt-1 text-xs text-muted-foreground">from {entry.previousStatus.replace(/_/g, " ")}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      from {entry.previousStatus.replace(/_/g, " ")}
+                    </p>
                   ) : null}
                   {entry.note ? <p className="mt-1 text-sm">{entry.note}</p> : null}
                 </li>
@@ -326,7 +401,9 @@ function SellerOrderDetailPage() {
               data.notes.map((note) => (
                 <div key={note.id} className="rounded-xl border border-border p-3">
                   <p className="text-sm">{note.body}</p>
-                  <p className="mt-1.5 text-xs text-muted-foreground">{fmtDateTime(note.createdAt)}</p>
+                  <p className="mt-1.5 text-xs text-muted-foreground">
+                    {fmtDateTime(note.createdAt, locale)}
+                  </p>
                 </div>
               ))
             )}
@@ -345,7 +422,10 @@ function renderOptions(options: unknown): React.ReactNode {
   return (
     <div className="mt-1 flex flex-wrap gap-1">
       {entries.map(([key, value]) => (
-        <span key={key} className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
+        <span
+          key={key}
+          className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground"
+        >
           {key}: {String(value)}
         </span>
       ))}

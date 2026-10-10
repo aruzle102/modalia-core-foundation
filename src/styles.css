@@ -64,10 +64,56 @@
   --color-ink: var(--ink);
   --color-surface: var(--surface);
   --color-surface-raised: var(--surface-raised);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-official: var(--official);
+  --color-verified: var(--verified);
+  --color-info: var(--info);
 }
 
 :root {
   --radius: 0.375rem;
+  /* ---------------- Motion tokens (Sec 43) ----------------
+     Mirror of `src/lib/motion-tokens.ts` — the single source of truth for
+     animation timing. Every keyframe/transition below references these;
+     no raw durations live outside this block. */
+  --motion-duration-instant: 0ms;
+  --motion-duration-subtle: 150ms;
+  --motion-duration-base: 200ms;
+  --motion-duration-overlay: 250ms;
+  --motion-duration-feedback: 300ms;
+  --motion-duration-emphasis: 350ms;
+  --motion-duration-slow: 400ms;
+  --motion-duration-cinematic: 700ms;
+  --motion-duration-scroll: 800ms;
+  --motion-duration-hero: 850ms;
+  --motion-duration-develop: 900ms;
+  --motion-duration-word: 600ms;
+  --motion-duration-letter: 650ms;
+  --motion-duration-blink: 1000ms;
+  --motion-duration-hero-image: 1200ms;
+  --motion-duration-brand: 1200ms;
+  --motion-duration-tracking: 60ms;
+  --motion-duration-magnetic: 180ms;
+  --motion-ease-emphasized: cubic-bezier(0.16, 0.8, 0.24, 1);
+  --motion-ease-soft: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --motion-ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --motion-ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --motion-ease-linear: linear;
+  --motion-stagger-grid: 60ms;
+  --motion-stagger-word: 55ms;
+  --motion-stagger-hero: 90ms;
+  --motion-letter-base: 40ms;
+  --motion-letter-step: 60ms;
+  --motion-marquee-normal: 42s;
+  --motion-marquee-slow: 70s;
+  --motion-ambient-grid-drift: 18s;
+  --motion-ambient-float-a: 10s;
+  --motion-ambient-float-b: 12s;
+  --motion-ambient-ring-a: 24s;
+  --motion-ambient-ring-b: 17s;
+  --motion-ambient-card-a: 8s;
+  --motion-ambient-card-b: 9s;
   --background: oklch(0.975 0.002 95);
   --foreground: oklch(0.18 0.005 95);
   --card: oklch(1 0 0);
@@ -90,6 +136,14 @@
   --ink: oklch(0.12 0.004 95);
   --surface: oklch(0.975 0.002 95);
   --surface-raised: oklch(1 0 0);
+  /* Brand: refined bronze — warm, premium, used sparingly for accents, sale badges, key highlights. */
+  --brand: oklch(0.52 0.11 78);
+  --brand-foreground: oklch(0.99 0.001 95);
+  /* Badge law (design-system.md): official = Modalia store blue check; verified = third-party seller green shield. */
+  --official: oklch(0.55 0.13 255);
+  --verified: oklch(0.6 0.13 162);
+  /* Info token (design-system.md) — same hue as official by badge law. */
+  --info: oklch(0.55 0.13 255);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -138,6 +192,9 @@
   --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.551 0.027 264.364);
+  --official: oklch(0.72 0.11 255);
+  --verified: oklch(0.72 0.12 162);
+  --info: oklch(0.72 0.11 255);
 }
 
 @layer base {
@@ -162,10 +219,10 @@
 
 @utility text-display {
   font-family: var(--font-display);
-  font-size: 2.5rem;
-  line-height: 1.1;
-  font-weight: 600;
-  letter-spacing: 0;
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  line-height: 1.05;
+  font-weight: 650;
+  letter-spacing: -0.02em;
 }
 
 @utility text-h3 {
@@ -173,13 +230,14 @@
   font-size: 1.125rem;
   line-height: 1.35;
   font-weight: 600;
+  letter-spacing: -0.01em;
 }
 @utility text-h2 {
   font-family: var(--font-display);
-  font-size: 1.75rem;
-  line-height: 1.25;
-  font-weight: 600;
-  letter-spacing: 0;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  line-height: 1.2;
+  font-weight: 650;
+  letter-spacing: -0.015em;
 }
 @utility text-body {
   font-size: 1rem;
@@ -229,8 +287,8 @@
   opacity: 0;
   transform: translateY(26px);
   transition:
-    opacity 0.7s ease-out,
-    transform 0.8s cubic-bezier(0.16, 0.8, 0.24, 1);
+    opacity var(--motion-duration-cinematic) var(--motion-ease-out),
+    transform var(--motion-duration-scroll) var(--motion-ease-emphasized);
   transition-delay: var(--reveal-delay, 0ms);
 }
 .reveal.is-visible {
@@ -243,10 +301,10 @@
   opacity: 0;
   transform: translateY(8px);
   transition:
-    opacity 0.3s ease-out,
-    transform 0.35s cubic-bezier(0.16, 0.8, 0.24, 1),
-    background-color 0.2s ease-out,
-    color 0.2s ease-out;
+    opacity var(--motion-duration-feedback) var(--motion-ease-out),
+    transform var(--motion-duration-emphasis) var(--motion-ease-emphasized),
+    background-color var(--motion-duration-base) var(--motion-ease-out),
+    color var(--motion-duration-base) var(--motion-ease-out);
   pointer-events: none;
 }
 .group:hover .card-action,
@@ -271,7 +329,7 @@
 
 /* Route transition: quick fade-and-rise on navigation (see PageFade). */
 .page-fade {
-  animation: page-fade-in 250ms cubic-bezier(0.16, 0.8, 0.24, 1);
+  animation: page-fade-in var(--motion-duration-overlay) var(--motion-ease-emphasized);
 }
 @keyframes page-fade-in {
   from {
@@ -299,7 +357,7 @@
 
 /* Wishlist pop: confirms "saved" when the heart is toggled. */
 .wish-pop {
-  animation: wish-pop 350ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation: wish-pop var(--motion-duration-emphasis) var(--motion-ease-soft);
 }
 @keyframes wish-pop {
   0% {
@@ -315,7 +373,7 @@
 
 /* Cart nudge: directional confirmation when an item lands in the cart. */
 .cart-nudge {
-  animation: cart-nudge 300ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation: cart-nudge var(--motion-duration-feedback) var(--motion-ease-soft);
 }
 @keyframes cart-nudge {
   0% {
@@ -355,16 +413,29 @@
   }
 }
 .hero-copy > * {
-  animation: hero-entrance 0.85s cubic-bezier(0.16, 0.8, 0.24, 1) both;
+  animation: hero-entrance var(--motion-duration-hero) var(--motion-ease-emphasized) both;
 }
 .hero-copy > *:nth-child(2) {
-  animation-delay: 0.09s;
+  animation-delay: var(--motion-stagger-hero);
 }
 .hero-copy > *:nth-child(3) {
-  animation-delay: 0.18s;
+  animation-delay: calc(var(--motion-stagger-hero) * 2);
 }
 .hero-copy > *:nth-child(4) {
-  animation-delay: 0.27s;
+  animation-delay: calc(var(--motion-stagger-hero) * 3);
+}
+/* Staggered entrance for the rebuilt editorial hero. */
+.hero-line {
+  animation: hero-entrance var(--motion-duration-develop) var(--motion-ease-emphasized) both;
+}
+/* Quiet textured fallback when WebGL is unavailable: fine grain over ink. */
+.hero-fallback {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(120% 90% at 80% 10%, rgba(255, 255, 255, 0.055), transparent 55%),
+    radial-gradient(100% 80% at 10% 90%, rgba(255, 255, 255, 0.03), transparent 50%),
+    var(--color-ink);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -379,7 +450,8 @@
     pointer-events: auto;
     transition: none;
   }
-  .hero-copy > * {
+  .hero-copy > *,
+  .hero-line {
     animation: none;
   }
 }
@@ -401,7 +473,7 @@ html {
     linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
   background-size: 56px 56px;
   mask-image: linear-gradient(to bottom, black, transparent 85%);
-  animation: grid-drift 18s linear infinite;
+  animation: grid-drift var(--motion-ambient-grid-drift) linear infinite;
 }
 .hero-orb {
   position: absolute;
@@ -420,7 +492,7 @@ html {
     rgba(255, 255, 255, 0.02) 48%,
     transparent 70%
   );
-  animation: float-a 10s ease-in-out infinite;
+  animation: float-a var(--motion-ambient-float-a) ease-in-out infinite;
 }
 .hero-orb-b {
   width: 24rem;
@@ -428,7 +500,7 @@ html {
   left: 42%;
   bottom: -12rem;
   background: radial-gradient(circle, rgba(255, 255, 255, 0.13), transparent 68%);
-  animation: float-b 12s ease-in-out infinite;
+  animation: float-b var(--motion-ambient-float-b) ease-in-out infinite;
 }
 .hero-ring {
   position: absolute;
@@ -441,14 +513,14 @@ html {
   height: 420px;
   inset-inline-end: 7%;
   top: 15%;
-  animation: ring-spin 24s linear infinite;
+  animation: ring-spin var(--motion-ambient-ring-a) linear infinite;
 }
 .hero-ring-b {
   width: 250px;
   height: 250px;
   inset-inline-end: 17%;
   top: 28%;
-  animation: ring-spin 17s linear reverse infinite;
+  animation: ring-spin var(--motion-ambient-ring-b) linear reverse infinite;
 }
 .hero-product {
   position: absolute;
@@ -469,7 +541,7 @@ html {
   top: 24%;
   border-radius: 28px;
   transform: perspective(900px) rotateY(-22deg) rotateX(8deg) rotateZ(7deg);
-  animation: card-float 8s ease-in-out infinite;
+  animation: card-float var(--motion-ambient-card-a) ease-in-out infinite;
 }
 .hero-product-b {
   width: 115px;
@@ -478,7 +550,7 @@ html {
   top: 46%;
   border-radius: 22px;
   transform: perspective(900px) rotateY(25deg) rotateX(-8deg) rotateZ(-12deg);
-  animation: card-float 9s 1s ease-in-out infinite reverse;
+  animation: card-float var(--motion-ambient-card-b) 1s ease-in-out infinite reverse;
 }
 .hero-product-inner {
   font-size: 4rem;
@@ -581,21 +653,21 @@ html {
 
 /* Brand entrance: brief cinematic wordmark reveal, fades out (JS unmounts after 1.25s). */
 .brand-entrance {
-  animation: brand-entrance 1.2s cubic-bezier(0.16, 0.8, 0.24, 1) forwards;
+  animation: brand-entrance var(--motion-duration-brand) var(--motion-ease-emphasized) forwards;
   pointer-events: none;
 }
 .brand-entrance-word > span {
   display: inline-block;
   opacity: 0;
-  animation: brand-entrance-letter 0.65s cubic-bezier(0.16, 0.8, 0.24, 1) forwards;
+  animation: brand-entrance-letter var(--motion-duration-letter) var(--motion-ease-emphasized) forwards;
 }
-.brand-entrance-word > span:nth-child(1) { animation-delay: 0.04s; }
-.brand-entrance-word > span:nth-child(2) { animation-delay: 0.1s; }
-.brand-entrance-word > span:nth-child(3) { animation-delay: 0.16s; }
-.brand-entrance-word > span:nth-child(4) { animation-delay: 0.22s; }
-.brand-entrance-word > span:nth-child(5) { animation-delay: 0.28s; }
-.brand-entrance-word > span:nth-child(6) { animation-delay: 0.34s; }
-.brand-entrance-word > span:nth-child(7) { animation-delay: 0.4s; }
+.brand-entrance-word > span:nth-child(1) { animation-delay: calc(var(--motion-letter-base) + var(--motion-letter-step) * 0); }
+.brand-entrance-word > span:nth-child(2) { animation-delay: calc(var(--motion-letter-base) + var(--motion-letter-step) * 1); }
+.brand-entrance-word > span:nth-child(3) { animation-delay: calc(var(--motion-letter-base) + var(--motion-letter-step) * 2); }
+.brand-entrance-word > span:nth-child(4) { animation-delay: calc(var(--motion-letter-base) + var(--motion-letter-step) * 3); }
+.brand-entrance-word > span:nth-child(5) { animation-delay: calc(var(--motion-letter-base) + var(--motion-letter-step) * 4); }
+.brand-entrance-word > span:nth-child(6) { animation-delay: calc(var(--motion-letter-base) + var(--motion-letter-step) * 5); }
+.brand-entrance-word > span:nth-child(7) { animation-delay: calc(var(--motion-letter-base) + var(--motion-letter-step) * 6); }
 @keyframes brand-entrance-letter {
   from {
     opacity: 0;
@@ -627,7 +699,12 @@ html {
   box-shadow:
     0 0 0 12px rgba(0, 0, 0, 0.04),
     0 20px 70px rgba(0, 0, 0, 0.14);
-  animation: success-pop 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation: success-pop var(--motion-duration-scroll) var(--motion-ease-soft);
+}
+@media (prefers-reduced-motion: reduce) {
+  .success-orbit {
+    animation: none;
+  }
 }
 @keyframes success-pop {
   0% {
@@ -699,4 +776,121 @@ html[lang="ar"] .text-caption {
 /* Brand wordmark entrance stays Latin-styled even on Arabic pages */
 html[lang="ar"] .brand-entrance-word {
   letter-spacing: inherit;
+}
+
+/* ---------------- Interactive motion components (src/components/motion) ----
+   Marquee, Magnetic, TextReveal, ImageReveal + useParallax target.
+   All respect the global prefers-reduced-motion guard above; each effect
+   additionally settles to a static, readable state when motion is off. */
+
+/* Marquee: infinite horizontal loop. The track holds two identical
+   segments; translating -50% loops seamlessly. Items must carry their
+   own horizontal spacing (never `gap` on the Marquee). Pauses on hover. */
+.marquee {
+  overflow: hidden;
+}
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee-forward var(--marquee-duration, var(--motion-marquee-normal)) linear infinite;
+  will-change: transform;
+}
+.marquee-segment {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+}
+.marquee-track[data-direction="reverse"] {
+  animation-name: marquee-reverse;
+}
+/* RTL-safe: "forward" follows the reading direction in both scripts. */
+[dir="rtl"] .marquee-track[data-direction="forward"] {
+  animation-name: marquee-reverse;
+}
+[dir="rtl"] .marquee-track[data-direction="reverse"] {
+  animation-name: marquee-forward;
+}
+.marquee:hover .marquee-track {
+  animation-play-state: paused;
+}
+@keyframes marquee-forward {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+@keyframes marquee-reverse {
+  from {
+    transform: translateX(-50%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none;
+  }
+}
+
+/* Magnetic: outer tracks the cursor, inner translates a fraction toward
+   it (JS sets the transform). Soft trailing transition; no layout shift. */
+.magnetic {
+  display: inline-flex;
+  max-width: 100%;
+}
+.magnetic-inner {
+  display: inline-flex;
+  will-change: transform;
+  transition: transform var(--motion-duration-magnetic) var(--motion-ease-soft);
+}
+@media (prefers-reduced-motion: reduce) {
+  .magnetic-inner {
+    transition: none;
+  }
+}
+
+/* TextReveal: word-by-word editorial headline reveal on scroll into view.
+   Vertical-only motion — safe in LTR and RTL. */
+.text-reveal-word {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(0.55em);
+  transition:
+    opacity var(--motion-duration-word) var(--motion-ease-out),
+    transform var(--motion-duration-cinematic) var(--motion-ease-emphasized);
+  transition-delay: var(--word-delay, 0ms);
+}
+.text-reveal.is-visible .text-reveal-word {
+  opacity: 1;
+  transform: none;
+}
+
+/* ImageReveal: editorial "develop" — zoom settles from 1.12 while a soft
+   clip inset opens. Triggered by the same is-visible pattern as .reveal. */
+.image-reveal {
+  overflow: hidden;
+}
+.image-reveal img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1.12);
+  clip-path: inset(10% 7% 10% 7%);
+  transition:
+    transform var(--motion-duration-develop) var(--motion-ease-emphasized),
+    clip-path var(--motion-duration-develop) var(--motion-ease-emphasized);
+  will-change: transform, clip-path;
+}
+.image-reveal.is-visible img {
+  transform: scale(1);
+  clip-path: inset(0 0 0 0);
+}
+@media (prefers-reduced-motion: reduce) {
+  .image-reveal img {
+    transition: none;
+  }
 }

@@ -29,7 +29,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireSeller } from "@/lib/seller-auth";
-import { assertAdmin } from "@/lib/admin-auth";
+import { assertAdminPermission } from "@/lib/admin-permissions";
 import type { CatalogProduct } from "@/lib/catalog.functions";
 import { pickLocalizedName } from "@/lib/names";
 
@@ -39,7 +39,10 @@ export type AnalyticsEventType =
   | "search"
   | "category_view"
   | "add_to_cart"
+  | "cart_remove"
+  | "buy_now_started"
   | "wishlist_add"
+  | "wishlist_remove"
   | "checkout_started"
   | "checkout_completed"
   | "purchase"
@@ -63,7 +66,10 @@ const EVENT_TYPES = [
   "search",
   "category_view",
   "add_to_cart",
+  "cart_remove",
+  "buy_now_started",
   "wishlist_add",
+  "wishlist_remove",
   "checkout_started",
   "checkout_completed",
   "purchase",
@@ -76,8 +82,9 @@ type RpcResult = { data: any; error: { message?: string } | null };
 
 /** Call a Postgres RPC that is not (yet) in the generated Supabase types. */
 async function callRpc(client: SupabaseClient, name: string, args: Record<string, unknown>): Promise<RpcResult> {
-  const rpc = client.rpc as unknown as (n: string, a: Record<string, unknown>) => Promise<RpcResult>;
-  return rpc(name, args);
+  // Call rpc directly on the client to preserve `this` binding.
+  // Detaching the method (const rpc = client.rpc) breaks Supabase internals (this.rest).
+  return client.rpc(name, args) as unknown as Promise<RpcResult>;
 }
 
 /** Publishable-key client; forwards the caller's JWT when present so auth.uid() works in RPCs. */
@@ -234,6 +241,26 @@ export interface FunnelStage {
   count: number;
 }
 
+/**
+ * Real commerce metrics. Every rate is computed from genuine rows; a `null`
+ * rate means "not measurable in this window" (denominator is zero) and the
+ * UI must render an honest "not tracked yet" state — never a fabricated 0%.
+ */
+export interface CommerceMetrics {
+  /** Unique purchasers ÷ unique checkout starters; null when unmeasurable. */
+  conversionRate: number | null;
+  /** 1 − (unique purchasers ÷ unique cart adders); null when unmeasurable. */
+  cartAbandonmentRate: number | null;
+  /** 1 − (unique purchasers ÷ unique checkout starters); null when unmeasurable. */
+  checkoutAbandonmentRate: number | null;
+  /** Real revenue (DZD) from non-cancelled orders in the window. */
+  revenue: number;
+  /** revenue ÷ orderCount; null when there are no orders. */
+  averageOrderValue: number | null;
+  /** Real order count in the window (cancelled/refunded/returned/failed excluded). */
+  orderCount: number;
+}
+
 export interface AdminAnalytics {
   days: number;
   hasData: boolean;
@@ -246,6 +273,7 @@ export interface AdminAnalytics {
     checkoutsStarted: number;
     purchases: number;
   };
+  metrics: CommerceMetrics;
   funnel: FunnelStage[];
   trendingProducts: { productId: string; name: string; slug: string; views: number }[];
   popularSearches: { query: string; count: number }[];
@@ -270,6 +298,22 @@ function uniqueCountBy(events: AnalyticsEventRow[], type: AnalyticsEventType): n
   return seen.size;
 }
 
+/** The anon-id set behind uniqueCountBy (for rate numerators/denominators). */
+function uniqueAnonSet(events: AnalyticsEventRow[], type: AnalyticsEventType): Set<string> {
+  const seen = new Set<string>();
+  for (const e of events) if (e.event_type === type) seen.add(e.anon_id);
+  return seen;
+}
+
+/**
+ * Clamp a computed rate to [0, 1]. Rates can otherwise escape the range when
+ * numerators and denominators come from different sources (e.g. Buy Now
+ * purchases without a preceding add_to_cart event, or cross-device checkouts).
+ */
+function clampRate(value: number): number {
+  return Math.min(1, Math.max(0, value));
+}
+
 function dayKey(iso: string): string {
   return iso.slice(0, 10);
 }
@@ -278,7 +322,7 @@ export const getAdminAnalytics = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .inputValidator((data) => daysInput.parse(data))
   .handler(async ({ data, context }): Promise<AdminAnalytics> => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "analytics.view");
     const diagnostics: TableDiagnostic[] = [];
     const { data: rows, error } = await callRpc(context.supabase as SupabaseClient, "admin_analytics_events", {
       p_days: data.days,
@@ -417,6 +461,38 @@ export const getAdminAnalytics = createServerFn({ method: "GET" })
       carts: viewsBySeller.get(id)?.carts ?? 0,
     }));
 
+    // Commerce metrics: conversion + abandonment from real event funnels,
+    // revenue/AOV from real order rows (service role; aggregates only).
+    const purchaseAnons = uniqueAnonSet(events, "purchase");
+    const checkoutAnons = uniqueAnonSet(events, "checkout_started");
+    const cartAnons = uniqueAnonSet(events, "add_to_cart");
+    const sinceIso = new Date(Date.now() - data.days * 86_400_000).toISOString();
+    type OrderRevenueRow = { grand_total: number; status: string };
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const orderRows = await fetchTable<OrderRevenueRow>(
+      "orders",
+      diagnostics,
+      supabaseAdmin
+        .from("orders")
+        .select("grand_total,status")
+        .gte("created_at", sinceIso)
+        .not("status", "in", "(cancelled,refunded,returned,failed_delivery)")
+        .limit(50000),
+    );
+    const orderCount = orderRows.length;
+    const revenue = orderRows.reduce((sum, r) => sum + num(r.grand_total), 0);
+    const metrics: CommerceMetrics = {
+      conversionRate:
+        checkoutAnons.size > 0 ? clampRate(purchaseAnons.size / checkoutAnons.size) : null,
+      cartAbandonmentRate:
+        cartAnons.size > 0 ? clampRate(1 - purchaseAnons.size / cartAnons.size) : null,
+      checkoutAbandonmentRate:
+        checkoutAnons.size > 0 ? clampRate(1 - purchaseAnons.size / checkoutAnons.size) : null,
+      revenue,
+      averageOrderValue: orderCount > 0 ? revenue / orderCount : null,
+      orderCount,
+    };
+
     return {
       days: data.days,
       hasData,
@@ -429,6 +505,7 @@ export const getAdminAnalytics = createServerFn({ method: "GET" })
         checkoutsStarted,
         purchases,
       },
+      metrics,
       funnel: [
         { stage: "product_view", label: "Viewed a product", count: uniqueCountBy(events, "product_view") },
         { stage: "add_to_cart", label: "Added to bag", count: uniqueCountBy(events, "add_to_cart") },
@@ -465,6 +542,7 @@ export interface SellerAnalytics {
     checkoutsStarted: number;
     purchases: number;
   };
+  metrics: CommerceMetrics;
   funnel: FunnelStage[];
   topProducts: { productId: string; name: string; views: number; carts: number }[];
   diagnostics: TableDiagnostic[];
@@ -541,10 +619,41 @@ export const getSellerAnalytics = createServerFn({ method: "GET" })
       carts: byProduct.get(id)?.carts ?? 0,
     }));
 
+    // Seller commerce metrics: real seller_orders revenue + event funnels.
+    const sellerPurchaseAnons = uniqueAnonSet(events, "purchase");
+    const sellerCheckoutAnons = uniqueAnonSet(events, "checkout_started");
+    const sellerCartAnons = uniqueAnonSet(events, "add_to_cart");
+    type SellerOrderRevenueRow = { subtotal: number; status: string };
+    const sellerOrderRows = await fetchTable<SellerOrderRevenueRow>(
+      "seller_orders",
+      diagnostics,
+      (context.supabase as SupabaseClient)
+        .from("seller_orders")
+        .select("subtotal,status")
+        .eq("seller_id", seller.sellerId)
+        .gte("created_at", sinceIso)
+        .not("status", "in", "(cancelled,refunded,returned)")
+        .limit(50000),
+    );
+    const sellerOrderCount = sellerOrderRows.length;
+    const sellerRevenue = sellerOrderRows.reduce((sum, r) => sum + num(r.subtotal), 0);
+    const sellerMetrics: CommerceMetrics = {
+      conversionRate:
+        sellerCheckoutAnons.size > 0 ? clampRate(sellerPurchaseAnons.size / sellerCheckoutAnons.size) : null,
+      cartAbandonmentRate:
+        sellerCartAnons.size > 0 ? clampRate(1 - sellerPurchaseAnons.size / sellerCartAnons.size) : null,
+      checkoutAbandonmentRate:
+        sellerCheckoutAnons.size > 0 ? clampRate(1 - sellerPurchaseAnons.size / sellerCheckoutAnons.size) : null,
+      revenue: sellerRevenue,
+      averageOrderValue: sellerOrderCount > 0 ? sellerRevenue / sellerOrderCount : null,
+      orderCount: sellerOrderCount,
+    };
+
     return {
       days: data.days,
       hasData,
       totals: { storeViews, productViews, uniqueVisitors: visitors.size, addToCarts, checkoutsStarted, purchases },
+      metrics: sellerMetrics,
       funnel: [
         { stage: "product_view", label: "Viewed a product", count: uniqueCountBy(events, "product_view") },
         { stage: "add_to_cart", label: "Added to bag", count: uniqueCountBy(events, "add_to_cart") },

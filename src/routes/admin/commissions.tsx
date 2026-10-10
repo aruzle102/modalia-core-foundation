@@ -5,6 +5,7 @@ import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AdminGate } from "@/components/admin/AdminGate";
+import { SuperAdminGate } from "@/components/admin/SuperAdminGate";
 import { AdminShell } from "@/components/admin/AdminShell";
 import {
   AdminCard,
@@ -14,6 +15,8 @@ import {
   fmtDateTime,
   timeAgo,
 } from "@/components/admin/ui";
+import { useAdminLocale } from "@/components/admin/useAdminLocale";
+import { getTranslations } from "@/lib/i18n";
 import { listAdminCommissions } from "@/lib/admin-catalog.functions";
 import { errMsg, Pager } from "./_shared";
 import { numParam, strParam, useBackParam, useDebouncedUrlParam, useUrlState } from "@/hooks/use-url-state";
@@ -31,7 +34,9 @@ export const Route = createFileRoute("/admin/commissions")({
 });
 
 function CommissionsPage() {
+  const locale = useAdminLocale();
   const t = useAdminT().commissions;
+  const nav = getTranslations(locale).adminNav.items;
   const url = useUrlState({ page: 1 });
   const backParam = useBackParam();
   const page = numParam(url.search["page"], 1);
@@ -62,7 +67,12 @@ function CommissionsPage() {
 
   return (
     <AdminGate>
-      <AdminShell title={t.title} subtitle={t.subtitle}>
+      <SuperAdminGate>
+      <AdminShell
+        title={t.title}
+        subtitle={t.subtitle}
+        breadcrumbs={[{ label: nav.commissions }]}
+      >
         <AdminCard
           title={t.title}
           subtitle={`${total} total`}
@@ -116,7 +126,7 @@ function CommissionsPage() {
                             <Link
                               to="/admin/sellers/$sellerId"
                               params={{ sellerId: r.sellerId }}
-                              search={{ back: backParam, q, status: "", page, create: "" }}
+                              search={{ back: backParam, tab: "overview", q, status: "", page, create: "" }}
                               className="font-medium text-primary hover:underline"
                             >
                               {r.legalName}
@@ -130,13 +140,13 @@ function CommissionsPage() {
                           </td>
                           <td className="py-3 pe-4 text-end tabular-nums">{r.orderCount}</td>
                           <td className="py-3 pe-4 text-end tabular-nums whitespace-nowrap">
-                            {fmtMoney(r.gross)}
+                            {fmtMoney(r.gross, "DZD", locale)}
                           </td>
-                          <td className="py-3 pe-4 text-end tabular-nums whitespace-nowrap text-amber-700 dark:text-amber-400">
-                            {fmtMoney(r.commission)}
+                          <td className="py-3 pe-4 text-end tabular-nums whitespace-nowrap text-brand">
+                            {fmtMoney(r.commission, "DZD", locale)}
                           </td>
                           <td className="py-3 pe-4 text-end tabular-nums whitespace-nowrap font-medium">
-                            {fmtMoney(r.net)}
+                            {fmtMoney(r.net, "DZD", locale)}
                           </td>
                           <td className="py-3 text-end">
                             <Button
@@ -173,8 +183,8 @@ function CommissionsPage() {
                                           <td className="py-1.5 pe-3 font-medium">
                                             {(h.rate * 100).toFixed(1)}%
                                           </td>
-                                          <td className="py-1.5 pe-3 text-muted-foreground" title={fmtDateTime(h.effectiveFrom)}>
-                                            {timeAgo(h.effectiveFrom)}
+                                          <td className="py-1.5 pe-3 text-muted-foreground" title={fmtDateTime(h.effectiveFrom, locale)}>
+                                            {timeAgo(h.effectiveFrom, locale)}
                                           </td>
                                           <td className="py-1.5 font-mono text-xs text-muted-foreground">
                                             {h.changedBy ? h.changedBy.slice(0, 8) : "—"}
@@ -195,11 +205,11 @@ function CommissionsPage() {
                 <tfoot>
                   <tr className="border-t-2 font-medium">
                     <td className="py-3 pe-4" colSpan={3}>Page totals</td>
-                    <td className="py-3 pe-4 text-end tabular-nums whitespace-nowrap">{fmtMoney(totals.gross)}</td>
-                    <td className="py-3 pe-4 text-end tabular-nums whitespace-nowrap text-amber-700 dark:text-amber-400">
-                      {fmtMoney(totals.commission)}
+                    <td className="py-3 pe-4 text-end tabular-nums whitespace-nowrap">{fmtMoney(totals.gross, "DZD", locale)}</td>
+                    <td className="py-3 pe-4 text-end tabular-nums whitespace-nowrap text-brand">
+                      {fmtMoney(totals.commission, "DZD", locale)}
                     </td>
-                    <td className="py-3 pe-4 text-end tabular-nums whitespace-nowrap">{fmtMoney(totals.net)}</td>
+                    <td className="py-3 pe-4 text-end tabular-nums whitespace-nowrap">{fmtMoney(totals.net, "DZD", locale)}</td>
                     <td />
                   </tr>
                 </tfoot>
@@ -213,6 +223,7 @@ function CommissionsPage() {
           )}
         </AdminCard>
       </AdminShell>
+      </SuperAdminGate>
     </AdminGate>
   );
 }

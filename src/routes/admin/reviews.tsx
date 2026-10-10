@@ -12,6 +12,8 @@ import {
   Field,
   fmtDateTime,
 } from "@/components/admin/ui";
+import { useAdminLocale } from "@/components/admin/useAdminLocale";
+import { getTranslations } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -45,9 +47,15 @@ const QUEUES: { value: ReviewQueue; label: string }[] = [
 ];
 
 function AdminReviewsPage() {
+  const locale = useAdminLocale();
+  const nav = getTranslations(locale).adminNav.items;
   return (
     <AdminGate>
-      <AdminShell title="Reviews" subtitle="Moderate customer reviews and handle abuse reports.">
+      <AdminShell
+        title="Reviews"
+        subtitle="Moderate customer reviews and handle abuse reports."
+        breadcrumbs={[{ label: nav.reviews }]}
+      >
         <ReviewsManager />
       </AdminShell>
     </AdminGate>
@@ -55,6 +63,7 @@ function AdminReviewsPage() {
 }
 
 function ReviewsManager() {
+  const locale = useAdminLocale();
   const queryClient = useQueryClient();
   const url = useUrlState({ tab: "pending", page: 1 });
   const queue = strParam(url.search["tab"], "pending") as ReviewQueue;
@@ -107,7 +116,7 @@ function ReviewsManager() {
           <EmptyState title="Queue is empty" text="Nothing needs attention here right now." />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[680px] text-left text-small">
+            <table className="w-full min-w-[680px] text-start text-small">
               <thead>
                 <tr className="border-b border-border text-caption text-muted-foreground">
                   <th className="px-3 py-2 font-medium">Review</th>
@@ -135,12 +144,12 @@ function ReviewsManager() {
                           </a>
                         ) : null}
                         <p className="mt-1 text-caption text-muted-foreground">
-                          {reviewer} · {fmtDateTime(r.created_at)}
+                          {reviewer} · {fmtDateTime(r.created_at, locale)}
                           {r.verified_purchase ? " · verified purchase" : ""}
                           {r.flagged_at ? " · flagged" : ""}
                         </p>
                         {r.moderation_reason ? (
-                          <p className="mt-1 text-caption text-amber-600 dark:text-amber-400">
+                          <p className="mt-1 text-caption text-brand">
                             Note: {r.moderation_reason}
                           </p>
                         ) : null}

@@ -26,6 +26,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database, Json } from "@/integrations/supabase/types";
 import { assertAdmin } from "@/lib/admin-auth";
+import { assertAdminPermission } from "@/lib/admin-permissions";
 import {
   detectMediaKind,
   validateMediaBytes,
@@ -76,11 +77,26 @@ const altTextSchema = z
 
 /** `<sellerId>/products/<productId>/<uuid>.<ext>` — rejects path games. */
 function parseManagedPath(path: string): { sellerId: string; productId: string } | null {
-  const m = /^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\/products\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\/[0-9a-f-]{1,64}\.(jpg|jpeg|png|webp|gif|glb|gltf)$/i.exec(
-    path.trim(),
-  );
+  const m =
+    /^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\/products\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\/[0-9a-f-]{1,64}\.(jpg|jpeg|png|webp|gif|mp4|webm|glb|gltf)$/i.exec(
+      path.trim(),
+    );
   if (!m) return null;
   return { sellerId: m[1]!, productId: m[2]! };
+}
+
+/**
+ * `<sellerId>/uploads/<uuid>.<ext>` — pre-save uploads (the admin editor's
+ * "new product" mode, mirroring the seller pipeline's
+ * `<sellerId>/uploads/` staging area). Rejects path games.
+ */
+function parseStagingPath(path: string): { sellerId: string } | null {
+  const m =
+    /^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\/uploads\/[0-9a-f-]{1,64}\.(jpg|jpeg|png|webp|gif|mp4|webm|glb|gltf)$/i.exec(
+      path.trim(),
+    );
+  if (!m) return null;
+  return { sellerId: m[1]! };
 }
 
 async function getProductSeller(productId: string): Promise<string> {
@@ -157,25 +173,43 @@ export const requestMediaUpload = createServerFn({ method: "POST" })
   .inputValidator((data) =>
     z
       .object({
-        productId: uuid,
+        productId: uuid.optional(),
+        sellerId: uuid.optional(),
         filename: z.string().min(1).max(200),
         mimeType: z.string().max(120).optional(),
         sizeBytes: z.number().int().min(1),
-        mediaKind: z.enum(["image", "model_3d"]).optional(),
+        mediaKind: z.enum(["image", "video", "model_3d"]).optional(),
+      })
+      .refine((d) => Boolean(d.productId) !== Boolean(d.sellerId), {
+        message: "Provide exactly one of productId or sellerId.",
       })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
     const { kind, extension } = validateMediaMeta({
       filename: data.filename,
       mimeType: data.mimeType,
       sizeBytes: data.sizeBytes,
       expectedKind: data.mediaKind ?? null,
     });
-    const sellerId = await getProductSeller(data.productId);
-    const path = `${sellerId}/products/${data.productId}/${crypto.randomUUID()}.${extension}`;
     const supabaseAdmin = await adminClient();
+    let path: string;
+    if (data.productId) {
+      const sellerId = await getProductSeller(data.productId);
+      path = `${sellerId}/products/${data.productId}/${crypto.randomUUID()}.${extension}`;
+    } else {
+      // Pre-save staging for the admin product editor's "new product" mode:
+      // the admin has already chosen a seller, so uploads stage under that
+      // seller's prefix (mirrors the seller pipeline's <sellerId>/uploads/).
+      const { data: seller, error } = await supabaseAdmin
+        .from("sellers")
+        .select("id")
+        .eq("id", data.sellerId as string)
+        .maybeSingle();
+      if (error || !seller) throw new Error("Seller not found.");
+      path = `${seller.id}/uploads/${crypto.randomUUID()}.${extension}`;
+    }
     const { data: signed, error } = await supabaseAdmin.storage
       .from(MEDIA_BUCKET)
       .createSignedUploadUrl(path);
@@ -190,31 +224,51 @@ export const finalizeMediaUpload = createServerFn({ method: "POST" })
   .inputValidator((data) =>
     z
       .object({
-        productId: uuid,
+        productId: uuid.optional(),
+        sellerId: uuid.optional(),
         path: z.string().min(1).max(500),
-        mediaKind: z.enum(["image", "model_3d"]),
+        mediaKind: z.enum(["image", "video", "model_3d"]),
         altText: altTextSchema,
+      })
+      .refine((d) => Boolean(d.productId) !== Boolean(d.sellerId), {
+        message: "Provide exactly one of productId or sellerId.",
       })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
+    const supabaseAdmin = await adminClient();
+    if (data.sellerId) {
+      // Staging mode (admin editor "new product"): validate content, keep the
+      // object; the editor attaches the path to the product on save.
+      const staged = parseStagingPath(data.path);
+      if (!staged || staged.sellerId !== data.sellerId) {
+        throw new Error("The upload path is not valid for this seller.");
+      }
+      const dims = await downloadAndValidate(data.path, data.mediaKind);
+      await auditLog(context, "media_uploaded", "storage_object", null, {
+        seller_id: data.sellerId,
+        media_kind: data.mediaKind,
+        staged: true,
+      });
+      return { staged: true as const, width: dims.width ?? null, height: dims.height ?? null };
+    }
+    const productId = data.productId as string;
     const parsed = parseManagedPath(data.path);
-    if (!parsed || parsed.productId !== data.productId) {
+    if (!parsed || parsed.productId !== productId) {
       throw new Error("The upload path is not valid for this product.");
     }
-    const sellerId = await getProductSeller(data.productId);
+    const sellerId = await getProductSeller(productId);
     if (parsed.sellerId !== sellerId) {
       throw new Error("The upload path does not belong to this product's seller.");
     }
 
     const dims = await downloadAndValidate(data.path, data.mediaKind);
 
-    const supabaseAdmin = await adminClient();
     const { data: existing, error: countError } = await supabaseAdmin
       .from("product_images")
       .select("id, sort_order")
-      .eq("product_id", data.productId)
+      .eq("product_id", productId)
       .order("sort_order", { ascending: false })
       .limit(1);
     if (countError) throw new Error(countError.message);
@@ -222,7 +276,7 @@ export const finalizeMediaUpload = createServerFn({ method: "POST" })
     const nextOrder = existing?.[0] ? (existing[0].sort_order ?? 0) + 1 : 0;
 
     const insert: ProductImageInsert = {
-      product_id: data.productId,
+      product_id: productId,
       storage_path: data.path,
       alt_text: (data.altText ?? {}) as unknown as Json,
       is_primary: isFirst,
@@ -240,7 +294,7 @@ export const finalizeMediaUpload = createServerFn({ method: "POST" })
       throw new Error(insertError?.message ?? "Could not save the media record.");
     }
     await auditLog(context, "media_uploaded", "product_image", row.id, {
-      product_id: data.productId,
+      product_id: productId,
       media_kind: data.mediaKind,
     });
     return { image: row, width: dims.width ?? null, height: dims.height ?? null };
@@ -265,51 +319,59 @@ export type AdminProductMedia = {
 export const listProductMedia = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .inputValidator((data) => z.object({ productId: uuid }).parse(data))
-  .handler(async ({ data, context }): Promise<{ product: { id: string; name: Json; slug: string }; media: AdminProductMedia[] }> => {
-    await assertAdmin(context);
-    const supabaseAdmin = await adminClient();
-    const { data: product, error: pError } = await supabaseAdmin
-      .from("products")
-      .select("id, name, slug")
-      .eq("id", data.productId)
-      .maybeSingle();
-    if (pError || !product) throw new Error("Product not found.");
-    const { data: rows, error } = await supabaseAdmin
-      .from("product_images")
-      .select("id, storage_path, alt_text, is_primary, sort_order, media_type")
-      .eq("product_id", data.productId)
-      .order("sort_order", { ascending: true });
-    if (error) throw new Error(error.message);
-    const paths = (rows ?? []).map((r) => r.storage_path);
-    const urls = new Map<string, string>();
-    if (paths.length) {
-      const { data: signed, error: sError } = await supabaseAdmin.storage
-        .from(MEDIA_BUCKET)
-        .createSignedUrls(paths, 3600);
-      if (sError) throw new Error(sError.message);
-      for (const s of signed ?? []) {
-        const url = s.signedUrl ?? s.signedURL;
-        if (s.path && url) urls.set(s.path, url);
+  .handler(
+    async ({
+      data,
+      context,
+    }): Promise<{
+      product: { id: string; name: Json; slug: string };
+      media: AdminProductMedia[];
+    }> => {
+      await assertAdminPermission(context, "content.manage");
+      const supabaseAdmin = await adminClient();
+      const { data: product, error: pError } = await supabaseAdmin
+        .from("products")
+        .select("id, name, slug")
+        .eq("id", data.productId)
+        .maybeSingle();
+      if (pError || !product) throw new Error("Product not found.");
+      const { data: rows, error } = await supabaseAdmin
+        .from("product_images")
+        .select("id, storage_path, alt_text, is_primary, sort_order, media_type")
+        .eq("product_id", data.productId)
+        .order("sort_order", { ascending: true });
+      if (error) throw new Error(error.message);
+      const paths = (rows ?? []).map((r) => r.storage_path);
+      const urls = new Map<string, string>();
+      if (paths.length) {
+        const { data: signed, error: sError } = await supabaseAdmin.storage
+          .from(MEDIA_BUCKET)
+          .createSignedUrls(paths, 3600);
+        if (sError) throw new Error(sError.message);
+        for (const s of signed ?? []) {
+          const url = s.signedUrl ?? s.signedURL;
+          if (s.path && url) urls.set(s.path, url);
+        }
       }
-    }
-    return {
-      product: { id: product.id, name: product.name, slug: product.slug },
-      media: (rows ?? []).map((r) => ({
-        id: r.id,
-        storagePath: r.storage_path,
-        altText:
-          r.alt_text && typeof r.alt_text === "object" && !Array.isArray(r.alt_text)
-            ? (r.alt_text as Record<string, string>)
-            : {},
-        isPrimary: r.is_primary,
-        sortOrder: r.sort_order,
-        mediaType: r.media_type,
-        previewUrl: urls.get(r.storage_path) ?? null,
-        width: null,
-        height: null,
-      })),
-    };
-  });
+      return {
+        product: { id: product.id, name: product.name, slug: product.slug },
+        media: (rows ?? []).map((r) => ({
+          id: r.id,
+          storagePath: r.storage_path,
+          altText:
+            r.alt_text && typeof r.alt_text === "object" && !Array.isArray(r.alt_text)
+              ? (r.alt_text as Record<string, string>)
+              : {},
+          isPrimary: r.is_primary,
+          sortOrder: r.sort_order,
+          mediaType: r.media_type,
+          previewUrl: urls.get(r.storage_path) ?? null,
+          width: null,
+          height: null,
+        })),
+      };
+    },
+  );
 
 // ---------------------------------------------------------------------------
 // Alt text / primary / reorder / replace / delete
@@ -333,7 +395,7 @@ export const updateMediaAlt = createServerFn({ method: "POST" })
     z.object({ imageId: uuid, productId: uuid, altText: altTextSchema }).parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
     await imageBelongsToProduct(data.imageId, data.productId);
     const supabaseAdmin = await adminClient();
     const { error } = await supabaseAdmin
@@ -351,7 +413,7 @@ export const setPrimaryMedia = createServerFn({ method: "POST" })
   .middleware(adminOnly)
   .inputValidator((data) => z.object({ imageId: uuid, productId: uuid }).parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
     await imageBelongsToProduct(data.imageId, data.productId);
     const supabaseAdmin = await adminClient();
     const { error: clearError } = await supabaseAdmin
@@ -376,7 +438,7 @@ export const reorderMedia = createServerFn({ method: "POST" })
     z.object({ productId: uuid, orderedIds: z.array(uuid).min(1).max(50) }).parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
     const supabaseAdmin = await adminClient();
     const { data: rows, error } = await supabaseAdmin
       .from("product_images")
@@ -406,15 +468,17 @@ export const reorderMedia = createServerFn({ method: "POST" })
 export const replaceMedia = createServerFn({ method: "POST" })
   .middleware(adminOnly)
   .inputValidator((data) =>
-    z.object({
-      imageId: uuid,
-      productId: uuid,
-      path: z.string().min(1).max(500),
-      mediaKind: z.enum(["image", "model_3d"]),
-    }).parse(data),
+    z
+      .object({
+        imageId: uuid,
+        productId: uuid,
+        path: z.string().min(1).max(500),
+        mediaKind: z.enum(["image", "video", "model_3d"]),
+      })
+      .parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
     const existing = await imageBelongsToProduct(data.imageId, data.productId);
     const parsed = parseManagedPath(data.path);
     const sellerId = await getProductSeller(data.productId);
@@ -448,7 +512,7 @@ export const deleteMedia = createServerFn({ method: "POST" })
   .middleware(adminOnly)
   .inputValidator((data) => z.object({ imageId: uuid, productId: uuid }).parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
     const existing = await imageBelongsToProduct(data.imageId, data.productId);
     const supabaseAdmin = await adminClient();
     // Clear variant image pins first (FK is nullable; keep variants intact).
@@ -487,7 +551,7 @@ export const deleteStorageObject = createServerFn({ method: "POST" })
   .middleware(adminOnly)
   .inputValidator((data) => z.object({ path: z.string().min(1).max(1000) }).parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
     const path = data.path.trim();
     if (path.includes("..")) throw new Error("Invalid path.");
     const supabaseAdmin = await adminClient();
@@ -497,7 +561,9 @@ export const deleteStorageObject = createServerFn({ method: "POST" })
       .eq("storage_path", path);
     if (refError) throw new Error(refError.message);
     if (count && count > 0) {
-      throw new Error("This file is attached to a product. Delete it from the product's media instead.");
+      throw new Error(
+        "This file is attached to a product. Delete it from the product's media instead.",
+      );
     }
     const { error } = await supabaseAdmin.storage.from(MEDIA_BUCKET).remove([path]);
     if (error) throw new Error(error.message);
@@ -508,3 +574,57 @@ export const deleteStorageObject = createServerFn({ method: "POST" })
 /** Re-exported for the uploader: the kind the server derived at request time. */
 export type { MediaKind };
 export { detectMediaKind };
+
+/* ------------------------------------------------------------------ */
+/* Media library (product-media bucket)                                */
+/* ------------------------------------------------------------------ */
+
+export type MediaEntry = {
+  name: string;
+  path: string;
+  isFolder: boolean;
+  size: number | null;
+  mime: string | null;
+  updatedAt: string | null;
+};
+
+export const listMedia = createServerFn({ method: "GET" })
+  .middleware(adminOnly)
+  .inputValidator((data) => z.object({ prefix: z.string().max(500).default("") }).parse(data))
+  .handler(async ({ data, context }): Promise<{ prefix: string; entries: MediaEntry[] }> => {
+    await assertAdminPermission(context, "content.manage");
+    const supabaseAdmin = await adminClient();
+    const prefix = data.prefix.replace(/(^\/+|\/+$)/g, "");
+    const { data: objects, error } = await supabaseAdmin.storage
+      .from(MEDIA_BUCKET)
+      .list(prefix || undefined, { limit: 100, sortBy: { column: "updated_at", order: "desc" } });
+    if (error) throw new Error(error.message);
+
+    const entries: MediaEntry[] = (objects ?? [])
+      .filter((o) => o.name !== ".emptyFolderPlaceholder")
+      .map((o) => {
+        const isFolder = o.id == null && (!o.metadata || Object.keys(o.metadata).length === 0);
+        return {
+          name: o.name,
+          path: prefix ? `${prefix}/${o.name}` : o.name,
+          isFolder,
+          size: typeof o.metadata?.size === "number" ? o.metadata.size : null,
+          mime: typeof o.metadata?.mimetype === "string" ? o.metadata.mimetype : null,
+          updatedAt: o.updated_at ?? o.created_at ?? null,
+        };
+      });
+    return { prefix, entries };
+  });
+
+export const getMediaSignedUrl = createServerFn({ method: "GET" })
+  .middleware(adminOnly)
+  .inputValidator((data) => z.object({ path: z.string().min(1).max(1000) }).parse(data))
+  .handler(async ({ data, context }) => {
+    await assertAdminPermission(context, "content.manage");
+    const supabaseAdmin = await adminClient();
+    const { data: signed, error } = await supabaseAdmin.storage
+      .from(MEDIA_BUCKET)
+      .createSignedUrl(data.path, 3600);
+    if (error || !signed?.signedUrl) throw new Error(error?.message ?? "Could not sign URL.");
+    return { url: signed.signedUrl };
+  });

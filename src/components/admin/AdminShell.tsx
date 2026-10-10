@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import {
   BadgeCheck,
   BarChart3,
@@ -8,27 +9,34 @@ import {
   ChevronDown,
   ExternalLink,
   FileText,
+  Flag,
   FolderTree,
   Globe,
+  Hammer,
+  HeartPulse,
   Images,
+  ImagePlus,
+  Layers,
   LayoutDashboard,
   LayoutTemplate,
   LogOut,
   MapPin,
+  MousePointerClick,
   Package,
   Percent,
   ScrollText,
   Settings,
   ShieldCheck,
   ShoppingBag,
-  Sparkles,
   Star,
   Store,
   Ticket,
   Truck,
+  UserCog,
   UserRound,
   Users,
   Wallet,
+  Wrench,
 } from "lucide-react";
 import { CommandBar } from "./CommandBar";
 import { QuickCreate } from "./QuickCreate";
@@ -36,10 +44,16 @@ import { useAdminLocale } from "./useAdminLocale";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { supabase } from "@/integrations/supabase/client";
 import { getTranslations, type Translation } from "@/lib/i18n";
+import {
+  ADMIN_NAV_PERMISSIONS,
+  canSeeNavItem,
+  getMyAdminIdentity,
+} from "@/lib/admin-permissions";
 import { cn } from "@/lib/utils";
 import { Crumbs, type Crumb } from "@/components/routing/crumbs";
 
 import type { LinkProps } from "@tanstack/react-router";
+import { ModaliaIntelligenceIcon } from "@/components/marketplace/ModaliaIntelligenceIcon";
 
 type AdminNavStrings = Translation["adminNav"];
 
@@ -58,8 +72,10 @@ interface NavGroup {
 
 /**
  * The canonical admin navigation. Every item MUST point at a real, working
- * /admin/* route — no dead links. Groups/items are trilingual via the
- * `adminNav` translation section.
+ * /admin/* route — no dead links — with one exception: /admin/team is the
+ * super-admin-only Team page reserved by the admin-members work and auto-hides
+ * for everyone else. Groups/items are trilingual via the `adminNav`
+ * translation section.
  */
 function buildNavGroups(t: AdminNavStrings): NavGroup[] {
   const items = t.items;
@@ -91,7 +107,11 @@ function buildNavGroups(t: AdminNavStrings): NavGroup[] {
         { label: items.sellerApplications, to: "/admin/applications", icon: <FileText className={icon} /> },
         { label: items.sellers, to: "/admin/sellers", icon: <Users className={icon} /> },
         { label: items.stores, to: "/admin/stores", icon: <Store className={icon} /> },
+        { label: "Verifications", to: "/admin/verifications" as any, icon: <BadgeCheck className={icon} /> },
         { label: items.customers, to: "/admin/customers", icon: <UserRound className={icon} /> },
+        { label: "Partnerships", to: "/admin/partnerships" as any, icon: <Building2 className={icon} /> },
+        { label: "Partner banners", to: "/admin/partner-banners" as any, icon: <ImagePlus className={icon} /> },
+        { label: "Reports", to: "/admin/reports" as any, icon: <Flag className={icon} /> },
       ],
     },
     {
@@ -103,18 +123,32 @@ function buildNavGroups(t: AdminNavStrings): NavGroup[] {
         { label: items.communes, to: "/admin/communes", icon: <Building2 className={icon} /> },
         { label: items.coupons, to: "/admin/coupons", icon: <Ticket className={icon} /> },
         { label: items.settlements, to: "/admin/settlements", icon: <Wallet className={icon} /> },
+        { label: items.commissions, to: "/admin/commissions", icon: <Percent className={icon} /> },
         { label: items.notifications, to: "/admin/notifications", icon: <Bell className={icon} /> },
+      ],
+    },
+    {
+      id: "content",
+      label: t.groups.content,
+      items: [
+        { label: items.homepage, to: "/admin/homepage", icon: <LayoutTemplate className={icon} /> },
+        { label: items.homepageBuilder, to: "/admin/homepage/builder", icon: <Hammer className={icon} /> },
+        { label: items.media, to: "/admin/media", icon: <Images className={icon} /> },
+        { label: items.banners, to: "/admin/banners", icon: <Flag className={icon} /> },
+        { label: items.collections, to: "/admin/collections", icon: <Layers className={icon} /> },
+        { label: items.buttons, to: "/admin/buttons", icon: <MousePointerClick className={icon} /> },
       ],
     },
     {
       id: "system",
       label: t.groups.system,
       items: [
-        { label: items.homepage, to: "/admin/homepage", icon: <LayoutTemplate className={icon} /> },
-        { label: items.ai, to: "/admin/ai", icon: <Sparkles className={icon} /> },
+        { label: items.team, to: "/admin/team", icon: <UserCog className={icon} /> },
+        { label: items.ai, to: "/admin/ai", icon: <ModaliaIntelligenceIcon size={18} className={icon} /> },
         { label: items.seo, to: "/admin/seo", icon: <Globe className={icon} /> },
-        { label: items.media, to: "/admin/media", icon: <Images className={icon} /> },
         { label: items.settings, to: "/admin/settings", icon: <Settings className={icon} /> },
+        { label: "Maintenance", to: "/admin/maintenance" as any, icon: <Wrench className={icon} /> },
+        { label: "System Health", to: "/admin/system-health" as any, icon: <HeartPulse className={icon} /> },
         { label: items.security, to: "/admin/security", icon: <ShieldCheck className={icon} /> },
         { label: items.auditLogs, to: "/admin/audit", icon: <ScrollText className={icon} /> },
       ],
@@ -166,6 +200,7 @@ function NavLink({ item, compact }: { item: NavItem; compact?: boolean }) {
   return (
     <Link
       to={item.to}
+      preload="intent"
       {...(item.exact ? { activeOptions: { exact: true } } : {})}
       activeProps={{ className: "bg-accent text-accent-foreground font-medium" }}
       className={cn(
@@ -240,7 +275,10 @@ function SidebarNav({ groups }: { groups: NavGroup[] }) {
             >
               <span>{group.label}</span>
               <ChevronDown
-                className={cn("h-3.5 w-3.5 transition-transform", open ? "" : "-rotate-90")}
+                className={cn(
+                  "h-3.5 w-3.5 transition-transform",
+                  open ? "" : "-rotate-90 rtl:rotate-90",
+                )}
                 aria-hidden="true"
               />
             </button>
@@ -284,7 +322,34 @@ export function AdminShell({
 }) {
   const locale = useAdminLocale();
   const t = getTranslations(locale).adminNav;
-  const groups = useMemo(() => buildNavGroups(t), [t]);
+  /**
+   * Admin identity for nav filtering (UX only — server functions enforce).
+   * While loading, the nav renders unfiltered to avoid a layout flash; on
+   * error AdminGate owns the denied/error state, so we fall back to
+   * unfiltered too. Groups that end up empty are dropped.
+   */
+  const identityQuery = useQuery({
+    queryKey: ["admin-identity"],
+    queryFn: () => getMyAdminIdentity(),
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
+  const groups = useMemo(() => {
+    const built = buildNavGroups(t);
+    const identity = identityQuery.data;
+    if (!identity) return built;
+    return built
+      .map((group) => ({
+        ...group,
+        items: group.items.filter((item) =>
+          canSeeNavItem(ADMIN_NAV_PERMISSIONS[String(item.to)], {
+            kind: identity.kind,
+            permissions: identity.permissions,
+          }),
+        ),
+      }))
+      .filter((group) => group.items.length > 0);
+  }, [t, identityQuery.data]);
   const allItems = useMemo(() => groups.flatMap((g) => g.items), [groups]);
 
   return (
@@ -295,7 +360,10 @@ export function AdminShell({
             <span className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-xs font-bold text-primary-foreground">
               M
             </span>
-            <span className="text-sm font-semibold tracking-tight">Modalia OS</span>
+            <span className="flex flex-col leading-none">
+              <span className="text-sm font-semibold tracking-tight">MODALIA</span>
+              <span className="text-caption text-muted-foreground">{t.areaLabel}</span>
+            </span>
           </Link>
           <div className="flex-1" />
           <CommandBar />

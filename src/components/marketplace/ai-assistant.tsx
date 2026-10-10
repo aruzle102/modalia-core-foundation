@@ -1,14 +1,13 @@
 /**
- * AI Shopping Assistant — storefront chat drawer.
+ * Modalia Intelligence — storefront chat drawer.
  *
- * Answers come ONLY from `aiChat` (real catalog data). The drawer always
- * labels who answered: the Rule Assistant (مساعد القواعد) or an external
- * AI provider — never pretending one is the other.
+ * Answers come ONLY from `aiChat` (deterministic, database-powered rules).
+ * No external AI provider is ever called in production.
  */
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Bot, Loader2, SendHorizonal, Sparkles } from "lucide-react";
+import { Bot, Loader2, SendHorizonal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -20,16 +19,26 @@ import {
 } from "@/components/ui/sheet";
 import { localeDirections, type SupportedLocale, type Translation } from "@/lib/i18n";
 import { formatPrice } from "@/lib/i18n/format";
-import { aiChat, getAiStatus, type AiChatProduct } from "@/lib/ai.functions";
+import { aiChat, type AiChatProduct } from "@/lib/ai.functions";
+import { getPublicIntelligenceConfig } from "@/lib/intelligence-settings.functions";
+import { answerSupportQuestion } from "@/lib/support-knowledge";
 import { cn } from "@/lib/utils";
+import { ModaliaIntelligenceIcon } from "@/components/marketplace/ModaliaIntelligenceIcon";
 
 type ChatMessage = {
   id: number;
   role: "user" | "assistant";
   text: string;
   products: AiChatProduct[];
-  source: "provider" | "rules";
+  source: "rules";
   intentSummary: string | null;
+  /**
+   * Honest provenance for support answers: the 8 intent answers come from the
+   * static confirmed knowledge base (`src/lib/support-knowledge.ts`), not
+   * from a database table. The intelligence_settings control plane (toggle,
+   * welcome/fallback copy, suggested questions) IS database-backed.
+   */
+  sourceDetail?: "support-static" | undefined;
 };
 
 
@@ -122,7 +131,7 @@ function ProductCard({ product, locale, t }: { product: AiChatProduct; locale: S
         />
       ) : (
         <div className="grid size-12 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground">
-          <Sparkles className="size-5" />
+          <ModaliaIntelligenceIcon size={20} />
         </div>
       )}
       <div className="min-w-0 flex-1">
@@ -156,12 +165,15 @@ export function AiAssistantDrawer({
   const bottomRef = useRef<HTMLDivElement>(null);
   const dir = localeDirections[locale];
 
-  const statusQuery = useQuery({
-    queryKey: ["ai-status"],
-    queryFn: () => getAiStatus({ data: {} }),
+  // Modalia Intelligence control plane: support toggle + trilingual copy.
+  const intelQuery = useQuery({
+    queryKey: ["intelligence-config", locale],
+    queryFn: () => getPublicIntelligenceConfig({ data: { locale } }),
     staleTime: 60_000,
     retry: false,
   });
+  const intel = intelQuery.data;
+  const supportEnabled = intel?.support_enabled ?? true;
 
   const chat = useMutation({
     mutationFn: (message: string) =>
@@ -182,6 +194,7 @@ export function AiAssistantDrawer({
           products: result.products,
           source: result.source,
           intentSummary: result.intentSummary,
+          sourceDetail: undefined,
         },
       ]);
     },
@@ -195,6 +208,7 @@ export function AiAssistantDrawer({
           products: [],
           source: "rules",
           intentSummary: null,
+          sourceDetail: undefined,
         },
       ]);
     },
@@ -209,13 +223,39 @@ export function AiAssistantDrawer({
     if (!message || chat.isPending) return;
     setMessages((prev) => [
       ...prev,
-      { id: idRef.current++, role: "user", text: message, products: [], source: "rules", intentSummary: null },
+      { id: idRef.current++, role: "user", text: message, products: [], source: "rules", intentSummary: null, sourceDetail: undefined },
     ]);
     setInput("");
+
+    // Support knowledge first: when enabled and the question matches a
+    // confirmed support intent, answer deterministically from the knowledge
+    // base instead of searching the catalog.
+    if (supportEnabled) {
+      const support = answerSupportQuestion(message, locale);
+      if (support.answer) {
+        const actionLinks = support.suggestedActions
+          .map((a) => `[${a.label}](${a.href})`)
+          .join(" · ");
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: idRef.current++,
+            role: "assistant",
+            text: `${support.answer}\n\n${actionLinks}`,
+            products: [],
+            source: "rules",
+            intentSummary: t.assistant.supportLabel ?? null,
+            // Honest label: static confirmed knowledge, not a DB row.
+            sourceDetail: "support-static",
+          },
+        ]);
+        return;
+      }
+    }
+
     chat.mutate(message);
   };
 
-  const source = statusQuery.data?.source ?? "rules";
   const isRtl = dir === "rtl";
 
   return (
@@ -224,35 +264,33 @@ export function AiAssistantDrawer({
         <SheetHeader className="border-b border-border px-5 py-4 text-start">
           <SheetTitle className="flex items-center gap-2 text-lg">
             <span className="grid size-9 place-items-center rounded-xl bg-primary text-primary-foreground">
-              <Sparkles className="size-4.5" />
+              <ModaliaIntelligenceIcon size={18} />
             </span>
             {t.assistant.title}
           </SheetTitle>
           <SheetDescription>{t.assistant.subtitle}</SheetDescription>
         </SheetHeader>
 
-        {/* Honesty banner: always names who is answering */}
-        <div
-          className={cn(
-            "mx-5 mt-4 flex items-start gap-2 rounded-xl border px-3 py-2.5 text-xs leading-5",
-            source === "rules"
-              ? "border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-300"
-              : "border-sky-500/30 bg-sky-500/10 text-sky-800 dark:text-sky-300",
-          )}
-        >
+        {/* Honesty banner: Modalia Intelligence is deterministic and database-powered. */}
+        <div className="mx-5 mt-4 flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2.5 text-xs leading-5 text-amber-800 dark:text-amber-300">
           <Bot className="mt-0.5 size-4 shrink-0" />
-          <p>{source === "rules" ? t.assistant.rulesBanner : t.assistant.providerBanner}</p>
+          <p>{t.assistant.rulesBanner}</p>
         </div>
 
         <div className="flex-1 overflow-y-auto px-5 py-4" role="log" aria-live="polite">
           {messages.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center gap-4 text-center">
               <span className="grid size-14 place-items-center rounded-2xl bg-muted">
-                <Sparkles className="size-6 text-muted-foreground" />
+                <ModaliaIntelligenceIcon size={24} className="text-muted-foreground" />
               </span>
-              <p className="max-w-xs text-sm text-muted-foreground">{t.assistant.empty}</p>
+              <p className="max-w-xs text-sm text-muted-foreground">
+                {intel?.welcome_message || t.assistant.empty}
+              </p>
               <div className="flex flex-wrap justify-center gap-2">
-                {t.assistant.suggestions.map((suggestion) => (
+                {(intel?.suggested_questions?.length
+                  ? intel.suggested_questions
+                  : t.assistant.suggestions
+                ).map((suggestion) => (
                   <Button
                     key={suggestion}
                     type="button"
@@ -281,6 +319,11 @@ export function AiAssistantDrawer({
                       {message.intentSummary ? (
                         <p className="mb-2 inline-block rounded-full bg-muted px-2.5 py-0.5 text-[11px] text-muted-foreground">
                           {t.assistant.understood}: {message.intentSummary}
+                        </p>
+                      ) : null}
+                      {message.sourceDetail === "support-static" ? (
+                        <p className="mb-2 text-[11px] italic text-muted-foreground">
+                          {t.assistant.supportStaticNote}
                         </p>
                       ) : null}
                       {renderRichText(message.text, locale)}
@@ -345,7 +388,7 @@ export function AiAssistantButton({
 }) {
   return (
     <Button variant="ghost" size="icon" onClick={onOpen} aria-label={t.assistant.open} title={t.assistant.open}>
-      <Sparkles />
+      <ModaliaIntelligenceIcon size={16} />
     </Button>
   );
 }

@@ -7,7 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { AdminCard, EmptyState, Field, StatusPill, TableSkeleton, fmtDateTime } from "@/components/admin/ui";
 import { SellerShell } from "@/components/seller/SellerShell";
 import { createSupportRequest, listSupportRequests } from "@/lib/seller-support.functions";
-import { getLocale, getTranslations } from "@/lib/i18n";
+import { getLocale, getTranslations, type SupportedLocale } from "@/lib/i18n";
+import { useAdminLocale } from "@/components/admin/useAdminLocale";
 import { RouteError } from "@/components/routing/route-states";
 
 const q = queryOptions({ queryKey: ["seller-support"], queryFn: () => listSupportRequests() });
@@ -16,32 +17,36 @@ export const Route = createFileRoute("/_authenticated/seller/support")({
   validateSearch: (search: Record<string, unknown>) => ({ locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined) }),
   loader: ({ context }) => context.queryClient.ensureQueryData(q),
   pendingComponent: TableSkeleton,
-  errorComponent: ({ reset }) => (
-    <SellerShell eyebrow="Seller workspace" title="Support">
-      <RouteError message="Support requests could not be loaded. Check your connection and try again." reset={reset} />
-    </SellerShell>
-  ),
+  errorComponent: SupportError,
   head: () => ({ meta: [{ name: "robots", content: "noindex,nofollow" }] }),
   component: SupportPage,
 });
 
-function SupportPage() {
-  const { locale } = Route.useSearch();
-  const t = getTranslations(locale);
-
+function SupportError({ reset }: { reset: () => void }) {
+  const t = getTranslations(useAdminLocale()).seller.support;
   return (
-    <SellerShell
-      eyebrow="Seller workspace"
-      title="Support"
-    >
-      <p className="text-body text-muted-foreground">Reach the Modalia team for account, payout or catalog issues. Replies appear below.</p>
-      <RequestForm />
-      <RequestList />
+    <SellerShell eyebrow={t.eyebrow} title={t.title}>
+      <RouteError message={t.loadError} reset={reset} />
     </SellerShell>
   );
 }
 
-function RequestForm() {
+type SupportT = ReturnType<typeof getTranslations>["seller"]["support"];
+
+function SupportPage() {
+  const { locale } = Route.useSearch();
+  const t: SupportT = getTranslations(locale).seller.support;
+
+  return (
+    <SellerShell eyebrow={t.eyebrow} title={t.title}>
+      <p className="text-body text-muted-foreground">{t.intro}</p>
+      <RequestForm t={t} />
+      <RequestList t={t} locale={locale} />
+    </SellerShell>
+  );
+}
+
+function RequestForm({ t }: { t: SupportT }) {
   const qc = useQueryClient();
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
@@ -50,27 +55,27 @@ function RequestForm() {
   const mutation = useMutation({
     mutationFn: () => createSupportRequest({ data: { subject, message } }),
     onSuccess: () => {
-      setStatus("Request submitted. We'll get back to you soon.");
+      setStatus(t.submitted);
       setSubject("");
       setMessage("");
       qc.invalidateQueries({ queryKey: ["seller-support"] });
     },
-    onError: (err) => setStatus(err instanceof Error ? err.message : "Submission failed."),
+    onError: (err) => setStatus(err instanceof Error ? err.message : t.submitFailed),
   });
 
   return (
-    <AdminCard title="New request" subtitle="Describe the issue; the team replies here." className="mb-8">
-      <Field label="Subject">
-        <Input placeholder="e.g. Payout delayed" value={subject} onChange={(e) => setSubject(e.target.value)} />
+    <AdminCard title={t.formTitle} subtitle={t.formSubtitle} className="mb-8">
+      <Field label={t.subjectLabel}>
+        <Input placeholder={t.subjectPlaceholder} value={subject} onChange={(e) => setSubject(e.target.value)} />
       </Field>
       <div className="mt-4">
-        <Field label="Message" hint={`${message.length}/4000 characters`}>
-          <Textarea rows={5} maxLength={4000} placeholder="Tell us what happened…" value={message} onChange={(e) => setMessage(e.target.value)} />
+        <Field label={t.messageLabel} hint={t.messageHint(message.length)}>
+          <Textarea rows={5} maxLength={4000} placeholder={t.messagePlaceholder} value={message} onChange={(e) => setMessage(e.target.value)} />
         </Field>
       </div>
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <Button disabled={subject.trim().length < 3 || message.trim().length < 10 || mutation.isPending} onClick={() => mutation.mutate()}>
-          {mutation.isPending ? "Submitting…" : "Send request"}
+          {mutation.isPending ? t.submitting : t.send}
         </Button>
         {status ? <p className="text-small text-muted-foreground">{status}</p> : null}
       </div>
@@ -78,11 +83,11 @@ function RequestForm() {
   );
 }
 
-function RequestList() {
+function RequestList({ t, locale }: { t: SupportT; locale: SupportedLocale }) {
   const { data } = useSuspenseQuery(q);
 
   return (
-    <AdminCard title="Your requests" subtitle={`${data.requests.length} total`}>
+    <AdminCard title={t.listTitle} subtitle={t.listSubtitle(data.requests.length)}>
       {data.requests.length ? (
         <div className="divide-y divide-border">
           {data.requests.map((r) => (
@@ -90,7 +95,7 @@ function RequestList() {
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <p className="font-medium">{r.subject}</p>
                 <div className="flex items-center gap-3">
-                  <span className="text-caption text-muted-foreground">{fmtDateTime(r.createdAt)}</span>
+                  <span className="text-caption text-muted-foreground">{fmtDateTime(r.createdAt, locale)}</span>
                   <StatusPill status={r.status} />
                 </div>
               </div>
@@ -98,7 +103,7 @@ function RequestList() {
               {r.adminResponse ? (
                 <div className="mt-3 rounded-xl bg-muted p-4">
                   <p className="text-caption font-semibold uppercase tracking-wide text-muted-foreground">
-                    Modalia team{r.respondedAt ? ` · ${fmtDateTime(r.respondedAt)}` : ""}
+                    {t.teamLabel}{r.respondedAt ? ` · ${fmtDateTime(r.respondedAt, locale)}` : ""}
                   </p>
                   <p className="mt-1.5 text-small">{r.adminResponse}</p>
                 </div>
@@ -107,7 +112,7 @@ function RequestList() {
           ))}
         </div>
       ) : (
-        <EmptyState title="No requests yet" text="Send your first request above and our team will help." />
+        <EmptyState title={t.emptyTitle} text={t.emptyText} />
       )}
     </AdminCard>
   );

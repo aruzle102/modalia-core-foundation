@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangle,
   Copy,
+  FileVideo,
   Image as ImageIcon,
   Images,
   Loader2,
@@ -48,6 +49,17 @@ import {
   submitForModeration,
 } from "@/lib/seller-products.functions";
 import {
+  getAdminEditorLists,
+  getAdminProductEditor,
+  saveAdminProduct,
+} from "@/lib/admin-products.functions";
+import { moderateAdminProduct } from "@/lib/admin-catalog.functions";
+import {
+  requestMediaUpload as requestAdminMediaUpload,
+  finalizeMediaUpload as finalizeAdminMediaUpload,
+  deleteStorageObject,
+} from "@/lib/admin-media.functions";
+import {
   requestSellerMediaUpload,
   finalizeSellerMediaUpload,
   deleteSellerMediaObject,
@@ -62,13 +74,13 @@ import { cn } from "@/lib/utils";
  * uploader takes translated labels, so the admin media manager passes its
  * own trilingual set while the editor uses English. */
 const SELLER_UPLOADER_LABELS: UploaderLabels = {
-  dropHint: "Drag images or 3D models (GLB/GLTF) here or",
+  dropHint: "Drag images, videos or 3D models (GLB/GLTF) here or",
   browse: "Browse files",
   uploading: "Uploading…",
   finalizing: "Validating…",
   done: "Done",
-  errUnsupported: "Unsupported file type. Allowed: JPG, PNG, WebP, GIF, GLB, GLTF.",
-  errTooLarge: "File too large — up to 10 MB for images, up to 50 MB for 3D models.",
+  errUnsupported: "Unsupported file type. Allowed: JPG, PNG, WebP, GIF, MP4, WebM, GLB, GLTF.",
+  errTooLarge: "File too large — up to 10 MB for images, 100 MB for videos, 50 MB for 3D models.",
   errEmpty: "The file is empty.",
   errCorrupt: "The file is corrupt or not a genuine file of this type.",
   errTooSmall: "Image too small — minimum 64×64 px.",
@@ -118,7 +130,7 @@ interface ImageState {
   id?: string;
   storagePath: string;
   isPrimary: boolean;
-  mediaType: "image" | "model_3d";
+  mediaType: "image" | "video" | "model_3d";
   altText?: LocaleText;
 }
 
@@ -133,6 +145,7 @@ interface EditorSnapshot {
   weightGrams: string;
   basePrice: string;
   compareAtPrice: string;
+  costPrice: string;
   tags: string[];
   seoTitle: string;
   seoDescription: string;
@@ -173,6 +186,26 @@ function uid(): string {
   return crypto.randomUUID().slice(0, 8);
 }
 
+/**
+ * Client-side public URL for a seller storage path (`<sellerId>/uploads/…`).
+ * Mirrors the server `publicUrl` in `src/lib/store.functions.ts`. Returns null
+ * when the path can't be resolved — the caller keeps the honest icon tile.
+ */
+function mediaPreviewUrl(path: string): string | null {
+  const base = import.meta.env["VITE_SUPABASE_URL"] as string | undefined;
+  const clean = path.replace(/^\/+/, "");
+  if (
+    !base ||
+    !clean ||
+    !clean.includes("/") ||
+    clean.includes("..") ||
+    !/^[A-Za-z0-9][A-Za-z0-9._\-/]*$/.test(clean)
+  ) {
+    return null;
+  }
+  return `${base.replace(/\/$/, "")}/storage/v1/object/public/product-media/${clean}`;
+}
+
 function refKey(refs: { optionCode: string; value: string }[]): string {
   return refs
     .map((r) => `${r.optionCode}::${r.value}`)
@@ -192,6 +225,7 @@ function emptySnapshot(): EditorSnapshot {
     weightGrams: "",
     basePrice: "",
     compareAtPrice: "",
+    costPrice: "",
     tags: [],
     seoTitle: "",
     seoDescription: "",
@@ -203,34 +237,96 @@ function emptySnapshot(): EditorSnapshot {
 
 /* ------------------------------------------------------------------ main */
 
-export function ProductEditor({ mode, productId }: { mode: "create" | "edit"; productId?: string }) {
+/**
+ * Media list thumbnail: renders the real image when its storage path resolves
+ * to a public URL, and falls back to the honest icon tile when it can't
+ * (unresolvable path, or the object fails to load — e.g. an unpublished
+ * draft the public endpoint won't serve). Videos and 3D models always show
+ * the icon tile.
+ */
+function MediaThumb({ img }: { img: ImageState }) {
+  const [failed, setFailed] = useState(false);
+  const url = img.mediaType === "image" ? mediaPreviewUrl(img.storagePath) : null;
+  if (!url || failed) {
+    return (
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted">
+        {img.mediaType === "model_3d" ? (
+          <ImageIcon className="h-5 w-5 text-muted-foreground" />
+        ) : img.mediaType === "video" ? (
+          <FileVideo className="h-5 w-5 text-muted-foreground" />
+        ) : (
+          <Images className="h-5 w-5 text-muted-foreground" />
+        )}
+      </span>
+    );
+  }
+  return (
+    <img
+      src={url}
+      alt=""
+      onError={() => setFailed(true)}
+      className="h-10 w-10 shrink-0 rounded-md bg-muted object-cover"
+    />
+  );
+}
+
+export function ProductEditor({
+  mode,
+  productId,
+  adminMode,
+  adminSellerId,
+}: {
+  mode: "create" | "edit";
+  productId?: string;
+  /**
+   * Admin context (Section 35): uses the admin server functions
+   * (`assertAdmin` + shared save core) instead of the seller ones.
+   * Everything else — steps, validation, UX — is the same editor.
+   */
+  adminMode?: boolean;
+  /** Required in admin create mode: the seller the new product belongs to. */
+  adminSellerId?: string;
+}) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const routeSearch = useSearch({ strict: false }) as Record<string, unknown>;
   const backParam = typeof routeSearch["back"] === "string" ? routeSearch["back"] : "";
 
   const editorQuery = useQuery({
-    queryKey: ["seller-product-editor", productId],
-    queryFn: () => getProductEditor({ data: { productId: productId as string } }),
+    queryKey: [adminMode ? "admin-product-editor" : "seller-product-editor", productId],
+    queryFn: () =>
+      adminMode
+        ? getAdminProductEditor({ data: { productId: productId as string } })
+        : getProductEditor({ data: { productId: productId as string } }),
     enabled: mode === "edit" && !!productId,
+  });
+  // Admin mode fetches all three lists in one call; the seller path keeps its
+  // three separate endpoints untouched.
+  const adminListsQuery = useQuery({
+    queryKey: ["admin-editor-lists"],
+    queryFn: () => getAdminEditorLists(),
+    enabled: adminMode === true,
   });
   const categoriesQuery = useQuery({
     queryKey: ["seller-categories"],
     queryFn: () => getSellerCategories(),
+    enabled: !adminMode,
   });
   const brandsQuery = useQuery({
     queryKey: ["seller-brands"],
     queryFn: () => getSellerBrands(),
+    enabled: !adminMode,
   });
   const colorsQuery = useQuery({
     queryKey: ["seller-colors"],
     queryFn: () => getSellerColors(),
+    enabled: !adminMode,
   });
 
   const [snap, setSnap] = useState<EditorSnapshot>(() => {
     if (mode === "create") {
       try {
-        const raw = localStorage.getItem("seller-product-draft-new");
+        const raw = localStorage.getItem(adminMode ? "admin-product-draft-new" : "seller-product-draft-new");
         if (raw) return { ...emptySnapshot(), ...JSON.parse(raw) };
       } catch {
         /* ignore */
@@ -297,7 +393,8 @@ export function ProductEditor({ mode, productId }: { mode: "create" | "edit"; pr
         id: img.id,
         storagePath: img.storage_path,
         isPrimary: !!img.is_primary,
-        mediaType: img.media_type === "model_3d" ? "model_3d" : "image",
+        mediaType:
+          img.media_type === "model_3d" ? "model_3d" : img.media_type === "video" ? "video" : "image",
         altText: asLocale(img.alt_text),
       }));
     const meta: any = p.metadata ?? {};
@@ -312,6 +409,7 @@ export function ProductEditor({ mode, productId }: { mode: "create" | "edit"; pr
       weightGrams: p.weight_grams != null ? String(p.weight_grams) : "",
       basePrice: p.base_price != null ? String(p.base_price) : "",
       compareAtPrice: p.compare_at_price != null ? String(p.compare_at_price) : "",
+      costPrice: (p as { cost_price?: number | null }).cost_price != null ? String((p as { cost_price?: number | null }).cost_price) : "",
       tags: (p.product_tag_assignments ?? [])
         .map((a: any) => a.product_tags)
         .filter(Boolean)
@@ -382,10 +480,11 @@ export function ProductEditor({ mode, productId }: { mode: "create" | "edit"; pr
   /* ------------------------- autosave + navigation guard ------------------------- */
   useEffect(() => {
     if (mode !== "create") return;
+    const key = adminMode ? "admin-product-draft-new" : "seller-product-draft-new";
     const id = window.setInterval(() => {
       if (dirtyRef.current) {
         try {
-          localStorage.setItem("seller-product-draft-new", JSON.stringify(snap));
+          localStorage.setItem(key, JSON.stringify(snap));
           setSavedAt(new Date().toLocaleTimeString());
         } catch {
           /* storage full — ignore */
@@ -393,7 +492,7 @@ export function ProductEditor({ mode, productId }: { mode: "create" | "edit"; pr
       }
     }, 20_000);
     return () => window.clearInterval(id);
-  }, [mode, snap]);
+  }, [mode, adminMode, snap]);
 
   useEffect(() => {
     const onUnload = (e: BeforeUnloadEvent) => {
@@ -416,6 +515,11 @@ export function ProductEditor({ mode, productId }: { mode: "create" | "edit"; pr
   const saveMutation = useMutation({
     mutationFn: async () => {
       const payload = buildPayload(snap, mode === "edit" ? productId : undefined);
+      if (adminMode) {
+        return saveAdminProduct({
+          data: { ...payload, sellerId: mode === "create" ? adminSellerId : undefined },
+        });
+      }
       return saveProduct({ data: payload });
     },
     onSuccess: (res) => {
@@ -424,13 +528,25 @@ export function ProductEditor({ mode, productId }: { mode: "create" | "edit"; pr
       queryClient.invalidateQueries({ queryKey: ["seller-products"] });
       queryClient.invalidateQueries({ queryKey: ["seller-product-editor"] });
       queryClient.invalidateQueries({ queryKey: ["seller-inventory"] });
+      if (adminMode) {
+        queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+        queryClient.invalidateQueries({ queryKey: ["admin-product-editor"] });
+      }
       if (mode === "create") {
         try {
-          localStorage.removeItem("seller-product-draft-new");
+          localStorage.removeItem(adminMode ? "admin-product-draft-new" : "seller-product-draft-new");
         } catch {
           /* ignore */
         }
-        navigate({ to: "/seller/products/$productId", params: { productId: res.productId }, search: { locale, back: backParam, q: "", status: "", moderation: "", page: 1 } });
+        if (adminMode) {
+          navigate({
+            to: "/admin/products/$productId",
+            params: { productId: res.productId },
+            search: { q: "", moderation: "all", status: "all", sellerId: "all", page: 1, create: "", back: "" },
+          });
+        } else {
+          navigate({ to: "/seller/products/$productId", params: { productId: res.productId }, search: { locale, back: backParam, q: "", status: "", moderation: "", page: 1 } });
+        }
       } else {
         setSavedAt(new Date().toLocaleTimeString());
       }
@@ -439,10 +555,18 @@ export function ProductEditor({ mode, productId }: { mode: "create" | "edit"; pr
   });
 
   const submitMutation = useMutation({
-    mutationFn: () => submitForModeration({ data: { productId: productId as string } }),
+    mutationFn: () =>
+      adminMode
+        ? // Admins don't "submit for review" — they approve directly.
+          moderateAdminProduct({
+            data: { productId: productId as string, decision: "approve" },
+          })
+        : submitForModeration({ data: { productId: productId as string } }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["seller-product-editor"] });
       queryClient.invalidateQueries({ queryKey: ["seller-products"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-product-editor"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
     },
     onError: (e) => setError(e instanceof Error ? e.message : "Unable to submit."),
   });
@@ -470,7 +594,7 @@ export function ProductEditor({ mode, productId }: { mode: "create" | "edit"; pr
     setTagInput("");
   };
 
-  const addUploadedMedia = (media: { path: string; kind: "image" | "model_3d" }) => {
+  const addUploadedMedia = (media: { path: string; kind: "image" | "video" | "model_3d" }) => {
     patch((s) => ({
       ...s,
       images: [
@@ -501,10 +625,15 @@ export function ProductEditor({ mode, productId }: { mode: "create" | "edit"; pr
   };
 
   const editorProduct: any = editorQuery.data?.product;
-  const categories: any[] = categoriesQuery.data?.categories ?? [];
-  const brands: any[] = brandsQuery.data?.brands ?? [];
-  const colors: { id: string; name: unknown; slug: string; hex_value: string | null }[] =
-    colorsQuery.data?.colors ?? [];
+  const categories: any[] = adminMode
+    ? (adminListsQuery.data?.categories ?? [])
+    : (categoriesQuery.data?.categories ?? []);
+  const brands: any[] = adminMode
+    ? (adminListsQuery.data?.brands ?? [])
+    : (brandsQuery.data?.brands ?? []);
+  const colors: { id: string; name: unknown; slug: string; hex_value: string | null }[] = adminMode
+    ? (adminListsQuery.data?.colors ?? [])
+    : (colorsQuery.data?.colors ?? []);
   const colorById = new Map(colors.map((c) => [c.id, c]));
   const canSubmit =
     mode === "edit" &&
@@ -522,7 +651,7 @@ export function ProductEditor({ mode, productId }: { mode: "create" | "edit"; pr
             text="This product does not exist or you do not have access to it."
             action={
               <Button asChild>
-                <BackLink back={backParam} fallbackTo="/seller/products">Back to products</BackLink>
+                <BackLink back={backParam} fallbackTo={adminMode ? "/admin/products" : "/seller/products"}>Back to products</BackLink>
               </Button>
             }
           />
@@ -559,7 +688,7 @@ export function ProductEditor({ mode, productId }: { mode: "create" | "edit"; pr
           {dirty ? <span className="text-xs text-amber-600">Unsaved changes</span> : null}
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {mode === "edit" ? (
+          {mode === "edit" && !adminMode ? (
             <Button
               type="button"
               variant="outline"
@@ -579,7 +708,13 @@ export function ProductEditor({ mode, productId }: { mode: "create" | "edit"; pr
               disabled={submitMutation.isPending}
             >
               <Send className="me-1.5 h-4 w-4" />
-              {submitMutation.isPending ? "Submitting…" : "Submit for review"}
+              {submitMutation.isPending
+                ? adminMode
+                  ? "Approving…"
+                  : "Submitting…"
+                : adminMode
+                  ? "Approve & publish"
+                  : "Submit for review"}
             </Button>
           ) : null}
           <Button type="button" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
@@ -789,18 +924,50 @@ export function ProductEditor({ mode, productId }: { mode: "create" | "edit"; pr
                   onChange={(e) => patch((s) => ({ ...s, compareAtPrice: e.target.value }))}
                 />
               </div>
+              <div>
+                <Label htmlFor="cost-price">Cost price (DZD) *</Label>
+                <Input
+                  id="cost-price"
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  required
+                  className="mt-1.5"
+                  value={snap.costPrice}
+                  onChange={(e) => patch((s) => ({ ...s, costPrice: e.target.value }))}
+                />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Your acquisition cost — mandatory. Visible only to you and the Modalia admin, never to customers.
+                </p>
+              </div>
             </div>
           </AdminCard>
 
           {/* images */}
           <AdminCard
             title="Media"
-            subtitle="Images and 3D models — first primary image is the cover"
+            subtitle="Images, videos and 3D models — first primary image is the cover"
           >
             <MediaUploader
               acceptKind="any"
               labels={SELLER_UPLOADER_LABELS}
               requestUpload={async (file, kind) => {
+                if (adminMode) {
+                  // Admin editor: product-scoped in edit mode, seller-staged in
+                  // create mode (mirrors the seller pipeline's uploads flow).
+                  const res = await requestAdminMediaUpload({
+                    data: {
+                      ...(mode === "edit"
+                        ? { productId: productId as string }
+                        : { sellerId: adminSellerId as string }),
+                      filename: file.name,
+                      mimeType: file.type || undefined,
+                      sizeBytes: file.size,
+                      mediaKind: kind,
+                    },
+                  });
+                  return { path: res.path, signedUrl: res.signedUrl, mediaKind: res.mediaKind };
+                }
                 const res = await requestSellerMediaUpload({
                   data: {
                     filename: file.name,
@@ -812,6 +979,18 @@ export function ProductEditor({ mode, productId }: { mode: "create" | "edit"; pr
                 return { path: res.path, signedUrl: res.signedUrl, mediaKind: res.mediaKind };
               }}
               finalizeUpload={async (path, kind) => {
+                if (adminMode) {
+                  const res = await finalizeAdminMediaUpload({
+                    data: {
+                      ...(mode === "edit"
+                        ? { productId: productId as string }
+                        : { sellerId: adminSellerId as string }),
+                      path,
+                      mediaKind: kind,
+                    },
+                  });
+                  return { width: res.width ?? null, height: res.height ?? null };
+                }
                 const res = await finalizeSellerMediaUpload({ data: { path, mediaKind: kind } });
                 return { width: res.width, height: res.height };
               }}
@@ -824,19 +1003,13 @@ export function ProductEditor({ mode, productId }: { mode: "create" | "edit"; pr
                     key={img.key}
                     className="flex items-center gap-3 rounded-lg border p-2.5"
                   >
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted">
-                      {img.mediaType === "model_3d" ? (
-                        <ImageIcon className="h-5 w-5 text-muted-foreground" />
-                      ) : (
-                        <Images className="h-5 w-5 text-muted-foreground" />
-                      )}
-                    </span>
+                    <MediaThumb img={img} />
                     <span className="min-w-0 flex-1 truncate font-mono text-xs" title={img.storagePath}>
                       {img.storagePath}
                     </span>
                     <Select
                       value={img.mediaType}
-                      onValueChange={(v: "image" | "model_3d") =>
+                      onValueChange={(v: "image" | "video" | "model_3d") =>
                         patch((s) => ({
                           ...s,
                           images: s.images.map((x) =>
@@ -850,6 +1023,7 @@ export function ProductEditor({ mode, productId }: { mode: "create" | "edit"; pr
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="image">Image</SelectItem>
+                        <SelectItem value="video">Video</SelectItem>
                         <SelectItem value="model_3d">3D model</SelectItem>
                       </SelectContent>
                     </Select>
@@ -881,11 +1055,17 @@ export function ProductEditor({ mode, productId }: { mode: "create" | "edit"; pr
                         // orphan object right away. Saved rows are cleaned up
                         // by saveProduct's reference-counted sync.
                         if (!img.id && img.storagePath) {
-                          deleteSellerMediaObject({
-                            data: { path: img.storagePath },
-                          }).catch(() => {
-                            /* best-effort cleanup */
-                          });
+                          if (adminMode) {
+                            deleteStorageObject({ data: { path: img.storagePath } }).catch(() => {
+                              /* best-effort cleanup */
+                            });
+                          } else {
+                            deleteSellerMediaObject({
+                              data: { path: img.storagePath },
+                            }).catch(() => {
+                              /* best-effort cleanup */
+                            });
+                          }
                         }
                         patch((s) => ({
                           ...s,
@@ -1212,25 +1392,21 @@ export function ProductEditor({ mode, productId }: { mode: "create" | "edit"; pr
                               ),
                             }))
                           }
-                          disabled={!snap.images.some((img) => img.id)}
+                          disabled={!snap.images.length}
                         >
                           <SelectTrigger className="h-8 w-32 text-xs">
                             <SelectValue placeholder="None" />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="none">None</SelectItem>
-                            {snap.images
-                              .filter((img) => img.id)
-                              .map((img, ii) => (
-                                <SelectItem key={img.key} value={img.id as string}>
-                                  Image {ii + 1}
-                                </SelectItem>
-                              ))}
+                            {snap.images.map((img, ii) => (
+                              <SelectItem key={img.key} value={img.id ?? img.key}>
+                                Image {ii + 1}
+                                {img.id ? null : " (new)"}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
-                        {snap.images.length > 0 && !snap.images.some((img) => img.id) ? (
-                          <span className="text-[11px] text-muted-foreground">Save first</span>
-                        ) : null}
                       </td>
                     </tr>
                   ))}
@@ -1311,6 +1487,9 @@ function buildPayload(snap: EditorSnapshot, id?: string) {
   if (!Object.keys(name).length) throw new Error("Product name is required in at least one language.");
   const basePrice = Number(snap.basePrice);
   if (!Number.isFinite(basePrice) || basePrice < 0) throw new Error("Base price must be 0 or more.");
+  const costPrice = Number(snap.costPrice);
+  if (snap.costPrice.trim() === "" || !Number.isFinite(costPrice) || costPrice < 0)
+    throw new Error("Cost price is mandatory — enter your acquisition cost (0 or more).");
 
   const variants =
     snap.variants.length > 0
@@ -1340,6 +1519,7 @@ function buildPayload(snap: EditorSnapshot, id?: string) {
     barcode: snap.barcode.trim() || undefined,
     weightGrams: snap.weightGrams === "" ? undefined : Number(snap.weightGrams),
     basePrice,
+    costPrice,
     compareAtPrice:
       snap.compareAtPrice === "" ? undefined : Number(snap.compareAtPrice),
     tags: snap.tags,
@@ -1374,7 +1554,12 @@ function buildPayload(snap: EditorSnapshot, id?: string) {
       weightGrams: v.weightGrams === "" ? undefined : Math.max(0, Number(v.weightGrams) || 0),
       stock: Math.max(0, Number(v.stock) || 0),
       lowStockThreshold: Math.max(0, Number(v.lowStockThreshold) || 0),
-      // Only real (saved) image ids cross the wire — unsaved image keys are skipped.
+      // Only real (saved) image ids cross the wire — unsaved image keys are
+      // skipped because the save core links variants by image row id and the
+      // row doesn't exist yet. Follow-up for the save-core owner: resolve a
+      // non-UUID imageId by matching data.images[].storagePath to the rows
+      // inserted in the same save (the image loop runs before the variant
+      // link loop), so a variant can keep an in-memory image across one save.
       imageId:
         v.imageId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v.imageId)
           ? v.imageId

@@ -7,9 +7,14 @@ import { getProductDetail } from "@/lib/product.functions";
 import {
   breadcrumbJsonLd,
   canonicalUrl,
+  extractSeoKeys,
+  fillSeoTemplate,
   formatPriceForMeta,
   pageHead,
+  productHeadCopy,
   productJsonLd,
+  prefetchSeoSettings,
+  seoRobotsFromHeadCtx,
   truncateForMeta,
 } from "@/lib/seo";
 import { getLocale, getTranslations, localeDirections } from "@/lib/i18n";
@@ -21,28 +26,42 @@ function ProductNotFound() { const { locale } = Route.useSearch(); return <div c
 export const Route = createFileRoute("/product/$slug")({
   validateSearch: (search: Record<string, unknown>) => ({ locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined) }),
   loaderDeps: ({ search }) => ({ locale: search.locale }),
-  loader: ({ context, deps, params }) => context.queryClient.ensureQueryData(productQuery(params.slug, deps.locale)),
+  loader: ({ context, deps, params }) => {
+    void prefetchSeoSettings(context.queryClient);
+    return context.queryClient.ensureQueryData(productQuery(params.slug, deps.locale));
+  },
   pendingComponent: ProductLoading,
   errorComponent: ProductError,
   notFoundComponent: ProductNotFound,
-  head: ({ params, loaderData }) => {
+  head: (context) => {
+    const { params, loaderData } = context;
+    const rawSearch = (context as unknown as { search?: Record<string, unknown> }).search ?? {};
+    const locale = getLocale(typeof rawSearch["locale"] === "string" ? rawSearch["locale"] : undefined);
+    // Trilingual head copy (FIX #16): merged `seo.*` i18n keys win when present,
+    // built-in locale copy is the fallback — never hardcoded English.
+    const copy = productHeadCopy(locale, extractSeoKeys(getTranslations(locale)));
     const product = loaderData;
     const path = `/product/${params.slug}`;
     const url = canonicalUrl(path);
     if (!product) {
       return pageHead({
-        title: `${params.slug} — Modalia`,
-        description: "Explore this product on Modalia.",
+        robots: seoRobotsFromHeadCtx(context),
+        title: fillSeoTemplate(copy.titleFallback, { slug: params.slug }),
+        description: copy.descriptionFallback,
         path,
       });
     }
     const storeName = product.store?.name ?? "Modalia";
-    const title = `${product.name} — ${storeName} — Modalia`;
+    const title = fillSeoTemplate(copy.title, { name: product.name, store: storeName });
     const priceLabel = formatPriceForMeta(product.price, product.currency, "fr");
     const description =
       product.shortDescription ??
       (product.description ? truncateForMeta(product.description) : null) ??
-      `${product.name} sold by ${storeName} for ${priceLabel}. Cash on delivery across Algeria.`;
+      fillSeoTemplate(copy.descriptionTemplate, {
+        name: product.name,
+        store: storeName,
+        price: priceLabel,
+      });
     const image =
       product.media.find((item) => item.isPrimary)?.url ?? product.media[0]?.url ?? null;
     const breadcrumbs = [
@@ -58,6 +77,7 @@ export const Route = createFileRoute("/product/$slug")({
       { name: product.name, url },
     ];
     return pageHead({
+      robots: seoRobotsFromHeadCtx(context),
       title,
       description,
       path,

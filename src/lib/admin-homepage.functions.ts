@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertAdmin } from "@/lib/admin-auth";
+import { assertAdminPermission } from "@/lib/admin-permissions";
 import type { Database, Json } from "@/integrations/supabase/types";
 
 /**
@@ -54,6 +55,13 @@ export const HOMEPAGE_KINDS = [
   "editorial",
   "blog",
   "app_banner",
+  "collections",
+  "customer_reviews",
+  "fashion_edit",
+  "limited_drops",
+  "newsletter",
+  "showcase",
+  "sport_edit",
 ] as const;
 
 export type HomepageKind = (typeof HOMEPAGE_KINDS)[number];
@@ -137,7 +145,7 @@ async function maxSortOrder(): Promise<number> {
 export const getHomepageSections = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .handler(async ({ context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
     const { data, error } = await context.supabase
       .from("homepage_sections")
       .select(SECTION_COLUMNS)
@@ -155,7 +163,7 @@ export const reorderHomepageSections = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
     if (new Set(data.orderedIds).size !== data.orderedIds.length) {
       throw new Error("Duplicate section ids in the new order.");
     }
@@ -184,6 +192,7 @@ const updatePatchSchema = z
     animation: jsonObjectSchema.optional(),
     starts_at: z.string().nullable().optional(),
     ends_at: z.string().nullable().optional(),
+    enabled: z.boolean().optional(),
   })
   .refine((patch) => Object.keys(patch).length > 0, { message: "Nothing to update." });
 
@@ -195,7 +204,7 @@ export const updateHomepageContent = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
     const supabaseAdmin = await adminClient();
     const { data: existing, error: fetchError } = await supabaseAdmin
       .from("homepage_sections")
@@ -205,7 +214,7 @@ export const updateHomepageContent = createServerFn({ method: "POST" })
     if (fetchError) throw new Error(fetchError.message);
     if (!existing) throw new Error("Section not found.");
 
-    // Careful merge: enabled and sort_order are never touched here.
+    // Careful merge: sort_order is never touched here (use reorderHomepageSections).
     const update: Database["public"]["Tables"]["homepage_sections"]["Update"] = {
       updated_at: new Date().toISOString(),
     };
@@ -221,6 +230,7 @@ export const updateHomepageContent = createServerFn({ method: "POST" })
     if (startsAt !== undefined) update.starts_at = startsAt;
     const endsAt = toIsoOrNull(data.patch.ends_at);
     if (endsAt !== undefined) update.ends_at = endsAt;
+    if (data.patch.enabled !== undefined) update.enabled = data.patch.enabled;
 
     const { data: updated, error } = await supabaseAdmin
       .from("homepage_sections")
@@ -255,7 +265,7 @@ export const createHomepageSection = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
     const supabaseAdmin = await adminClient();
     const sortOrder = (await maxSortOrder()) + 1;
     const { data: created, error } = await supabaseAdmin
@@ -289,7 +299,7 @@ export const duplicateHomepageSection = createServerFn({ method: "POST" })
   .middleware(adminOnly)
   .inputValidator((data) => z.object({ sectionId: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
     const supabaseAdmin = await adminClient();
     const { data: source, error: fetchError } = await supabaseAdmin
       .from("homepage_sections")
@@ -342,7 +352,7 @@ export const deleteHomepageSection = createServerFn({ method: "POST" })
   .middleware(adminOnly)
   .inputValidator((data) => z.object({ sectionId: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "content.manage");
     const supabaseAdmin = await adminClient();
     const { data: target, error: fetchError } = await supabaseAdmin
       .from("homepage_sections")

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireSeller, type SellerPermission } from "@/lib/seller-auth";
 import type { Database, Json } from "@/integrations/supabase/types";
+import { v8Admin } from "./seller-offices.functions";
 
 /**
  * Seller marketing operations (Phase 2/4, Worker 6).
@@ -744,10 +745,13 @@ export const deleteBundle = createServerFn({ method: "POST" })
 // ---------------------------------------------------------------------------
 // Shipping rules (permission: store.manage)
 //
-// Weight bands are free-form [min_weight_grams, max_weight_grams) in grams,
-// e.g. 0–5000 g then 5001 g and up; max_weight_grams = null means no upper
-// limit. Bands for the same (wilaya, commune, delivery method) may not
-// overlap, enforced server-side.
+// Weight bands use the fixed presets [0, 5000) g ("0–5 kg") and [5000, ∞) g
+// ("> 5 kg"), matching the checkout_cart RPC's half-open semantics
+// (min <= weight < max, max_weight_grams = null means no upper limit). The
+// data model still accepts arbitrary bands for commune-specific rules, but
+// the seller UI only offers the two presets. Bands for the same (wilaya,
+// commune, delivery method) may not overlap, enforced server-side; the
+// upsert key includes the band so the two presets coexist.
 // ---------------------------------------------------------------------------
 
 export type SellerShippingRuleRow = Pick<
@@ -864,10 +868,11 @@ export const upsertShippingRule = createServerFn({ method: "POST" })
       }
     }
 
-    // Upsert key is (seller_id, wilaya_id, commune_id, delivery_method). There
-    // is no unique constraint for it, so the upsert is delete-free:
-    // - explicit id → ownership-checked update,
-    // - otherwise → update the existing same-scope rule, else insert.
+    // Upsert key is (seller_id, wilaya_id, commune_id, delivery_method,
+    // min_weight_grams, max_weight_grams). The weight band MUST be part of the
+    // key: without it, saving the second preset band (0–5 kg / > 5 kg) for the
+    // same destination+method silently REPLACED the first band's rule instead
+    // of creating a second one (V8 §27 matrix depends on this).
     let ruleId: string | null = null;
     if (data.id) {
       const { data: existing } = await db
@@ -884,9 +889,15 @@ export const upsertShippingRule = createServerFn({ method: "POST" })
         .select("id")
         .eq("seller_id", seller.sellerId)
         .eq("wilaya_id", data.wilaya_id)
-        .eq("delivery_method", data.delivery_method);
+        .eq("delivery_method", data.delivery_method)
+        .eq("min_weight_grams", data.min_weight_grams);
       scopeQuery = data.commune_id ? scopeQuery.eq("commune_id", data.commune_id) : scopeQuery.is("commune_id", null);
-      const { data: existing } = await scopeQuery.maybeSingle();
+      scopeQuery =
+        data.max_weight_grams == null
+          ? scopeQuery.is("max_weight_grams", null)
+          : scopeQuery.eq("max_weight_grams", data.max_weight_grams);
+      const { data: existing, error: lookupError } = await scopeQuery.maybeSingle();
+      if (lookupError) throw new Error(lookupError.message);
       if (existing) ruleId = existing.id;
     }
 
@@ -1005,4 +1016,79 @@ export const deleteShippingRule = createServerFn({ method: "POST" })
       delivery_method: existing.delivery_method,
     });
     return { ok: true as const };
+  });
+
+// ---------------------------------------------------------------------------
+// Shipping settings (permission: store.manage)
+//
+// Per-seller shipping config, stored in public.seller_shipping_settings
+// (migration 20261006170000). Absence of a row means defaults
+// (office_enabled = true).
+//
+// office_enabled audit (V8 §27): the checkout_cart RPC computes shipping
+// purely from shipping_rules — it takes no settings input and is NOT
+// modified here. The flag is honored at the data level instead: disabling
+// office delivery also flips the seller's office shipping_rules to
+// enabled=false, so the RPC refuses office checkout with its standard
+// "Delivery is not available…" error. Re-enabling the flag does NOT
+// auto-re-enable the rules — the seller re-enables them from the UI
+// (matrix or rule toggles), so no price rule is ever silently reactivated.
+// Platform (admin) override path is unchanged: platform rules have
+// seller_id IS NULL and act as fallbacks; seller rules take precedence
+// (ORDER BY seller_id IS NOT NULL DESC in the RPC).
+// ---------------------------------------------------------------------------
+
+/** The seller's shipping settings; defaults when no row exists. */
+export const getShippingSettings = createServerFn({ method: "GET" })
+  .middleware(sellerOnly)
+  .handler(async ({ context }) => {
+    const seller = await sellerSession(context, "store.manage");
+    const db = await v8Admin();
+    const { data, error } = await db
+      .from("seller_shipping_settings")
+      .select("office_enabled")
+      .eq("seller_id", seller.sellerId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return { office_enabled: data?.office_enabled ?? true };
+  });
+
+/** Update the seller's shipping settings. Disabling office delivery pauses the seller's office rules. */
+export const setShippingSettings = createServerFn({ method: "POST" })
+  .middleware(sellerOnly)
+  .inputValidator((data) => z.object({ office_enabled: z.boolean() }).parse(data))
+  .handler(async ({ data, context }) => {
+    const seller = await sellerSession(context, "store.manage");
+    const db = await v8Admin();
+    const { error } = await db.from("seller_shipping_settings").upsert(
+      {
+        seller_id: seller.sellerId,
+        office_enabled: data.office_enabled,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "seller_id" },
+    );
+    if (error) throw new Error(error.message);
+
+    let pausedRules = 0;
+    if (!data.office_enabled) {
+      const { data: paused, error: pauseError } = await db
+        .from("shipping_rules")
+        .update({ enabled: false, updated_at: new Date().toISOString() })
+        .eq("seller_id", seller.sellerId)
+        .eq("delivery_method", "office")
+        .eq("enabled", true)
+        .select("id");
+      if (pauseError) throw new Error(pauseError.message);
+      pausedRules = paused?.length ?? 0;
+    }
+
+    await auditLog(
+      context.userId ?? null,
+      data.office_enabled ? "shipping_office_enabled" : "shipping_office_disabled",
+      "seller_shipping_settings",
+      seller.sellerId,
+      { paused_rules: pausedRules },
+    );
+    return { ok: true as const, pausedRules };
   });

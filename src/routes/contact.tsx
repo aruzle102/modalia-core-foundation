@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SiteFooter, SiteHeader } from "@/components/layout/site-shell";
 import { getLocale, getTranslations, localeDirections } from "@/lib/i18n";
-import { canonicalUrl } from "@/lib/seo";
+import { canonicalUrl, prefetchSeoSettings, seoRobotsFromHeadCtx } from "@/lib/seo";
 import { submitContactMessage } from "@/lib/engagement.functions";
 import type { SupportedLocale } from "@/config/platform";
 
@@ -158,7 +158,9 @@ export const Route = createFileRoute("/contact")({
   validateSearch: (search: Record<string, unknown>) => ({
     locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined),
   }),
+  loader: ({ context }) => prefetchSeoSettings(context.queryClient),
   head: (context) => {
+    const robots = seoRobotsFromHeadCtx(context);
     const rawSearch = (context as unknown as { search?: Record<string, unknown> }).search ?? {};
     const locale = getLocale(
       typeof rawSearch["locale"] === "string" ? rawSearch["locale"] : undefined,
@@ -172,6 +174,7 @@ export const Route = createFileRoute("/contact")({
         { property: "og:description", content: c.metaDescription },
         { property: "og:type", content: "website" },
         { name: "twitter:card", content: "summary_large_image" },
+        ...(robots ? [{ name: "robots", content: robots }] : []),
       ],
       links: [{ rel: "canonical", href: canonicalUrl("/contact") }],
     };

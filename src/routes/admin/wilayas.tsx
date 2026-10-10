@@ -63,7 +63,7 @@ function WilayasPage() {
             <EmptyState title="No wilayas" text="The wilayas table has not been seeded yet." />
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[680px] text-left text-small">
+              <table className="w-full min-w-[680px] text-start text-small">
                 <thead>
                   <tr className="border-b border-border text-caption text-muted-foreground">
                     <th className="px-3 py-2 font-medium">Code</th>
@@ -91,7 +91,7 @@ function WilayasPage() {
                       <td className="px-3 py-3">
                         <Link
                           to="/admin/shipping"
-                          search={{ wilaya: w.id }}
+                          search={{ locale, wilaya: w.id }}
                           className="underline-offset-4 hover:underline"
                         >
                           {w.rule_count}

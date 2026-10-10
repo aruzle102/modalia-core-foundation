@@ -71,19 +71,35 @@ export const getSellerProfile = createServerFn({ method: "GET" })
     const seller = await requireSeller({ supabase: context.supabase, userId: context.userId });
     const { data, error } = await context.supabase
       .from("sellers")
-      .select("id,legal_name,phone,email,account_status,commission_rate")
+      .select("id,legal_name,first_name,last_name,phone,email,email_verified_at,account_status,commission_rate,wilaya,address")
       .eq("id", seller.sellerId)
       .single();
     if (error || !data) throw new Error(error?.message ?? "Seller profile unavailable.");
+
+    // Best-effort: mirror Auth verification state into sellers.email_verified_at
+    // (Section 9). Never throws; keeps sellers.email == auth.users.email.
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { syncEmailVerificationState } = await import("@/lib/seller-email-sync");
+      await syncEmailVerificationState(supabaseAdmin, seller.sellerId, context.userId);
+    } catch {
+      /* verification sync is best-effort */
+    }
+
     return {
       isOwner: seller.isOwner,
       profile: {
         id: data.id as string,
         legalName: data.legal_name as string,
+        firstName: (data.first_name as string | null) ?? "",
+        lastName: (data.last_name as string | null) ?? "",
         phone: (data.phone as string | null) ?? "",
         email: (data.email as string | null) ?? "",
+        emailVerifiedAt: (data as { email_verified_at?: string | null }).email_verified_at ?? null,
         accountStatus: data.account_status as string,
         commissionRate: Number(data.commission_rate ?? 0),
+        wilaya: (data as { wilaya?: string | null }).wilaya ?? "",
+        address: (data as { address?: string | null }).address ?? "",
       },
     };
   });
@@ -94,8 +110,14 @@ export const updateSellerProfile = createServerFn({ method: "POST" })
     z
       .object({
         legalName: z.string().min(2).max(160),
+        // Optional identity fields for the guided onboarding wizard
+        // (Section 21); omitted fields are left untouched.
+        firstName: z.string().trim().min(1).max(100).optional(),
+        lastName: z.string().trim().min(1).max(100).optional(),
         phone: z.string().max(30).optional(),
         email: z.string().email().max(160).optional(),
+        wilaya: z.string().trim().min(1).max(100).optional(),
+        address: z.string().trim().max(500).optional(),
       })
       .parse(data),
   )
@@ -106,20 +128,101 @@ export const updateSellerProfile = createServerFn({ method: "POST" })
     const phone = data.phone?.trim() || null;
     if (phone && !phonePattern().test(phone)) throw new Error("Phone number is not valid.");
 
-    const { error } = await context.supabase
-      .from("sellers")
-      .update({ legal_name: data.legalName, phone, email: data.email ?? null })
-      .eq("id", seller.sellerId);
+    // Email is NEVER written directly: it goes through the verified
+    // Auth-synced flow (Section 9) so sellers.email always equals
+    // auth.users.email.
+    const patch: {
+      legal_name: string;
+      phone: string | null;
+      first_name?: string;
+      last_name?: string;
+      wilaya?: string;
+      address?: string | null;
+    } = { legal_name: data.legalName, phone };
+    if (data.firstName !== undefined) patch.first_name = data.firstName;
+    if (data.lastName !== undefined) patch.last_name = data.lastName;
+    if (data.wilaya !== undefined) patch.wilaya = data.wilaya;
+    if (data.address !== undefined) patch.address = data.address?.trim() || null;
+
+    const { error } = await context.supabase.from("sellers").update(patch).eq("id", seller.sellerId);
     if (error) throw new Error(error.message);
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { changeSellerEmail } = await import("@/lib/seller-email-sync");
+
+    let emailResult: { changed: boolean; email: string; verified: boolean } | null = null;
+    const requestedEmail = data.email?.trim() || null;
+    if (requestedEmail) {
+      // For an owner, sellers.owner_id === the auth user id.
+      emailResult = await changeSellerEmail({
+        supabaseAdmin,
+        sellerId: seller.sellerId,
+        authUserId: context.userId,
+        newEmail: requestedEmail,
+        actorId: context.userId,
+        actorType: "seller",
+      });
+    }
+
     await supabaseAdmin.from("audit_logs").insert({
       actor_id: context.userId,
       action: "seller_profile.update",
       resource: "sellers",
       resource_id: seller.sellerId,
-      metadata: { legal_name: data.legalName, phone, email: data.email ?? null },
+      metadata: {
+        legal_name: data.legalName,
+        phone,
+        email: requestedEmail,
+        email_changed: emailResult?.changed ?? false,
+        email_verified: emailResult?.verified ?? null,
+      },
     });
 
-    return { ok: true };
+    return {
+      ok: true,
+      emailChanged: emailResult?.changed ?? false,
+      emailVerified: emailResult?.verified ?? null,
+      verificationPending: emailResult ? !emailResult.verified : null,
+    };
+  });
+
+/* ----------------------------- Onboarding ------------------------------- */
+
+/**
+ * Marks the guided seller onboarding wizard (Section 21) complete.
+ *
+ * Owner-only: staff members never run the wizard, so a staff call is
+ * rejected. Sets `sellers.onboarded_at = now()` only where it is still
+ * NULL, making repeated calls a harmless no-op (idempotent). The `skipped`
+ * flag records the explicit "Skip for now" path; both paths stop the
+ * post-login redirect to /seller/onboarding.
+ *
+ * RLS: the "seller_owner_or_admin" policy (FOR ALL, owner_id = auth.uid())
+ * permits the owner to update their own sellers row, so the regular
+ * authenticated client is used — no service-role bypass.
+ */
+export const markOnboardingComplete = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) => z.object({ skipped: z.boolean().default(false) }).parse(data))
+  .handler(async ({ data, context }) => {
+    const seller = await requireSeller({ supabase: context.supabase, userId: context.userId });
+    if (!seller.isOwner) throw new Error("Only the store owner can complete onboarding.");
+
+    const { error } = await context.supabase
+      .from("sellers")
+      .update({ onboarded_at: new Date().toISOString() })
+      .eq("id", seller.sellerId)
+      .is("onboarded_at", null);
+    if (error) throw new Error(error.message);
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("audit_logs").insert({
+      actor_id: context.userId,
+      action: data.skipped ? "seller_onboarding.skipped" : "seller_onboarding.completed",
+      resource: "sellers",
+      resource_id: seller.sellerId,
+      metadata: {},
+    });
+
+    return { ok: true as const, skipped: data.skipped };
   });

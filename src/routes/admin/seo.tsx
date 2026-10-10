@@ -24,7 +24,11 @@ export const Route = createFileRoute("/admin/seo")({
     locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined),
   }),
   head: () => ({
-    meta: [{ title: "SEO — Modalia Admin" }],
+    meta: [
+      { name: "robots", content: "noindex,nofollow" },
+      { title: "SEO — Modalia Admin" },
+      { name: "description", content: "Default search-engine metadata for the storefront." },
+    ],
   }),
   component: SeoPage,
 });

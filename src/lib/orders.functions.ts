@@ -54,6 +54,8 @@ export const getOrderConfirmation = createServerFn({ method: "GET" })
     return { orderNumber: result.data.order_number, total: Number(result.data.grand_total), currency: result.data.currency, deliveryMethod: result.data.delivery_method, address: result.data.address_snapshot };
   });
 
+export type GuestOrderHistoryEvent = { status: string; previousStatus: string | null; at: string; actor: string; note: string | null };
+
 export const trackGuestOrder = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({ orderNumber: z.string().trim().toUpperCase().regex(/^ORD-[A-Z0-9]{6}$/), phone: z.string().trim().regex(/^\+213[5-7][0-9]{8}$/) }).parse(data))
   .handler(async ({ data }) => {
@@ -63,8 +65,13 @@ export const trackGuestOrder = createServerFn({ method: "POST" })
     // re-scope with the caller-supplied order number + checkout phone (both
     // validated above) — the same pattern guest checkout uses.
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const result = await supabaseAdmin.from("orders").select("order_number,created_at,status,grand_total,currency,delivery_method,seller_orders(status,stores(name))").eq("order_number", data.orderNumber).eq("guest_phone", data.phone).maybeSingle();
+    const result = await supabaseAdmin.from("orders").select("id,order_number,created_at,status,grand_total,currency,delivery_method,seller_orders(status,stores(name))").eq("order_number", data.orderNumber).eq("guest_phone", data.phone).maybeSingle();
     if (result.error || !result.data) return null;
     const sellerOrders = (result.data.seller_orders ?? []).map((sellerOrder: any) => ({ status: sellerOrder.status, storeName: Array.isArray(sellerOrder.stores) ? sellerOrder.stores[0]?.name ?? "Store" : sellerOrder.stores?.name ?? "Store" }));
-    return { orderNumber: result.data.order_number, createdAt: result.data.created_at, status: result.data.status, total: Number(result.data.grand_total), currency: result.data.currency, deliveryMethod: result.data.delivery_method, sellerOrders };
+    // Parent-level status history only (rollup rows written by Worker A's
+    // transition_seller_order_status: order_id = parent, seller_order_id NULL).
+    const historyResult = await supabaseAdmin.from("order_status_history").select("previous_status,new_status,actor_type,note,created_at").eq("order_id", result.data.id).is("seller_order_id", null).order("created_at", { ascending: true });
+    if (historyResult.error) throw new Error("The order was found, but its history could not be loaded.");
+    const history: GuestOrderHistoryEvent[] = (historyResult.data ?? []).map((row) => ({ status: row.new_status, previousStatus: row.previous_status, at: row.created_at, actor: row.actor_type, note: row.note }));
+    return { orderNumber: result.data.order_number, createdAt: result.data.created_at, status: result.data.status, total: Number(result.data.grand_total), currency: result.data.currency, deliveryMethod: result.data.delivery_method, sellerOrders, history };
   });

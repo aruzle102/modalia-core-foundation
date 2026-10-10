@@ -7,7 +7,7 @@
  * server entry (src/server.ts), which serves it at GET /sitemap.xml.
  */
 import { createClient } from "@supabase/supabase-js";
-import { canonicalUrl } from "./seo";
+import { absoluteUrl } from "./seo";
 
 type SitemapEntry = {
   loc: string;
@@ -99,9 +99,17 @@ function renderXml(entries: SitemapEntry[]): string {
 const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
 let cached: { xml: string; at: number } | null = null;
 
-export async function getSitemapXml(): Promise<string> {
+/**
+ * Sitemap <loc> values must be absolute. The base is VITE_SITE_URL when set;
+ * otherwise the request origin that hit /sitemap.xml (passed by server.ts).
+ * Collections have no public pages (they live inside stores.settings) and are
+ * intentionally absent here (registry #171).
+ */
+export async function getSitemapXml(fallbackBase?: string): Promise<string> {
   const now = Date.now();
   if (cached && now - cached.at < CACHE_TTL_MS) return cached.xml;
+
+  const abs = (path: string) => absoluteUrl(path, fallbackBase);
 
   const [products, categories, stores] = await Promise.all([
     fetchAllSlugs("products"),
@@ -111,24 +119,24 @@ export async function getSitemapXml(): Promise<string> {
 
   const entries: SitemapEntry[] = [
     ...STATIC_ROUTES.map((route) => ({
-      loc: canonicalUrl(route.path),
+      loc: abs(route.path),
       changefreq: route.changefreq,
       priority: route.priority,
     })),
     ...categories.map((category) => ({
-      loc: canonicalUrl(`/category/${encodeURIComponent(category.slug)}`),
+      loc: abs(`/category/${encodeURIComponent(category.slug)}`),
       lastmod: toLastmod(category.updatedAt),
       changefreq: "weekly",
       priority: 0.8,
     })),
     ...stores.map((store) => ({
-      loc: canonicalUrl(`/store/${encodeURIComponent(store.slug)}`),
+      loc: abs(`/store/${encodeURIComponent(store.slug)}`),
       lastmod: toLastmod(store.updatedAt),
       changefreq: "weekly",
       priority: 0.7,
     })),
     ...products.map((product) => ({
-      loc: canonicalUrl(`/product/${encodeURIComponent(product.slug)}`),
+      loc: abs(`/product/${encodeURIComponent(product.slug)}`),
       lastmod: toLastmod(product.updatedAt),
       changefreq: "weekly",
       priority: 0.8,

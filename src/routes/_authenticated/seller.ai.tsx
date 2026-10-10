@@ -1,16 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { Check, Copy, Info, Sparkles } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Check, Copy, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { AdminCard, EmptyState, Field, TableSkeleton } from "@/components/admin/ui";
 import { getSellerAiCatalog, type AiCatalogProduct } from "@/lib/seller-orders.functions";
 import { aiSellerDraft, aiApplySellerDraft } from "@/lib/ai.functions";
-import { getLocale } from "@/lib/i18n";
+import { getLocale, getTranslations } from "@/lib/i18n";
 import { SellerShell } from "@/components/seller/SellerShell";
 import { errMsg } from "../admin/_shared";
+import { ModaliaIntelligenceIcon } from "@/components/marketplace/ModaliaIntelligenceIcon";
 
 export const Route = createFileRoute("/_authenticated/seller/ai")({
   validateSearch: (search: Record<string, unknown>) => ({ locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined) }),
@@ -92,6 +93,7 @@ function improveDescription(product: AiCatalogProduct): string {
 
 function SellerAiPage() {
   const { locale } = Route.useSearch();
+  const t = getTranslations(locale);
   const catalogQuery = useQuery({
     queryKey: ["seller-ai-catalog"],
     queryFn: () => getSellerAiCatalog({ data: {} }),
@@ -145,7 +147,7 @@ function SellerAiPage() {
             <div className="max-w-md">
               <Field label="Product">
                 <Select value={product?.id ?? ""} onValueChange={setProductId}>
-                  <SelectTrigger><SelectValue placeholder="Select a product" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t.common.selectProduct} /></SelectTrigger>
                   <SelectContent>
                     {products.map((p) => (
                       <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
@@ -160,7 +162,7 @@ function SellerAiPage() {
             <AdminCard
               title="SEO title & description generator"
               subtitle="Deterministic template output from your product fields."
-              actions={<Sparkles className="size-4 text-muted-foreground" />}
+              actions={<ModaliaIntelligenceIcon size={16} className="text-muted-foreground" />}
             >
               <div className="space-y-5">
                 <CopyableBlock label="SEO title (max 60 chars)" value={seo.title} hint={`${seo.title.length}/60 characters`} />
@@ -185,7 +187,7 @@ function SellerAiPage() {
             <AdminCard
               title="Product description improver"
               subtitle="Structured rewrite built from your existing description, attributes and price."
-              actions={<Sparkles className="size-4 text-muted-foreground" />}
+              actions={<ModaliaIntelligenceIcon size={16} className="text-muted-foreground" />}
             >
               <div className="space-y-5">
                 <div>
@@ -213,9 +215,10 @@ function SellerAiPage() {
  * edits the description text; the product's publication status is untouched.
  */
 function AiDraftStudio({ productId, productName }: { productId: string; productName: string }) {
+  const queryClient = useQueryClient();
   const [draft, setDraft] = useState<string>("");
   const [edited, setEdited] = useState<string>("");
-  const [source, setSource] = useState<"provider" | "rules" | null>(null);
+  const [source, setSource] = useState<"rules" | null>(null);
   const [tags, setTags] = useState<string[]>([]);
   const [categories, setCategories] = useState<Array<{ slug: string; name: string }>>([]);
   const [note, setNote] = useState<string>("");
@@ -241,7 +244,12 @@ function AiDraftStudio({ productId, productName }: { productId: string; productN
 
   const apply = useMutation({
     mutationFn: () => aiApplySellerDraft({ data: { productId, locale: "en", description: edited } }),
-    onSuccess: () => setApplied(true),
+    onSuccess: () => {
+      setApplied(true);
+      // The applied description is now the product's description — drop the
+      // stale catalog cache so the UI shows the new copy immediately.
+      queryClient.invalidateQueries({ queryKey: ["seller-ai-catalog"] });
+    },
   });
 
   const resetFor = () => {
@@ -252,7 +260,7 @@ function AiDraftStudio({ productId, productName }: { productId: string; productN
     <AdminCard
       title="Description draft studio"
       subtitle={`Drafts for “${productName}”. Nothing here publishes anything.`}
-      actions={<Sparkles className="size-4 text-muted-foreground" />}
+      actions={<ModaliaIntelligenceIcon size={16} className="text-muted-foreground" />}
     >
       <div className="space-y-5">
         <div className="flex items-start gap-3 rounded-2xl border border-sky-500/30 bg-sky-500/10 p-4">
@@ -285,7 +293,7 @@ function AiDraftStudio({ productId, productName }: { productId: string; productN
 
         {source ? (
           <p className="text-xs text-muted-foreground">
-            Generated by {source === "provider" ? "the connected AI provider" : "the rule-based assistant (no external AI)"} — from your product data only.
+            Generated by the rule-based assistant (no external AI) — from your product data only.
           </p>
         ) : null}
 

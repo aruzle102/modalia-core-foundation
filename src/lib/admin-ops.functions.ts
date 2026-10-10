@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database, Json } from "@/integrations/supabase/types";
 import { assertAdmin } from "@/lib/admin-auth";
+import { assertAdminPermission } from "@/lib/admin-permissions";
 
 /**
  * Admin operations server functions (Super Admin OS, phase 3/8 — worker 1/5).
@@ -66,9 +67,11 @@ export type AdminStoreListItem = StoreRow & {
   product_count: number;
 };
 
+const emptyToUndefined = (v: unknown) => (v === "" ? undefined : v);
+
 const listStoresInput = z.object({
   q: z.string().max(100).optional(),
-  status: z.enum(["draft", "active", "suspended", "closed"]).optional(),
+  status: z.preprocess(emptyToUndefined, z.enum(["draft", "active", "suspended", "closed"]).optional()),
   page: z.number().int().min(1).default(1),
 });
 
@@ -76,25 +79,46 @@ export const listAdminStores = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .inputValidator((data) => listStoresInput.parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "stores.view");
     const supabaseAdmin = await adminClient();
     const q = data.q ? sanitizeSearch(data.q) : "";
 
-    let query = supabaseAdmin
-      .from("stores")
-      .select("*, sellers(legal_name)", { count: "exact" });
+    let query = supabaseAdmin.from("stores").select("*, sellers(legal_name)", { count: "exact" });
     if (data.status) query = query.eq("status", data.status);
-    if (q) query = query.or(`name.ilike.%${q}%,slug.ilike.%${q}%`);
+    if (q) {
+      const like = `%${q}%`;
+      // Server-side seller lookup: match seller name / email / phone /
+      // login username, then include their stores in the result set.
+      const sellerIds = new Set<string>();
+      const [bySeller, byUsername] = await Promise.all([
+        supabaseAdmin
+          .from("sellers")
+          .select("id")
+          .or(`legal_name.ilike.${like},email.ilike.${like},phone.ilike.${like}`)
+          .limit(50),
+        supabaseAdmin.from("seller_accounts").select("seller_id").ilike("username", like).limit(50),
+      ]);
+      for (const s of bySeller.data ?? []) if (s.id) sellerIds.add(s.id);
+      for (const a of byUsername.data ?? []) if (a.seller_id) sellerIds.add(a.seller_id);
+      const ids = [...sellerIds];
+      query =
+        ids.length > 0
+          ? query.or(`name.ilike.${like},slug.ilike.${like},seller_id.in.(${ids.join(",")})`)
+          : query.or(`name.ilike.${like},slug.ilike.${like}`);
+    }
 
     const from = (data.page - 1) * PAGE_SIZE;
-    const { data: rows, error, count } = await query
-      .order("created_at", { ascending: false })
-      .range(from, from + PAGE_SIZE - 1);
+    const {
+      data: rows,
+      error,
+      count,
+    } = await query.order("created_at", { ascending: false }).range(from, from + PAGE_SIZE - 1);
     if (error) throw new Error(error.message);
 
     const items: AdminStoreListItem[] = (rows ?? []).map((s) => ({
       ...(s as StoreRow),
-      seller_legal_name: (s as { sellers?: { legal_name?: string | null } | null }).sellers?.legal_name ?? null,
+      seller_legal_name:
+        (s as { sellers?: { legal_name?: string | null } | null }).sellers?.legal_name ?? null,
       product_count: 0,
     }));
 
@@ -134,7 +158,7 @@ export const listAdminCustomers = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .inputValidator((data) => listCustomersInput.parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "customers.view");
     const supabaseAdmin = await adminClient();
     const q = data.q ? sanitizeSearch(data.q) : "";
 
@@ -142,9 +166,11 @@ export const listAdminCustomers = createServerFn({ method: "GET" })
     if (q) query = query.or(`display_name.ilike.%${q}%,phone.ilike.%${q}%`);
 
     const from = (data.page - 1) * PAGE_SIZE;
-    const { data: rows, error, count } = await query
-      .order("created_at", { ascending: false })
-      .range(from, from + PAGE_SIZE - 1);
+    const {
+      data: rows,
+      error,
+      count,
+    } = await query.order("created_at", { ascending: false }).range(from, from + PAGE_SIZE - 1);
     if (error) throw new Error(error.message);
 
     const items: AdminCustomerListItem[] = (rows ?? []).map((p) => ({
@@ -195,7 +221,7 @@ export const listGuestCustomers = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .inputValidator((data) => z.object({ page: z.number().int().min(1).default(1) }).parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "customers.view");
     const supabaseAdmin = await adminClient();
     // Guest orders carry no customer_id; aggregate by contact details.
     const { data: orders, error } = await supabaseAdmin
@@ -249,11 +275,15 @@ export type AdminWilayaListItem = WilayaRow & {
   rule_count: number;
 };
 
+/**
+ * Rich wilaya list for the management page (with commune_count + rule_count).
+ * For simple dropdowns, use the lite `listWilayas` in admin-catalog.functions.ts.
+ */
 export const listAdminWilayas = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .inputValidator((data) => z.object({}).parse(data))
   .handler(async ({ context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "shipping.manage");
     const supabaseAdmin = await adminClient();
     const [{ data: wilayas, error }, { data: communes }, { data: rules }] = await Promise.all([
       supabaseAdmin.from("wilayas").select("*").order("code"),
@@ -294,24 +324,29 @@ const listCommunesInput = z.object({
   page: z.number().int().min(1).default(1),
 });
 
+/**
+ * Rich paginated/searchable commune list for the management page.
+ * For simple dropdowns by wilaya, use the lite `listCommunes` in
+ * admin-catalog.functions.ts.
+ */
 export const listAdminCommunes = createServerFn({ method: "GET" })
   .middleware(adminOnly)
   .inputValidator((data) => listCommunesInput.parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAdminPermission(context, "shipping.manage");
     const supabaseAdmin = await adminClient();
     const q = data.q ? sanitizeSearch(data.q) : "";
 
-    let query = supabaseAdmin
-      .from("communes")
-      .select("*, wilayas(code,name)", { count: "exact" });
+    let query = supabaseAdmin.from("communes").select("*, wilayas(code,name)", { count: "exact" });
     if (data.wilayaId) query = query.eq("wilaya_id", data.wilayaId);
     if (q) query = query.or(`code.ilike.%${q}%`);
 
     const from = (data.page - 1) * PAGE_SIZE;
-    const { data: rows, error, count } = await query
-      .order("code")
-      .range(from, from + PAGE_SIZE - 1);
+    const {
+      data: rows,
+      error,
+      count,
+    } = await query.order("code").range(from, from + PAGE_SIZE - 1);
     if (error) throw new Error(error.message);
 
     const items: AdminCommuneListItem[] = (rows ?? []).map((c) => {
@@ -328,121 +363,6 @@ export const listAdminCommunes = createServerFn({ method: "GET" })
   });
 
 /* ------------------------------------------------------------------ */
-/* Official store (settings.official === true)                         */
-/* ------------------------------------------------------------------ */
-
-export type OfficialStoreOverview = {
-  store: StoreRow;
-  seller_legal_name: string | null;
-  product_count: number;
-  published_count: number;
-  recent_products: { id: string; slug: string; name: Json; base_price: number; status: string }[];
-} | null;
-
-export const getOfficialStore = createServerFn({ method: "GET" })
-  .middleware(adminOnly)
-  .inputValidator((data) => z.object({}).parse(data))
-  .handler(async ({ context }): Promise<{ official: OfficialStoreOverview }> => {
-    await assertAdmin(context);
-    const supabaseAdmin = await adminClient();
-    const { data: store, error } = await supabaseAdmin
-      .from("stores")
-      .select("*, sellers(legal_name)")
-      .contains("settings", { official: true })
-      .maybeSingle();
-    if (error) throw new Error(error.message);
-    if (!store) return { official: null };
-
-    const sellerId = (store as StoreRow).seller_id;
-    const [{ data: products }, { data: sellerProducts }] = await Promise.all([
-      supabaseAdmin
-        .from("products")
-        .select("id,slug,name,base_price,status,publication_status")
-        .eq("seller_id", sellerId)
-        .order("created_at", { ascending: false })
-        .limit(8),
-      supabaseAdmin.from("products").select("id,status").eq("seller_id", sellerId).limit(2000),
-    ]);
-
-    const published = (sellerProducts ?? []).filter(
-      (p) => p.status === "active",
-    ).length;
-
-    return {
-      official: {
-        store: store as StoreRow,
-        seller_legal_name:
-          (store as { sellers?: { legal_name?: string | null } | null }).sellers?.legal_name ?? null,
-        product_count: (sellerProducts ?? []).length,
-        published_count: published,
-        recent_products: (products ?? []).map((p) => ({
-          id: p.id,
-          slug: p.slug,
-          name: p.name,
-          base_price: Number(p.base_price) || 0,
-          status: p.status,
-        })),
-      },
-    };
-  });
-
-/* ------------------------------------------------------------------ */
-/* Media library (product-media bucket)                                */
-/* ------------------------------------------------------------------ */
-
-export type MediaEntry = {
-  name: string;
-  path: string;
-  isFolder: boolean;
-  size: number | null;
-  mime: string | null;
-  updatedAt: string | null;
-};
-
-const MEDIA_BUCKET = "product-media";
-
-export const listMedia = createServerFn({ method: "GET" })
-  .middleware(adminOnly)
-  .inputValidator((data) => z.object({ prefix: z.string().max(500).default("") }).parse(data))
-  .handler(async ({ data, context }): Promise<{ prefix: string; entries: MediaEntry[] }> => {
-    await assertAdmin(context);
-    const supabaseAdmin = await adminClient();
-    const prefix = data.prefix.replace(/(^\/+|\/+$)/g, "");
-    const { data: objects, error } = await supabaseAdmin.storage
-      .from(MEDIA_BUCKET)
-      .list(prefix || undefined, { limit: 100, sortBy: { column: "updated_at", order: "desc" } });
-    if (error) throw new Error(error.message);
-
-    const entries: MediaEntry[] = (objects ?? [])
-      .filter((o) => o.name !== ".emptyFolderPlaceholder")
-      .map((o) => {
-        const isFolder = o.id == null && (!o.metadata || Object.keys(o.metadata).length === 0);
-        return {
-          name: o.name,
-          path: prefix ? `${prefix}/${o.name}` : o.name,
-          isFolder,
-          size: typeof o.metadata?.size === "number" ? o.metadata.size : null,
-          mime: typeof o.metadata?.mimetype === "string" ? o.metadata.mimetype : null,
-          updatedAt: o.updated_at ?? o.created_at ?? null,
-        };
-      });
-    return { prefix, entries };
-  });
-
-export const getMediaSignedUrl = createServerFn({ method: "GET" })
-  .middleware(adminOnly)
-  .inputValidator((data) => z.object({ path: z.string().min(1).max(1000) }).parse(data))
-  .handler(async ({ data, context }) => {
-    await assertAdmin(context);
-    const supabaseAdmin = await adminClient();
-    const { data: signed, error } = await supabaseAdmin.storage
-      .from(MEDIA_BUCKET)
-      .createSignedUrl(data.path, 3600);
-    if (error || !signed?.signedUrl) throw new Error(error?.message ?? "Could not sign URL.");
-    return { url: signed.signedUrl };
-  });
-
-/* ------------------------------------------------------------------ */
 /* Security overview                                                   */
 /* ------------------------------------------------------------------ */
 
@@ -450,7 +370,12 @@ export type SecurityOverview = {
   roleCounts: { role: string; count: number }[];
   superAdmins: { user_id: string; display_name: string | null; created_at: string }[];
   passwordResetRequired: number;
-  recentSecurityEvents: { id: string; action: string; created_at: string; resource: string | null }[];
+  recentSecurityEvents: {
+    id: string;
+    action: string;
+    created_at: string;
+    resource: string | null;
+  }[];
 };
 
 export const getSecurityOverview = createServerFn({ method: "GET" })
@@ -460,22 +385,31 @@ export const getSecurityOverview = createServerFn({ method: "GET" })
     await assertAdmin(context);
     const supabaseAdmin = await adminClient();
 
-    const [{ data: roles }, { data: admins }, { data: resetSellers, count: resetCount }, { data: events }] =
-      await Promise.all([
-        supabaseAdmin.from("user_roles").select("role"),
-        supabaseAdmin
-          .from("user_roles")
-          .select("user_id,created_at")
-          .eq("role", "super_admin")
-          .order("created_at"),
-        supabaseAdmin.from("sellers").select("id", { count: "exact" }).eq("must_reset_password", true),
-        supabaseAdmin
-          .from("audit_logs")
-          .select("id,action,created_at,resource")
-          .or("action.ilike.%password%,action.ilike.%login%,action.ilike.%role%,action.ilike.%session%,action.ilike.%auth%")
-          .order("created_at", { ascending: false })
-          .limit(20),
-      ]);
+    const [
+      { data: roles },
+      { data: admins },
+      { data: resetSellers, count: resetCount },
+      { data: events },
+    ] = await Promise.all([
+      supabaseAdmin.from("user_roles").select("role"),
+      supabaseAdmin
+        .from("user_roles")
+        .select("user_id,created_at")
+        .eq("role", "super_admin")
+        .order("created_at"),
+      supabaseAdmin
+        .from("sellers")
+        .select("id", { count: "exact" })
+        .eq("must_reset_password", true),
+      supabaseAdmin
+        .from("audit_logs")
+        .select("id,action,created_at,resource")
+        .or(
+          "action.ilike.%password%,action.ilike.%login%,action.ilike.%role%,action.ilike.%session%,action.ilike.%auth%",
+        )
+        .order("created_at", { ascending: false })
+        .limit(20),
+    ]);
 
     const adminIds = (admins ?? []).map((a) => a.user_id);
     const { data: adminProfiles } =
@@ -524,6 +458,12 @@ export const SITE_SETTING_KEYS = [
   "seo_description",
   "seo_keywords",
   "seo_robots_index",
+  // Platform product-moderation mode: `require_approval` (default) or
+  // `auto_publish`. Read server-side by the seller publish actions.
+  "product_moderation_mode",
+  // Platform default commission rate (percent, 0–100) pre-filled in the
+  // seller-creation wizard. Read by `getDefaultCommissionRate`.
+  "default_commission_rate",
 ] as const;
 
 export const getSiteSettings = createServerFn({ method: "GET" })
@@ -544,11 +484,7 @@ export const getSiteSettings = createServerFn({ method: "GET" })
 
 export const updateSiteSettings = createServerFn({ method: "POST" })
   .middleware(adminOnly)
-  .inputValidator((data) =>
-    z
-      .object({ values: z.record(z.string(), z.unknown()) })
-      .parse(data),
-  )
+  .inputValidator((data) => z.object({ values: z.record(z.string(), z.unknown()) }).parse(data))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const supabaseAdmin = await adminClient();
@@ -557,12 +493,38 @@ export const updateSiteSettings = createServerFn({ method: "POST" })
     const allowed = new Set<string>(SITE_SETTING_KEYS as readonly string[]);
     const rows = Object.entries(data.values)
       .filter(([key]) => allowed.has(key))
-      .map(([key, value]) => ({
-        key,
-        value: value as Json,
-        updated_by: actorId,
-        updated_at: new Date().toISOString(),
-      }));
+      .map(([key, value]) => {
+        // The moderation mode is a strict enum — never persist garbage that
+        // the seller publish path would silently fall back from.
+        if (key === "product_moderation_mode") {
+          if (value !== "require_approval" && value !== "auto_publish") {
+            throw new Error("Invalid moderation mode.");
+          }
+        }
+        // The default commission rate is a percent — never persist garbage
+        // the seller wizard would silently fall back from.
+        if (key === "default_commission_rate") {
+          const n =
+            typeof value === "number"
+              ? value
+              : Number(String(value ?? "").trim().replace(",", "."));
+          if (!Number.isFinite(n) || n < 0 || n > 100) {
+            throw new Error("Invalid default commission rate (0–100).");
+          }
+          return {
+            key,
+            value: Math.round(n * 100) / 100,
+            updated_by: actorId,
+            updated_at: new Date().toISOString(),
+          };
+        }
+        return {
+          key,
+          value: value as Json,
+          updated_by: actorId,
+          updated_at: new Date().toISOString(),
+        };
+      });
     if (rows.length === 0) throw new Error("No valid settings to save.");
 
     const { error } = await supabaseAdmin.from("site_settings").upsert(rows, { onConflict: "key" });
@@ -572,4 +534,31 @@ export const updateSiteSettings = createServerFn({ method: "POST" })
       keys: rows.map((r) => r.key),
     });
     return { ok: true, saved: rows.length };
+  });
+
+/** Hard fallback when the platform setting was never configured. */
+export const DEFAULT_COMMISSION_RATE = 10;
+
+/**
+ * Admin read of the platform default commission rate (percent, 0–100).
+ * The seller-creation wizard pre-fills its commission step from this —
+ * changing it in Admin > Settings actually changes new-seller behavior.
+ */
+export const getDefaultCommissionRate = createServerFn({ method: "GET" })
+  .middleware(adminOnly)
+  .inputValidator((data) => z.object({}).parse(data))
+  .handler(async ({ context }) => {
+    await assertAdmin(context);
+    const supabaseAdmin = await adminClient();
+    const { data, error } = await supabaseAdmin
+      .from("site_settings")
+      .select("value")
+      .eq("key", "default_commission_rate")
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    const raw = data?.value as Json;
+    const n =
+      typeof raw === "number" ? raw : Number(String(raw ?? "").trim().replace(",", "."));
+    const rate = Number.isFinite(n) ? Math.min(100, Math.max(0, n)) : DEFAULT_COMMISSION_RATE;
+    return { rate };
   });

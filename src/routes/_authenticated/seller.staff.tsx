@@ -123,6 +123,7 @@ function InviteForm() {
 }
 
 function StaffTable() {
+  const { locale } = Route.useSearch();
   const { data } = useSuspenseQuery(q);
   const qc = useQueryClient();
   const mutation = useMutation({
@@ -148,7 +149,7 @@ function StaffTable() {
             <div className="min-w-0">
               <p className="font-medium">{member.title ?? "Staff"}</p>
               <p className="text-caption text-muted-foreground" dir="ltr">
-                {member.userId.slice(0, 8)}… · joined {fmtDateTime(member.createdAt)}
+                {member.userId.slice(0, 8)}… · joined {fmtDateTime(member.createdAt, locale)}
               </p>
               <div className="mt-2 flex max-w-xl flex-wrap gap-1.5">
                 {member.permissions.slice(0, 6).map((p) => (

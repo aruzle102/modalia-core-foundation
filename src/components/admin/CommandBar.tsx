@@ -3,19 +3,26 @@ import type { ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import {
+  AtSign,
   BadgeCheck,
   ExternalLink,
+  LayoutTemplate,
   Loader2,
   Package,
   Plus,
   Search,
+  Settings,
   ShoppingBag,
   Store,
+  Tag,
+  Ticket,
+  Truck,
   User,
   UserPlus,
   Users,
 } from "lucide-react";
-import { adminGlobalSearch, getOfficialStore } from "@/lib/admin-search.functions";
+import { adminGlobalSearch } from "@/lib/admin-search.functions";
+import { getOfficialStore } from "@/lib/admin-official-store.functions";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { getTranslations } from "@/lib/i18n";
@@ -36,10 +43,12 @@ interface SearchItem {
  * ("Search…" + ⌘K hint); ⌘K / Ctrl+K opens, Esc or backdrop click closes.
  *
  * Searches orders (by number, email, phone, customer name), sellers, stores,
- * products and customers through the admin-only `adminGlobalSearch` server
- * function — no mock data. Clicking a result navigates to the real record.
- * A "Quick actions" group offers Create product / seller / store and opening
- * the official storefront.
+ * products (by name in all locales and slug), customers, categories (by name),
+ * coupons (by code) and seller login usernames through the admin-only
+ * `adminGlobalSearch` server function — no mock data. Clicking a result
+ * navigates to the real record. A "Quick actions" group offers Create product
+ * / seller (+ store) / coupon and opening shipping, homepage, settings and the
+ * official storefront.
  */
 export function CommandBar() {
   const locale = useAdminLocale();
@@ -80,7 +89,7 @@ export function CommandBar() {
 
   useEffect(() => {
     if (open) setTimeout(() => inputRef.current?.focus(), 0);
-  }, [open ]);
+  }, [open]);
 
   const search = useQuery({
     queryKey: ["admin-search", debounced],
@@ -109,7 +118,7 @@ export function CommandBar() {
     const groups = t.groups;
     const actions: SearchItem[] = [];
 
-    const official = officialStore.data?.store ?? null;
+    const official = officialStore.data?.official?.store ?? null;
     const officialReady = officialStore.isSuccess;
     actions.push(
       {
@@ -137,6 +146,38 @@ export function CommandBar() {
         run: () => go("/admin/sellers", { search: { create: "seller" } }),
       },
       {
+        key: "action-create-coupon",
+        group: groups.actions,
+        label: t.createCoupon,
+        sub: t.createCouponHint,
+        icon: <Ticket className="h-4 w-4 text-muted-foreground" />,
+        run: () => go("/admin/coupons", { search: { create: "coupon" } }),
+      },
+      {
+        key: "action-open-shipping",
+        group: groups.actions,
+        label: t.openShipping,
+        sub: t.openShippingHint,
+        icon: <Truck className="h-4 w-4 text-muted-foreground" />,
+        run: () => go("/admin/shipping", {}),
+      },
+      {
+        key: "action-open-homepage",
+        group: groups.actions,
+        label: t.openHomepage,
+        sub: t.openHomepageHint,
+        icon: <LayoutTemplate className="h-4 w-4 text-muted-foreground" />,
+        run: () => go("/admin/homepage", {}),
+      },
+      {
+        key: "action-open-settings",
+        group: groups.actions,
+        label: t.openSettings,
+        sub: t.openSettingsHint,
+        icon: <Settings className="h-4 w-4 text-muted-foreground" />,
+        run: () => go("/admin/settings", {}),
+      },
+      {
         key: "action-official-store",
         group: groups.actions,
         label: t.openOfficialStore,
@@ -150,7 +191,11 @@ export function CommandBar() {
         run: () => {
           if (official) {
             close();
-            window.open(`/store/${official.slug}?locale=${locale}`, "_blank", "noopener,noreferrer");
+            window.open(
+              `/store/${official.slug}?locale=${locale}`,
+              "_blank",
+              "noopener,noreferrer",
+            );
           }
         },
       },
@@ -183,8 +228,8 @@ export function CommandBar() {
         results.push({
           key: `product-${p.id}`,
           group: groups.products,
-          label: p.slug,
-          sub: `${p.price} DZD · ${p.status.replace(/_/g, " ")}`,
+          label: p.name,
+          sub: `${p.slug} · ${p.price} DZD · ${p.status.replace(/_/g, " ")}`,
           icon: <Package className="h-4 w-4 text-muted-foreground" />,
           run: () => go("/admin/products", { search: { q: p.slug } }),
         });
@@ -196,7 +241,8 @@ export function CommandBar() {
           label: s.name,
           sub: s.slug,
           icon: <Store className="h-4 w-4 text-muted-foreground" />,
-          run: () => go("/admin/sellers", { search: { q: s.slug } }),
+          // Open the store's Store Control Center directly.
+          run: () => go("/admin/stores/$storeId", { params: { storeId: s.id } }),
         });
       }
       for (const c of data.customers) {
@@ -209,9 +255,48 @@ export function CommandBar() {
           run: () => go("/admin/orders", { search: { q: c.phone ?? c.email ?? c.name } }),
         });
       }
+      for (const c of data.categories) {
+        results.push({
+          key: `category-${c.id}`,
+          group: groups.categories,
+          label: c.name,
+          sub: `${c.slug} · ${c.status.replace(/_/g, " ")}`,
+          icon: <Tag className="h-4 w-4 text-muted-foreground" />,
+          run: () => go("/admin/categories", {}),
+        });
+      }
+      for (const c of data.coupons) {
+        results.push({
+          key: `coupon-${c.id}`,
+          group: groups.coupons,
+          label: c.code,
+          sub: `${c.value} · ${c.status.replace(/_/g, " ")}`,
+          icon: <Ticket className="h-4 w-4 text-muted-foreground" />,
+          run: () => go("/admin/coupons", {}),
+        });
+      }
+      for (const u of data.usernames) {
+        results.push({
+          key: `username-${u.sellerId}`,
+          group: groups.usernames,
+          label: u.username,
+          sub: u.sellerName,
+          icon: <AtSign className="h-4 w-4 text-muted-foreground" />,
+          run: () => go("/admin/sellers/$sellerId", { params: { sellerId: u.sellerId } }),
+        });
+      }
     }
     return { actions, results };
-  }, [search.data, officialStore.data, officialStore.isFetching, officialStore.isSuccess, t, go, locale, close]);
+  }, [
+    search.data,
+    officialStore.data,
+    officialStore.isFetching,
+    officialStore.isSuccess,
+    t,
+    go,
+    locale,
+    close,
+  ]);
 
   const items = useMemo(() => [...actions, ...results], [actions, results]);
 
@@ -228,7 +313,9 @@ export function CommandBar() {
       setActiveIndex((i) => (selectable.length ? (i + 1) % selectable.length : 0));
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      setActiveIndex((i) => (selectable.length ? (i - 1 + selectable.length) % selectable.length : 0));
+      setActiveIndex((i) =>
+        selectable.length ? (i - 1 + selectable.length) % selectable.length : 0,
+      );
     } else if (e.key === "Enter") {
       e.preventDefault();
       const item = selectable[clampedIndex];
@@ -278,7 +365,9 @@ export function CommandBar() {
                 placeholder={t.placeholder}
                 className="h-11 border-0 bg-transparent shadow-none focus-visible:ring-0"
               />
-              {search.isFetching ? <Loader2 className="h-4 w-4 shrink-0 animate-spin text-muted-foreground" /> : null}
+              {search.isFetching ? (
+                <Loader2 className="h-4 w-4 shrink-0 animate-spin text-muted-foreground" />
+              ) : null}
             </div>
             <div className="max-h-80 overflow-y-auto py-1">
               {search.isError ? (
@@ -315,7 +404,9 @@ export function CommandBar() {
                         {item.icon}
                         <span className="min-w-0 flex-1">
                           <span className="block truncate text-sm font-medium">{item.label}</span>
-                          <span className="block truncate text-xs text-muted-foreground">{item.sub}</span>
+                          <span className="block truncate text-xs text-muted-foreground">
+                            {item.sub}
+                          </span>
                         </span>
                         {active && !item.disabled ? (
                           <ExternalLink className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />

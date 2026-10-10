@@ -1,6 +1,10 @@
 import * as React from "react";
 import { Inbox } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { platformConfig, type SupportedLocale } from "@/config/platform";
+import { getTranslations } from "@/lib/i18n";
+import { localeTag } from "@/lib/i18n/format";
+import { useAdminLocale } from "./useAdminLocale";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -23,40 +27,84 @@ export function AdminCard({
   actions,
   children,
   className,
+  contentClassName,
 }: {
   title?: string;
   subtitle?: string | undefined;
   actions?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
+  contentClassName?: string | undefined;
 }) {
   return (
-    <Card className={className}>
+    <Card className={cn("rounded-md shadow-none", className)}>
       {title || actions ? (
-        <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0">
-          <div>
+        <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0 px-4 py-3.5 sm:px-5">
+          <div className="min-w-0">
             {title ? <CardTitle className="text-sm font-semibold">{title}</CardTitle> : null}
-            {subtitle ? <CardDescription className="mt-0.5">{subtitle}</CardDescription> : null}
+            {subtitle ? <CardDescription className="mt-1 text-caption">{subtitle}</CardDescription> : null}
           </div>
           {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
         </CardHeader>
       ) : null}
-      <CardContent>{children}</CardContent>
+      <CardContent className={cn("px-4 pb-4 sm:px-5 sm:pb-5", contentClassName)}>{children}</CardContent>
     </Card>
   );
 }
 
 /* ---------------------------------- Stat --------------------------------- */
 
-export function Stat({ label, value, hint }: { label: string; value: React.ReactNode; hint?: React.ReactNode }) {
+export function Stat({
+  label,
+  value,
+  hint,
+  className,
+}: {
+  label: string;
+  value: React.ReactNode;
+  hint?: React.ReactNode;
+  className?: string | undefined;
+}) {
   return (
-    <Card>
-      <CardContent className="pt-5">
-        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
-        <p className="mt-1 text-2xl font-semibold tabular-nums">{value}</p>
-        {hint ? <p className="mt-1 text-xs text-muted-foreground">{hint}</p> : null}
+    <Card className={cn("rounded-md shadow-none", className)}>
+      <CardContent className="p-4">
+        <p className="text-eyebrow text-muted-foreground">{label}</p>
+        <p className="mt-1.5 text-2xl font-semibold tabular-nums">{value}</p>
+        {hint ? <p className="mt-1 text-caption text-muted-foreground">{hint}</p> : null}
       </CardContent>
     </Card>
+  );
+}
+
+/* ------------------------- Stat rows (dense lists) ------------------------ */
+
+export function StatRows({ children, className }: { children: React.ReactNode; className?: string | undefined }) {
+  return (
+    <div className={cn("divide-y divide-border overflow-hidden rounded-md border border-border bg-card", className)}>
+      {children}
+    </div>
+  );
+}
+
+export function StatRow({
+  label,
+  value,
+  hint,
+  className,
+}: {
+  label: string;
+  value: React.ReactNode;
+  hint?: React.ReactNode;
+  className?: string | undefined;
+}) {
+  return (
+    <div className={cn("flex items-baseline justify-between gap-4 px-4 py-3 sm:px-5", className)}>
+      <div className="min-w-0">
+        <p className="text-small font-medium">{label}</p>
+        {hint ? <p className="mt-0.5 text-caption text-muted-foreground">{hint}</p> : null}
+      </div>
+      <p className="shrink-0 text-lg font-semibold tabular-nums">{value}</p>
+    </div>
   );
 }
 
@@ -68,16 +116,18 @@ const BLUE = new Set(["confirmed", "shipped", "in_transit", "converted"]);
 const RED = new Set(["cancelled", "rejected", "failed_delivery", "suspended", "disabled"]);
 const SLATE = new Set(["returned", "refunded", "archived", "hidden"]);
 
+/**
+ * Status tones use design-system tokens only (no raw green/amber/blue/red/slate).
+ * `info` is the blue informational tone; per badge law it shares the official
+ * blue hue.
+ */
 function statusTone(status: string): string {
   const s = status.toLowerCase();
-  if (GREEN.has(s))
-    return "bg-green-100 text-green-800 ring-green-600/20 dark:bg-green-500/10 dark:text-green-400 dark:ring-green-400/20";
-  if (AMBER.has(s))
-    return "bg-amber-100 text-amber-800 ring-amber-600/20 dark:bg-amber-500/10 dark:text-amber-400 dark:ring-amber-400/20";
-  if (BLUE.has(s))
-    return "bg-blue-100 text-blue-800 ring-blue-600/20 dark:bg-blue-500/10 dark:text-blue-400 dark:ring-blue-400/20";
-  if (RED.has(s)) return "bg-red-100 text-red-800 ring-red-600/20 dark:bg-red-500/10 dark:text-red-400 dark:ring-red-400/20";
-  return "bg-slate-100 text-slate-700 ring-slate-600/20 dark:bg-slate-500/10 dark:text-slate-400 dark:ring-slate-400/20";
+  if (GREEN.has(s)) return "bg-verified/10 text-verified ring-verified/25";
+  if (AMBER.has(s)) return "bg-brand/10 text-brand ring-brand/25";
+  if (BLUE.has(s)) return "bg-info/10 text-info ring-info/25";
+  if (RED.has(s)) return "bg-destructive/10 text-destructive ring-destructive/25";
+  return "bg-muted text-muted-foreground ring-border";
 }
 
 export function StatusPill({ status, className }: { status: string; className?: string }) {
@@ -97,11 +147,21 @@ export function StatusPill({ status, className }: { status: string; className?: 
 
 /* ------------------------------- EmptyState ------------------------------ */
 
-export function EmptyState({ title, text, action }: { title: string; text?: string | undefined; action?: React.ReactNode }) {
+export function EmptyState({
+  title,
+  text,
+  action,
+  icon,
+}: {
+  title: string;
+  text?: string | undefined;
+  action?: React.ReactNode;
+  icon?: React.ReactNode | undefined;
+}) {
   return (
-    <div className="flex flex-col items-center justify-center gap-2 px-4 py-12 text-center">
+    <div className="flex flex-col items-center justify-center gap-2 px-4 py-10 text-center">
       <div className="flex h-11 w-11 items-center justify-center rounded-full bg-muted">
-        <Inbox className="h-5 w-5 text-muted-foreground" />
+        {icon ?? <Inbox className="h-5 w-5 text-muted-foreground" />}
       </div>
       <p className="text-sm font-semibold">{title}</p>
       {text ? <p className="max-w-sm text-sm text-muted-foreground">{text}</p> : null}
@@ -114,13 +174,13 @@ export function EmptyState({ title, text, action }: { title: string; text?: stri
 
 export function TableSkeleton({ rows = 6 }: { rows?: number }) {
   return (
-    <div className="space-y-2">
+    <div className="space-y-1.5" role="status">
       {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="flex items-center gap-3 rounded-md border p-3">
-          <Skeleton className="h-4 w-1/4" />
-          <Skeleton className="h-4 w-1/3" />
-          <Skeleton className="h-4 w-1/6" />
-          <Skeleton className="h-6 w-16 rounded-full" />
+        <div key={i} className="flex items-center gap-3 rounded-md border border-border bg-card px-3 py-2.5">
+          <Skeleton className="h-3.5 w-1/4" />
+          <Skeleton className="h-3.5 w-1/3" />
+          <Skeleton className="h-3.5 w-1/6" />
+          <Skeleton className="h-5 w-16 rounded-full" />
         </div>
       ))}
     </div>
@@ -134,7 +194,8 @@ export function ConfirmDialog({
   onOpenChange,
   title,
   description,
-  confirmLabel = "Confirm",
+  confirmLabel,
+  cancelLabel,
   onConfirm,
   danger = false,
 }: {
@@ -142,10 +203,17 @@ export function ConfirmDialog({
   onOpenChange: (open: boolean) => void;
   title: string;
   description?: string;
-  confirmLabel?: string;
+  confirmLabel?: string | undefined;
+  cancelLabel?: string | undefined;
   onConfirm: () => void;
   danger?: boolean | undefined;
 }) {
+  // The dialog resolves the active locale itself so call sites that rely on
+  // the default button labels get them translated for free.
+  const locale = useAdminLocale();
+  const common = getTranslations(locale).common;
+  const confirmText = confirmLabel ?? common.confirm;
+  const cancelText = cancelLabel ?? common.cancel;
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
@@ -154,16 +222,60 @@ export function ConfirmDialog({
           {description ? <AlertDialogDescription>{description}</AlertDialogDescription> : null}
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>{cancelText}</AlertDialogCancel>
           <AlertDialogAction
             onClick={onConfirm}
             className={danger ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : undefined}
           >
-            {confirmLabel}
+            {confirmText}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+  );
+}
+
+/* ---------------------------- SegmentedControl --------------------------- */
+
+export function SegmentedControl<T extends string>({
+  options,
+  value,
+  onChange,
+  ariaLabel,
+  className,
+}: {
+  options: Array<{ value: T; label: React.ReactNode }>;
+  value: T;
+  onChange: (value: T) => void;
+  ariaLabel: string;
+  className?: string | undefined;
+}) {
+  return (
+    <div
+      role="group"
+      aria-label={ariaLabel}
+      className={cn("flex gap-0.5 rounded-md border border-border bg-card p-0.5", className)}
+    >
+      {options.map((opt) => {
+        const selected = opt.value === value;
+        return (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => onChange(opt.value)}
+            aria-pressed={selected}
+            className={cn(
+              "rounded-[5px] px-3 py-1 text-small font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              selected
+                ? "bg-foreground text-background"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground",
+            )}
+          >
+            {opt.label}
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
@@ -195,24 +307,38 @@ export function Field({
 
 /* --------------------------------- Helpers ------------------------------- */
 
-export function fmtMoney(n: number | string, currency = "DZD"): string {
+/**
+ * Locale-aware formatters. `locale` is the UI locale (ar/fr/en); when omitted
+ * it falls back to the platform default language.
+ */
+export function fmtMoney(
+  n: number | string,
+  currency = "DZD",
+  locale: SupportedLocale = platformConfig.market.defaultLanguage,
+): string {
   const value = typeof n === "string" ? Number(n) : n;
   if (!Number.isFinite(value)) return "—";
-  return `${new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(value)} ${currency}`;
+  return `${new Intl.NumberFormat(localeTag(locale), { maximumFractionDigits: 2 }).format(value)} ${currency}`;
 }
 
-export function fmtDate(value: string | Date | null | undefined): string {
+export function fmtDate(
+  value: string | Date | null | undefined,
+  locale: SupportedLocale = platformConfig.market.defaultLanguage,
+): string {
   if (!value) return "—";
   const d = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(d.getTime())) return "—";
-  return new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" }).format(d);
+  return new Intl.DateTimeFormat(localeTag(locale), { dateStyle: "medium" }).format(d);
 }
 
-export function fmtDateTime(value: string | Date | null | undefined): string {
+export function fmtDateTime(
+  value: string | Date | null | undefined,
+  locale: SupportedLocale = platformConfig.market.defaultLanguage,
+): string {
   if (!value) return "—";
   const d = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(d.getTime())) return "—";
-  return new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short" }).format(d);
+  return new Intl.DateTimeFormat(localeTag(locale), { dateStyle: "medium", timeStyle: "short" }).format(d);
 }
 
 const RELATIVE_UNITS: Array<[Intl.RelativeTimeFormatUnit, number]> = [
@@ -224,12 +350,15 @@ const RELATIVE_UNITS: Array<[Intl.RelativeTimeFormatUnit, number]> = [
   ["minute", 60 * 1000],
 ];
 
-export function timeAgo(value: string | Date | null | undefined): string {
+export function timeAgo(
+  value: string | Date | null | undefined,
+  locale: SupportedLocale = platformConfig.market.defaultLanguage,
+): string {
   if (!value) return "—";
   const d = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(d.getTime())) return "—";
   const diffMs = d.getTime() - Date.now();
-  const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
+  const rtf = new Intl.RelativeTimeFormat(localeTag(locale), { numeric: "auto" });
   for (const [unit, ms] of RELATIVE_UNITS) {
     const amount = Math.round(diffMs / ms);
     if (Math.abs(amount) >= 1) return rtf.format(amount, unit);

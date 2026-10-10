@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import type { Database, Json } from "@/integrations/supabase/types";
+import { storagePublicUrl } from "@/lib/store.functions";
 
 type LocalizedText = Json | null;
 
@@ -11,7 +12,7 @@ export type ProductOption = { id: string; code: string; name: string; required: 
 export type ProductVariant = { id: string; price: number; compareAtPrice: number | null; available: boolean; stock: number; lowStockThreshold: number; maxPurchaseQuantity: number | null; optionValueIds: string[] };
 export type ProductReview = { id: string; firstName: string | null; rating: number; body: string | null; createdAt: string; verifiedPurchase: boolean; imageUrl: string | null };
 export type RelatedProduct = { id: string; slug: string; name: string; price: number; storeName: string; categorySlug: string | null; imagePath: string | null; imageAlt: string; createdAt: string };
-export type ProductDetail = { id: string; slug: string; name: string; description: string | null; shortDescription: string | null; price: number; compareAtPrice: number | null; currency: string; featured: boolean; weightGrams: number | null; category: { name: string; slug: string } | null; brand: { name: string; slug: string } | null; store: { name: string; slug: string; logoUrl: string | null; verified: boolean } | null; media: ProductMedia[]; options: ProductOption[]; variants: ProductVariant[]; reviews: ProductReview[]; reviewSummary: { average: number | null; count: number; distribution: Record<number, number> }; related: RelatedProduct[]; similar: RelatedProduct[] };
+export type ProductDetail = { id: string; slug: string; name: string; description: string | null; shortDescription: string | null; price: number; compareAtPrice: number | null; currency: string; featured: boolean; weightGrams: number | null; category: { name: string; slug: string } | null; brand: { name: string; slug: string } | null; store: { name: string; slug: string; logoUrl: string | null; verified: boolean } | null; media: ProductMedia[]; options: ProductOption[]; variants: ProductVariant[]; reviews: ProductReview[]; reviewSummary: { average: number | null; count: number; distribution: Record<number, number> }; related: RelatedProduct[]; similar: RelatedProduct[]; fromStore: RelatedProduct[] };
 
 function localized(value: LocalizedText, locale: string, fallback: string) {
   if (!value || Array.isArray(value)) return fallback;
@@ -20,7 +21,11 @@ function localized(value: LocalizedText, locale: string, fallback: string) {
   return typeof text === "string" ? text : fallback;
 }
 
-function publicUrl(path: string | null) { return path && /^https?:\/\//.test(path) ? path : null; }
+function publicUrl(path: string | null) {
+  if (!path) return null;
+  if (/^https?:\/\//.test(path)) return path;
+  return storagePublicUrl(path);
+}
 
 /** Public URL for a review photo stored in the `review-images` bucket. */
 function reviewImageUrl(path: string | null): string | null {
@@ -40,11 +45,11 @@ export const getProductDetail = createServerFn({ method: "GET" })
   .validator((data) => z.object({ slug: z.string(), locale: z.string() }).parse(data))
   .handler(async ({ data }) => {
     const supabase = createPublicClient();
-    const productResult = await supabase.from("products").select("id,slug,name,description,short_description,base_price,compare_at_price,currency,featured,weight_grams,category_id,category:categories(name,slug),brand:brands(name,slug),store:stores(name,slug,logo_path,verification_status)").eq("slug", data.slug).maybeSingle();
+    const productResult = await supabase.from("products").select("id,slug,name,description,short_description,base_price,compare_at_price,currency,featured,weight_grams,category_id,store_id,category:categories(name,slug),brand:brands(name,slug),store:stores(name,slug,logo_path,verification_status)").eq("slug", data.slug).eq("status", "active").eq("publication_status", "published").eq("moderation_status", "approved").eq("visibility", "public").maybeSingle();
     if (productResult.error) throw new Error("The product could not be loaded.");
     if (!productResult.data) return null;
     const product = productResult.data;
-    const [mediaResult, optionsResult, valuesResult, variantsResult, optionLinksResult, reviewsResult, relatedResult, similarResult] = await Promise.all([
+    const [mediaResult, optionsResult, valuesResult, variantsResult, optionLinksResult, reviewsResult, relatedResult, similarResult, storeResult] = await Promise.all([
       supabase.from("product_images").select("id,storage_path,alt_text,color_id,variant_id,is_primary,media_type").eq("product_id", product.id).order("is_primary", { ascending: false }).order("sort_order"),
       supabase.from("product_options").select("id,code,name,required").eq("product_id", product.id).order("sort_order"),
       supabase.from("product_option_values").select("id,product_option_id,value,label,color_id,colors(hex_value)").order("sort_order"),
@@ -53,8 +58,9 @@ export const getProductDetail = createServerFn({ method: "GET" })
       supabase.from("reviews").select("id,first_name,rating,body,created_at,verified_purchase,image_path").eq("product_id", product.id).eq("moderation_status", "approved").order("created_at", { ascending: false }).limit(20),
       supabase.from("products").select("id,slug,name,base_price,created_at,category:categories(slug),seller:sellers(stores(name)),images:product_images(storage_path,alt_text,sort_order)").eq("category_id", product.category_id ?? "00000000-0000-0000-0000-000000000000").eq("status", "active").eq("publication_status", "published").eq("moderation_status", "approved").eq("visibility", "public").neq("id", product.id).order("published_at", { ascending: false }).limit(4),
       supabase.from("products").select("id,slug,name,base_price,created_at,category:categories(slug),seller:sellers(stores(name)),images:product_images(storage_path,alt_text,sort_order)").eq("category_id", product.category_id ?? "00000000-0000-0000-0000-000000000000").eq("status", "active").eq("publication_status", "published").eq("moderation_status", "approved").eq("visibility", "public").neq("id", product.id).order("published_at", { ascending: false }).limit(12),
+      supabase.from("products").select("id,slug,name,base_price,created_at,category:categories(slug),seller:sellers(stores(name)),images:product_images(storage_path,alt_text,sort_order)").eq("store_id", product.store_id ?? "00000000-0000-0000-0000-000000000000").eq("status", "active").eq("publication_status", "published").eq("moderation_status", "approved").eq("visibility", "public").neq("id", product.id).order("published_at", { ascending: false }).limit(8),
     ]);
-    if (mediaResult.error || optionsResult.error || valuesResult.error || variantsResult.error || optionLinksResult.error || reviewsResult.error || relatedResult.error || similarResult.error) throw new Error("The product details could not be loaded.");
+    if (mediaResult.error || optionsResult.error || valuesResult.error || variantsResult.error || optionLinksResult.error || reviewsResult.error || relatedResult.error || similarResult.error || storeResult.error) throw new Error("The product details could not be loaded.");
     const inventories = await Promise.all((variantsResult.data ?? []).map((variant) => supabase.from("inventory").select("quantity,reserved_quantity,low_stock_threshold,max_purchase_quantity").eq("variant_id", variant.id).maybeSingle()));
     const optionIds = new Set((optionsResult.data ?? []).map((option) => option.id));
     const values = (valuesResult.data ?? []).filter((value) => optionIds.has(value.product_option_id));
@@ -78,10 +84,12 @@ export const getProductDetail = createServerFn({ method: "GET" })
       .filter((item) => !relatedIds.has(item.id))
       .sort((a, b) => Math.abs(a.price - productPrice) - Math.abs(b.price - productPrice))
       .slice(0, 4);
+    // More from this store: other live products from the same storefront.
+    const fromStore = (storeResult.data ?? []).map(toCard).slice(0, 8);
     const category = Array.isArray(product.category) ? product.category[0] : product.category;
     const brand = Array.isArray(product.brand) ? product.brand[0] : product.brand;
     const store = Array.isArray(product.store) ? product.store[0] : product.store;
-    return { id: product.id, slug: product.slug, name: localized(product.name, data.locale, product.slug), description: localized(product.description, data.locale, "") || null, shortDescription: localized(product.short_description, data.locale, "") || null, price: Number(product.base_price), compareAtPrice: product.compare_at_price, currency: product.currency, featured: product.featured, weightGrams: product.weight_grams, category: category ? { name: localized(category.name, data.locale, category.slug), slug: category.slug } : null, brand: brand ? { name: brand.name, slug: brand.slug } : null, store: store ? { name: store.name, slug: store.slug, logoUrl: publicUrl(store.logo_path), verified: store.verification_status === "verified" } : null, media: (mediaResult.data ?? []).map((image) => ({ id: image.id, url: publicUrl(image.storage_path), alt: localized(image.alt_text, data.locale, ""), colorId: image.color_id, variantId: image.variant_id, isPrimary: image.is_primary, mediaType: image.media_type })), options, variants, reviews, reviewSummary: { average: reviews.length ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length : null, count: reviews.length, distribution }, related, similar } satisfies ProductDetail;
+    return { id: product.id, slug: product.slug, name: localized(product.name, data.locale, product.slug), description: localized(product.description, data.locale, "") || null, shortDescription: localized(product.short_description, data.locale, "") || null, price: Number(product.base_price), compareAtPrice: product.compare_at_price, currency: product.currency, featured: product.featured, weightGrams: product.weight_grams, category: category ? { name: localized(category.name, data.locale, category.slug), slug: category.slug } : null, brand: brand ? { name: brand.name, slug: brand.slug } : null, store: store ? { name: store.name, slug: store.slug, logoUrl: publicUrl(store.logo_path), verified: store.verification_status === "verified" } : null, media: (mediaResult.data ?? []).map((image) => ({ id: image.id, url: publicUrl(image.storage_path), alt: localized(image.alt_text, data.locale, ""), colorId: image.color_id, variantId: image.variant_id, isPrimary: image.is_primary, mediaType: image.media_type })), options, variants, reviews, reviewSummary: { average: reviews.length ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length : null, count: reviews.length, distribution }, related, similar, fromStore } satisfies ProductDetail;
   });
 export type WishlistLivePrice = { productId: string; price: number; compareAtPrice: number | null; available: boolean; slug: string };
 

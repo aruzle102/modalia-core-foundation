@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { buildSellerProfilePatch, updateSellerProfileInput } from "./seller-onboarding.schemas";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireSeller } from "@/lib/seller-auth";
 import { phonePattern } from "@/lib/localization";
@@ -71,7 +72,7 @@ export const getSellerProfile = createServerFn({ method: "GET" })
     const seller = await requireSeller({ supabase: context.supabase, userId: context.userId });
     const { data, error } = await context.supabase
       .from("sellers")
-      .select("id,legal_name,first_name,last_name,phone,email,email_verified_at,account_status,commission_rate,wilaya,address")
+      .select("id,legal_name,first_name,last_name,phone,email,email_verified_at,account_status,commission_rate")
       .eq("id", seller.sellerId)
       .single();
     if (error || !data) throw new Error(error?.message ?? "Seller profile unavailable.");
@@ -104,23 +105,11 @@ export const getSellerProfile = createServerFn({ method: "GET" })
     };
   });
 
+// updateSellerProfileInput imported from ./seller-onboarding.schemas.ts
+
 export const updateSellerProfile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data) =>
-    z
-      .object({
-        legalName: z.string().min(2).max(160),
-        // Optional identity fields for the guided onboarding wizard
-        // (Section 21); omitted fields are left untouched.
-        firstName: z.string().trim().min(1).max(100).optional(),
-        lastName: z.string().trim().min(1).max(100).optional(),
-        phone: z.string().max(30).optional(),
-        email: z.string().email().max(160).optional(),
-        wilaya: z.string().trim().min(1).max(100).optional(),
-        address: z.string().trim().max(500).optional(),
-      })
-      .parse(data),
-  )
+  .inputValidator((data) => updateSellerProfileInput.parse(data))
   .handler(async ({ data, context }) => {
     const seller = await requireSeller({ supabase: context.supabase, userId: context.userId });
     if (!seller.isOwner) throw new Error("Only the store owner can update the seller profile.");
@@ -131,18 +120,14 @@ export const updateSellerProfile = createServerFn({ method: "POST" })
     // Email is NEVER written directly: it goes through the verified
     // Auth-synced flow (Section 9) so sellers.email always equals
     // auth.users.email.
-    const patch: {
-      legal_name: string;
-      phone: string | null;
-      first_name?: string;
-      last_name?: string;
-      wilaya?: string;
-      address?: string | null;
-    } = { legal_name: data.legalName, phone };
-    if (data.firstName !== undefined) patch.first_name = data.firstName;
-    if (data.lastName !== undefined) patch.last_name = data.lastName;
-    if (data.wilaya !== undefined) patch.wilaya = data.wilaya;
-    if (data.address !== undefined) patch.address = data.address?.trim() || null;
+    const patch = buildSellerProfilePatch({
+      legalName: data.legalName,
+      phone,
+      firstName: data.firstName,
+      lastName: data.lastName,
+      wilaya: data.wilaya,
+      address: data.address,
+    });
 
     const { error } = await context.supabase.from("sellers").update(patch).eq("id", seller.sellerId);
     if (error) throw new Error(error.message);

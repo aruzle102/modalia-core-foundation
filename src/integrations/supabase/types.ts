@@ -462,6 +462,44 @@ export type Database = {
           },
         ]
       }
+      coupon_tiers: {
+        Row: {
+          coupon_id: string
+          created_at: string
+          discount_amount: number
+          id: string
+          max_subtotal: number | null
+          min_subtotal: number
+          sort_order: number
+        }
+        Insert: {
+          coupon_id: string
+          created_at?: string
+          discount_amount: number
+          id?: string
+          max_subtotal?: number | null
+          min_subtotal: number
+          sort_order?: number
+        }
+        Update: {
+          coupon_id?: string
+          created_at?: string
+          discount_amount?: number
+          id?: string
+          max_subtotal?: number | null
+          min_subtotal?: number
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coupon_tiers_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coupon_usages: {
         Row: {
           coupon_id: string
@@ -507,44 +545,6 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "orders"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      coupon_tiers: {
-        Row: {
-          coupon_id: string
-          created_at: string
-          discount_amount: number
-          id: string
-          max_subtotal: number | null
-          min_subtotal: number
-          sort_order: number
-        }
-        Insert: {
-          coupon_id: string
-          created_at?: string
-          discount_amount: number
-          id?: string
-          max_subtotal?: number | null
-          min_subtotal: number
-          sort_order?: number
-        }
-        Update: {
-          coupon_id?: string
-          created_at?: string
-          discount_amount?: number
-          id?: string
-          max_subtotal?: number | null
-          min_subtotal?: number
-          sort_order?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "coupon_tiers_coupon_id_fkey"
-            columns: ["coupon_id"]
-            isOneToOne: false
-            referencedRelation: "coupons"
             referencedColumns: ["id"]
           },
         ]
@@ -2322,50 +2322,6 @@ export type Database = {
           },
         ]
       }
-      seller_warnings: {
-        Row: {
-          id: string
-          seller_id: string
-          product_id: string | null
-          reason: string
-          action_taken: string
-          issued_by: string | null
-          issued_at: string
-          acknowledged_at: string | null
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          seller_id: string
-          product_id?: string | null
-          reason: string
-          action_taken?: string
-          issued_by?: string | null
-          issued_at?: string
-          acknowledged_at?: string | null
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          seller_id?: string
-          product_id?: string | null
-          reason?: string
-          action_taken?: string
-          issued_by?: string | null
-          issued_at?: string
-          acknowledged_at?: string | null
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "seller_warnings_seller_id_fkey"
-            columns: ["seller_id"]
-            isOneToOne: false
-            referencedRelation: "sellers"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       seller_support_requests: {
         Row: {
           admin_response: string | null
@@ -2431,12 +2387,12 @@ export type Database = {
           phone: string | null
           status: Database["public"]["Enums"]["store_status"]
           updated_at: string
-          verification_state: string
-          verified_by: string | null
-          verified_at: string | null
           verification_note: string | null
           wilaya: string | null
           address: string | null
+          verification_state: string
+          verified_at: string | null
+          verified_by: string | null
         }
         Insert: {
           account_status?: Database["public"]["Enums"]["seller_account_status"]
@@ -2455,12 +2411,12 @@ export type Database = {
           phone?: string | null
           status?: Database["public"]["Enums"]["store_status"]
           updated_at?: string
-          verification_state?: string
-          verified_by?: string | null
-          verified_at?: string | null
           verification_note?: string | null
           wilaya?: string | null
           address?: string | null
+          verification_state?: string
+          verified_at?: string | null
+          verified_by?: string | null
         }
         Update: {
           account_status?: Database["public"]["Enums"]["seller_account_status"]
@@ -2479,12 +2435,12 @@ export type Database = {
           phone?: string | null
           status?: Database["public"]["Enums"]["store_status"]
           updated_at?: string
-          verification_state?: string
-          verified_by?: string | null
-          verified_at?: string | null
           verification_note?: string | null
           wilaya?: string | null
           address?: string | null
+          verification_state?: string
+          verified_at?: string | null
+          verified_by?: string | null
         }
         Relationships: []
       }
@@ -2746,13 +2702,11 @@ export type Database = {
           slug: string
           status: Database["public"]["Enums"]["store_status"]
           updated_at: string
+          verification_expires_at: string | null
+          verification_note: string | null
           verification_status: Database["public"]["Enums"]["store_verification_status"]
           verified_at: string | null
           verified_by: string | null
-          verification_expires_at: string | null
-          verification_note: string | null
-          wilaya: string | null
-          address: string | null
         }
         Insert: {
           banner_path?: string | null
@@ -2768,11 +2722,11 @@ export type Database = {
           slug: string
           status?: Database["public"]["Enums"]["store_status"]
           updated_at?: string
+          verification_expires_at?: string | null
+          verification_note?: string | null
           verification_status?: Database["public"]["Enums"]["store_verification_status"]
           verified_at?: string | null
           verified_by?: string | null
-          verification_expires_at?: string | null
-          verification_note?: string | null
         }
         Update: {
           banner_path?: string | null
@@ -2788,11 +2742,11 @@ export type Database = {
           slug?: string
           status?: Database["public"]["Enums"]["store_status"]
           updated_at?: string
+          verification_expires_at?: string | null
+          verification_note?: string | null
           verification_status?: Database["public"]["Enums"]["store_verification_status"]
           verified_at?: string | null
           verified_by?: string | null
-          verification_expires_at?: string | null
-          verification_note?: string | null
         }
         Relationships: [
           {

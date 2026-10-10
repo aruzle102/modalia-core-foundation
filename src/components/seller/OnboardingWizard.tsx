@@ -27,6 +27,8 @@ export interface OnboardingProfileData {
   lastName: string;
   email: string;
   phone: string;
+  wilaya?: string;
+  address?: string;
 }
 
 export interface OnboardingStoreData {
@@ -79,6 +81,8 @@ export function OnboardingWizard({
   const [lastName, setLastName] = useState(initialProfile.lastName);
   const [email, setEmail] = useState(initialProfile.email);
   const [phone, setPhone] = useState(initialProfile.phone);
+  const [wilaya, setWilaya] = useState(initialProfile.wilaya ?? "");
+  const [address, setAddress] = useState(initialProfile.address ?? "");
 
   // Store form (pre-filled from getStoreStudio; null when the admin has not
   // created the store yet — the step then shows an honest pending state).
@@ -141,6 +145,8 @@ export function OnboardingWizard({
           lastName: lastName.trim(),
           phone: phone.trim() || undefined,
           email: email.trim() || undefined,
+          wilaya: wilaya.trim() || undefined,
+          address: address.trim() || undefined,
         },
       });
       setDirty(false);
@@ -315,6 +321,22 @@ export function OnboardingWizard({
                     maxLength={30}
                     autoComplete="tel"
                     className="text-start"
+                  />
+                </Field>
+                <Field label={t.wilaya}>
+                  <Input
+                    value={wilaya}
+                    onChange={(e) => touch(setWilaya)(e.target.value)}
+                    maxLength={100}
+                    autoComplete="address-level1"
+                  />
+                </Field>
+                <Field label={t.address}>
+                  <Input
+                    value={address}
+                    onChange={(e) => touch(setAddress)(e.target.value)}
+                    maxLength={500}
+                    autoComplete="street-address"
                   />
                 </Field>
               </div>

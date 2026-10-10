@@ -48,15 +48,27 @@ export const Route = createFileRoute("/_authenticated/seller")({
       <p className="text-sm text-muted-foreground">Loading seller overview…</p>
     </div>
   ),
-  errorComponent: () => (
-    <div role="alert" className="mx-auto max-w-md px-6 py-24 text-center">
-      <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800" aria-hidden="true">
-        <span className="text-xl">⚠</span>
+  errorComponent: ({ error }) => {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    // Sanitize: show error type but not sensitive details
+    const displayMessage = message.includes("DENIED")
+      ? "Access denied. Please ensure your seller account is active."
+      : message.includes("MUST_RESET_PASSWORD")
+        ? "Password reset required. Please change your password."
+        : message.includes("Unauthorized")
+          ? "Please sign in again."
+          : `Error: ${message}`;
+    return (
+      <div role="alert" className="mx-auto max-w-md px-6 py-24 text-center">
+        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800" aria-hidden="true">
+          <span className="text-xl">⚠</span>
+        </div>
+        <p className="font-medium text-neutral-900 dark:text-neutral-100">Seller overview could not be loaded.</p>
+        <p className="mt-2 text-sm text-muted-foreground">{displayMessage}</p>
+        <p className="mt-1 text-xs text-muted-foreground">If the problem persists, contact support with this message.</p>
       </div>
-      <p className="font-medium text-neutral-900 dark:text-neutral-100">Seller overview could not be loaded.</p>
-      <p className="mt-1 text-sm text-muted-foreground">Please try refreshing the page. If the problem persists, contact support.</p>
-    </div>
-  ),
+    );
+  },
   head: () => ({
     meta: [
       { name: "robots", content: "noindex,nofollow" },

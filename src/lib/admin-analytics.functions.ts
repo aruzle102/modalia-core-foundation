@@ -87,11 +87,8 @@ async function callRpc<T>(
   name: string,
   args: Record<string, unknown>,
 ): Promise<T> {
-  const rpc = client.rpc as unknown as (
-    n: string,
-    a: Record<string, unknown>,
-  ) => Promise<{ data: T | null; error: { message?: string } | null }>;
-  const { data, error } = await rpc(name, args);
+  // Preserve this-binding: call directly on client (fixes "reading 'rest'" error).
+  const { data, error } = await (client.rpc(name, args) as unknown as Promise<{ data: T | null; error: { message?: string } | null }>);
   if (error) throw new Error(error.message ?? `${name} failed`);
   return (data ?? null) as T;
 }

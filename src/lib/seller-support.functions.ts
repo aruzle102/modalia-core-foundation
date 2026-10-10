@@ -71,7 +71,7 @@ export const getSellerProfile = createServerFn({ method: "GET" })
     const seller = await requireSeller({ supabase: context.supabase, userId: context.userId });
     const { data, error } = await context.supabase
       .from("sellers")
-      .select("id,legal_name,first_name,last_name,phone,email,email_verified_at,account_status,commission_rate")
+      .select("id,legal_name,first_name,last_name,phone,email,email_verified_at,account_status,commission_rate,wilaya,address")
       .eq("id", seller.sellerId)
       .single();
     if (error || !data) throw new Error(error?.message ?? "Seller profile unavailable.");
@@ -98,6 +98,8 @@ export const getSellerProfile = createServerFn({ method: "GET" })
         emailVerifiedAt: (data as { email_verified_at?: string | null }).email_verified_at ?? null,
         accountStatus: data.account_status as string,
         commissionRate: Number(data.commission_rate ?? 0),
+        wilaya: (data as { wilaya?: string | null }).wilaya ?? "",
+        address: (data as { address?: string | null }).address ?? "",
       },
     };
   });
@@ -114,6 +116,8 @@ export const updateSellerProfile = createServerFn({ method: "POST" })
         lastName: z.string().trim().min(1).max(100).optional(),
         phone: z.string().max(30).optional(),
         email: z.string().email().max(160).optional(),
+        wilaya: z.string().trim().min(1).max(100).optional(),
+        address: z.string().trim().max(500).optional(),
       })
       .parse(data),
   )
@@ -132,9 +136,13 @@ export const updateSellerProfile = createServerFn({ method: "POST" })
       phone: string | null;
       first_name?: string;
       last_name?: string;
+      wilaya?: string;
+      address?: string | null;
     } = { legal_name: data.legalName, phone };
     if (data.firstName !== undefined) patch.first_name = data.firstName;
     if (data.lastName !== undefined) patch.last_name = data.lastName;
+    if (data.wilaya !== undefined) patch.wilaya = data.wilaya;
+    if (data.address !== undefined) patch.address = data.address?.trim() || null;
 
     const { error } = await context.supabase.from("sellers").update(patch).eq("id", seller.sellerId);
     if (error) throw new Error(error.message);

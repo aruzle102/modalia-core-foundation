@@ -1325,6 +1325,8 @@ export const en = {
         profileSubtitle: "Shown to customers and used for payouts.",
         legalName: "Legal name",
         phone: "Phone",
+        wilaya: "Wilaya",
+        address: "Address",
         phoneHint: "Algerian format, e.g. 0550 12 34 56",
         contactEmail: "Contact email",
         saveChanges: "Save changes",
@@ -1385,6 +1387,7 @@ export const en = {
       },
     },
     sellerDashboardV8: {
+      sectionLoadError: "Could not load this section. Other data is still available.",
       nav: {
         overview: "Overview",
         orders: "Orders",

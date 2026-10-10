@@ -2435,6 +2435,8 @@ export type Database = {
           verified_by: string | null
           verified_at: string | null
           verification_note: string | null
+          wilaya: string | null
+          address: string | null
         }
         Insert: {
           account_status?: Database["public"]["Enums"]["seller_account_status"]
@@ -2457,6 +2459,8 @@ export type Database = {
           verified_by?: string | null
           verified_at?: string | null
           verification_note?: string | null
+          wilaya?: string | null
+          address?: string | null
         }
         Update: {
           account_status?: Database["public"]["Enums"]["seller_account_status"]
@@ -2479,6 +2483,8 @@ export type Database = {
           verified_by?: string | null
           verified_at?: string | null
           verification_note?: string | null
+          wilaya?: string | null
+          address?: string | null
         }
         Relationships: []
       }
@@ -2745,6 +2751,8 @@ export type Database = {
           verified_by: string | null
           verification_expires_at: string | null
           verification_note: string | null
+          wilaya: string | null
+          address: string | null
         }
         Insert: {
           banner_path?: string | null

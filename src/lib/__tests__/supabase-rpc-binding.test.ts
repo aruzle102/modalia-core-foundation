@@ -24,7 +24,8 @@ describe("supabase rpc this-binding", () => {
       const src = readFileSync(join(__dirname, rel), "utf-8");
       const lines = src.split("\n");
       for (let i = 0; i < lines.length; i++) {
-        if (/const rpc\w* = .*\.rpc as unknown/.test(lines[i])) {
+        const line = lines[i];
+        if (line && /const rpc\w* = .*\.rpc as unknown/.test(line)) {
           const ctx = lines.slice(i, i + 10).join("\n");
           assert.ok(
             /\.call\(client,|\.apply\(client,|\.bind\(client\)/.test(ctx),

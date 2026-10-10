@@ -25,8 +25,8 @@ function useReveal<T extends HTMLElement>(threshold = 0.12) {
       return;
     }
     const obs = new IntersectionObserver(
-      ([e]) => {
-        if (e.isIntersecting) {
+      ([entry]) => {
+        if (entry?.isIntersecting) {
           setVisible(true);
           obs.disconnect();
         }
@@ -158,6 +158,7 @@ function LandingPage() {
             <Reveal delay={300}>
               <Link
                 to="/home"
+                search={{ locale }}
                 className="group mt-10 inline-flex w-fit items-center gap-3 rounded-full bg-white px-10 py-4 text-sm font-semibold text-neutral-950 shadow-2xl transition-all hover:bg-white/90 active:scale-[0.98]"
               >
                 {heroCta}
@@ -220,7 +221,7 @@ function LandingPage() {
               </h2>
             </Reveal>
             <Reveal delay={150}>
-              <Link to="/home" className="group mt-8 inline-flex w-fit items-center gap-2 text-sm font-semibold text-white/85 transition-all hover:gap-4 hover:text-white">
+              <Link to="/home" search={{ locale }} className="group mt-8 inline-flex w-fit items-center gap-2 text-sm font-semibold text-white/85 transition-all hover:gap-4 hover:text-white">
                 Explore fashion <ArrowRight className="size-4" />
               </Link>
             </Reveal>
@@ -244,7 +245,7 @@ function LandingPage() {
                 <p className="mt-6 max-w-md text-lg leading-relaxed text-neutral-600">
                   Performance gear, sneakers and sportswear — built for how you move.
                 </p>
-                <Link to="/home" className="group mt-8 inline-flex w-fit items-center gap-2 text-sm font-semibold transition-all hover:gap-4">
+                <Link to="/home" search={{ locale }} className="group mt-8 inline-flex w-fit items-center gap-2 text-sm font-semibold transition-all hover:gap-4">
                   Explore sport <ArrowRight className="size-4" />
                 </Link>
               </Reveal>
@@ -266,7 +267,7 @@ function LandingPage() {
                 <p className="mt-6 max-w-md text-lg leading-relaxed text-white/60">
                   Essentials for modern living — thoughtfully selected.
                 </p>
-                <Link to="/home" className="group mt-8 inline-flex w-fit items-center gap-2 text-sm font-semibold text-white/85 transition-all hover:gap-4 hover:text-white">
+                <Link to="/home" search={{ locale }} className="group mt-8 inline-flex w-fit items-center gap-2 text-sm font-semibold text-white/85 transition-all hover:gap-4 hover:text-white">
                   Explore lifestyle <ArrowRight className="size-4" />
                 </Link>
               </Reveal>
@@ -318,6 +319,7 @@ function LandingPage() {
             <Reveal delay={150}>
               <Link
                 to="/home"
+                search={{ locale }}
                 className="group mt-10 inline-flex items-center gap-3 rounded-full bg-white px-12 py-5 text-base font-semibold text-neutral-950 transition-all hover:bg-white/90 active:scale-[0.98]"
               >
                 {heroCta}

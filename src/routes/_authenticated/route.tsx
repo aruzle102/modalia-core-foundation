@@ -16,7 +16,8 @@ export const Route = createFileRoute("/_authenticated")({
       const locale = getLocale(new URLSearchParams(location.search).get("locale") ?? undefined);
       // Preserve the full intended destination (path + search) for the
       // return trip. The login page sanitizes it before navigating.
-      const intended = location.pathname + location.search;
+      const search = typeof location.search === "string" ? location.search : "";
+      const intended = location.pathname + search;
       if (location.pathname.startsWith("/seller")) {
         throw redirect({ to: "/seller/login", search: { locale, redirect: intended } });
       }

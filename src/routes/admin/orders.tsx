@@ -22,14 +22,13 @@ import {
 } from "@/hooks/use-url-state";
 import {
   AdminCard,
-  Stat,
   StatusPill,
-  EmptyState,
   TableSkeleton,
   Field,
   fmtMoney,
   fmtDateTime,
 } from "@/components/admin/ui";
+import { DataTable, EmptyState, StatCard } from "@/components/dashboard";
 import { listAdminSellersLite } from "@/lib/admin-catalog.functions";
 import { listAdminOrders } from "@/lib/admin-orders.functions";
 import { getLocale, getTranslations } from "@/lib/i18n";
@@ -181,10 +180,10 @@ function OrdersList() {
         subtitle="Search, filter and manage every customer order on the marketplace."
         breadcrumbs={[{ label: t.adminNav.items.orders }]}
       >
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Stat label="Matching orders" value={ordersQuery.isLoading ? "…" : String(total)} />
-          <Stat
-            label="Revenue on this page"
+        <div className="grid gap-4 sm:grid-cols-2">
+          <StatCard title="Matching orders" value={ordersQuery.isLoading ? "…" : String(total)} />
+          <StatCard
+            title="Revenue on this page"
             value={ordersQuery.isLoading ? "…" : fmtMoney(pageRevenue, "DZD", locale)}
           />
         </div>
@@ -213,7 +212,7 @@ function OrdersList() {
           }
         >
           <div
-            className={`grid gap-4 ${filtersOpen ? "" : "hidden"} sm:grid sm:grid-cols-2 lg:grid-cols-4`}
+            className={`grid gap-3 ${filtersOpen ? "" : "hidden"} sm:grid sm:grid-cols-2 lg:grid-cols-4`}
           >
             <Field label="Search">
               <div className="relative">
@@ -324,59 +323,72 @@ function OrdersList() {
           </div>
         </AdminCard>
 
-        <AdminCard title={total > 0 ? `${total} order${total === 1 ? "" : "s"}` : "Orders"}>
+        <section aria-label="Orders" className="mt-6">
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold tracking-tight">
+              {total > 0 ? `${total} order${total === 1 ? "" : "s"}` : "Orders"}
+            </h2>
+          </div>
           {ordersQuery.isLoading ? (
-            <TableSkeleton />
+            <DataTable>
+              <div className="p-4">
+                <TableSkeleton />
+              </div>
+            </DataTable>
           ) : ordersQuery.isError ? (
-            <EmptyState
-              title="Orders could not be loaded"
-              action={
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => ordersQuery.refetch()}
-                >
-                  Try again
-                </Button>
-              }
-            />
-          ) : orders.length === 0 ? (
-            <EmptyState
-              title={hasActiveFilters ? "No orders match these filters" : "No orders yet"}
-              action={
-                hasActiveFilters ? (
-                  <Button type="button" variant="outline" size="sm" onClick={clearFilters}>
-                    Clear filters
+            <DataTable>
+              <EmptyState
+                title="Orders could not be loaded"
+                action={
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => ordersQuery.refetch()}
+                  >
+                    Try again
                   </Button>
-                ) : undefined
-              }
-            />
+                }
+              />
+            </DataTable>
+          ) : orders.length === 0 ? (
+            <DataTable>
+              <EmptyState
+                title={hasActiveFilters ? "No orders match these filters" : "No orders yet"}
+                action={
+                  hasActiveFilters ? (
+                    <Button type="button" variant="outline" size="sm" onClick={clearFilters}>
+                      Clear filters
+                    </Button>
+                  ) : undefined
+                }
+              />
+            </DataTable>
           ) : (
             <>
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[900px] border-collapse text-sm">
+              <DataTable>
+                <table className="w-full min-w-[900px] text-sm">
                   <thead>
-                    <tr className="border-b border-border text-start text-xs uppercase tracking-wide text-muted-foreground">
-                      <th className="px-3 py-2 text-start font-medium">Order</th>
-                      <th className="px-3 py-2 text-start font-medium">Date</th>
-                      <th className="px-3 py-2 text-start font-medium">Customer</th>
-                      <th className="px-3 py-2 text-start font-medium">Phone</th>
-                      <th className="px-3 py-2 text-start font-medium">Wilaya</th>
-                      <th className="px-3 py-2 text-start font-medium">Sellers</th>
-                      <th className="px-3 py-2 text-end font-medium">Items</th>
-                      <th className="px-3 py-2 text-end font-medium">Total</th>
-                      <th className="px-3 py-2 text-start font-medium">Payment</th>
-                      <th className="px-3 py-2 text-start font-medium">Status</th>
+                    <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                      <th className="px-3 py-3 text-start">Order</th>
+                      <th className="px-3 py-3 text-start">Date</th>
+                      <th className="px-3 py-3 text-start">Customer</th>
+                      <th className="px-3 py-3 text-start">Phone</th>
+                      <th className="px-3 py-3 text-start">Wilaya</th>
+                      <th className="px-3 py-3 text-start">Sellers</th>
+                      <th className="px-3 py-3 text-end">Items</th>
+                      <th className="px-3 py-3 text-end">Total</th>
+                      <th className="px-3 py-3 text-start">Payment</th>
+                      <th className="px-3 py-3 text-start">Status</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                     {orders.map((order) => (
                       <tr
                         key={order.id}
-                        className="border-b border-border/60 last:border-0 hover:bg-muted/40"
+                        className="hover:bg-muted/40"
                       >
-                        <td className="px-3 py-2.5">
+                        <td className="px-3 py-3">
                           <Link
                             to="/admin/orders/$orderId"
                             params={{ orderId: order.id }}
@@ -399,40 +411,40 @@ function OrdersList() {
                             {order.orderNumber}
                           </Link>
                         </td>
-                        <td className="whitespace-nowrap px-3 py-2.5 text-muted-foreground">
+                        <td className="whitespace-nowrap px-3 py-3 text-muted-foreground">
                           {fmtDateTime(order.createdAt, locale)}
                         </td>
-                        <td className="px-3 py-2.5">
+                        <td className="px-3 py-3 font-medium">
                           {[order.firstName, order.lastName].filter(Boolean).join(" ") || "—"}
                         </td>
                         <td
-                          className="whitespace-nowrap px-3 py-2.5 text-muted-foreground"
+                          className="whitespace-nowrap px-3 py-3 text-muted-foreground"
                           dir="ltr"
                         >
                           {order.phone ?? "—"}
                         </td>
-                        <td className="px-3 py-2.5">{order.wilaya || "—"}</td>
+                        <td className="px-3 py-3">{order.wilaya || "—"}</td>
                         <td
-                          className="max-w-[180px] truncate px-3 py-2.5 text-muted-foreground"
+                          className="max-w-[180px] truncate px-3 py-3 text-muted-foreground"
                           title={order.sellerNames.join(", ")}
                         >
                           {order.sellerNames.length > 0 ? order.sellerNames.join(", ") : "—"}
                         </td>
-                        <td className="px-3 py-2.5 text-end tabular-nums">{order.itemCount}</td>
-                        <td className="whitespace-nowrap px-3 py-2.5 text-end font-medium tabular-nums">
+                        <td className="px-3 py-3 text-end tabular-nums">{order.itemCount}</td>
+                        <td className="whitespace-nowrap px-3 py-3 text-end font-medium tabular-nums">
                           {fmtMoney(order.grandTotal, "DZD", locale)}
                         </td>
-                        <td className="px-3 py-2.5 capitalize text-muted-foreground">
+                        <td className="px-3 py-3 capitalize text-muted-foreground">
                           {order.paymentMethod === "cod" ? "Cash on delivery" : order.paymentMethod}
                         </td>
-                        <td className="px-3 py-2.5">
+                        <td className="px-3 py-3">
                           <StatusPill status={order.status} />
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
-              </div>
+              </DataTable>
               <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
                 <p className="text-sm text-muted-foreground">
                   Page {safePage} of {totalPages} · {total} order{total === 1 ? "" : "s"}
@@ -462,7 +474,7 @@ function OrdersList() {
               </div>
             </>
           )}
-        </AdminCard>
+        </section>
       </AdminShell>
     </AdminGate>
   );

@@ -5,7 +5,8 @@ import { Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AdminCard, EmptyState, StatusPill, TableSkeleton, Field, fmtDateTime, fmtMoney } from "@/components/admin/ui";
+import { AdminCard, StatusPill, TableSkeleton, Field, fmtDateTime, fmtMoney } from "@/components/admin/ui";
+import { DataTable, EmptyState } from "@/components/dashboard";
 import { listSellerOrders } from "@/lib/seller-orders.functions";
 import { getLocale } from "@/lib/i18n";
 import { numParam, strParam, useBackParam, useDebouncedUrlParam, useUrlState } from "@/hooks/use-url-state";
@@ -92,7 +93,7 @@ function SellerOrdersPage() {
           ) : null
         }
       >
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 sm:grid-cols-2">
           <Field label="Search">
             <div className="relative">
               <Search className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -124,34 +125,34 @@ function SellerOrdersPage() {
         {ordersQuery.isLoading ? (
           <TableSkeleton rows={6} />
         ) : ordersQuery.isError ? (
-          <AdminCard>
-            <EmptyState title="Orders could not be loaded" text={errMsg(ordersQuery.error)} />
-          </AdminCard>
+          <DataTable>
+            <EmptyState title="Orders could not be loaded" description={errMsg(ordersQuery.error)} />
+          </DataTable>
         ) : orders.length === 0 ? (
-          <AdminCard>
+          <DataTable>
             <EmptyState
               title="No orders yet"
-              text={hasFilters ? "No orders match your filters." : "When customers buy from your store, their orders will appear here."}
+              description={hasFilters ? "No orders match your filters." : "When customers buy from your store, their orders will appear here."}
             />
-          </AdminCard>
+          </DataTable>
         ) : (
           <div className="space-y-4">
-            <AdminCard className="overflow-x-auto">
+            <DataTable>
               <table className="w-full min-w-[720px] text-sm">
                 <thead>
-                  <tr className="border-b border-border text-start text-xs uppercase tracking-wide text-muted-foreground">
-                    <th className="py-3 pe-4 text-start font-medium">Order</th>
-                    <th className="py-3 pe-4 text-start font-medium">Customer</th>
-                    <th className="py-3 pe-4 text-start font-medium">Items</th>
-                    <th className="py-3 pe-4 text-start font-medium">Total</th>
-                    <th className="py-3 pe-4 text-start font-medium">Status</th>
-                    <th className="py-3 text-start font-medium">Placed</th>
+                  <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                    <th className="px-4 py-3 text-start">Order</th>
+                    <th className="px-4 py-3 text-start">Customer</th>
+                    <th className="px-4 py-3 text-end">Items</th>
+                    <th className="px-4 py-3 text-end">Total</th>
+                    <th className="px-4 py-3 text-start">Status</th>
+                    <th className="px-4 py-3 text-start">Placed</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border">
+                <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                   {orders.map((order) => (
-                    <tr key={order.id} className="align-top">
-                      <td className="py-3 pe-4">
+                    <tr key={order.id} className="align-top hover:bg-muted/40">
+                      <td className="px-4 py-3">
                         <Link
                           to="/seller/orders/$orderId"
                           params={{ orderId: order.id }}
@@ -161,19 +162,19 @@ function SellerOrdersPage() {
                           {order.orderNumber}
                         </Link>
                       </td>
-                      <td className="py-3 pe-4">
+                      <td className="px-4 py-3">
                         <p className="font-medium">{[order.firstName, order.lastName].filter(Boolean).join(" ") || "—"}</p>
                         <p className="text-xs text-muted-foreground" dir="ltr">{order.phone ?? "—"}</p>
                       </td>
-                      <td className="py-3 pe-4 tabular-nums">{order.itemCount}</td>
-                      <td className="py-3 pe-4 tabular-nums">{fmtMoney(order.subtotal + order.shippingTotal, "DZD", locale)}</td>
-                      <td className="py-3 pe-4"><StatusPill status={order.status} /></td>
-                      <td className="py-3 text-xs text-muted-foreground">{fmtDateTime(order.createdAt, locale)}</td>
+                      <td className="px-4 py-3 text-end tabular-nums">{order.itemCount}</td>
+                      <td className="px-4 py-3 text-end tabular-nums">{fmtMoney(order.subtotal + order.shippingTotal, "DZD", locale)}</td>
+                      <td className="px-4 py-3"><StatusPill status={order.status} /></td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground">{fmtDateTime(order.createdAt, locale)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-            </AdminCard>
+            </DataTable>
             <Pager page={page} total={total} pageSize={pageSize} onPage={(p) => url.set({ page: p }, { push: true })} />
           </div>
         )}

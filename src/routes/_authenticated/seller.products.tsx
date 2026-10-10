@@ -1,7 +1,7 @@
 import { createFileRoute, Link, Outlet, useMatch } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Copy, Loader2, Pencil, Plus, Search } from "lucide-react";
+import { Copy, Loader2, Pencil, Plus, Search, X } from "lucide-react";
 import { SellerShell } from "@/components/seller/SellerShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +19,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { AdminCard, EmptyState, StatusPill } from "@/components/admin/ui";
+import { AdminCard, StatusPill } from "@/components/admin/ui";
+import { DataTable, EmptyState, ErrorState } from "@/components/dashboard";
 import {
   bulkUpdateProducts,
   duplicateProduct,
@@ -111,6 +112,11 @@ function ProductsTable() {
 
   const setPage = (next: number) => url.set({ page: next }, { push: true });
   const setFilter = (patch: Record<string, string>) => url.set({ ...patch, page: 1 });
+  const hasFilters = q !== "" || status !== "" || moderation !== "";
+  const clearFilters = () => {
+    setSearchInput("");
+    url.set({ q: "", status: "", moderation: "", page: 1 });
+  };
 
   const query = useQuery({
     queryKey: ["seller-products", q, status, moderation, page],
@@ -167,7 +173,7 @@ function ProductsTable() {
     >
       <div dir={localeDirections[locale]} className="space-y-4">
         <AdminCard>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
             <div className="relative min-w-56 flex-1">
               <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -177,45 +183,51 @@ function ProductsTable() {
                 onChange={(e) => setSearchInput(e.target.value)}
               />
             </div>
-            <Select
-              value={status || "all"}
-              onValueChange={(v) => setFilter({ status: v === "all" ? "" : v })}
-            >
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All statuses</SelectItem>
-                <SelectItem value="draft">Draft</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="archived">Archived</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select
-              value={moderation || "all"}
-              onValueChange={(v) => setFilter({ moderation: v === "all" ? "" : v })}
-            >
-              <SelectTrigger className="w-44">
-                <SelectValue placeholder="Moderation" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All moderation</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="approved">Approved</SelectItem>
-                <SelectItem value="rejected">Rejected</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex flex-wrap items-center gap-3">
+              <Select
+                value={status || "all"}
+                onValueChange={(v) => setFilter({ status: v === "all" ? "" : v })}
+              >
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All statuses</SelectItem>
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="archived">Archived</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select
+                value={moderation || "all"}
+                onValueChange={(v) => setFilter({ moderation: v === "all" ? "" : v })}
+              >
+                <SelectTrigger className="w-44">
+                  <SelectValue placeholder="Moderation" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All moderation</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="approved">Approved</SelectItem>
+                  <SelectItem value="rejected">Rejected</SelectItem>
+                </SelectContent>
+              </Select>
+              {hasFilters ? (
+                <Button type="button" variant="ghost" size="sm" onClick={clearFilters}>
+                  <X className="size-4" />
+                  Clear
+                </Button>
+              ) : null}
+            </div>
           </div>
         </AdminCard>
 
         {error ? (
-          <p role="alert" className="rounded-md bg-destructive/10 px-4 py-3 text-sm text-destructive">
-            {error}
-          </p>
+          <ErrorState title="Action failed" description={error} />
         ) : null}
 
         {selected.length > 0 ? (
-          <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted/40 px-4 py-2.5">
+          <div className="flex flex-wrap items-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 py-2.5 dark:border-neutral-800 dark:bg-neutral-950">
             <span className="text-sm font-medium">{selected.length} selected</span>
             <div className="flex-1" />
             <Button
@@ -248,23 +260,27 @@ function ProductsTable() {
           </div>
         ) : null}
 
-        <AdminCard>
-          {query.isPending ? (
-            <div className="space-y-3">
+        {query.isPending ? (
+          <DataTable>
+            <div className="space-y-3 p-4">
               {[1, 2, 3, 4].map((i) => (
                 <div key={i} className="h-14 animate-pulse rounded-lg bg-muted" />
               ))}
             </div>
-          ) : query.isError ? (
+          </DataTable>
+        ) : query.isError ? (
+          <DataTable>
             <EmptyState
               title="Could not load products"
-              text={query.error instanceof Error ? query.error.message : "Try again."}
+              description={query.error instanceof Error ? query.error.message : "Try again."}
               action={<Button onClick={() => query.refetch()}>Retry</Button>}
             />
-          ) : !products.length ? (
+          </DataTable>
+        ) : !products.length ? (
+          <DataTable>
             <EmptyState
               title="No products yet"
-              text="Create your first product to start selling."
+              description="Create your first product to start selling."
               action={
                 <Button asChild>
                   <Link to="/seller/products/new" search={{ locale, back: backParam, q, status, moderation, page }}>
@@ -273,59 +289,60 @@ function ProductsTable() {
                 </Button>
               }
             />
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[820px] text-sm">
-                <thead>
-                  <tr className="border-b text-start text-xs text-muted-foreground">
-                    <th className="w-10 px-3 py-2.5">
-                      <Checkbox
-                        checked={selected.length > 0 && selected.length === products.length}
-                        onCheckedChange={(c) => toggleAll(c === true)}
-                        aria-label="Select all"
-                      />
-                    </th>
-                    <th className="px-3 py-2.5 text-start font-medium">Product</th>
-                    <th className="px-3 py-2.5 text-start font-medium">Price</th>
-                    <th className="px-3 py-2.5 text-start font-medium">Stock</th>
-                    <th className="px-3 py-2.5 text-start font-medium">Status</th>
-                    <th className="px-3 py-2.5 text-start font-medium">Moderation</th>
-                    <th className="w-24 px-3 py-2.5 text-end font-medium">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {products.map((p) => {
-                    const stock = stockTone(p);
-                    return (
-                      <tr key={p.id} className="border-b last:border-0 hover:bg-muted/30">
-                        <td className="px-3 py-3">
-                          <Checkbox
-                            checked={selected.includes(p.id)}
-                            onCheckedChange={(c) =>
-                              setSelected((s) =>
-                                c === true ? [...s, p.id] : s.filter((id) => id !== p.id),
-                              )
-                            }
-                            aria-label={`Select ${p.slug}`}
-                          />
-                        </td>
-                        <td className="px-3 py-3">
-                          <Link
-                            to="/seller/products/$productId"
-                            params={{ productId: p.id }}
-                            search={{ locale, back: backParam, q, status, moderation, page }}
-                            className="font-medium hover:underline"
-                          >
-                            {localeName(p.name, p.slug)}
-                          </Link>
-                          <p className="font-mono text-xs text-muted-foreground">
-                            {p.sku ?? "No SKU"} · {p.product_variants?.length ?? 0} variant
-                            {(p.product_variants?.length ?? 0) === 1 ? "" : "s"}
-                          </p>
-                        </td>
-                        <td className="px-3 py-3 tabular-nums">
-                          {Number(p.base_price).toLocaleString()} DZD
-                        </td>
+          </DataTable>
+        ) : (
+          <DataTable>
+            <table className="w-full min-w-[820px] text-sm">
+              <thead>
+                <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                  <th className="w-10 px-3 py-3">
+                    <Checkbox
+                      checked={selected.length > 0 && selected.length === products.length}
+                      onCheckedChange={(c) => toggleAll(c === true)}
+                      aria-label="Select all"
+                    />
+                  </th>
+                  <th className="px-3 py-3 text-start">Product</th>
+                  <th className="px-3 py-3 text-end">Price</th>
+                  <th className="px-3 py-3 text-start">Stock</th>
+                  <th className="px-3 py-3 text-start">Status</th>
+                  <th className="px-3 py-3 text-start">Moderation</th>
+                  <th className="w-24 px-3 py-3 text-end">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
+                {products.map((p) => {
+                  const stock = stockTone(p);
+                  return (
+                    <tr key={p.id} className="hover:bg-muted/40">
+                      <td className="px-3 py-3">
+                        <Checkbox
+                          checked={selected.includes(p.id)}
+                          onCheckedChange={(c) =>
+                            setSelected((s) =>
+                              c === true ? [...s, p.id] : s.filter((id) => id !== p.id),
+                            )
+                          }
+                          aria-label={`Select ${p.slug}`}
+                        />
+                      </td>
+                      <td className="px-3 py-3">
+                        <Link
+                          to="/seller/products/$productId"
+                          params={{ productId: p.id }}
+                          search={{ locale, back: backParam, q, status, moderation, page }}
+                          className="font-medium hover:underline"
+                        >
+                          {localeName(p.name, p.slug)}
+                        </Link>
+                        <p className="font-mono text-xs text-muted-foreground">
+                          {p.sku ?? "No SKU"} · {p.product_variants?.length ?? 0} variant
+                          {(p.product_variants?.length ?? 0) === 1 ? "" : "s"}
+                        </p>
+                      </td>
+                      <td className="px-3 py-3 text-end tabular-nums">
+                        {Number(p.base_price).toLocaleString()} DZD
+                      </td>
                         <td className="px-3 py-3">
                           <span className={stock.tone}>{stock.label}</span>
                         </td>
@@ -374,9 +391,8 @@ function ProductsTable() {
                   })}
                 </tbody>
               </table>
-            </div>
+          </DataTable>
           )}
-        </AdminCard>
 
         {totalPages > 1 ? (
           <div className="flex items-center justify-between text-sm text-muted-foreground">

@@ -2,8 +2,10 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangle,
+  Banknote,
   ChevronRight,
   ClipboardList,
+  Clock,
   FileText,
   LayoutGrid,
   Package,
@@ -11,6 +13,7 @@ import {
   Plus,
   RefreshCw,
   ShieldCheck,
+  ShoppingBag,
   Truck,
   Users,
   Wallet,
@@ -22,13 +25,14 @@ import { AdminGate } from "@/components/admin/AdminGate";
 import { AdminShell } from "@/components/admin/AdminShell";
 import {
   AdminCard,
-  EmptyState,
-  Stat,
   StatusPill,
   TableSkeleton,
   fmtDateTime,
   fmtMoney,
 } from "@/components/admin/ui";
+import { StatCard } from "@/components/dashboard/StatCard";
+import { EmptyState } from "@/components/dashboard/EmptyState";
+import { ErrorState } from "@/components/dashboard/ErrorState";
 import { SalesChart } from "@/components/admin/Charts";
 import { getAdminMetrics } from "@/lib/admin-dashboard.functions";
 import { listAuditLogs } from "@/lib/admin-catalog.functions";
@@ -258,6 +262,12 @@ function DashboardContent({ locale }: { locale: Locale }) {
   if (metrics.isPending || metrics.data === undefined) {
     return shell(
       <div className="space-y-6">
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <StatCard title={s.orders} loading />
+          <StatCard title={s.revenue} loading />
+          <StatCard title={s.activeSellers} loading />
+          <StatCard title={s.pendingOrders} loading />
+        </div>
         <TableSkeleton />
       </div>,
     );
@@ -267,13 +277,15 @@ function DashboardContent({ locale }: { locale: Locale }) {
     const error = metrics.error;
     const message = error instanceof Error ? error.message : String(error ?? "Unknown error");
     return shell(
-      <div role="alert" className="border border-destructive/40 bg-destructive/5 p-6">
-        <p className="font-medium text-destructive">{s.loadingError}</p>
-        <pre className="mt-2 overflow-x-auto whitespace-pre-wrap break-words text-small text-destructive">{message}</pre>
-        <Button className="mt-4" onClick={retryAll}>
-          <RefreshCw className="size-4" /> {s.retry}
-        </Button>
-      </div>,
+      <ErrorState
+        title={s.loadingError}
+        description={message}
+        action={
+          <Button onClick={retryAll}>
+            <RefreshCw className="size-4" aria-hidden="true" /> {s.retry}
+          </Button>
+        }
+      />,
     );
   }
 
@@ -362,19 +374,19 @@ function DashboardContent({ locale }: { locale: Locale }) {
   return shell(
     <>
       {failedTables.length > 0 ? (
-        <div role="alert" className="mb-6 rounded-md border border-brand/40 bg-brand/10 p-5">
+        <div role="alert" className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-5 dark:border-amber-900/60 dark:bg-amber-950/30">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="flex items-center gap-2 font-medium text-brand">
-              <AlertTriangle className="size-4" />
+            <p className="flex items-center gap-2 font-medium text-amber-800 dark:text-amber-300">
+              <AlertTriangle className="size-4" aria-hidden="true" />
               {s.incomplete(failedTables.length)}
             </p>
             <Button size="sm" variant="outline" onClick={retryAll}>
-              <RefreshCw className="size-3.5" /> {s.retry}
+              <RefreshCw className="size-3.5" aria-hidden="true" /> {s.retry}
             </Button>
           </div>
           <ul className="mt-3 space-y-1">
             {failedTables.map((diagnostic) => (
-              <li key={diagnostic.table} className="text-small text-brand/80">
+              <li key={diagnostic.table} className="text-small text-amber-700 dark:text-amber-400/90">
                 <code className="font-mono text-xs">{diagnostic.table}</code>
                 {diagnostic.message ? `: ${diagnostic.message}` : null}
               </li>
@@ -386,22 +398,42 @@ function DashboardContent({ locale }: { locale: Locale }) {
       {/* ------------------------------ Today ------------------------------ */}
       <section aria-label={s.today}>
         <div className="mb-4">
-          <h2 className="text-h3">{s.today}</h2>
-          <p className="mt-0.5 text-caption text-muted-foreground">{s.todayHint}</p>
+          <h2 className="text-lg font-semibold tracking-tight">{s.today}</h2>
+          <p className="mt-0.5 text-sm text-muted-foreground">{s.todayHint}</p>
         </div>
-        <div className="grid gap-px overflow-hidden border border-border bg-border sm:grid-cols-2 lg:grid-cols-4">
-          <Stat label={s.orders} value={String(m.metrics.ordersTotal)} hint={s.ordersHint} />
-          <Stat label={s.revenue} value={fmtMoney(m.metrics.salesDelivered, "DZD", locale)} hint={s.revenueHint} />
-          <Stat label={s.activeSellers} value={String(m.metrics.activeSellers)} />
-          <Stat label={s.pendingOrders} value={String(pendingOrdersCount)} hint={s.pendingOrdersHint} />
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
+          <StatCard
+            featured
+            title={s.revenue}
+            icon={<Banknote className="h-4 w-4" aria-hidden="true" />}
+            value={fmtMoney(m.metrics.salesDelivered, "DZD", locale)}
+            description={s.revenueHint}
+          />
+          <StatCard
+            title={s.orders}
+            icon={<ShoppingBag className="h-4 w-4" aria-hidden="true" />}
+            value={String(m.metrics.ordersTotal)}
+            description={s.ordersHint}
+          />
+          <StatCard
+            title={s.activeSellers}
+            icon={<Users className="h-4 w-4" aria-hidden="true" />}
+            value={String(m.metrics.activeSellers)}
+          />
+          <StatCard
+            title={s.pendingOrders}
+            icon={<Clock className="h-4 w-4" aria-hidden="true" />}
+            value={String(pendingOrdersCount)}
+            description={s.pendingOrdersHint}
+          />
         </div>
       </section>
 
       {/* -------------------------- Needs attention ------------------------- */}
-      <section aria-label={s.needsAttention} className="mt-10">
-        <h2 className="mb-4 text-h3">{s.needsAttention}</h2>
+      <section aria-label={s.needsAttention} className="mt-8">
+        <h2 className="mb-4 text-lg font-semibold tracking-tight">{s.needsAttention}</h2>
         {attentionTotal > 0 ? (
-          <div className="divide-y divide-border border border-border bg-card">
+          <div className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
             {attention.map((item) => (
               <Link
                 key={item.key}
@@ -409,33 +441,35 @@ function DashboardContent({ locale }: { locale: Locale }) {
                 search={item.search}
                 className="flex items-center gap-4 px-4 py-3.5 transition-colors hover:bg-muted/50 sm:px-5"
               >
-                <item.icon className="size-5 shrink-0 text-muted-foreground" aria-hidden />
+                <item.icon className="size-5 shrink-0 text-muted-foreground" aria-hidden="true" />
                 <span className="min-w-0 flex-1 truncate font-medium">{item.label}</span>
                 <span
                   className={`shrink-0 rounded-full px-2.5 py-1 text-small font-semibold tabular-nums ${
-                    item.count > 0 ? "bg-brand/15 text-brand" : "bg-muted text-muted-foreground"
+                    item.count > 0 ? "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300" : "bg-muted text-muted-foreground"
                   }`}
                 >
                   {item.count}
                 </span>
-                <ChevronRight className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+                <ChevronRight className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
               </Link>
             ))}
           </div>
         ) : (
-          <p className="border border-border bg-card px-5 py-8 text-small text-muted-foreground">{s.allClear}</p>
+          <div className="rounded-xl border border-border bg-card">
+            <EmptyState title={s.allClear} />
+          </div>
         )}
       </section>
 
       {/* ----------------------------- Sales chart --------------------------- */}
-      <section aria-label={s.sales} className="mt-10">
+      <section aria-label={s.sales} className="mt-8">
         <AdminCard title={s.sales} subtitle={s.salesSubtitle}>
           <SalesChart data={m.series} />
         </AdminCard>
       </section>
 
       {/* ---------------------------- Order funnel --------------------------- */}
-      <section aria-label={s.orderFunnel} className="mt-10">
+      <section aria-label={s.orderFunnel} className="mt-8">
         <AdminCard title={s.orderFunnel} subtitle={s.funnelSubtitle}>
           {funnelTotal > 0 ? (
             <ol className="space-y-1">
@@ -446,14 +480,14 @@ function DashboardContent({ locale }: { locale: Locale }) {
                     <Link
                       to="/admin/orders"
                       search={orderStatusSearch(stage)}
-                      className="flex items-center gap-3 rounded-md px-2 py-1.5 transition-colors hover:bg-muted/60"
+                      className="flex items-center gap-3 rounded-lg px-2 py-1.5 transition-colors hover:bg-muted/60"
                     >
                       <span className="w-40 shrink-0">
                         <StatusPill status={stage} />
                       </span>
                       <span className="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-muted">
                         <span
-                          className="block h-full rounded-full bg-primary/70"
+                          className="block h-full rounded-full bg-neutral-900 dark:bg-neutral-100"
                           style={{ width: `${(count / funnelMax) * 100}%` }}
                         />
                       </span>
@@ -478,7 +512,7 @@ function DashboardContent({ locale }: { locale: Locale }) {
                   key={stage}
                   to="/admin/orders"
                   search={orderStatusSearch(stage)}
-                  className="flex items-center gap-2 rounded-md border border-border px-3 py-1.5 transition-colors hover:bg-muted/60"
+                  className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 transition-colors hover:bg-muted/60"
                 >
                   <StatusPill status={stage} />
                   <span className="text-small font-semibold tabular-nums">
@@ -492,7 +526,7 @@ function DashboardContent({ locale }: { locale: Locale }) {
       </section>
 
       {/* --------------------- Top products / Top stores --------------------- */}
-      <div className="mt-10 grid gap-8 lg:grid-cols-2">
+      <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <AdminCard title={s.topProducts}>
           {m.topProducts.length > 0 ? (
             <ol className="divide-y divide-border">
@@ -551,7 +585,7 @@ function DashboardContent({ locale }: { locale: Locale }) {
         </AdminCard>
       </div>
 
-      <div className="mt-10 grid gap-8 lg:grid-cols-5">
+      <div className="mt-8 grid gap-6 lg:grid-cols-5">
         {/* --------------------------- Recent activity ------------------------ */}
         <AdminCard
           title={s.recentActivity}
@@ -563,7 +597,7 @@ function DashboardContent({ locale }: { locale: Locale }) {
           ) : activity.isError ? (
             <EmptyState
               title={s.failedToLoad}
-              text={activity.error instanceof Error ? activity.error.message : undefined}
+              description={activity.error instanceof Error ? activity.error.message : undefined}
             />
           ) : activityLogs.length > 0 ? (
             <div>
@@ -585,28 +619,28 @@ function DashboardContent({ locale }: { locale: Locale }) {
                 search={{ action: "", resource: "", page: 1 }}
                 className="mt-3 inline-flex items-center gap-1 text-small font-medium text-primary underline-offset-4 hover:underline"
               >
-                {s.viewAllAudit} <ChevronRight className="size-3.5" aria-hidden />
+                {s.viewAllAudit} <ChevronRight className="size-3.5" aria-hidden="true" />
               </Link>
             </div>
           ) : (
-            <EmptyState title={s.noActivity} text={s.noActivityText} />
+            <EmptyState title={s.noActivity} description={s.noActivityText} />
           )}
         </AdminCard>
 
         {/* --------------------------- Quick actions -------------------------- */}
         <div className="lg:col-span-2">
-          <h2 className="mb-4 text-h3">{s.quickActions}</h2>
+          <h2 className="mb-4 text-lg font-semibold tracking-tight">{s.quickActions}</h2>
           <div className="grid gap-3">
             {createActions.map((action) => (
               <Link
                 key={action.key}
                 to={action.to}
                 search={action.search}
-                className="flex items-center gap-3 border border-primary/30 bg-primary/5 px-4 py-3 transition-colors hover:border-primary/60 hover:bg-primary/10"
+                className="flex items-center gap-3 rounded-xl border border-neutral-900/20 bg-neutral-900/[0.03] px-4 py-3 transition-colors hover:border-neutral-900/40 hover:bg-neutral-900/[0.06] dark:border-neutral-100/20 dark:bg-neutral-100/[0.03] dark:hover:border-neutral-100/40 dark:hover:bg-neutral-100/[0.06]"
               >
-                <action.icon className="size-5 shrink-0 text-primary" aria-hidden />
+                <action.icon className="size-5 shrink-0" aria-hidden="true" />
                 <span className="flex-1 text-small font-medium">{action.label}</span>
-                <ChevronRight className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+                <ChevronRight className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
               </Link>
             ))}
             {quickActions.map((action) => (
@@ -614,11 +648,11 @@ function DashboardContent({ locale }: { locale: Locale }) {
                 key={action.key}
                 to={action.to}
                 search={action.search}
-                className="flex items-center gap-3 border border-border bg-card px-4 py-3 transition-colors hover:border-primary/50 hover:bg-muted/50"
+                className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 transition-colors hover:border-neutral-400 hover:bg-muted/50 dark:hover:border-neutral-600"
               >
-                <action.icon className="size-5 shrink-0 text-primary" aria-hidden />
+                <action.icon className="size-5 shrink-0 text-muted-foreground" aria-hidden="true" />
                 <span className="flex-1 text-small font-medium">{action.label}</span>
-                <ChevronRight className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+                <ChevronRight className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
               </Link>
             ))}
           </div>

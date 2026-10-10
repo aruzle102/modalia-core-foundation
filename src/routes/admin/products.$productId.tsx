@@ -7,7 +7,6 @@ import { AdminShell } from "@/components/admin/AdminShell";
 import {
   AdminCard,
   ConfirmDialog,
-  Field,
   StatusPill,
   TableSkeleton,
   EmptyState,
@@ -123,73 +122,77 @@ function AdminControls({ productId }: { productId: string }) {
       ) : productQuery.isError || !product ? (
         <EmptyState title={t.notFound} text={errMsg(productQuery.error)} />
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-5">
           <div className="flex flex-wrap items-center gap-2">
             <StatusPill status={product.status} />
             <StatusPill status={product.moderation_status} />
             <StatusPill status={product.visibility} />
-            <span className="ms-2 text-caption text-muted-foreground">
+            <span className="ms-2 text-xs text-muted-foreground">
               {pickName(product.name) || product.slug}
             </span>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-small font-medium">{t.moderationLabel}</span>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={busy}
-              onClick={() => moderate.mutate({ decision: "approve" })}
-            >
-              {t.approvePublish}
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={busy}
-              onClick={() => moderate.mutate({ decision: "hide" })}
-            >
-              {t.hide}
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={busy || !rejectReason.trim()}
-              onClick={() =>
-                ask(t.rejectTitle, t.rejectDesc, () =>
-                  moderate.mutate({ decision: "reject", reason: rejectReason.trim() }),
-                )
-              }
-            >
-              {t.reject}
-            </Button>
-            <Input
-              value={rejectReason}
-              onChange={(e) => setRejectReason(e.target.value)}
-              placeholder={t.rejectReasonPlaceholder}
-              className="max-w-xs"
-              aria-label={t.rejectReasonPlaceholder}
-            />
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-small font-medium">{t.statusLabel}</span>
-            {(["draft", "active", "archived"] as const).map((s) => (
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">{t.moderationLabel}</p>
+            <div className="flex flex-wrap items-center gap-2">
               <Button
-                key={s}
                 size="sm"
-                variant={product.status === s ? "default" : "outline"}
-                disabled={busy || product.status === s}
+                variant="outline"
+                disabled={busy}
+                onClick={() => moderate.mutate({ decision: "approve" })}
+              >
+                {t.approvePublish}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={busy}
+                onClick={() => moderate.mutate({ decision: "hide" })}
+              >
+                {t.hide}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={busy || !rejectReason.trim()}
                 onClick={() =>
-                  ask(t.statusConfirmTitle, t.statusConfirmDesc, () => setStatus.mutate(s))
+                  ask(t.rejectTitle, t.rejectDesc, () =>
+                    moderate.mutate({ decision: "reject", reason: rejectReason.trim() }),
+                  )
                 }
               >
-                {t[`status_${s}` as "status_draft" | "status_active" | "status_archived"]}
+                {t.reject}
               </Button>
-            ))}
+              <Input
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                placeholder={t.rejectReasonPlaceholder}
+                className="max-w-xs"
+                aria-label={t.rejectReasonPlaceholder}
+              />
+            </div>
           </div>
 
-          <div className="flex items-center justify-between gap-3 border-t border-border pt-4">
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">{t.statusLabel}</p>
+            <div className="flex flex-wrap items-center gap-2">
+              {(["draft", "active", "archived"] as const).map((s) => (
+                <Button
+                  key={s}
+                  size="sm"
+                  variant={product.status === s ? "default" : "outline"}
+                  disabled={busy || product.status === s}
+                  onClick={() =>
+                    ask(t.statusConfirmTitle, t.statusConfirmDesc, () => setStatus.mutate(s))
+                  }
+                >
+                  {t[`status_${s}` as "status_draft" | "status_active" | "status_archived"]}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between gap-3 border-t border-neutral-200 pt-4 dark:border-neutral-800">
             <Label htmlFor="admin-featured">{t.featured}</Label>
             <Switch
               id="admin-featured"

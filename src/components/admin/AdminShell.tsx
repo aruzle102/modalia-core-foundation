@@ -56,6 +56,7 @@ import {
 } from "@/lib/admin-permissions";
 import { cn } from "@/lib/utils";
 import { Crumbs, type Crumb } from "@/components/routing/crumbs";
+import { PageHeader } from "@/components/dashboard/PageHeader";
 
 import type { LinkProps } from "@tanstack/react-router";
 
@@ -419,13 +420,7 @@ export function AdminShell({
         <main id="main-content" tabIndex={-1} className="min-w-0 flex-1">
           <div className="mx-auto w-full max-w-7xl px-4 py-6 lg:px-8">
             {breadcrumbs && breadcrumbs.length > 0 ? <Crumbs items={breadcrumbs} /> : null}
-            <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
-              <div className="min-w-0">
-                <h1 className="text-xl font-semibold tracking-tight">{title}</h1>
-                {subtitle ? <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p> : null}
-              </div>
-              {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
-            </div>
+            <PageHeader title={title} description={subtitle} actions={actions} />
             {children}
           </div>
         </main>

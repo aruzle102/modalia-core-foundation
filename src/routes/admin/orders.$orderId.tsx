@@ -26,13 +26,13 @@ import { AdminShell } from "@/components/admin/AdminShell";
 import {
   AdminCard,
   StatusPill,
-  EmptyState,
   Field,
   ConfirmDialog,
   fmtMoney,
   fmtDateTime,
   timeAgo,
 } from "@/components/admin/ui";
+import { DataTable, EmptyState } from "@/components/dashboard";
 import { useAdminLocale } from "@/components/admin/useAdminLocale";
 import {
   addOrderNote,
@@ -183,7 +183,7 @@ function OrderDetailPage() {
             }
           />
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-6">
             <OrderHeaderCard order={order} />
             <CustomerCard order={order} />
             <ParentStatusCard
@@ -512,32 +512,34 @@ function SellerOrderCard({
         {" · "}Placed {timeAgo(sellerOrder.createdAt, locale)}
       </p>
 
-      <div className="mt-4 overflow-x-auto">
-        <table className="w-full min-w-[640px] border-collapse text-sm">
-          <thead>
-            <tr className="border-b border-border text-start text-xs uppercase tracking-wide text-muted-foreground">
-              <th className="px-2 py-2 text-start font-medium">Product</th>
-              <th className="px-2 py-2 text-start font-medium">Variant</th>
-              <th className="px-2 py-2 text-end font-medium">Qty</th>
-              <th className="px-2 py-2 text-end font-medium">Unit price</th>
-              <th className="px-2 py-2 text-end font-medium">Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sellerOrder.items.map((item) => (
-              <tr key={item.id} className="border-b border-border/60 last:border-0">
-                <td className="px-2 py-2.5">
-                  <p className="font-medium">{item.title}</p>
-                  {item.sku ? <p className="text-xs text-muted-foreground">SKU: {item.sku}</p> : null}
-                </td>
-                <td className="px-2 py-2.5 text-muted-foreground">{optionsText(item.options) || "—"}</td>
-                <td className="px-2 py-2.5 text-end tabular-nums">{item.quantity}</td>
-                <td className="whitespace-nowrap px-2 py-2.5 text-end tabular-nums">{fmtMoney(item.unitPrice, "DZD", locale)}</td>
-                <td className="whitespace-nowrap px-2 py-2.5 text-end font-medium tabular-nums">{fmtMoney(item.total, "DZD", locale)}</td>
+      <div className="mt-5">
+        <DataTable>
+          <table className="w-full min-w-[640px] text-sm">
+            <thead>
+              <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                <th className="px-4 py-3 text-start">Product</th>
+                <th className="px-4 py-3 text-start">Variant</th>
+                <th className="px-4 py-3 text-end">Qty</th>
+                <th className="px-4 py-3 text-end">Unit price</th>
+                <th className="px-4 py-3 text-end">Total</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
+              {sellerOrder.items.map((item) => (
+                <tr key={item.id} className="hover:bg-muted/40">
+                  <td className="px-4 py-3">
+                    <p className="font-medium">{item.title}</p>
+                    {item.sku ? <p className="text-xs text-muted-foreground">SKU: {item.sku}</p> : null}
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground">{optionsText(item.options) || "—"}</td>
+                  <td className="px-4 py-3 text-end tabular-nums">{item.quantity}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-end tabular-nums">{fmtMoney(item.unitPrice, "DZD", locale)}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-end font-medium tabular-nums">{fmtMoney(item.total, "DZD", locale)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </DataTable>
       </div>
 
       <dl className="mt-4 grid gap-3 rounded-lg bg-muted/40 p-4 text-sm sm:grid-cols-2 lg:grid-cols-4">

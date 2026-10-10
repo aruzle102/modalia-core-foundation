@@ -3,7 +3,8 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AdminGate } from "@/components/admin/AdminGate";
 import { AdminShell } from "@/components/admin/AdminShell";
-import { AdminCard, EmptyState, Field, TableSkeleton } from "@/components/admin/ui";
+import { EmptyState, Field, TableSkeleton } from "@/components/admin/ui";
+import { FormSection } from "@/components/dashboard";
 import {
   Select,
   SelectContent,
@@ -50,7 +51,7 @@ function AdminProductNewPage() {
         ) : sellersQuery.isError ? (
           <EmptyState title={t.loadError} text={errMsg(sellersQuery.error)} />
         ) : !sellerId ? (
-          <AdminCard title={t.chooseSellerTitle} subtitle={t.chooseSellerHint}>
+          <FormSection title={t.chooseSellerTitle} description={t.chooseSellerHint}>
             <Field label={t.seller}>
               <Select value={sellerId} onValueChange={setSellerId}>
                 <SelectTrigger className="max-w-md">
@@ -65,7 +66,7 @@ function AdminProductNewPage() {
                 </SelectContent>
               </Select>
             </Field>
-          </AdminCard>
+          </FormSection>
         ) : (
           <ProductEditor key={sellerId} mode="create" adminMode adminSellerId={sellerId} />
         )}

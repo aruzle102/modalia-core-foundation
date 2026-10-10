@@ -389,6 +389,7 @@ function suspendedMessage(
 
 import { Crumbs, type Crumb } from "@/components/routing/crumbs";
 import { ModaliaIntelligenceIcon } from "@/components/marketplace/ModaliaIntelligenceIcon";
+import { PageHeader } from "@/components/dashboard/PageHeader";
 
 export function SellerShell({
   title,
@@ -648,17 +649,7 @@ export function SellerShell({
         <main id="main-content" tabIndex={-1} className="min-w-0 flex-1">
           <div className="mx-auto w-full max-w-7xl px-4 py-6 lg:px-8">
             {breadcrumbs && breadcrumbs.length > 0 ? <Crumbs items={breadcrumbs} /> : null}
-            <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
-              <div className="min-w-0">
-                {eyebrow ? (
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    {eyebrow}
-                  </p>
-                ) : null}
-                <h1 className="mt-1 text-xl font-semibold tracking-tight">{title}</h1>
-              </div>
-              {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
-            </div>
+            <PageHeader eyebrow={eyebrow} title={title} actions={actions} />
             {children}
           </div>
         </main>

@@ -9,11 +9,11 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   AdminCard,
   StatusPill,
-  EmptyState,
   Field,
   fmtDateTime,
   fmtMoney,
 } from "@/components/admin/ui";
+import { DataTable, EmptyState } from "@/components/dashboard";
 import {
   getSellerOrderDetail,
   updateSellerOrderStatus,
@@ -54,12 +54,12 @@ export const Route = createFileRoute("/_authenticated/seller/orders/$orderId")({
   ),
   errorComponent: () => (
     <SellerShell eyebrow="Seller workspace" title="Order">
-      <AdminCard>
+      <DataTable>
         <EmptyState
           title="Order could not be loaded"
-          text="Please check your connection and try again."
+          description="Please check your connection and try again."
         />
-      </AdminCard>
+      </DataTable>
     </SellerShell>
   ),
   component: SellerOrderDetailPage,
@@ -111,12 +111,12 @@ function SellerOrderDetailPage() {
   if (!data) {
     return (
       <SellerShell eyebrow="Seller workspace" title="Order">
-        <AdminCard>
+        <DataTable>
           <EmptyState
             title="Order not found"
-            text="This order does not exist or does not belong to your store."
+            description="This order does not exist or does not belong to your store."
           />
-        </AdminCard>
+        </DataTable>
       </SellerShell>
     );
   }
@@ -209,7 +209,7 @@ function SellerOrderDetailPage() {
         )}
       </AdminCard>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+      <div className="mt-8 grid gap-6 lg:grid-cols-2">
         {/* Customer */}
         <AdminCard title="Customer">
           <dl className="space-y-3 text-sm">
@@ -305,45 +305,50 @@ function SellerOrderDetailPage() {
       </div>
 
       {/* Items */}
-      <AdminCard title={`Items (${data.items.length})`} className="mt-6 overflow-x-auto">
+      <section aria-label="Items" className="mt-8">
+        <h2 className="mb-4 text-lg font-semibold tracking-tight">{`Items (${data.items.length})`}</h2>
         {data.items.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No items on this order.</p>
+          <DataTable>
+            <EmptyState title="No items" description="No items on this order." />
+          </DataTable>
         ) : (
-          <table className="w-full min-w-[640px] text-sm">
-            <thead>
-              <tr className="border-b border-border text-start text-xs uppercase tracking-wide text-muted-foreground">
-                <th className="py-3 pe-4 text-start font-medium">Product</th>
-                <th className="py-3 pe-4 text-start font-medium">SKU</th>
-                <th className="py-3 pe-4 text-start font-medium">Qty</th>
-                <th className="py-3 pe-4 text-start font-medium">Unit price</th>
-                <th className="py-3 text-start font-medium">Total</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {data.items.map((item) => (
-                <tr key={item.id} className="align-top">
-                  <td className="py-3 pe-4">
-                    <p className="font-medium">{item.title}</p>
-                    {renderOptions(item.options)}
-                  </td>
-                  <td className="py-3 pe-4 text-xs text-muted-foreground" dir="ltr">
-                    {item.sku ?? "—"}
-                  </td>
-                  <td className="py-3 pe-4 tabular-nums">{item.quantity}</td>
-                  <td className="py-3 pe-4 tabular-nums">
-                    {fmtMoney(item.unitPrice, data.currency, locale)}
-                  </td>
-                  <td className="py-3 tabular-nums font-medium">
-                    {fmtMoney(item.total, data.currency, locale)}
-                  </td>
+          <DataTable>
+            <table className="w-full min-w-[640px] text-sm">
+              <thead>
+                <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                  <th className="px-4 py-3 text-start">Product</th>
+                  <th className="px-4 py-3 text-start">SKU</th>
+                  <th className="px-4 py-3 text-end">Qty</th>
+                  <th className="px-4 py-3 text-end">Unit price</th>
+                  <th className="px-4 py-3 text-end">Total</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
+                {data.items.map((item) => (
+                  <tr key={item.id} className="align-top hover:bg-muted/40">
+                    <td className="px-4 py-3">
+                      <p className="font-medium">{item.title}</p>
+                      {renderOptions(item.options)}
+                    </td>
+                    <td className="px-4 py-3 text-xs text-muted-foreground" dir="ltr">
+                      {item.sku ?? "—"}
+                    </td>
+                    <td className="px-4 py-3 text-end tabular-nums">{item.quantity}</td>
+                    <td className="px-4 py-3 text-end tabular-nums">
+                      {fmtMoney(item.unitPrice, data.currency, locale)}
+                    </td>
+                    <td className="px-4 py-3 text-end tabular-nums font-medium">
+                      {fmtMoney(item.total, data.currency, locale)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </DataTable>
         )}
-      </AdminCard>
+      </section>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+      <div className="mt-8 grid gap-6 lg:grid-cols-2">
         {/* Timeline */}
         <AdminCard title="Status timeline">
           {data.history.length === 0 ? (

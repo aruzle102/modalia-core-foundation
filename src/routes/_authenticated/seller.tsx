@@ -1,11 +1,27 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
-import { AlertTriangle, ArrowRight, Wallet } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowRight,
+  BadgeCheck,
+  Banknote,
+  Clock,
+  Eye,
+  Package,
+  Percent,
+  Receipt,
+  ShoppingBag,
+  Wallet,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SellerShell } from "@/components/seller/SellerShell";
 import { getLocale, getTranslations } from "@/lib/i18n";
 import { localeTag } from "@/lib/i18n/format";
-import { AdminCard, EmptyState, Stat, StatusPill, fmtDate, fmtMoney } from "@/components/admin/ui";
+import { AdminCard, StatusPill, fmtDate, fmtMoney } from "@/components/admin/ui";
+import { StatCard } from "@/components/dashboard/StatCard";
+import { DataTable } from "@/components/dashboard/DataTable";
+import { EmptyState } from "@/components/dashboard/EmptyState";
+import { ErrorState } from "@/components/dashboard/ErrorState";
 import { CountUp } from "@/components/motion";
 import { Donut, SalesLine, TopList } from "@/components/seller/SellerCharts";
 import { OnboardingNudge } from "@/components/seller/OnboardingNudge";
@@ -59,13 +75,16 @@ export const Route = createFileRoute("/_authenticated/seller")({
           ? "Please sign in again."
           : `Error: ${message}`;
     return (
-      <div role="alert" className="mx-auto max-w-md px-6 py-24 text-center">
-        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800" aria-hidden="true">
-          <span className="text-xl">⚠</span>
-        </div>
-        <p className="font-medium text-neutral-900 dark:text-neutral-100">Seller overview could not be loaded.</p>
-        <p className="mt-2 text-sm text-muted-foreground">{displayMessage}</p>
-        <p className="mt-1 text-xs text-muted-foreground">If the problem persists, contact support with this message.</p>
+      <div className="mx-auto max-w-md px-6">
+        <ErrorState
+          title="Seller overview could not be loaded."
+          description={
+            <>
+              <span className="block">{displayMessage}</span>
+              <span className="mt-1 block text-xs">If the problem persists, contact support with this message.</span>
+            </>
+          }
+        />
       </div>
     );
   },
@@ -105,19 +124,19 @@ function SellerOverviewPage() {
       eyebrow="Seller overview"
       actions={
         <>
+          <Button asChild>
+            <Link to="/seller/products" search={{ locale, q: "", status: "", moderation: "", page: 1 }}>Manage products</Link>
+          </Button>
           <Button asChild variant="outline">
             <Link to="/seller/orders" search={{ locale, q: "", status: "", page: 1 }}>Orders</Link>
           </Button>
           <Button asChild variant="outline">
             <Link to="/seller/analytics" search={{ locale, days: 30 }}>Analytics</Link>
           </Button>
-          <Button asChild>
-            <Link to="/seller/products" search={{ locale, q: "", status: "", moderation: "", page: 1 }}>Manage products</Link>
-          </Button>
         </>
       }
     >
-      {/* Onboarding nudge (Worker A) — only until the seller is onboarded */}
+      {/* Onboarding nudge — only until the seller is onboarded */}
       {!overview.onboarded ? (
         <div className="mb-6">
           <OnboardingNudge locale={locale} />
@@ -125,62 +144,83 @@ function SellerOverviewPage() {
       ) : null}
 
       {/* KPI grid — every figure computed from real rows, see seller-dashboard.functions.ts */}
-      <section aria-label="Key metrics" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Stat label="Net earnings" value={fmtMoney(kpis.netEarnings, currency, locale)} hint="Delivered sales minus commission payable" className="border-neutral-200/80 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-shadow duration-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] dark:border-neutral-800/80 dark:bg-neutral-950" />
-        <Stat
-          label="Delivered sales"
+      <section aria-label="Key metrics" className="grid grid-cols-2 gap-4 lg:grid-cols-3">
+        <StatCard
+          featured
+          title="Net earnings"
+          icon={<Wallet className="h-4 w-4" aria-hidden="true" />}
+          value={fmtMoney(kpis.netEarnings, currency, locale)}
+          description="Delivered sales minus commission payable"
+        />
+        <StatCard
+          title="Delivered sales"
+          icon={<Banknote className="h-4 w-4" aria-hidden="true" />}
           value={fmtMoney(kpis.totalDeliveredSales, currency, locale)}
-          hint={`${kpis.deliveredCount} delivered ${kpis.deliveredCount === 1 ? "order" : "orders"}`}
-          className="border-neutral-200/80 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-shadow duration-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] dark:border-neutral-800/80 dark:bg-neutral-950"
+          description={`${kpis.deliveredCount} delivered ${kpis.deliveredCount === 1 ? "order" : "orders"}`}
         />
-        <Stat
-          label="Orders"
+        <StatCard
+          title="Orders"
+          icon={<ShoppingBag className="h-4 w-4" aria-hidden="true" />}
           value={String(kpis.ordersCount)}
-          hint={kpis.pendingOrdersCount > 0 ? `${kpis.pendingOrdersCount} awaiting fulfilment` : "All orders fulfilled"}
-
-          className="border-neutral-200/80 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-shadow duration-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] dark:border-neutral-800/80 dark:bg-neutral-950"
+          description={kpis.pendingOrdersCount > 0 ? `${kpis.pendingOrdersCount} awaiting fulfilment` : "All orders fulfilled"}
         />
-        <Stat label="Avg. order value" value={fmtMoney(kpis.averageOrderValue, currency, locale)} hint="Across delivered orders"  className="border-neutral-200/80 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-shadow duration-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] dark:border-neutral-800/80 dark:bg-neutral-950" />
-        <Stat label="Commission payable" value={fmtMoney(kpis.commissionPayable, currency, locale)} hint="Owed on delivered sales"  className="border-neutral-200/80 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-shadow duration-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] dark:border-neutral-800/80 dark:bg-neutral-950" />
-        <Stat
-          label="Pending settlement"
+        <StatCard
+          title="Avg. order value"
+          icon={<Receipt className="h-4 w-4" aria-hidden="true" />}
+          value={fmtMoney(kpis.averageOrderValue, currency, locale)}
+          description="Across delivered orders"
+        />
+        <StatCard
+          title="Commission payable"
+          icon={<Percent className="h-4 w-4" aria-hidden="true" />}
+          value={fmtMoney(kpis.commissionPayable, currency, locale)}
+          description="Owed on delivered sales"
+        />
+        <StatCard
+          title="Pending settlement"
+          icon={<Clock className="h-4 w-4" aria-hidden="true" />}
           value={fmtMoney(kpis.pendingSettlementAmount, currency, locale)}
-          hint={kpis.pendingSettlementAmount > 0 ? "Queued for payout" : "Nothing queued"}
-
-          className="border-neutral-200/80 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-shadow duration-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] dark:border-neutral-800/80 dark:bg-neutral-950"
+          description={kpis.pendingSettlementAmount > 0 ? "Queued for payout" : "Nothing queued"}
         />
-        <Stat
-          label="Products"
+        <StatCard
+          title="Products"
+          icon={<Package className="h-4 w-4" aria-hidden="true" />}
           value={String(kpis.productsCount)}
-          hint={stockIssues > 0 ? `${kpis.lowStockCount} low · ${kpis.outOfStockCount} out of stock` : "Stock levels healthy"}
-
-          className="border-neutral-200/80 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-shadow duration-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] dark:border-neutral-800/80 dark:bg-neutral-950"
+          description={stockIssues > 0 ? `${kpis.lowStockCount} low · ${kpis.outOfStockCount} out of stock` : "Stock levels healthy"}
         />
-        <Stat label="Settled to date" value={fmtMoney(kpis.settledAmount, currency, locale)} hint="Approved / paid settlements"  className="border-neutral-200/80 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-shadow duration-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] dark:border-neutral-800/80 dark:bg-neutral-950" />
+        <StatCard
+          title="Settled to date"
+          icon={<BadgeCheck className="h-4 w-4" aria-hidden="true" />}
+          value={fmtMoney(kpis.settledAmount, currency, locale)}
+          description="Approved / paid settlements"
+        />
       </section>
 
       {/* Today — real rows only. View cards show an honest "not tracked yet"
           state when the analytics pipeline has nothing for this store;
           conversion is omitted unless views are measurable. */}
-      <AdminCard title={t.today.title} subtitle={t.today.subtitle} className="mt-6">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
-          <Stat
-            label={t.today.sales}
+      <AdminCard title={t.today.title} subtitle={t.today.subtitle} className="mt-8">
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 xl:grid-cols-5">
+          <StatCard
+            title={t.today.sales}
+            icon={<Banknote className="h-4 w-4" aria-hidden="true" />}
             value={
               <>
                 <CountUp value={today.todaySales} locale={tag} formatOptions={{ maximumFractionDigits: 2 }} />{" "}
                 {currency}
               </>
             }
-            hint={t.today.salesHint}
+            description={t.today.salesHint}
           />
-          <Stat
-            label={t.today.orders}
+          <StatCard
+            title={t.today.orders}
+            icon={<ShoppingBag className="h-4 w-4" aria-hidden="true" />}
             value={<CountUp value={today.todayOrdersCount} locale={tag} />}
-            hint={t.today.ordersHint}
+            description={t.today.ordersHint}
           />
-          <Stat
-            label={t.today.storeViews}
+          <StatCard
+            title={t.today.storeViews}
+            icon={<Eye className="h-4 w-4" aria-hidden="true" />}
             value={
               today.viewsMeasurable && today.storeViews != null ? (
                 <CountUp value={today.storeViews} locale={tag} />
@@ -188,10 +228,11 @@ function SellerOverviewPage() {
                 t.today.viewsNotTracked
               )
             }
-            hint={today.viewsMeasurable ? undefined : t.today.viewsNotTrackedHint}
+            description={today.viewsMeasurable ? undefined : t.today.viewsNotTrackedHint}
           />
-          <Stat
-            label={t.today.productViews}
+          <StatCard
+            title={t.today.productViews}
+            icon={<Eye className="h-4 w-4" aria-hidden="true" />}
             value={
               today.viewsMeasurable && today.productViews != null ? (
                 <CountUp value={today.productViews} locale={tag} />
@@ -199,11 +240,12 @@ function SellerOverviewPage() {
                 t.today.viewsNotTracked
               )
             }
-            hint={today.viewsMeasurable ? undefined : t.today.viewsNotTrackedHint}
+            description={today.viewsMeasurable ? undefined : t.today.viewsNotTrackedHint}
           />
           {today.conversionRate != null ? (
-            <Stat
-              label={t.today.conversion}
+            <StatCard
+              title={t.today.conversion}
+              icon={<Percent className="h-4 w-4" aria-hidden="true" />}
               value={
                 <CountUp
                   value={today.conversionRate / 100}
@@ -211,7 +253,7 @@ function SellerOverviewPage() {
                   formatOptions={{ style: "percent", maximumFractionDigits: 1 }}
                 />
               }
-              hint={t.today.conversionHint}
+              description={t.today.conversionHint}
             />
           ) : null}
         </div>
@@ -219,7 +261,7 @@ function SellerOverviewPage() {
 
       {/* Settlement nudge */}
       {kpis.pendingSettlementAmount > 0 ? (
-        <div className="mt-6 flex flex-wrap items-center gap-4 rounded-2xl bg-zinc-950 p-5 text-white">
+        <div className="mt-8 flex flex-wrap items-center gap-4 rounded-2xl bg-zinc-950 p-5 text-white">
           <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10">
             <Wallet className="h-5 w-5" aria-hidden="true" />
           </span>
@@ -237,26 +279,8 @@ function SellerOverviewPage() {
         </div>
       ) : null}
 
-      {/* Charts */}
-      <section className="mt-8 grid gap-6 lg:grid-cols-3">
-        <AdminCard title="Sales — last 30 days" subtitle="Delivered sales and order counts per day" className="lg:col-span-2">
-          {series === null ? (
-            <p className="text-small text-muted-foreground">{t.sectionLoadError}</p>
-          ) : (
-            <SalesLine data={series} />
-          )}
-        </AdminCard>
-        <AdminCard title="Order statuses" subtitle="Your orders by current status">
-          {breakdown === null ? (
-            <p className="text-small text-muted-foreground">{t.sectionLoadError}</p>
-          ) : (
-            <Donut data={breakdown.map((b) => ({ label: b.status, value: b.count }))} centerLabel="orders" />
-          )}
-        </AdminCard>
-      </section>
-
       {/* Top products + stock alerts */}
-      <section className="mt-6 grid gap-6 lg:grid-cols-2">
+      <section className="mt-8 grid gap-6 lg:grid-cols-2">
         <AdminCard
           title="Top products"
           subtitle="By revenue across non-cancelled orders"
@@ -307,7 +331,25 @@ function SellerOverviewPage() {
               ))}
             </ul>
           ) : (
-            <EmptyState title="Stock levels healthy" text="No variant is at or below its low-stock threshold." />
+            <EmptyState title="Stock levels healthy" description="No variant is at or below its low-stock threshold." />
+          )}
+        </AdminCard>
+      </section>
+
+      {/* Charts */}
+      <section className="mt-8 grid gap-6 lg:grid-cols-3">
+        <AdminCard title="Sales — last 30 days" subtitle="Delivered sales and order counts per day" className="lg:col-span-2">
+          {series === null ? (
+            <p className="text-small text-muted-foreground">{t.sectionLoadError}</p>
+          ) : (
+            <SalesLine data={series} />
+          )}
+        </AdminCard>
+        <AdminCard title="Order statuses" subtitle="Your orders by current status">
+          {breakdown === null ? (
+            <p className="text-small text-muted-foreground">{t.sectionLoadError}</p>
+          ) : (
+            <Donut data={breakdown.map((b) => ({ label: b.status, value: b.count }))} centerLabel="orders" />
           )}
         </AdminCard>
       </section>
@@ -316,7 +358,7 @@ function SellerOverviewPage() {
       <AdminCard
         title="Recent orders"
         subtitle="Latest orders across your store"
-        className="mt-6"
+        className="mt-8"
         actions={
           <Button asChild variant="ghost" size="sm">
             <Link to="/seller/orders" search={{ locale, q: "", status: "", page: 1 }}>
@@ -328,36 +370,36 @@ function SellerOverviewPage() {
         {recent === null ? (
           <p className="text-small text-muted-foreground">{t.sectionLoadError}</p>
         ) : recent.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-small">
+          <DataTable>
+            <table className="w-full min-w-[640px] text-small">
               <thead>
-                <tr className="border-b border-border text-start text-caption uppercase tracking-wide text-muted-foreground">
-                  <th scope="col" className="py-2 pe-4 text-start font-medium">Order</th>
-                  <th scope="col" className="py-2 pe-4 text-start font-medium">Customer</th>
-                  <th scope="col" className="py-2 pe-4 text-start font-medium">Status</th>
-                  <th scope="col" className="py-2 pe-4 text-start font-medium">Date</th>
-                  <th scope="col" className="py-2 text-end font-medium">Total</th>
+                <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                  <th scope="col" className="py-2.5 ps-4 pe-4 text-start font-semibold">Order</th>
+                  <th scope="col" className="py-2.5 pe-4 text-start font-semibold">Customer</th>
+                  <th scope="col" className="py-2.5 pe-4 text-start font-semibold">Status</th>
+                  <th scope="col" className="py-2.5 pe-4 text-start font-semibold">Date</th>
+                  <th scope="col" className="py-2.5 pe-4 text-end font-semibold">Total</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                 {recent.map((o) => (
-                  <tr key={o.id}>
-                    <td className="py-3 pe-4 font-medium tabular-nums">{o.orderNumber}</td>
+                  <tr key={o.id} className="transition-colors hover:bg-muted/40">
+                    <td className="py-3 ps-4 pe-4 font-medium tabular-nums">{o.orderNumber}</td>
                     <td className="py-3 pe-4 text-muted-foreground">{o.customer}</td>
                     <td className="py-3 pe-4">
                       <StatusPill status={o.status} />
                     </td>
                     <td className="py-3 pe-4 text-muted-foreground">{fmtDate(o.createdAt, locale)}</td>
-                    <td className="py-3 text-end font-medium tabular-nums">{fmtMoney(o.total, currency, locale)}</td>
+                    <td className="py-3 pe-4 text-end font-medium tabular-nums">{fmtMoney(o.total, currency, locale)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </div>
+          </DataTable>
         ) : (
           <EmptyState
             title="No orders yet"
-            text="Orders for your products will appear here as soon as customers check out."
+            description="Orders for your products will appear here as soon as customers check out."
             action={
               <Button asChild variant="outline" size="sm">
                 <Link to="/seller/products" search={{ locale, q: "", status: "", moderation: "", page: 1 }}>Add products</Link>

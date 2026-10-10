@@ -6,11 +6,11 @@ import { AdminGate } from "@/components/admin/AdminGate";
 import { SuperAdminGate } from "@/components/admin/SuperAdminGate";
 import { AdminShell } from "@/components/admin/AdminShell";
 import {
-  AdminCard,
   EmptyState,
   TableSkeleton,
   Field,
 } from "@/components/admin/ui";
+import { FormSection } from "@/components/dashboard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -102,13 +102,13 @@ function SettingsPage() {
         breadcrumbs={[{ label: t.settings }]}
       >
         <div className="space-y-6">
-          <AdminCard title="Contact" subtitle="Shown in the footer and contact page.">
+          <FormSection title="Contact" description="Shown in the footer and contact page.">
             {settingsQuery.isPending ? (
               <TableSkeleton rows={4} />
             ) : settingsQuery.isError ? (
               <EmptyState title="Could not load settings" text={errMsg(settingsQuery.error)} />
             ) : (
-              <div className="space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
                 {CONTACT_FIELDS.map((f) => (
                   <Field key={f.key} label={f.label}>
                     <Input
@@ -119,20 +119,32 @@ function SettingsPage() {
                     />
                   </Field>
                 ))}
-                <Field label="Contact address">
-                  <Textarea
-                    value={form["contact_address"] ?? ""}
-                    onChange={(e) => set("contact_address", e.target.value)}
-                    rows={2}
-                  />
-                </Field>
+                <div className="sm:col-span-2">
+                  <Field label="Contact address">
+                    <Textarea
+                      value={form["contact_address"] ?? ""}
+                      onChange={(e) => set("contact_address", e.target.value)}
+                      rows={2}
+                    />
+                  </Field>
+                </div>
               </div>
             )}
-          </AdminCard>
+          </FormSection>
 
-          <AdminCard title="Social links" subtitle="Shown in the footer. Leave empty to hide.">
+          <FormSection
+            title="Social links"
+            description="Shown in the footer. Leave empty to hide."
+            actions={
+              !settingsQuery.isPending && !settingsQuery.isError ? (
+                <Button onClick={() => save.mutate()} disabled={save.isPending || settingsQuery.isPending}>
+                  {save.isPending ? "Saving…" : "Save settings"}
+                </Button>
+              ) : undefined
+            }
+          >
             {!settingsQuery.isPending && !settingsQuery.isError ? (
-              <div className="space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
                 {SOCIAL_FIELDS.map((f) => (
                   <Field key={f.key} label={f.label}>
                     <Input
@@ -143,14 +155,9 @@ function SettingsPage() {
                     />
                   </Field>
                 ))}
-                <div>
-                  <Button onClick={() => save.mutate()} disabled={save.isPending || settingsQuery.isPending}>
-                    {save.isPending ? "Saving…" : "Save settings"}
-                  </Button>
-                </div>
               </div>
             ) : null}
-          </AdminCard>
+          </FormSection>
 
           <ModerationModeCard />
 
@@ -197,44 +204,44 @@ function ModerationModeCard() {
   });
 
   return (
-    <AdminCard
+    <FormSection
       title="Product moderation"
-      subtitle="Controls what happens when a seller publishes a product."
+      description="Controls what happens when a seller publishes a product."
+      actions={
+        settingsQuery.isPending || mode === null || settingsQuery.isError ? undefined : (
+          <Button onClick={() => saveMode.mutate(mode)} disabled={saveMode.isPending}>
+            {saveMode.isPending ? "Saving…" : "Save moderation mode"}
+          </Button>
+        )
+      }
     >
       {settingsQuery.isPending || mode === null ? (
         <TableSkeleton rows={2} />
       ) : settingsQuery.isError ? (
         <EmptyState title="Could not load settings" text={errMsg(settingsQuery.error)} />
       ) : (
-        <div className="space-y-4">
-          <Field
-            label="Publishing mode"
-            hint={
-              mode === "auto_publish"
-                ? "Seller publish actions approve products immediately, without human review."
-                : "Seller publish actions send products to the moderation queue for human approval."
-            }
-          >
-            <Select value={mode} onValueChange={setMode}>
-              <SelectTrigger className="max-w-md">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="require_approval">
-                  Require approval (moderation queue)
-                </SelectItem>
-                <SelectItem value="auto_publish">Auto-publish (no human review)</SelectItem>
-              </SelectContent>
-            </Select>
-          </Field>
-          <div>
-            <Button onClick={() => saveMode.mutate(mode)} disabled={saveMode.isPending}>
-              {saveMode.isPending ? "Saving…" : "Save moderation mode"}
-            </Button>
-          </div>
-        </div>
+        <Field
+          label="Publishing mode"
+          hint={
+            mode === "auto_publish"
+              ? "Seller publish actions approve products immediately, without human review."
+              : "Seller publish actions send products to the moderation queue for human approval."
+          }
+        >
+          <Select value={mode} onValueChange={setMode}>
+            <SelectTrigger className="max-w-md">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="require_approval">
+                Require approval (moderation queue)
+              </SelectItem>
+              <SelectItem value="auto_publish">Auto-publish (no human review)</SelectItem>
+            </SelectContent>
+          </Select>
+        </Field>
       )}
-    </AdminCard>
+    </FormSection>
   );
 }
 
@@ -275,41 +282,41 @@ function CommissionRateCard() {
   const valid = Number.isFinite(parsed) && parsed >= 0 && parsed <= 100;
 
   return (
-    <AdminCard
+    <FormSection
       title="Default commission rate"
-      subtitle="Pre-filled in the seller-creation wizard for new sellers. Existing sellers keep their own rate."
+      description="Pre-filled in the seller-creation wizard for new sellers. Existing sellers keep their own rate."
+      actions={
+        rateQuery.isPending || rate === null || rateQuery.isError ? undefined : (
+          <Button
+            onClick={() => saveRate.mutate(parsed)}
+            disabled={saveRate.isPending || !valid}
+          >
+            {saveRate.isPending ? "Saving…" : "Save commission rate"}
+          </Button>
+        )
+      }
     >
       {rateQuery.isPending || rate === null ? (
         <TableSkeleton rows={2} />
       ) : rateQuery.isError ? (
         <EmptyState title="Could not load commission setting" text={errMsg(rateQuery.error)} />
       ) : (
-        <div className="space-y-4">
-          <Field
-            label="Commission (%)"
-            hint="Applies only to sellers created after the change. History per seller is preserved."
-          >
-            <Input
-              type="number"
-              min={0}
-              max={100}
-              step={0.5}
-              dir="ltr"
-              className="max-w-40"
-              value={rate}
-              onChange={(e) => setRate(e.target.value)}
-            />
-          </Field>
-          <div>
-            <Button
-              onClick={() => saveRate.mutate(parsed)}
-              disabled={saveRate.isPending || !valid}
-            >
-              {saveRate.isPending ? "Saving…" : "Save commission rate"}
-            </Button>
-          </div>
-        </div>
+        <Field
+          label="Commission (%)"
+          hint="Applies only to sellers created after the change. History per seller is preserved."
+        >
+          <Input
+            type="number"
+            min={0}
+            max={100}
+            step={0.5}
+            dir="ltr"
+            className="max-w-40"
+            value={rate}
+            onChange={(e) => setRate(e.target.value)}
+          />
+        </Field>
       )}
-    </AdminCard>
+    </FormSection>
   );
 }

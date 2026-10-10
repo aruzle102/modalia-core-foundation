@@ -8,12 +8,12 @@ import { AdminShell } from "@/components/admin/AdminShell";
 import {
   AdminCard,
   StatusPill,
-  EmptyState,
   TableSkeleton,
   ConfirmDialog,
   fmtMoney,
   fmtDateTime,
 } from "@/components/admin/ui";
+import { DataTable, EmptyState } from "@/components/dashboard";
 import { useAdminLocale } from "@/components/admin/useAdminLocale";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -268,9 +268,13 @@ function ProductsManager() {
         </div>
       </AdminCard>
 
-      <AdminCard title={t.title} subtitle={t.matchCount(total)}>
+      <section aria-label={t.title} className="mt-6">
+        <div className="mb-4">
+          <h2 className="text-lg font-semibold tracking-tight">{t.title}</h2>
+          <p className="mt-0.5 text-sm text-muted-foreground">{t.matchCount(total)}</p>
+        </div>
         {selected.length > 0 ? (
-          <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2.5">
+          <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 py-2.5 dark:border-neutral-800 dark:bg-neutral-950">
             <span className="text-sm font-medium">{t.selected(selected.length)}</span>
             <div className="ms-auto flex flex-wrap gap-1.5">
               <Button
@@ -335,44 +339,52 @@ function ProductsManager() {
           </div>
         ) : null}
         {productsQuery.isPending ? (
-          <TableSkeleton />
+          <DataTable>
+            <div className="p-4">
+              <TableSkeleton />
+            </div>
+          </DataTable>
         ) : productsQuery.isError ? (
-          <EmptyState
-            title={t.productsLoadError}
-            text={errMsg(productsQuery.error)}
-            action={
-              <Button type="button" variant="outline" size="sm" onClick={() => productsQuery.refetch()}>
-                {common.retry}
-              </Button>
-            }
-          />
+          <DataTable>
+            <EmptyState
+              title={t.productsLoadError}
+              description={errMsg(productsQuery.error)}
+              action={
+                <Button type="button" variant="outline" size="sm" onClick={() => productsQuery.refetch()}>
+                  {common.retry}
+                </Button>
+              }
+            />
+          </DataTable>
         ) : products.length === 0 ? (
-          <EmptyState title={t.noProducts} text={t.noProductsText} />
+          <DataTable>
+            <EmptyState title={t.noProducts} description={t.noProductsText} />
+          </DataTable>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[760px] text-start text-small">
+          <DataTable>
+            <table className="w-full min-w-[760px] text-sm">
               <thead>
-                <tr className="border-b border-border text-caption text-muted-foreground">
-                  <th className="w-10 px-3 py-2">
+                <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                  <th className="w-10 px-3 py-3">
                     <Checkbox
                       checked={products.length > 0 && selected.length === products.length}
                       onCheckedChange={toggleSelectAll}
                       aria-label={t.selectAll}
                     />
                   </th>
-                  <th className="px-3 py-2 font-medium">{t.colProduct}</th>
-                  <th className="px-3 py-2 font-medium">{t.colSeller}</th>
-                  <th className="px-3 py-2 font-medium">{t.colPrice}</th>
-                  <th className="px-3 py-2 font-medium">{t.colModeration}</th>
-                  <th className="px-3 py-2 font-medium">{t.colStatus}</th>
-                  <th className="px-3 py-2 font-medium">{t.colVisibility}</th>
-                  <th className="px-3 py-2 font-medium">{t.colFeatured}</th>
-                  <th className="px-3 py-2 font-medium text-end">{t.colActions}</th>
+                  <th className="px-3 py-3 text-start">{t.colProduct}</th>
+                  <th className="px-3 py-3 text-start">{t.colSeller}</th>
+                  <th className="px-3 py-3 text-end">{t.colPrice}</th>
+                  <th className="px-3 py-3 text-start">{t.colModeration}</th>
+                  <th className="px-3 py-3 text-start">{t.colStatus}</th>
+                  <th className="px-3 py-3 text-start">{t.colVisibility}</th>
+                  <th className="px-3 py-3 text-start">{t.colFeatured}</th>
+                  <th className="px-3 py-3 text-end">{t.colActions}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                 {products.map((p) => (
-                  <tr key={p.id} className="align-top">
+                  <tr key={p.id} className="align-top hover:bg-muted/40">
                     <td className="px-3 py-3">
                       <Checkbox
                         checked={selected.includes(p.id as string)}
@@ -382,16 +394,16 @@ function ProductsManager() {
                     </td>
                     <td className="px-3 py-3">
                       <p className="font-medium">{pickName(p.name) || p.slug}</p>
-                      <p className="text-caption text-muted-foreground">{p.slug} · {fmtDateTime(p.created_at, locale)}</p>
+                      <p className="text-xs text-muted-foreground">{p.slug} · {fmtDateTime(p.created_at, locale)}</p>
                       {p.flags.length > 0 ? (
                         <div className="mt-1.5 flex flex-wrap items-center gap-1" title={t.flagsNote}>
-                          <Flag className="size-3 text-brand" aria-hidden />
-                          <span className="text-caption text-muted-foreground">{t.flagsTitle}:</span>
+                          <Flag className="size-3 text-amber-600" aria-hidden />
+                          <span className="text-xs text-muted-foreground">{t.flagsTitle}:</span>
                           {p.flags.map((f: ModerationFlag) => (
                             <span
                               key={f.code}
                               title={`${t.flagLabels[f.code]} — “${f.match}”`}
-                              className="rounded-sm bg-brand/15 px-1.5 py-0.5 text-caption font-medium text-brand"
+                              className="rounded-sm bg-amber-500/15 px-1.5 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-300"
                             >
                               {t.flagLabels[f.code]}
                             </span>
@@ -399,11 +411,11 @@ function ProductsManager() {
                         </div>
                       ) : null}
                     </td>
-                    <td className="px-3 py-3 text-caption">{sellerName(p.seller_id)}</td>
-                    <td className="px-3 py-3 whitespace-nowrap">
+                    <td className="px-3 py-3 text-xs">{sellerName(p.seller_id)}</td>
+                    <td className="px-3 py-3 text-end whitespace-nowrap tabular-nums">
                       {fmtMoney(Number(p.base_price), "DZD", locale)}
                       {p.compare_at_price ? (
-                        <span className="ms-2 text-caption text-muted-foreground line-through">
+                        <span className="ms-2 text-xs text-muted-foreground line-through">
                           {fmtMoney(Number(p.compare_at_price), "DZD", locale)}
                         </span>
                       ) : null}
@@ -418,7 +430,7 @@ function ProductsManager() {
                         aria-label={p.featured ? t.unfeatureProduct : t.featureProduct}
                         className="text-muted-foreground hover:text-foreground"
                       >
-                        {p.featured ? <Star className="size-4 fill-brand text-brand" /> : <StarOff className="size-4" />}
+                        {p.featured ? <Star className="size-4 fill-amber-500 text-amber-500" /> : <StarOff className="size-4" />}
                       </button>
                     </td>
                     <td className="px-3 py-3">
@@ -478,12 +490,12 @@ function ProductsManager() {
                 ))}
               </tbody>
             </table>
-          </div>
+          </DataTable>
         )}
         <div className="mt-4">
           <Pager page={page} total={total} pageSize={pageSize} onPage={setPage} />
         </div>
-      </AdminCard>
+      </section>
 
       <ConfirmDialog
         open={confirm !== null}

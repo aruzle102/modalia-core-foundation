@@ -123,11 +123,15 @@ const SLATE = new Set(["returned", "refunded", "archived", "hidden"]);
  */
 function statusTone(status: string): string {
   const s = status.toLowerCase();
-  if (GREEN.has(s)) return "bg-verified/10 text-verified ring-verified/25";
-  if (AMBER.has(s)) return "bg-brand/10 text-brand ring-brand/25";
-  if (BLUE.has(s)) return "bg-info/10 text-info ring-info/25";
-  if (RED.has(s)) return "bg-destructive/10 text-destructive ring-destructive/25";
-  return "bg-muted text-muted-foreground ring-border";
+  if (GREEN.has(s))
+    return "bg-emerald-500/10 text-emerald-700 ring-emerald-600/20 dark:bg-emerald-400/10 dark:text-emerald-300 dark:ring-emerald-400/20";
+  if (AMBER.has(s))
+    return "bg-amber-500/10 text-amber-700 ring-amber-600/20 dark:bg-amber-400/10 dark:text-amber-300 dark:ring-amber-400/20";
+  if (BLUE.has(s))
+    return "bg-sky-500/10 text-sky-700 ring-sky-600/20 dark:bg-sky-400/10 dark:text-sky-300 dark:ring-sky-400/20";
+  if (RED.has(s))
+    return "bg-rose-500/10 text-rose-700 ring-rose-600/20 dark:bg-rose-400/10 dark:text-rose-300 dark:ring-rose-400/20";
+  return "bg-neutral-500/10 text-neutral-600 ring-neutral-500/20 dark:bg-neutral-400/10 dark:text-neutral-300 dark:ring-neutral-400/20";
 }
 
 export function StatusPill({ status, className }: { status: string; className?: string }) {
@@ -150,21 +154,25 @@ export function StatusPill({ status, className }: { status: string; className?: 
 export function EmptyState({
   title,
   text,
+  description,
   action,
   icon,
 }: {
   title: string;
   text?: string | undefined;
+  /** Alias for `text` — preferred for new code (matches dashboard/EmptyState). */
+  description?: React.ReactNode | undefined;
   action?: React.ReactNode;
   icon?: React.ReactNode | undefined;
 }) {
+  const body = description ?? text;
   return (
     <div className="flex flex-col items-center justify-center gap-2 px-4 py-10 text-center">
       <div className="flex h-11 w-11 items-center justify-center rounded-full bg-muted">
         {icon ?? <Inbox className="h-5 w-5 text-muted-foreground" />}
       </div>
       <p className="text-sm font-semibold">{title}</p>
-      {text ? <p className="max-w-sm text-sm text-muted-foreground">{text}</p> : null}
+      {body ? <p className="max-w-sm text-sm text-muted-foreground">{body}</p> : null}
       {action ? <div className="mt-2">{action}</div> : null}
     </div>
   );

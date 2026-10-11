@@ -694,16 +694,19 @@ export function SellerShell({
         </div>
         {/* Mobile nav: drawer with grouped navigation */}
         <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
-          <SheetContent side={dir === "rtl" ? "right" : "left"} className="w-72 overflow-y-auto p-0">
-            <SheetHeader className="border-b p-4">
-              <SheetTitle className="flex items-center gap-2 text-start">
-                <span className="flex h-7 w-7 items-center justify-center rounded-md bg-zinc-950 text-xs font-bold text-white">
+          <SheetContent
+            side={dir === "rtl" ? "right" : "left"}
+            className="w-72 overflow-y-auto bg-neutral-950 p-0 text-neutral-200 dark:bg-black"
+          >
+            <SheetHeader className="border-b border-white/10 p-4">
+              <SheetTitle className="flex items-center gap-2 text-start text-white">
+                <span className="flex h-7 w-7 items-center justify-center rounded-md bg-white text-xs font-bold text-neutral-950">
                   M
                 </span>
                 <span className="text-sm font-semibold tracking-tight">Seller OS</span>
               </SheetTitle>
             </SheetHeader>
-            <SellerSidebarNav groups={navGroups} onNavigate={() => setMobileNavOpen(false)} />
+            <SellerSidebarNav groups={navGroups} onNavigate={() => setMobileNavOpen(false)} dark />
           </SheetContent>
         </Sheet>
       </header>

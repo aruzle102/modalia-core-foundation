@@ -9,6 +9,8 @@ import {
   Bell,
   Building2,
   ChevronDown,
+  ChevronsLeft,
+  ChevronsRight,
   ExternalLink,
   Eye,
   KeyRound,
@@ -195,13 +197,14 @@ function getNavGroups(
   ];
 }
 
-function SellerNavLink({ item, compact, onNavigate, onDark }: { item: NavItem; compact?: boolean; onNavigate?: (() => void) | undefined; onDark?: boolean | undefined }) {
+function SellerNavLink({ item, compact, onNavigate, onDark, collapsed }: { item: NavItem; compact?: boolean; onNavigate?: (() => void) | undefined; onDark?: boolean | undefined; collapsed?: boolean }) {
   const className = cn(
     "group relative flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-all duration-200",
     onDark
       ? "text-neutral-400 hover:bg-white/10 hover:text-white [&_svg]:text-neutral-500 hover:[&_svg]:text-white"
       : "text-muted-foreground hover:bg-neutral-100 hover:text-neutral-900 dark:hover:bg-neutral-800/60 dark:hover:text-neutral-100",
     compact && "shrink-0 whitespace-nowrap py-1.5",
+    collapsed && "justify-center px-0",
   );
   if (item.href) {
     return (
@@ -211,10 +214,16 @@ function SellerNavLink({ item, compact, onNavigate, onDark }: { item: NavItem; c
         rel="noreferrer"
         onClick={onNavigate}
         className={className}
+        title={collapsed ? item.label : undefined}
+        aria-label={collapsed ? item.label : undefined}
       >
         {item.icon}
-        {item.label}
-        <ExternalLink className="ms-auto h-3 w-3 opacity-60" aria-hidden="true" />
+        {collapsed ? null : (
+          <>
+            {item.label}
+            <ExternalLink className="ms-auto h-3 w-3 opacity-60" aria-hidden="true" />
+          </>
+        )}
       </a>
     );
   }
@@ -230,9 +239,11 @@ function SellerNavLink({ item, compact, onNavigate, onDark }: { item: NavItem; c
           : "bg-neutral-900 text-white font-medium shadow-sm dark:bg-white dark:text-neutral-900 [&_svg]:text-current",
       }}
       className={className}
+      title={collapsed ? item.label : undefined}
+      aria-label={collapsed ? item.label : undefined}
     >
       {item.icon}
-      {item.label}
+      {collapsed ? null : item.label}
     </Link>
   );
 }
@@ -282,7 +293,7 @@ function itemMatches(item: NavItem, pathname: string): boolean {
  * persist in localStorage so the sidebar looks the same after reload.
  * Follows the AdminShell pattern.
  */
-function SellerSidebarNav({ groups, onNavigate, dark }: { groups: NavGroup[]; onNavigate?: () => void; dark?: boolean }) {
+function SellerSidebarNav({ groups, onNavigate, dark, collapsed }: { groups: NavGroup[]; onNavigate?: () => void; dark?: boolean; collapsed?: boolean }) {
   const { pathname } = useLocation();
   const allItems = useMemo(() => groups.flatMap((g) => g.items), [groups]);
   const [expanded, setExpanded] = useState<string[]>(() => {
@@ -320,6 +331,31 @@ function SellerSidebarNav({ groups, onNavigate, dark }: { groups: NavGroup[]; on
       return next;
     });
   };
+
+  // Collapsed (icon-only) mode — 21st.dev "Dashboard with Collapsible Sidebar"
+  // pattern: flatten groups, icons with tooltips, dividers between groups.
+  if (collapsed) {
+    return (
+      <nav className="space-y-1 p-2" aria-label="Seller">
+        {groups.map((group, gi) => (
+          <div key={group.id}>
+            {gi > 0 ? <div className="mx-2 my-2 border-t border-white/10" aria-hidden="true" /> : null}
+            <div className="space-y-1">
+              {group.items.map((item) => (
+                <SellerNavLink
+                  key={item.href ?? String(item.to)}
+                  item={item}
+                  onNavigate={onNavigate}
+                  onDark={dark}
+                  collapsed
+                />
+              ))}
+            </div>
+          </div>
+        ))}
+      </nav>
+    );
+  }
 
   return (
     <nav className="space-y-4 p-4" aria-label="Seller">
@@ -444,6 +480,27 @@ export function SellerShell({
       .filter((group) => group.items.length > 0);
   }, [locale, seller?.supportMode, seller?.storeSlug]);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  // Collapsible sidebar (21st.dev "Dashboard with Collapsible Sidebar" pattern):
+  // desktop sidebar collapses to icon-only; persisted across reloads.
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return window.localStorage.getItem("modalia:seller-nav:collapsed") === "1";
+    } catch {
+      return false;
+    }
+  });
+  const toggleSidebar = () => {
+    setSidebarCollapsed((prev) => {
+      const next = !prev;
+      try {
+        window.localStorage.setItem("modalia:seller-nav:collapsed", next ? "1" : "0");
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  };
 
   // Preserve the intended route so the seller returns here after signing in.
   const intended = useMemo(
@@ -652,11 +709,34 @@ export function SellerShell({
       </header>
 
       <div className="flex">
-        <aside className="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-68 shrink-0 self-start overflow-y-auto bg-neutral-950 text-neutral-200 lg:block dark:bg-black">
-          <div className="px-4 pb-2 pt-5">
-            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-neutral-500">Seller Workspace</p>
+        <aside
+          className={cn(
+            "sticky top-14 hidden h-[calc(100vh-3.5rem)] shrink-0 self-start overflow-y-auto overflow-x-hidden bg-neutral-950 text-neutral-200 transition-[width] duration-300 lg:block dark:bg-black",
+            sidebarCollapsed ? "w-16" : "w-68",
+          )}
+        >
+          <div className="flex items-center justify-between px-4 pb-2 pt-5">
+            {!sidebarCollapsed && (
+              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-neutral-500">
+                Seller Workspace
+              </p>
+            )}
+            <button
+              type="button"
+              onClick={toggleSidebar}
+              aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              aria-expanded={!sidebarCollapsed}
+              title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-neutral-400 transition-colors hover:bg-white/10 hover:text-white"
+            >
+              {sidebarCollapsed ? (
+                <ChevronsRight className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />
+              ) : (
+                <ChevronsLeft className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />
+              )}
+            </button>
           </div>
-          <SellerSidebarNav groups={navGroups} dark />
+          <SellerSidebarNav groups={navGroups} dark collapsed={sidebarCollapsed} />
         </aside>
 
         <main id="main-content" tabIndex={-1} className="min-w-0 flex-1">

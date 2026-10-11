@@ -3,9 +3,32 @@
  * Public form (with image attachments) -> admin inbox at /admin/reports.
  */
 import { createServerFn } from "@tanstack/react-start";
+import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import type { Database } from "@/integrations/supabase/types";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertAdmin } from "@/lib/admin-auth";
+import { rateLimitEndpoint } from "@/lib/rate-limit";
+
+/** Same public-client pattern as product.functions.ts: publishable key, no session. */
+function createPublicClient() {
+  const url = process.env["SUPABASE_URL"];
+  const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
+  if (!url || !key) throw new Error("The problem report form is unavailable.");
+  return createClient<Database>(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: {
+      fetch: (input, init) => {
+        const headers = new Headers(init?.headers);
+        if (key.startsWith("sb_") && headers.get("Authorization") === `Bearer ${key}`) {
+          headers.delete("Authorization");
+        }
+        headers.set("apikey", key);
+        return fetch(input, { ...init, headers });
+      },
+    },
+  });
+}
 
 const reportSchema = z.object({
   reporterName: z.string().max(200).optional(),
@@ -30,7 +53,10 @@ export const getReportUploadUrl = createServerFn({ method: "POST" })
       .parse(d)
   )
   .handler(async ({ data, context }): Promise<{ path: string; signedUrl: string; token: string }> => {
-    const { createClient } = await import("@supabase/supabase-js");
+    // Public endpoint that mints service-role storage URLs: rate-limit first so
+    // a single client cannot churn signed upload URLs. Generous (10/min per IP)
+    // so legitimate multi-photo reports never break.
+    rateLimitEndpoint("getReportUploadUrl", 10, 60_000);
     const url = process.env["SUPABASE_URL"]!;
     const key = process.env["SUPABASE_SERVICE_ROLE_KEY"]!;
     const supabaseAdmin = createClient(url, key);
@@ -45,7 +71,9 @@ export const getReportUploadUrl = createServerFn({ method: "POST" })
 export const submitProblemReport = createServerFn({ method: "POST" })
   .validator((d) => reportSchema.parse(d))
   .handler(async ({ data, context }): Promise<{ ok: boolean }> => {
-    const supabase = (context as any).supabase;
+    // Public function (no auth middleware): build the anon client directly —
+    // context.supabase is only populated by requireSupabaseAuth middleware.
+    const supabase = createPublicClient();
     const { error } = await supabase.from("problem_reports").insert({
       reporter_name: data.reporterName?.trim() || null,
       reporter_email: data.reporterEmail?.trim().toLowerCase() || null,

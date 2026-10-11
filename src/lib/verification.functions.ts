@@ -12,10 +12,32 @@
  *  4. Approved → store.verification_status = 'verified'
  */
 import { createServerFn } from "@tanstack/react-start";
+import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import type { Database } from "@/integrations/supabase/types";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireSeller } from "@/lib/seller-auth";
 import { assertAdmin } from "@/lib/admin-auth";
+
+/** Same public-client pattern as product.functions.ts: publishable key, no session. */
+function createPublicClient() {
+  const url = process.env["SUPABASE_URL"];
+  const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
+  if (!url || !key) throw new Error("Store view tracking is unavailable.");
+  return createClient<Database>(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: {
+      fetch: (input, init) => {
+        const headers = new Headers(init?.headers);
+        if (key.startsWith("sb_") && headers.get("Authorization") === `Bearer ${key}`) {
+          headers.delete("Authorization");
+        }
+        headers.set("apikey", key);
+        return fetch(input, { ...init, headers });
+      },
+    },
+  });
+}
 
 const sellerOnly = [requireSupabaseAuth] as const;
 const adminOnly = [requireSupabaseAuth] as const;
@@ -131,7 +153,9 @@ export const requestVerification = createServerFn({ method: "POST" })
 export const recordStoreView = createServerFn({ method: "POST" })
   .validator((d) => z.object({ storeId: z.string().uuid(), deviceHash: z.string().min(8).max(128) }).parse(d))
   .handler(async ({ data, context }): Promise<{ counted: boolean }> => {
-    const supabase = (context as any).supabase;
+    // Public function (no auth middleware): build the anon client directly —
+    // context.supabase is only populated by requireSupabaseAuth middleware.
+    const supabase = createPublicClient();
     const { data: result, error } = await supabase.rpc("record_store_view", {
       p_store_id: data.storeId,
       p_device_hash: data.deviceHash,

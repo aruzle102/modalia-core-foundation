@@ -120,6 +120,11 @@ function RootShell({ children }: { children: ReactNode }) {
   // Document-level locale plumbing: screen readers, crawlers, and components
   // that read document.documentElement.dir (ProductRail, ChipGroup RTL logic)
   // all follow the active locale — never hardcoded "en"/unset.
+  // The <html> attribute covers SSR; this effect keeps the live DOM in sync
+  // across client-side locale switches (full-page reload on switch).
+  useEffect(() => {
+    document.documentElement.dir = locale === "ar" ? "rtl" : "ltr";
+  }, [locale]);
   return (
     <html lang={locale} dir={locale === "ar" ? "rtl" : "ltr"}>
       <head>

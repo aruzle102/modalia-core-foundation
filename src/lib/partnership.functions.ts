@@ -3,9 +3,31 @@
  * Public form -> admin inbox at /admin/partnerships.
  */
 import { createServerFn } from "@tanstack/react-start";
+import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import type { Database } from "@/integrations/supabase/types";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertAdmin } from "@/lib/admin-auth";
+
+/** Same public-client pattern as product.functions.ts: publishable key, no session. */
+function createPublicClient() {
+  const url = process.env["SUPABASE_URL"];
+  const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
+  if (!url || !key) throw new Error("The partnership form is unavailable.");
+  return createClient<Database>(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: {
+      fetch: (input, init) => {
+        const headers = new Headers(init?.headers);
+        if (key.startsWith("sb_") && headers.get("Authorization") === `Bearer ${key}`) {
+          headers.delete("Authorization");
+        }
+        headers.set("apikey", key);
+        return fetch(input, { ...init, headers });
+      },
+    },
+  });
+}
 
 const partnershipSchema = z.object({
   companyName: z.string().min(2).max(200),
@@ -21,7 +43,9 @@ const partnershipSchema = z.object({
 export const submitPartnershipRequest = createServerFn({ method: "POST" })
   .validator((d) => partnershipSchema.parse(d))
   .handler(async ({ data, context }): Promise<{ ok: boolean }> => {
-    const supabase = (context as any).supabase;
+    // Public function (no auth middleware): build the anon client directly —
+    // context.supabase is only populated by requireSupabaseAuth middleware.
+    const supabase = createPublicClient();
     const { error } = await supabase.from("partnership_requests").insert({
       company_name: data.companyName.trim(),
       contact_name: data.contactName.trim(),

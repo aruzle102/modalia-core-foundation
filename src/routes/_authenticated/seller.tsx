@@ -273,7 +273,7 @@ function SellerOverviewPage() {
           </div>
           <Button asChild variant="secondary" size="sm">
             <Link to="/seller/analytics" search={{ locale, days: 30 }}>
-              View analytics <ArrowRight className="ms-1 h-4 w-4" aria-hidden="true" />
+              View analytics <ArrowRight className="ms-1 h-4 w-4 rtl:rotate-180" aria-hidden="true" />
             </Link>
           </Button>
         </div>
@@ -287,7 +287,7 @@ function SellerOverviewPage() {
           actions={
             <Button asChild variant="ghost" size="sm">
               <Link to="/seller/analytics" search={{ locale, days: 30 }}>
-                Details <ArrowRight className="ms-1 h-4 w-4" aria-hidden="true" />
+                Details <ArrowRight className="ms-1 h-4 w-4 rtl:rotate-180" aria-hidden="true" />
               </Link>
             </Button>
           }
@@ -310,7 +310,7 @@ function SellerOverviewPage() {
           actions={
             <Button asChild variant="ghost" size="sm">
               <Link to="/seller/products" search={{ locale, q: "", status: "", moderation: "", page: 1 }}>
-                Manage inventory <ArrowRight className="ms-1 h-4 w-4" aria-hidden="true" />
+                Manage inventory <ArrowRight className="ms-1 h-4 w-4 rtl:rotate-180" aria-hidden="true" />
               </Link>
             </Button>
           }
@@ -362,7 +362,7 @@ function SellerOverviewPage() {
         actions={
           <Button asChild variant="ghost" size="sm">
             <Link to="/seller/orders" search={{ locale, q: "", status: "", page: 1 }}>
-              All orders <ArrowRight className="ms-1 h-4 w-4" aria-hidden="true" />
+              All orders <ArrowRight className="ms-1 h-4 w-4 rtl:rotate-180" aria-hidden="true" />
             </Link>
           </Button>
         }

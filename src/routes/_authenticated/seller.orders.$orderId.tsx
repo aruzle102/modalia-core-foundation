@@ -135,7 +135,7 @@ function SellerOrderDetailPage() {
       actions={
         <Button asChild variant="outline" size="sm">
           <BackLink back={back} fallbackTo="/seller/orders" fallbackSearch={{ locale }}>
-            <ArrowLeft className="size-4" />
+            <ArrowLeft className="size-4 rtl:rotate-180" />
             All orders
           </BackLink>
         </Button>

@@ -1,6 +1,6 @@
 import { useState, type MouseEvent } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Heart, ShoppingBag, Zap } from "lucide-react";
+import { ArrowRight, Heart, ShoppingBag } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatPrice } from "@/lib/i18n/format";
 import { getTranslations } from "@/lib/i18n";
@@ -45,10 +45,24 @@ export function ProductCard({
   const soldOut = stock === 0;
   const lowStock = stock != null && stock > 0 && stock <= LOW_STOCK_THRESHOLD;
 
-  const handleQuickAdd = (event: any) => {
+  // Honest quick-add: raise a mode:"add" request for the catalog card.
+  // BuyNowHost fetches real variant data server-side — default-variant
+  // products go straight to the cart with a toast; products with required
+  // options open the variant sheet instead of guessing. Never a fake line.
+  const handleQuickAdd = (event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
-    // Navigate to product page for purchase (variant selection + cart work there)
-    window.location.href = `/product/${product.slug}?locale=${locale}`;
+    event.preventDefault();
+    startBuyNow(
+      locale,
+      {
+        productId: product.id,
+        slug: product.slug,
+        name: product.name,
+        image: product.imagePath,
+        storeName: product.storeName,
+      },
+      { mode: "add", quantity: 1 },
+    );
   };
 
   const handleWishlist = (event: any) => {
@@ -142,8 +156,7 @@ export function ProductCard({
           <button
             type="button"
             onClick={handleQuickAdd}
-            onTouchStart={handleQuickAdd}
-            aria-label="Add to cart"
+            aria-label={t.quickAdd}
             className="absolute bottom-2 right-2 z-10 grid size-11 place-items-center rounded-full bg-[#0A0A0A] text-white shadow-[0_2px_10px_rgba(0,0,0,0.25)] transition-transform hover:scale-105 active:scale-95 touch-manipulation"
           >
             <ShoppingBag className="size-4" aria-hidden="true" />

@@ -410,7 +410,10 @@ export function SellerShell({
   // of a confusing "not a seller" state.
   const supportHandshake = useSupportHandshake();
   const locale = useSellerLocale();
-  const dirProps = { dir: localeDirections[locale], lang: locale } as const;
+  // Logical direction for side-based components (drawer, etc.): the mobile
+  // nav drawer slides in from the inline-start side.
+  const dir = localeDirections[locale];
+  const dirProps = { dir, lang: locale } as const;
   const nav = useNavigate();
   const t = getTranslations(locale).sellerAuth;
   // V8 Sec 47: in support mode only the read-scope sections are shown —
@@ -627,7 +630,7 @@ export function SellerShell({
         </div>
         {/* Mobile nav: drawer with grouped navigation */}
         <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
-          <SheetContent side="left" className="w-72 overflow-y-auto p-0">
+          <SheetContent side={dir === "rtl" ? "right" : "left"} className="w-72 overflow-y-auto p-0">
             <SheetHeader className="border-b p-4">
               <SheetTitle className="flex items-center gap-2 text-start">
                 <span className="flex h-7 w-7 items-center justify-center rounded-md bg-zinc-950 text-xs font-bold text-white">

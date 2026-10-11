@@ -31,12 +31,30 @@ import {
 import { DataTable, EmptyState, StatCard } from "@/components/dashboard";
 import { listAdminSellersLite } from "@/lib/admin-catalog.functions";
 import { listAdminOrders } from "@/lib/admin-orders.functions";
-import { getLocale, getTranslations } from "@/lib/i18n";
+import { getLocale, getTranslations, type SupportedLocale } from "@/lib/i18n";
 
 export const Route = createFileRoute("/admin/orders")({
   // List state (search / filters / page) lives in the URL so Back works and
   // filtered views are shareable.
-  validateSearch: (search: Record<string, unknown>) => ({
+  //
+  // All keys are optional in the TYPE (runtime still fills defaults): the
+  // $orderId child route genuinely ignores these params — filter context
+  // travels via the `back` URL instead — so Links to the detail page must not
+  // be forced to repeat them. TanStack Router accumulates parent search
+  // schemas into child Link types, which is why this loosening lives here.
+  validateSearch: (search: Record<string, unknown>): {
+    locale?: SupportedLocale;
+    q?: string;
+    status?: string;
+    sellerId?: string;
+    wilaya?: string;
+    paymentMethod?: string;
+    minTotal?: string;
+    maxTotal?: string;
+    from?: string;
+    to?: string;
+    page?: number;
+  } => ({
     locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined),
     q: strParam(search["q"]),
     status: strParam(search["status"]),
@@ -88,7 +106,8 @@ function OrdersPage() {
 }
 
 function OrdersList() {
-  const { locale } = Route.useSearch();
+  const { locale: localeParam } = Route.useSearch();
+  const locale = getLocale(localeParam);
   const t = getTranslations(locale);
   const url = useUrlState({ page: 1 });
   const backParam = useBackParam();
@@ -394,17 +413,6 @@ function OrdersList() {
                             params={{ orderId: order.id }}
                             search={{
                               back: backParam,
-                              locale,
-                              q,
-                              status,
-                              sellerId,
-                              wilaya,
-                              paymentMethod,
-                              minTotal,
-                              maxTotal,
-                              from,
-                              to,
-                              page,
                             }}
                             className="font-medium text-primary underline-offset-4 hover:underline"
                           >

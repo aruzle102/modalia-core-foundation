@@ -32,6 +32,15 @@ const quoteSchema = z.object({
   methods: z.record(z.string().uuid(), z.enum(["home", "office"])),
   officeIds: z.record(z.string().uuid(), z.string().uuid()),
   couponCode: z.string().trim().min(1).max(64).optional(),
+  // Optional buyer identity for coupon checks that need it. Same strict
+  // Algerian phone format as the checkout submit path; when present it is
+  // normalized exactly like p_phone at submit time and used for the coupon's
+  // per_customer_limit check (mirrors the checkout_cart RPC). Absent → the
+  // check is skipped and the RPC remains authoritative at submit.
+  buyerPhone: z
+    .string()
+    .regex(/^(0[5-7][0-9]{8}|\+213[5-7][0-9]{8})$/)
+    .optional(),
 });
 
 export type QuoteDeliveryMethod = "home" | "office";
@@ -121,12 +130,21 @@ function matchShippingRule(
 /**
  * Read-only coupon validation, mirroring Worker A's validateCoupon contract.
  * Returns the same reason codes; no usage counters are touched.
+ *
+ * Also mirrors the checkout_cart RPC's per_customer_limit check
+ * (supabase/migrations/20261006180000_checkout_coupons_tracking_v8.sql):
+ * when `buyerPhone` is provided it is normalized exactly like the submit
+ * path's p_phone and prior coupon_usages rows for this coupon + phone are
+ * counted; reaching the limit rejects the coupon read-only. Without a buyer
+ * phone there is no customer identity on a public quote, so the check is
+ * skipped — the RPC stays authoritative at submit time.
  */
 async function validateCouponReadonly(
   db: AdminDb,
   code: string,
   sellerSubtotals: Record<string, number>,
   subtotal: number,
+  buyerPhone: string | null,
 ): Promise<
   | { valid: true; code: string; discountType: string; discountValue: number; discountAmount: number; eligibleSubtotal: number }
   | { valid: false; reason: CouponReason }
@@ -137,7 +155,7 @@ async function validateCouponReadonly(
   const { data: coupon } = await db
     .from("coupons")
     .select(
-      "code,status,discount_type,discount_value,starts_at,ends_at,usage_limit,usage_count,min_order_amount,max_discount_amount,seller_id",
+      "id,code,status,discount_type,discount_value,starts_at,ends_at,usage_limit,usage_count,per_customer_limit,min_order_amount,max_discount_amount,seller_id",
     )
     .ilike("code", escapedCode)
     .maybeSingle();
@@ -152,6 +170,35 @@ async function validateCouponReadonly(
   }
   if (coupon.usage_limit != null && coupon.usage_count >= coupon.usage_limit) {
     return { valid: false, reason: "usage_limit" };
+  }
+  // Per-customer limit — same logic as the checkout_cart RPC:
+  //   SELECT count(*) FROM public.coupon_usages
+  //     WHERE coupon_id = v_coupon.id
+  //       AND ((p_customer_id IS NOT NULL AND customer_id = p_customer_id)
+  //         OR (guest_phone IS NOT NULL AND guest_phone = p_phone));
+  //   IF v_usage_used >= v_coupon.per_customer_limit THEN RAISE EXCEPTION ...; END IF;
+  // The customer_id branch never applies on this public quote path (the
+  // submit wrapper never passes p_customer_id); the guest-phone branch is
+  // the operative one, with the phone normalized exactly as at submit time
+  // (checkout.functions.ts: `0…` → `+213…`).
+  if (coupon.per_customer_limit != null && buyerPhone) {
+    const normalizedPhone = buyerPhone.startsWith("0") ? "+213" + buyerPhone.slice(1) : buyerPhone;
+    // coupon_usages is not yet in the generated Database types (same
+    // `as any` precedent as system-health.functions.ts "pg_tables"); the
+    // query only reads `count`, never row fields.
+    const { count: priorUses } = await db
+      .from("coupon_usages" as any)
+      .select("id", { count: "exact", head: true })
+      .eq("coupon_id", coupon.id)
+      .eq("guest_phone", normalizedPhone);
+    // Rejection uses the existing couponError shape. The reason stays inside
+    // the CouponReason union (checkout.tsx maps it exhaustively with
+    // Record<CouponReason, string> — a new reason would break tsc there);
+    // the client shows its usage-limit message, same rejection family the
+    // RPC raises ("…maximum number of times").
+    if ((priorUses ?? 0) >= coupon.per_customer_limit) {
+      return { valid: false, reason: "usage_limit" };
+    }
   }
   const eligibleSubtotal = coupon.seller_id ? (sellerSubtotals[coupon.seller_id] ?? 0) : subtotal;
   if (eligibleSubtotal <= 0) return { valid: false, reason: "not_applicable" };
@@ -337,7 +384,13 @@ export const getCheckoutQuote = createServerFn({ method: "POST" })
     let coupon: QuoteCoupon | null = null;
     let couponError: { reason: CouponReason } | null = null;
     if (data.couponCode) {
-      const validation = await validateCouponReadonly(db, data.couponCode, sellerSubtotals, sellers.reduce((s, x) => s + x.subtotal, 0));
+      const validation = await validateCouponReadonly(
+        db,
+        data.couponCode,
+        sellerSubtotals,
+        sellers.reduce((s, x) => s + x.subtotal, 0),
+        data.buyerPhone ?? null,
+      );
       if (validation.valid) {
         coupon = { code: validation.code, discountAmount: validation.discountAmount };
       } else {

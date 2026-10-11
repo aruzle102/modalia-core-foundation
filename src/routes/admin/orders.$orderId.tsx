@@ -158,7 +158,7 @@ function OrderDetailPage() {
           fallbackTo="/admin/orders"
           className="inline-flex w-fit items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
         >
-          <ArrowLeft className="size-4" />
+          <ArrowLeft className="size-4 rtl:rotate-180" />
           Back to orders
         </BackLink>
 

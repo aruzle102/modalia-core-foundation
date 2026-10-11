@@ -72,7 +72,6 @@ import { Route as AdminVerificationsRouteImport } from './routes/admin/verificat
 import { Route as AdminWilayasRouteImport } from './routes/admin/wilayas'
 import { Route as CategorySlugRouteImport } from './routes/category.$slug'
 import { Route as ProductSlugRouteImport } from './routes/product.$slug'
-import { Route as SellerChangePasswordRouteImport } from './routes/seller/change-password'
 import { Route as SellerLoginRouteImport } from './routes/seller/login'
 import { Route as SellerResetPasswordRouteImport } from './routes/seller/reset-password'
 import { Route as StoreSlugRouteImport } from './routes/store.$slug'
@@ -430,11 +429,6 @@ const ProductSlugRoute = ProductSlugRouteImport.update({
   path: '/product/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SellerChangePasswordRoute = SellerChangePasswordRouteImport.update({
-  id: '/seller/change-password',
-  path: '/seller/change-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const SellerLoginRoute = SellerLoginRouteImport.update({
   id: '/seller/login',
   path: '/seller/login',
@@ -733,7 +727,6 @@ export interface FileRoutesByFullPath {
   '/admin/wilayas': typeof AdminWilayasRoute
   '/category/$slug': typeof CategorySlugRoute
   '/product/$slug': typeof ProductSlugRoute
-  '/seller/change-password': typeof SellerChangePasswordRoute
   '/seller/login': typeof SellerLoginRoute
   '/seller/reset-password': typeof SellerResetPasswordRoute
   '/store/$slug': typeof StoreSlugRoute
@@ -839,7 +832,6 @@ export interface FileRoutesByTo {
   '/admin/wilayas': typeof AdminWilayasRoute
   '/category/$slug': typeof CategorySlugRoute
   '/product/$slug': typeof ProductSlugRoute
-  '/seller/change-password': typeof SellerChangePasswordRoute
   '/seller/login': typeof SellerLoginRoute
   '/seller/reset-password': typeof SellerResetPasswordRoute
   '/store/$slug': typeof StoreSlugRoute
@@ -947,7 +939,6 @@ export interface FileRoutesById {
   '/admin/wilayas': typeof AdminWilayasRoute
   '/category/$slug': typeof CategorySlugRoute
   '/product/$slug': typeof ProductSlugRoute
-  '/seller/change-password': typeof SellerChangePasswordRoute
   '/seller/login': typeof SellerLoginRoute
   '/seller/reset-password': typeof SellerResetPasswordRoute
   '/store/$slug': typeof StoreSlugRoute
@@ -1055,7 +1046,6 @@ export interface FileRouteTypes {
     | '/admin/wilayas'
     | '/category/$slug'
     | '/product/$slug'
-    | '/seller/change-password'
     | '/seller/login'
     | '/seller/reset-password'
     | '/store/$slug'
@@ -1161,7 +1151,6 @@ export interface FileRouteTypes {
     | '/admin/wilayas'
     | '/category/$slug'
     | '/product/$slug'
-    | '/seller/change-password'
     | '/seller/login'
     | '/seller/reset-password'
     | '/store/$slug'
@@ -1268,7 +1257,6 @@ export interface FileRouteTypes {
     | '/admin/wilayas'
     | '/category/$slug'
     | '/product/$slug'
-    | '/seller/change-password'
     | '/seller/login'
     | '/seller/reset-password'
     | '/store/$slug'
@@ -1374,7 +1362,6 @@ export interface RootRouteChildren {
   AdminWilayasRoute: typeof AdminWilayasRoute
   CategorySlugRoute: typeof CategorySlugRoute
   ProductSlugRoute: typeof ProductSlugRoute
-  SellerChangePasswordRoute: typeof SellerChangePasswordRoute
   SellerLoginRoute: typeof SellerLoginRoute
   SellerResetPasswordRoute: typeof SellerResetPasswordRoute
   StoreSlugRoute: typeof StoreSlugRoute
@@ -1823,13 +1810,6 @@ declare module '@tanstack/react-router' {
       path: '/product/$slug'
       fullPath: '/product/$slug'
       preLoaderRoute: typeof ProductSlugRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/seller/change-password': {
-      id: '/seller/change-password'
-      path: '/seller/change-password'
-      fullPath: '/seller/change-password'
-      preLoaderRoute: typeof SellerChangePasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/seller/login': {
@@ -2396,7 +2376,6 @@ const rootRouteChildren: RootRouteChildren = {
   AdminWilayasRoute: AdminWilayasRoute,
   CategorySlugRoute: CategorySlugRoute,
   ProductSlugRoute: ProductSlugRoute,
-  SellerChangePasswordRoute: SellerChangePasswordRoute,
   SellerLoginRoute: SellerLoginRoute,
   SellerResetPasswordRoute: SellerResetPasswordRoute,
   StoreSlugRoute: StoreSlugRoute,

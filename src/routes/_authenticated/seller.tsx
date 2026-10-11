@@ -69,11 +69,9 @@ export const Route = createFileRoute("/_authenticated/seller")({
     // Sanitize: show error type but not sensitive details
     const displayMessage = message.includes("DENIED")
       ? "Access denied. Please ensure your seller account is active."
-      : message.includes("MUST_RESET_PASSWORD")
-        ? "Password reset required. Please change your password."
-        : message.includes("Unauthorized")
-          ? "Please sign in again."
-          : `Error: ${message}`;
+      : message.includes("Unauthorized")
+        ? "Please sign in again."
+        : `Error: ${message}`;
     return (
       <div className="mx-auto max-w-md px-6">
         <ErrorState

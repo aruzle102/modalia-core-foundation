@@ -141,11 +141,8 @@ type SellerDb = SupabaseClient<Database>;
  *   permissions stored in that row's jsonb array.
  * - Rejects when neither row exists, when the seller's account_status is not
  *   'active', or when a staff member lacks any of the required permissions.
- * - Unless `opts.allowMustReset` is set, an owner whose
- *   `must_reset_password` flag is set is rejected with
- *   `Error("MUST_RESET_PASSWORD")`. This makes every existing seller server
- *   function deny flagged owners server-side — the enforcement is not just
- *   the client redirect in SellerShell (which stays as a fast-path).
+ * - The legacy `must_reset_password` flag is reported in the context for
+ *   display purposes only; it no longer blocks any seller server function.
  */
 async function resolveSeller(
   ctx: { supabase: SellerDb; userId: string },
@@ -192,10 +189,8 @@ async function resolveSeller(
     mustResetPassword = ownedSeller.must_reset_password ?? false;
     onboarded = ownedSeller.onboarded_at != null;
     perms = [...ALL_SELLER_PERMISSIONS];
-    // Server-side first-login enforcement: a flagged owner may not touch
-    // ANY seller server function until the password is rotated. The
-    // password-change flow itself uses requireSellerAllowMustReset.
-    if (mustResetPassword && !opts.allowMustReset) throw new Error("MUST_RESET_PASSWORD");
+    // The must_reset_password flag is informational only (shown on the
+    // security page); it no longer blocks seller access.
   } else {
     const { data: staff, error: staffError } = await supabase
       .from("seller_staff")
@@ -255,11 +250,10 @@ async function resolveSeller(
 }
 
 /**
- * Session-only seller resolution that DENIES flagged owners server-side.
- * This is the default gate for every seller server function: an owner with
- * `must_reset_password = true` gets `Error("MUST_RESET_PASSWORD")` instead
- * of a context, so no seller data or mutation is reachable before the
- * forced password rotation.
+ * Session-only seller resolution for seller server functions.
+ * Rejects when no seller identity exists, the account is not active,
+ * or a staff member lacks a required permission. The legacy
+ * `must_reset_password` flag is informational only and never blocks access.
  */
 export async function requireSeller(
   ctx: { supabase: SellerDb; userId: string },
@@ -285,10 +279,6 @@ export async function requireSellerAllowMustReset(
  * Server-side UI gate for the Seller OS. Returns { seller: SellerContext | null }.
  * Signed-out users never reach the handler (requireSupabaseAuth throws first);
  * signed-in non-sellers resolve to null instead of an error.
- *
- * A flagged owner (MUST_RESET_PASSWORD) still resolves — with the
- * allow-variant — so the shell client-redirects to the change-password page
- * instead of showing a confusing "not-seller" state.
  */
 export const getSellerContext = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -299,18 +289,7 @@ export const getSellerContext = createServerFn({ method: "GET" })
         userId: context.userId,
       });
       return { seller };
-    } catch (err) {
-      if (err instanceof Error && err.message === "MUST_RESET_PASSWORD") {
-        try {
-          const seller = await requireSellerAllowMustReset({
-            supabase: context.supabase as SellerDb,
-            userId: context.userId,
-          });
-          return { seller };
-        } catch {
-          return { seller: null };
-        }
-      }
+    } catch {
       return { seller: null };
     }
   });
@@ -392,83 +371,3 @@ function authVerifierClient() {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 }
-
-/**
- * Forced password rotation for sellers provisioned by the admin.
- *
- * Flow: admin creates the auth user with a one-time temporary password
- * (shown once in the admin UI) and sets `sellers.must_reset_password = true`.
- * On first sign-in the login page routes the owner to
- * `/seller/change-password`, which calls this function: the caller proves
- * knowledge of the temporary password, a new password is applied through the
- * admin API, and the flag is cleared.
- *
- * Errors are thrown as short English codes; the page maps them to i18n.
- */
-const changePasswordInput = z.object({
-  currentPassword: z.string().min(1).max(128),
-  newPassword: z.string().min(8).max(72),
-});
-
-export const changeSellerPassword = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((data) => changePasswordInput.parse(data))
-  .handler(async ({ data, context }) => {
-    const { rateLimitEndpoint } = await import("@/lib/rate-limit");
-    // Blunt password-guessing against the temporary password.
-    rateLimitEndpoint("changeSellerPassword", 10, 10 * 60 * 1000);
-
-    const supabase = context.supabase as SellerDb;
-    const userId = context.userId;
-
-    // The allow-variant: this is the one operation a flagged owner must be
-    // able to perform while MUST_RESET_PASSWORD is set (requireSeller would
-    // throw here). Staff never rotate the seller's credentials — fail closed.
-    const access = await requireSellerAllowMustReset({ supabase, userId });
-    if (!access.isOwner) throw new Error("NOT_SELLER_OWNER");
-    const { data: seller, error: sellerError } = await supabase
-      .from("sellers")
-      .select("id,email")
-      .eq("id", access.sellerId)
-      .maybeSingle();
-    if (sellerError || !seller) throw new Error("NOT_SELLER_OWNER");
-    if (data.newPassword === data.currentPassword) throw new Error("PASSWORD_SAME_AS_CURRENT");
-
-    if (!seller.email) throw new Error("NOT_SELLER_OWNER");
-
-    // Prove knowledge of the current (temporary) password with a throwaway
-    // session-less sign-in. Nothing from the browser session is reused.
-    const { error: signInError } = await authVerifierClient().auth.signInWithPassword({
-      email: seller.email,
-      password: data.currentPassword,
-    });
-    if (signInError) throw new Error("CURRENT_PASSWORD_INCORRECT");
-
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(userId, {
-      password: data.newPassword,
-      user_metadata: { force_password_reset: false },
-    });
-    if (updateError) throw new Error("UPDATE_FAILED");
-
-    const { error: flagError } = await supabaseAdmin
-      .from("sellers")
-      .update({ must_reset_password: false })
-      .eq("id", seller.id);
-    if (flagError) throw new Error("UPDATE_FAILED");
-
-    // Best-effort audit; the password itself is never logged or stored.
-    try {
-      await supabaseAdmin.from("audit_logs").insert({
-        actor_id: userId,
-        action: "seller_password_changed",
-        resource: "seller",
-        resource_id: seller.id,
-        metadata: {},
-      });
-    } catch {
-      /* audit is best-effort */
-    }
-
-    return { ok: true as const };
-  });

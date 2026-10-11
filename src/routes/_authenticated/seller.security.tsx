@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { AlertTriangle, KeyRound, LogOut, MailCheck, MailWarning, ShieldCheck, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -73,30 +73,6 @@ function SellerSecurityPage() {
         "Review and manage your account's sign-in security — your password, your email verification, and your sessions."
       </p>
 
-      {/* Clear warning while a temporary password is still active. */}
-      {mustResetPassword ? (
-        <div
-          role="alert"
-          className="mt-6 flex flex-col gap-3 rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 sm:flex-row sm:items-center"
-        >
-          <div className="flex items-start gap-3">
-            <AlertTriangle className="mt-0.5 size-5 shrink-0 text-amber-600 dark:text-amber-400" />
-            <div>
-              <p className="text-sm font-semibold">Temporary password still active</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                "Your account is still using the temporary password created by the platform team. Change it to a password only you know before doing anything else."
-              </p>
-            </div>
-          </div>
-          <div className="sm:ms-auto sm:shrink-0">
-            <Button type="button" size="sm" asChild>
-              <Link to="/seller/change-password" search={{ locale }}>
-                Change password now
-              </Link>
-            </Button>
-          </div>
-        </div>
-      ) : null}
 
       <div className="mt-6">
         {authQuery.isLoading ? (
@@ -127,13 +103,7 @@ function SellerSecurityPage() {
                     : "Last changed by you. Change it any time you suspect it may be known."
                 }
               />
-              <div className="mt-4">
-                <Button type="button" variant={mustResetPassword ? "default" : "outline"} size="sm" asChild>
-                  <Link to="/seller/change-password" search={{ locale }}>
-                    Change password
-                  </Link>
-                </Button>
-              </div>
+
             </FormSection>
 
             {/* Email verification — real status from the auth user, nothing invented */}

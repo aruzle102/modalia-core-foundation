@@ -38,7 +38,6 @@ type GateState = "checking" | "wizard" | "complete" | "load-error";
  * Gate chain (all server-verified):
  * - not active (suspended/disabled/pending/deactivated) → seller login
  *   (which signs the account out with a clear message);
- * - mustResetPassword → change-password first;
  * - staff (never onboarded) → seller dashboard;
  * - already onboarded → friendly "setup complete" state with dashboard link;
  * - otherwise the 4-step wizard, resumable on every visit.
@@ -60,10 +59,6 @@ function SellerOnboardingPage() {
         if (cancelled) return;
         if (status.access !== "active") {
           await nav({ href: `/seller/login?locale=${locale}`, replace: true });
-          return;
-        }
-        if (status.mustResetPassword) {
-          await nav({ href: `/seller/change-password?locale=${locale}`, replace: true });
           return;
         }
         // Staff members are invited with their own credentials and never

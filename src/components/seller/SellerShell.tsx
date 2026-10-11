@@ -435,9 +435,6 @@ export function SellerShell({
   }, [locale, seller?.supportMode, seller?.storeSlug]);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
-  // Forced password rotation: a first-time owner who reaches the workspace
-  // Password change is handled via the onboarding wizard.
-  // No forced redirect to change-password page.
   // Preserve the intended route so the seller returns here after signing in.
   const intended = useMemo(
     () =>

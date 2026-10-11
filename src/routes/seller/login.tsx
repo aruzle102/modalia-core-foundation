@@ -84,15 +84,9 @@ function SellerLoginPage() {
       try {
         const { data } = await supabase.auth.getSession();
         if (cancelled || !data.session) return;
-        const { access, mustResetPassword, onboarded, isOwner } = await getSellerAccessStatus();
+        const { access, onboarded, isOwner } = await getSellerAccessStatus();
         if (cancelled) return;
         if (access === "active") {
-          // Forced password rotation: an owner whose temporary password
-          // hasn't been rotated yet must change it before anything else.
-          if (mustResetPassword) {
-            await nav({ href: `/seller/change-password?locale=${locale}`, replace: true });
-            return;
-          }
           // New onboarding flow: sellers who haven't completed setup go to the
           // 4-step wizard (personal → store → appearance → credentials).
           // Onboarding flow: non-onboarded owners go to the wizard.
@@ -139,19 +133,11 @@ function SellerLoginPage() {
       void clearLoginAttempts().catch(() => {});
       // Server-side status check: suspended / disabled / pending sellers and
       // deactivated staff must not enter, with a clear reason.
-      const { access, mustResetPassword, onboarded, isOwner } = await getSellerAccessStatus();
+      const { access, onboarded, isOwner } = await getSellerAccessStatus();
       if (access !== "active") {
         await supabase.auth.signOut();
         setMessageTone("error");
         setMessage(blockedMessage(t));
-        return;
-      }
-      // Forced password rotation: a flagged owner must change the temporary
-      // password before anything else. The change-password page routes to the
-      // onboarding wizard or the dashboard on success, so the intended
-      // destination is preserved by the existing flow.
-      if (mustResetPassword) {
-        await nav({ href: `/seller/change-password?locale=${locale}`, replace: true });
         return;
       }
       // New onboarding flow: non-onboarded sellers go to the 4-step wizard.

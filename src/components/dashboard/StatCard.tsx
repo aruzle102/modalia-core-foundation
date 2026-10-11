@@ -46,21 +46,26 @@ export function StatCard({ title, value, icon, description, trend, loading, feat
   return (
     <Card
       className={cn(
-        "h-full rounded-xl border-neutral-200/80 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)]",
-        "transition-shadow duration-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)]",
+        "relative h-full overflow-hidden rounded-2xl border-neutral-200/80 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)]",
+        "transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(0,0,0,0.10)]",
         "dark:border-neutral-800/80 dark:bg-neutral-950",
         featured && "lg:col-span-2",
         className,
       )}
     >
-      <CardContent className="p-5">
+      {/* Accent bar */}
+      <span
+        aria-hidden="true"
+        className="absolute inset-y-0 start-0 w-1 bg-gradient-to-b from-neutral-900 via-neutral-700 to-neutral-400 dark:from-white dark:via-neutral-300 dark:to-neutral-600"
+      />
+      <CardContent className="p-5 ps-6">
         <div className="flex items-start justify-between gap-3">
-          <p className="text-xs font-semibold uppercase tracking-[0.08em] text-neutral-500 dark:text-neutral-400">
+          <p className="text-xs font-bold uppercase tracking-[0.12em] text-neutral-500 dark:text-neutral-400">
             {title}
           </p>
           {icon ? (
             <span
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-neutral-950 text-white shadow-sm dark:bg-white dark:text-neutral-950"
               aria-hidden="true"
             >
               {icon}
@@ -77,8 +82,8 @@ export function StatCard({ title, value, icon, description, trend, loading, feat
             <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
               <p
                 className={cn(
-                  "font-bold tabular-nums tracking-tight text-neutral-900 dark:text-white",
-                  featured ? "text-4xl" : "text-3xl",
+                  "font-extrabold tabular-nums tracking-tighter text-neutral-950 dark:text-white",
+                  featured ? "text-5xl" : "text-4xl",
                 )}
               >
                 {value}

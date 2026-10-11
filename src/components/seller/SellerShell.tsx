@@ -195,9 +195,12 @@ function getNavGroups(
   ];
 }
 
-function SellerNavLink({ item, compact, onNavigate }: { item: NavItem; compact?: boolean; onNavigate?: (() => void) | undefined }) {
+function SellerNavLink({ item, compact, onNavigate, onDark }: { item: NavItem; compact?: boolean; onNavigate?: (() => void) | undefined; onDark?: boolean | undefined }) {
   const className = cn(
-    "group relative flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-all duration-200 hover:bg-neutral-100 hover:text-neutral-900 dark:hover:bg-neutral-800/60 dark:hover:text-neutral-100",
+    "group relative flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-all duration-200",
+    onDark
+      ? "text-neutral-400 hover:bg-white/10 hover:text-white [&_svg]:text-neutral-500 hover:[&_svg]:text-white"
+      : "text-muted-foreground hover:bg-neutral-100 hover:text-neutral-900 dark:hover:bg-neutral-800/60 dark:hover:text-neutral-100",
     compact && "shrink-0 whitespace-nowrap py-1.5",
   );
   if (item.href) {
@@ -221,7 +224,11 @@ function SellerNavLink({ item, compact, onNavigate }: { item: NavItem; compact?:
       preload="intent"
       onClick={onNavigate}
       {...(item.exact ? { activeOptions: { exact: true } } : {})}
-      activeProps={{ className: "bg-neutral-900 text-white font-medium shadow-sm dark:bg-white dark:text-neutral-900 [&_svg]:text-current" }}
+      activeProps={{
+        className: onDark
+          ? "bg-white text-neutral-950 font-semibold shadow-md [&_svg]:text-neutral-950"
+          : "bg-neutral-900 text-white font-medium shadow-sm dark:bg-white dark:text-neutral-900 [&_svg]:text-current",
+      }}
       className={className}
     >
       {item.icon}
@@ -275,7 +282,7 @@ function itemMatches(item: NavItem, pathname: string): boolean {
  * persist in localStorage so the sidebar looks the same after reload.
  * Follows the AdminShell pattern.
  */
-function SellerSidebarNav({ groups, onNavigate }: { groups: NavGroup[]; onNavigate?: () => void }) {
+function SellerSidebarNav({ groups, onNavigate, dark }: { groups: NavGroup[]; onNavigate?: () => void; dark?: boolean }) {
   const { pathname } = useLocation();
   const allItems = useMemo(() => groups.flatMap((g) => g.items), [groups]);
   const [expanded, setExpanded] = useState<string[]>(() => {
@@ -326,8 +333,11 @@ function SellerSidebarNav({ groups, onNavigate }: { groups: NavGroup[]; onNaviga
               onClick={() => toggle(group.id)}
               aria-expanded={open}
               className={cn(
-                "flex w-full items-center justify-between rounded-lg px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-neutral-500 transition-colors duration-200 hover:bg-neutral-100 hover:text-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-800/60 dark:hover:text-neutral-200",
-                active && "text-neutral-900 dark:text-neutral-100",
+                "flex w-full items-center justify-between rounded-lg px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] transition-colors duration-200",
+                dark
+                  ? "text-neutral-500 hover:bg-white/5 hover:text-neutral-300"
+                  : "text-neutral-500 hover:bg-neutral-100 hover:text-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-800/60 dark:hover:text-neutral-200",
+                active && (dark ? "text-white" : "text-neutral-900 dark:text-neutral-100"),
               )}
             >
               <span>{group.label}</span>
@@ -342,7 +352,7 @@ function SellerSidebarNav({ groups, onNavigate }: { groups: NavGroup[]; onNaviga
             {open ? (
               <div className="mt-0.5 space-y-0.5">
                 {group.items.map((item) => (
-                  <SellerNavLink key={item.href ?? String(item.to)} item={item} onNavigate={onNavigate} />
+                  <SellerNavLink key={item.href ?? String(item.to)} item={item} onNavigate={onNavigate} onDark={dark} />
                 ))}
               </div>
             ) : null}
@@ -642,8 +652,11 @@ export function SellerShell({
       </header>
 
       <div className="flex">
-        <aside className="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-64 shrink-0 self-start overflow-y-auto border-e border-neutral-200/80 bg-white dark:border-neutral-800/80 dark:bg-neutral-950 lg:block">
-          <SellerSidebarNav groups={navGroups} />
+        <aside className="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-68 shrink-0 self-start overflow-y-auto bg-neutral-950 text-neutral-200 lg:block dark:bg-black">
+          <div className="px-4 pb-2 pt-5">
+            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-neutral-500">Seller Workspace</p>
+          </div>
+          <SellerSidebarNav groups={navGroups} dark />
         </aside>
 
         <main id="main-content" tabIndex={-1} className="min-w-0 flex-1">

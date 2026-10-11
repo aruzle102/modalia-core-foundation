@@ -208,14 +208,21 @@ function itemMatches(item: NavItem, pathname: string): boolean {
   return pathname === to || pathname.startsWith(`${to}/`);
 }
 
-function NavLink({ item, compact }: { item: NavItem; compact?: boolean }) {
+function NavLink({ item, compact, onDark }: { item: NavItem; compact?: boolean; onDark?: boolean | undefined }) {
   return (
     <Link
       to={item.to}
       {...(item.exact ? { activeOptions: { exact: true } } : {})}
-      activeProps={{ className: "bg-neutral-900 text-white font-medium shadow-sm dark:bg-white dark:text-neutral-900 [&_svg]:text-current" }}
+      activeProps={{
+        className: onDark
+          ? "bg-white text-neutral-950 font-semibold shadow-md [&_svg]:text-neutral-950"
+          : "bg-neutral-900 text-white font-medium shadow-sm dark:bg-white dark:text-neutral-900 [&_svg]:text-current",
+      }}
       className={cn(
-        "group relative flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-all duration-200 hover:bg-neutral-100 hover:text-neutral-900 dark:hover:bg-neutral-800/60 dark:hover:text-neutral-100",
+        "group relative flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-all duration-200",
+        onDark
+          ? "text-neutral-400 hover:bg-white/10 hover:text-white [&_svg]:text-neutral-500 hover:[&_svg]:text-white"
+          : "text-muted-foreground hover:bg-neutral-100 hover:text-neutral-900 dark:hover:bg-neutral-800/60 dark:hover:text-neutral-100",
         compact && "shrink-0 whitespace-nowrap py-1.5",
       )}
     >
@@ -229,7 +236,7 @@ function NavLink({ item, compact }: { item: NavItem; compact?: boolean }) {
  * Collapsible sidebar group. Expanded groups + the active section persist in
  * localStorage so the sidebar looks the same after reload.
  */
-function SidebarNav({ groups }: { groups: NavGroup[] }) {
+function SidebarNav({ groups, dark }: { groups: NavGroup[]; dark?: boolean }) {
   const { pathname } = useLocation();
   const allItems = useMemo(() => groups.flatMap((g) => g.items), [groups]);
   const [expanded, setExpanded] = useState<string[]>(() => {
@@ -280,8 +287,11 @@ function SidebarNav({ groups }: { groups: NavGroup[] }) {
               onClick={() => toggle(group.id)}
               aria-expanded={open}
               className={cn(
-                "flex w-full items-center justify-between rounded-lg px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-neutral-500 transition-colors duration-200 hover:bg-neutral-100 hover:text-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-800/60 dark:hover:text-neutral-200",
-                active && "text-neutral-900 dark:text-neutral-100",
+                "flex w-full items-center justify-between rounded-lg px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] transition-colors duration-200",
+                dark
+                  ? "text-neutral-500 hover:bg-white/5 hover:text-neutral-300"
+                  : "text-neutral-500 hover:bg-neutral-100 hover:text-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-800/60 dark:hover:text-neutral-200",
+                active && (dark ? "text-white" : "text-neutral-900 dark:text-neutral-100"),
               )}
             >
               <span>{group.label}</span>
@@ -296,7 +306,7 @@ function SidebarNav({ groups }: { groups: NavGroup[] }) {
             {open ? (
               <div className="mt-0.5 space-y-0.5">
                 {group.items.map((item) => (
-                  <NavLink key={String(item.to)} item={item} />
+                  <NavLink key={String(item.to)} item={item} onDark={dark} />
                 ))}
               </div>
             ) : null}
@@ -413,8 +423,11 @@ export function AdminShell({
       </header>
 
       <div className="flex">
-        <aside className="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-64 shrink-0 self-start overflow-y-auto border-e border-neutral-200/80 bg-white dark:border-neutral-800/80 dark:bg-neutral-950 lg:block">
-          <SidebarNav groups={groups} />
+        <aside className="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-68 shrink-0 self-start overflow-y-auto bg-neutral-950 text-neutral-200 lg:block dark:bg-black">
+          <div className="px-4 pb-2 pt-5">
+            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-neutral-500">Control Center</p>
+          </div>
+          <SidebarNav groups={groups} dark />
         </aside>
 
         <main id="main-content" tabIndex={-1} className="min-w-0 flex-1">

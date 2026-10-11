@@ -1,8 +1,15 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { LogIn } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import {
+  AuthPage as AuthShell,
+  AuthCard,
+  AuthCenter,
+  AuthField,
+  AuthInput,
+  AuthMessage,
+  AuthSubmit,
+  AuthTextButton,
+} from "@/components/auth/AuthForm";
 import { supabase } from "@/integrations/supabase/client";
 import { getSellerAccessStatus } from "@/lib/seller-auth";
 import { resolveUsernameToEmail } from "@/lib/seller-identity";
@@ -190,22 +197,18 @@ function SellerLoginPage() {
   }
 
   return (
-    <div dir={localeDirections[locale]} lang={locale} className="min-h-screen bg-background">
-      <main id="main-content" tabIndex={-1} className="mx-auto flex min-h-screen max-w-md items-center px-4 py-10">
-        <div className="w-full rounded-3xl border border-border bg-card p-6 sm:p-8">
-          <div>
-            <p className="text-wordmark text-foreground">Modalia</p>
-            <p className="mt-2 text-eyebrow text-muted-foreground">Seller OS</p>
-            <h1 className="mt-1 text-display">{mode === "signin" ? t.loginTitle : t.forgotTitle}</h1>
-          </div>
-          <p className="mt-3 text-small text-muted-foreground">{mode === "signin" ? t.loginSub : t.forgotSub}</p>
-
+    <AuthShell dir={localeDirections[locale]} lang={locale}>
+      <AuthCenter className="min-h-screen">
+        <AuthCard
+          eyebrow="MODALIA · SELLER OS"
+          title={mode === "signin" ? t.loginTitle : t.forgotTitle}
+          subtitle={mode === "signin" ? t.loginSub : t.forgotSub}
+        >
+          {checkingSession ? <span className="sr-only">{t.signingIn}</span> : null}
           {mode === "signin" ? (
-            <form onSubmit={handleSignIn}>
-              <label className="mt-7 block text-small">
-                {t.identifier}
-                <Input
-                  className="mt-2"
+            <form onSubmit={handleSignIn} className="space-y-5">
+              <AuthField label={t.identifier}>
+                <AuthInput
                   type="text"
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
@@ -213,12 +216,11 @@ function SellerLoginPage() {
                   autoComplete="username"
                   placeholder={t.identifierPlaceholder}
                   spellCheck={false}
+                  maxLength={160}
                 />
-              </label>
-              <label className="mt-5 block text-small">
-                {t.password}
-                <Input
-                  className="mt-2"
+              </AuthField>
+              <AuthField label={t.password}>
+                <AuthInput
                   type="password"
                   minLength={8}
                   value={password}
@@ -226,78 +228,68 @@ function SellerLoginPage() {
                   required
                   autoComplete="current-password"
                 />
-              </label>
-              {message ? (
-                <p
-                  role="alert"
-                  className={
-                    messageTone === "error"
-                      ? "mt-5 rounded-xl bg-destructive/10 p-3 text-small text-destructive"
-                      : "mt-5 rounded-xl bg-muted p-3 text-small"
-                  }
-                >
-                  {message}
-                </p>
-              ) : null}
-              <Button className="mt-6 h-12 w-full rounded-full" disabled={loading}>
-                {loading ? t.signingIn : t.signIn}
-              </Button>
-              <button
-                type="button"
-                className="mt-5 w-full text-small underline underline-offset-4"
-                onClick={() => {
-                  setMode("forgot");
-                  setMessage("");
-                }}
-              >
-                {t.forgotPassword}
-              </button>
+              </AuthField>
+              {message ? <AuthMessage tone={messageTone}>{message}</AuthMessage> : null}
+              <AuthSubmit loading={loading} loadingLabel={t.signingIn}>
+                {t.signIn}
+              </AuthSubmit>
             </form>
           ) : (
-            <form onSubmit={handleForgot}>
-              <label className="mt-7 block text-small">
-                {t.email}
-                <Input className="mt-2" type="email" value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} required autoComplete="email" />
-              </label>
-              {message ? (
-                <p
-                  role="alert"
-                  className={
-                    messageTone === "error"
-                      ? "mt-5 rounded-xl bg-destructive/10 p-3 text-small text-destructive"
-                      : "mt-5 rounded-xl bg-muted p-3 text-small"
-                  }
-                >
-                  {message}
-                </p>
-              ) : null}
-              <Button className="mt-6 h-12 w-full rounded-full" disabled={loading}>
-                {loading ? t.sending : t.sendResetLink}
-              </Button>
-              <button
-                type="button"
-                className="mt-5 w-full text-small underline underline-offset-4"
-                onClick={() => {
-                  setMode("signin");
-                  setMessage("");
-                }}
-              >
-                {t.backToSignIn}
-              </button>
+            <form onSubmit={handleForgot} className="space-y-5">
+              <AuthField label={t.email}>
+                <AuthInput
+                  type="email"
+                  value={forgotEmail}
+                  onChange={(e) => setForgotEmail(e.target.value)}
+                  required
+                  autoComplete="email"
+                  maxLength={160}
+                />
+              </AuthField>
+              {message ? <AuthMessage tone={messageTone}>{message}</AuthMessage> : null}
+              <AuthSubmit loading={loading} loadingLabel={t.sending}>
+                {t.sendResetLink}
+              </AuthSubmit>
             </form>
           )}
-
-          <p className="mt-7 text-center text-small text-muted-foreground">
+          {mode === "signin" ? (
+            <AuthTextButton
+              onClick={() => {
+                setMode("forgot");
+                setMessage("");
+              }}
+            >
+              {t.forgotPassword}
+            </AuthTextButton>
+          ) : (
+            <AuthTextButton
+              onClick={() => {
+                setMode("signin");
+                setMessage("");
+              }}
+            >
+              {t.backToSignIn}
+            </AuthTextButton>
+          )}
+          <p className="mt-7 text-center text-sm text-muted-foreground">
             {t.noAccount}{" "}
-            <Link to="/become-a-seller" search={{ locale }} className="underline underline-offset-4">
+            <Link
+              to="/become-a-seller"
+              search={{ locale }}
+              className="underline underline-offset-4 hover:text-foreground"
+            >
               {t.becomeSeller}
             </Link>
           </p>
-          <Link to="/" search={{ locale }} className="mt-3 block text-center text-caption text-muted-foreground">
+          <Link
+            to="/"
+            search={{ locale }}
+            className="mt-3 block text-center text-xs text-muted-foreground underline-offset-4 hover:underline"
+          >
             {t.backToMarketplace}
           </Link>
-        </div>
-      </main>
-    </div>
+        </AuthCard>
+      </AuthCenter>
+    </AuthShell>
   );
 }

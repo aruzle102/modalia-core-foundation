@@ -5,12 +5,8 @@ import { Search } from "lucide-react";
 import { AdminGate } from "@/components/admin/AdminGate";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { Pager, errMsg, pickName } from "./_shared";
-import {
-  AdminCard,
-  StatusPill,
-  EmptyState,
-  TableSkeleton,
-} from "@/components/admin/ui";
+import { StatusPill, TableSkeleton } from "@/components/admin/ui";
+import { DataTable, EmptyState } from "@/components/dashboard";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -85,10 +81,12 @@ function CommunesPage() {
         subtitle="Toggle which communes are deliverable, per wilaya."
         breadcrumbs={[{ label: t.communes }]}
       >
-        <AdminCard
-          title={t.communes}
-          subtitle={`${total} commune(s)`}
-          actions={
+        <section aria-label={t.communes}>
+          <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold tracking-tight">{t.communes}</h2>
+              <p className="mt-0.5 text-sm text-muted-foreground">{`${total} commune(s)`}</p>
+            </div>
             <div className="flex flex-wrap items-center gap-2">
               <div className="min-w-44">
                 <Label className="sr-only">Wilaya</Label>
@@ -114,32 +112,39 @@ function CommunesPage() {
                 />
               </div>
             </div>
-          }
-        >
+          </div>
           {communesQuery.isPending ? (
-            <TableSkeleton />
+            <DataTable>
+              <div className="p-4">
+                <TableSkeleton />
+              </div>
+            </DataTable>
           ) : communesQuery.isError ? (
-            <EmptyState title="Could not load communes" text={errMsg(communesQuery.error)} />
+            <DataTable>
+              <EmptyState title="Could not load communes" description={errMsg(communesQuery.error)} />
+            </DataTable>
           ) : items.length === 0 ? (
-            <EmptyState title="No communes" text="No communes match this filter." />
+            <DataTable>
+              <EmptyState title="No communes" description="No communes match this filter." />
+            </DataTable>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[620px] text-start text-small">
+            <DataTable>
+              <table className="w-full min-w-[620px] text-sm">
                 <thead>
-                  <tr className="border-b border-border text-caption text-muted-foreground">
-                    <th className="px-3 py-2 font-medium">Code</th>
-                    <th className="px-3 py-2 font-medium">Commune</th>
-                    <th className="px-3 py-2 font-medium">Wilaya</th>
-                    <th className="px-3 py-2 font-medium">Status</th>
-                    <th className="px-3 py-2 font-medium">Deliverable</th>
+                  <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                    <th className="px-3 py-3 text-start">Code</th>
+                    <th className="px-3 py-3 text-start">Commune</th>
+                    <th className="px-3 py-3 text-start">Wilaya</th>
+                    <th className="px-3 py-3 text-start">Status</th>
+                    <th className="px-3 py-3 text-start">Deliverable</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border">
+                <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                   {items.map((c) => (
                     <tr key={c.id} className="hover:bg-muted/40">
                       <td className="px-3 py-3 font-mono">{c.code}</td>
                       <td className="px-3 py-3 font-medium">{pickName(c.name) || "—"}</td>
-                      <td className="px-3 py-3 text-caption text-muted-foreground">
+                      <td className="px-3 py-3 text-xs text-muted-foreground">
                         {c.wilaya_code} — {pickName(c.wilaya_name)}
                       </td>
                       <td className="px-3 py-3">
@@ -156,9 +161,9 @@ function CommunesPage() {
                   ))}
                 </tbody>
               </table>
-            </div>
+            </DataTable>
           )}
-        </AdminCard>
+        </section>
         <div className="mt-4">
           <Pager page={page} total={total} pageSize={communesQuery.data?.pageSize ?? 25} onPage={setPage} />
         </div>

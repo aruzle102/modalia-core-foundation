@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Pencil, Plus } from "lucide-react";
+import { Archive, BadgeCheck, Building2, Pencil, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,15 +21,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   AdminCard,
   ConfirmDialog,
-  EmptyState,
   Field,
-  Stat,
   TableSkeleton,
 } from "@/components/admin/ui";
+import { DataTable, EmptyState, ErrorState, StatCard } from "@/components/dashboard";
 import { SellerShell } from "@/components/seller/SellerShell";
 import { RouteError } from "@/components/routing/route-states";
 import {
@@ -273,10 +271,11 @@ function SellerOfficesPage() {
         <p className="text-body text-muted-foreground">{o.hint}</p>
 
         <div className="mt-4 grid gap-4 sm:grid-cols-3">
-          <Stat label={navTitle} value={offices.length} />
-          <Stat label={o.active} value={activeCount} />
-          <Stat
-            label={locale === "ar" ? "غير نشط" : locale === "fr" ? "Inactifs" : "Inactive"}
+          <StatCard title={navTitle} icon={<Building2 className="h-4 w-4" aria-hidden="true" />} value={offices.length} />
+          <StatCard title={o.active} icon={<BadgeCheck className="h-4 w-4" aria-hidden="true" />} value={activeCount} />
+          <StatCard
+            title={locale === "ar" ? "غير نشط" : locale === "fr" ? "Inactifs" : "Inactive"}
+            icon={<Archive className="h-4 w-4" aria-hidden="true" />}
             value={offices.length - activeCount}
           />
         </div>
@@ -285,7 +284,7 @@ function SellerOfficesPage() {
           {officesQuery.isPending ? (
             <TableSkeleton rows={3} />
           ) : officesQuery.isError ? (
-            <EmptyState
+            <ErrorState
               title={loadError}
               action={
                 <Button variant="outline" onClick={() => officesQuery.refetch()}>
@@ -294,28 +293,28 @@ function SellerOfficesPage() {
               }
             />
           ) : offices.length === 0 ? (
-            <EmptyState title={o.empty} text={o.emptyText} action={<Button onClick={openCreate}>{o.add}</Button>} />
+            <EmptyState title={o.empty} description={o.emptyText} action={<Button onClick={openCreate}>{o.add}</Button>} />
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{o.name}</TableHead>
-                    <TableHead>{o.wilaya}</TableHead>
-                    <TableHead>{o.address}</TableHead>
-                    <TableHead>{o.phone}</TableHead>
-                    <TableHead>{o.hours}</TableHead>
-                    <TableHead>{o.active}</TableHead>
-                    <TableHead className="text-end">
+            <DataTable>
+              <table className="w-full min-w-[820px] text-sm">
+                <thead>
+                  <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                    <th className="px-3 py-3 text-start">{o.name}</th>
+                    <th className="px-3 py-3 text-start">{o.wilaya}</th>
+                    <th className="px-3 py-3 text-start">{o.address}</th>
+                    <th className="px-3 py-3 text-start">{o.phone}</th>
+                    <th className="px-3 py-3 text-start">{o.hours}</th>
+                    <th className="px-3 py-3 text-start">{o.active}</th>
+                    <th className="px-3 py-3 text-end">
                       {locale === "ar" ? "إجراءات" : locale === "fr" ? "Actions" : "Actions"}
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                   {offices.map((office) => (
-                    <TableRow key={office.id}>
-                      <TableCell className="font-medium">{office.name}</TableCell>
-                      <TableCell className="whitespace-nowrap">
+                    <tr key={office.id} className="hover:bg-muted/40">
+                      <td className="px-3 py-3 font-medium">{office.name}</td>
+                      <td className="whitespace-nowrap px-3 py-3">
                         {office.wilayas
                           ? `${office.wilayas.code} · ${placeName(office.wilayas.name, locale, office.wilayas.code)}`
                           : "—"}
@@ -324,23 +323,23 @@ function SellerOfficesPage() {
                             {placeName(office.communes.name, locale, office.communes.code)}
                           </span>
                         )}
-                      </TableCell>
-                      <TableCell className="max-w-52 truncate text-sm text-muted-foreground">
+                      </td>
+                      <td className="max-w-52 truncate px-3 py-3 text-sm text-muted-foreground">
                         {office.address ?? "—"}
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap tabular-nums">{office.phone ?? "—"}</TableCell>
-                      <TableCell className="max-w-40 truncate text-sm text-muted-foreground">
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-3 tabular-nums">{office.phone ?? "—"}</td>
+                      <td className="max-w-40 truncate px-3 py-3 text-sm text-muted-foreground">
                         {office.opening_hours ?? "—"}
-                      </TableCell>
-                      <TableCell>
+                      </td>
+                      <td className="px-3 py-3">
                         <Switch
                           checked={office.active}
                           disabled={toggleMutation.isPending}
                           onCheckedChange={(v) => toggleMutation.mutate({ id: office.id, active: v })}
                           aria-label={office.active ? t.sellerShippingV8.dialog.off : t.sellerShippingV8.dialog.on}
                         />
-                      </TableCell>
-                      <TableCell>
+                      </td>
+                      <td className="px-3 py-3">
                         <div className="flex justify-end gap-1">
                           <Button variant="ghost" size="sm" onClick={() => openEdit(office)}>
                             <Pencil className="me-1 h-3.5 w-3.5" />
@@ -350,12 +349,12 @@ function SellerOfficesPage() {
                             {t.sellerShippingV8.rules.delete}
                           </Button>
                         </div>
-                      </TableCell>
-                    </TableRow>
+                      </td>
+                    </tr>
                   ))}
-                </TableBody>
-              </Table>
-            </div>
+                </tbody>
+              </table>
+            </DataTable>
           )}
         </AdminCard>
 

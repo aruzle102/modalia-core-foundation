@@ -1,19 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
+import { Archive, CalendarClock, Plus, Zap } from "lucide-react";
 import { SellerShell } from "@/components/seller/SellerShell";
 import {
   AdminCard,
   ConfirmDialog,
-  EmptyState,
   Field,
-  Stat,
   StatusPill,
   TableSkeleton,
   fmtDate,
   fmtMoney,
 } from "@/components/admin/ui";
+import { DataTable, EmptyState, ErrorState, StatCard } from "@/components/dashboard";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -32,7 +31,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   createPromotion,
   deletePromotion,
@@ -178,18 +176,21 @@ function PromotionsPage() {
         {query.isPending ? (
           <TableSkeleton rows={6} />
         ) : query.isError ? (
-          <AdminCard title="Could not load discounts">
-            <p className="text-sm text-destructive">
-              {query.error instanceof Error ? query.error.message : "Unexpected error."}
-            </p>
-            <Button variant="outline" className="mt-4" onClick={() => query.refetch()}>Retry</Button>
-          </AdminCard>
+          <ErrorState
+            title="Could not load discounts"
+            description={query.error instanceof Error ? query.error.message : "Unexpected error."}
+            action={
+              <Button variant="outline" onClick={() => query.refetch()}>
+                Retry
+              </Button>
+            }
+          />
         ) : (
           <>
             <div className="grid gap-4 sm:grid-cols-3">
-              <Stat label="Live now" value={stats.live} />
-              <Stat label="Scheduled" value={stats.scheduled} />
-              <Stat label="Ended or paused" value={stats.ended} />
+              <StatCard title="Live now" icon={<Zap className="h-4 w-4" aria-hidden="true" />} value={stats.live} />
+              <StatCard title="Scheduled" icon={<CalendarClock className="h-4 w-4" aria-hidden="true" />} value={stats.scheduled} />
+              <StatCard title="Ended or paused" icon={<Archive className="h-4 w-4" aria-hidden="true" />} value={stats.ended} />
             </div>
 
             <AdminCard
@@ -200,43 +201,43 @@ function PromotionsPage() {
               {promotions.length === 0 ? (
                 <EmptyState
                   title="No discounts yet"
-                  text="Put a product or a single variant on sale for a limited time. The sale price must stay below the current price."
+                  description="Put a product or a single variant on sale for a limited time. The sale price must stay below the current price."
                   action={<Button onClick={openCreate}>Create your first discount</Button>}
                 />
               ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Product</TableHead>
-                        <TableHead>Variant</TableHead>
-                        <TableHead>Sale price</TableHead>
-                        <TableHead>Was</TableHead>
-                        <TableHead>Off</TableHead>
-                        <TableHead>Valid</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-end">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
+                <DataTable>
+                  <table className="w-full min-w-[900px] text-sm">
+                    <thead>
+                      <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                        <th className="px-3 py-3 text-start">Product</th>
+                        <th className="px-3 py-3 text-start">Variant</th>
+                        <th className="px-3 py-3 text-end">Sale price</th>
+                        <th className="px-3 py-3 text-end">Was</th>
+                        <th className="px-3 py-3 text-end">Off</th>
+                        <th className="px-3 py-3 text-start">Valid</th>
+                        <th className="px-3 py-3 text-start">Status</th>
+                        <th className="px-3 py-3 text-end">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                       {promotions.map((p) => {
                         const baseP = basePriceOf(p);
                         const off = baseP > 0 && p.sale_price < baseP ? Math.round((1 - Number(p.sale_price) / baseP) * 100) : 0;
                         const state = promoState(p, now);
                         return (
-                          <TableRow key={p.id}>
-                            <TableCell className="font-medium">{productName(p.product?.name, locale)}</TableCell>
-                            <TableCell className="font-mono text-xs">{p.variant?.sku ?? "All variants"}</TableCell>
-                            <TableCell className="font-semibold">{fmtMoney(p.sale_price, "DZD", locale)}</TableCell>
-                            <TableCell className="text-muted-foreground line-through">{fmtMoney(baseP, "DZD", locale)}</TableCell>
-                            <TableCell className="tabular-nums text-green-700 dark:text-green-400">−{off}%</TableCell>
-                            <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
+                          <tr key={p.id} className="hover:bg-muted/40">
+                            <td className="px-3 py-3 font-medium">{productName(p.product?.name, locale)}</td>
+                            <td className="px-3 py-3 font-mono text-xs">{p.variant?.sku ?? "All variants"}</td>
+                            <td className="px-3 py-3 text-end font-semibold tabular-nums">{fmtMoney(p.sale_price, "DZD", locale)}</td>
+                            <td className="px-3 py-3 text-end text-muted-foreground line-through tabular-nums">{fmtMoney(baseP, "DZD", locale)}</td>
+                            <td className="px-3 py-3 text-end tabular-nums text-green-700 dark:text-green-400">−{off}%</td>
+                            <td className="whitespace-nowrap px-3 py-3 text-xs text-muted-foreground">
                               {fmtDate(p.starts_at, locale)} → {fmtDate(p.ends_at, locale)}
-                            </TableCell>
-                            <TableCell>
+                            </td>
+                            <td className="px-3 py-3">
                               <StatusPill status={pillFor(state)} />
-                            </TableCell>
-                            <TableCell>
+                            </td>
+                            <td className="px-3 py-3">
                               <div className="flex justify-end gap-1">
                                 <Button
                                   variant="ghost"
@@ -250,13 +251,13 @@ function PromotionsPage() {
                                   Delete
                                 </Button>
                               </div>
-                            </TableCell>
-                          </TableRow>
+                            </td>
+                          </tr>
                         );
                       })}
-                    </TableBody>
-                  </Table>
-                </div>
+                    </tbody>
+                  </table>
+                </DataTable>
               )}
             </AdminCard>
           </>

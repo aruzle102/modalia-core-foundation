@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { SellerShell } from "@/components/seller/SellerShell";
 import { StoreStudio } from "@/components/seller/StoreStudio";
+import { EmptyState } from "@/components/dashboard";
 import { getStoreStudio } from "@/lib/seller-store.functions";
 import { getLocale, getTranslations } from "@/lib/i18n";
 import { useAdminLocale } from "@/components/admin/useAdminLocale";
@@ -53,7 +54,7 @@ function AppearancePage() {
       {data ? (
         <StoreStudio data={data} locale={locale} initialTab="appearance" />
       ) : (
-        <p className="py-10 text-small text-muted-foreground">{t.notFound}</p>
+        <EmptyState title={t.notFound} />
       )}
     </SellerShell>
   );

@@ -7,13 +7,12 @@ import { AdminGate } from "@/components/admin/AdminGate";
 import { AdminShell } from "@/components/admin/AdminShell";
 import {
   AdminCard,
-  Stat,
   StatusPill,
-  EmptyState,
   TableSkeleton,
   Field,
   fmtDateTime,
 } from "@/components/admin/ui";
+import { DataTable, ErrorState, StatCard } from "@/components/dashboard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -184,20 +183,26 @@ function IntelligencePage() {
         <div className="space-y-6">
           <AdminCard title="AI mode" subtitle="Modalia Intelligence is deterministic and database-powered.">
             {statusQuery.isPending ? (
-              <TableSkeleton rows={3} />
+              <DataTable>
+                <div className="p-4">
+                  <TableSkeleton rows={3} />
+                </div>
+              </DataTable>
             ) : statusQuery.isError ? (
-              <EmptyState title="Could not load AI status" text={errMsg(statusQuery.error)} />
+              <DataTable>
+                <ErrorState title="Could not load AI status" description={errMsg(statusQuery.error)} />
+              </DataTable>
             ) : status ? (
               <div className="grid gap-4 sm:grid-cols-2">
-                <Stat
-                  label="Mode"
+                <StatCard
+                  title="Mode"
                   value={<StatusPill status="rules" />}
-                  hint="Honest rule-based engine on real store data only. No external AI provider is called in production."
+                  description="Honest rule-based engine on real store data only. No external AI provider is called in production."
                 />
-                <Stat
-                  label="Assistant names"
+                <StatCard
+                  title="Assistant names"
                   value={Object.values(status.ruleAssistantName).join(" · ")}
-                  hint="Rule assistant name in ar / fr / en"
+                  description="Rule assistant name in ar / fr / en"
                 />
               </div>
             ) : null}
@@ -208,9 +213,15 @@ function IntelligencePage() {
             subtitle="Enable or disable each intelligence surface without touching code."
           >
             {settingsQuery.isPending ? (
-              <TableSkeleton rows={3} />
+              <DataTable>
+                <div className="p-4">
+                  <TableSkeleton rows={3} />
+                </div>
+              </DataTable>
             ) : settingsQuery.isError || !draft ? (
-              <EmptyState title="Could not load settings" text={errMsg(settingsQuery.error)} />
+              <DataTable>
+                <ErrorState title="Could not load settings" description={errMsg(settingsQuery.error)} />
+              </DataTable>
             ) : (
               <div className="divide-y divide-border">
                 <ToggleRow
@@ -272,7 +283,11 @@ function IntelligencePage() {
             }
           >
             {!draft ? (
-              <TableSkeleton rows={4} />
+              <DataTable>
+                <div className="p-4">
+                  <TableSkeleton rows={4} />
+                </div>
+              </DataTable>
             ) : (
               <div className="grid gap-6">
                 <TriInputs
@@ -339,7 +354,11 @@ function IntelligencePage() {
             }
           >
             {!draft ? (
-              <TableSkeleton rows={4} />
+              <DataTable>
+                <div className="p-4">
+                  <TableSkeleton rows={4} />
+                </div>
+              </DataTable>
             ) : (
               <div className="grid gap-4 sm:grid-cols-2">
                 {(
@@ -379,14 +398,20 @@ function IntelligencePage() {
 
           <AdminCard title="Index status" subtitle="Knowledge is the live database — no manual retraining needed.">
             {settingsQuery.isPending ? (
-              <TableSkeleton rows={2} />
+              <DataTable>
+                <div className="p-4">
+                  <TableSkeleton rows={2} />
+                </div>
+              </DataTable>
             ) : settingsQuery.isError || !draft ? (
-              <EmptyState title="Could not load status" text={errMsg(settingsQuery.error)} />
+              <DataTable>
+                <ErrorState title="Could not load status" description={errMsg(settingsQuery.error)} />
+              </DataTable>
             ) : (
               <div className="grid gap-4 sm:grid-cols-3">
-                <Stat label="Source of truth" value="PostgreSQL" hint="Products, categories, stores, shipping, policies" />
-                <Stat label="Index mode" value="Live" hint="New catalog content becomes searchable immediately" />
-                <Stat label="Last settings update" value={fmtDateTime(draft.updated_at, locale)} hint="From the audit log for change history" />
+                <StatCard title="Source of truth" value="PostgreSQL" description="Products, categories, stores, shipping, policies" />
+                <StatCard title="Index mode" value="Live" description="New catalog content becomes searchable immediately" />
+                <StatCard title="Last settings update" value={fmtDateTime(draft.updated_at, locale)} description="From the audit log for change history" />
               </div>
             )}
           </AdminCard>

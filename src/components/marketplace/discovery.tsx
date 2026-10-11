@@ -81,7 +81,7 @@ export function ProductCard({
 
 
   return (
-    <article className="group relative min-w-0 overflow-hidden rounded-[14px] border border-[#E5E5E5] bg-white transition-shadow duration-300 hover:shadow-[0_12px_32px_-12px_rgba(0,0,0,0.18)]">
+    <article className="group relative min-w-0 overflow-hidden rounded-2xl border border-border bg-card transition-colors duration-200 hover:border-foreground/25">
       {/* Image wrapper — buttons are siblings of the Link, not nested inside */}
       <div className="relative">
         <Link
@@ -91,8 +91,8 @@ export function ProductCard({
           className="block"
           aria-label={product.name}
         >
-          {/* Image — 1:1, dominant */}
-          <div className={`relative aspect-square overflow-hidden bg-[#F6F6F4] ${soldOut ? "saturate-50" : ""}`}>
+          {/* Image — 4:5, image-first */}
+          <div className={`relative aspect-[4/5] overflow-hidden bg-muted ${soldOut ? "saturate-50" : ""}`}>
           {product.imagePath ? (
             <img
               src={product.imagePath}
@@ -108,7 +108,7 @@ export function ProductCard({
               className="size-full object-cover"
             />
           ) : (
-            <div className="flex size-full items-end p-5 text-sm text-[#666666]">
+            <div className="flex size-full items-end p-5 text-sm text-muted-foreground">
               Modalia
               <br />
               {product.name}
@@ -125,14 +125,14 @@ export function ProductCard({
           ) : null}
 
           {/* Badges — real data only */}
-          <div className="pointer-events-none absolute left-2.5 top-2.5 z-10 flex flex-col items-start gap-1.5">
+          <div className="pointer-events-none absolute start-2.5 top-2.5 z-10 flex flex-col items-start gap-1.5">
             {sale != null ? (
-              <span className="rounded-md bg-[#E53935] px-2 py-1 text-[11px] font-bold text-white">
+              <span className="rounded-md bg-destructive px-2 py-1 text-[11px] font-bold text-destructive-foreground">
                 -{sale}%
               </span>
             ) : null}
             {fresh ? (
-              <span className="rounded-md bg-[#0A0A0A] px-2 py-1 text-[11px] font-bold uppercase tracking-wide text-white">
+              <span className="rounded-md bg-foreground px-2 py-1 text-[11px] font-bold uppercase tracking-wide text-background">
                 {t.new}
               </span>
             ) : null}
@@ -148,16 +148,16 @@ export function ProductCard({
           onTouchStart={handleWishlist}
           aria-pressed={wishlisted}
           aria-label={t.wishlist(product.name)}
-          className="absolute right-2 top-2 z-10 grid size-11 place-items-center rounded-full bg-white text-[#0A0A0A] shadow-[0_2px_10px_rgba(0,0,0,0.12)] transition-transform hover:scale-105 active:scale-95 touch-manipulation"
+          className="absolute end-2 top-2 z-10 grid size-10 place-items-center rounded-full bg-card text-foreground shadow-sm transition-transform hover:scale-105 active:scale-95 touch-manipulation"
         >
-          <Heart className={`size-4 ${wishlisted ? "fill-[#E53935] text-[#E53935]" : ""}`} aria-hidden="true" />
+          <Heart className={`size-4 ${wishlisted ? "fill-destructive text-destructive" : ""}`} aria-hidden="true" />
         </button>
         {!soldOut ? (
           <button
             type="button"
             onClick={handleQuickAdd}
             aria-label={t.quickAdd}
-            className="absolute bottom-2 right-2 z-10 grid size-11 place-items-center rounded-full bg-[#0A0A0A] text-white shadow-[0_2px_10px_rgba(0,0,0,0.25)] transition-transform hover:scale-105 active:scale-95 touch-manipulation"
+            className="absolute bottom-2 end-2 z-10 grid size-10 place-items-center rounded-full bg-foreground text-background shadow-sm transition-transform hover:scale-105 active:scale-95 touch-manipulation"
           >
             <ShoppingBag className="size-4" aria-hidden="true" />
           </button>
@@ -172,28 +172,28 @@ export function ProductCard({
         aria-label={product.name}
       >
         {/* Info */}
-        <div className="space-y-1 px-3.5 pb-3.5 pt-3">
-          <p className="truncate text-[10px] font-semibold uppercase tracking-[0.14em] text-[#666666]">
+        <div className="space-y-1 px-3 pb-3 pt-2.5">
+          <p className="truncate text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
             {product.storeName}
           </p>
-          <h3 className="line-clamp-2 min-h-[2.5em] text-[13.5px] font-semibold leading-snug text-[#0A0A0A]">
+          <h3 className="line-clamp-2 min-h-[2.5em] text-[13.5px] font-medium leading-snug text-foreground">
             {product.name}
           </h3>
           <p className="flex items-baseline gap-1.5 pt-0.5">
-            <span className="text-[16px] font-bold tracking-tight text-[#0A0A0A]">
+            <span className="text-base font-bold tabular-nums tracking-tight text-foreground">
               {formatPrice(product.price, locale)}
             </span>
             {sale != null && product.compareAtPrice ? (
-              <span className="text-[12.5px] text-[#666666] line-through">
+              <span className="text-[12.5px] tabular-nums text-muted-foreground line-through">
                 {formatPrice(product.compareAtPrice, locale)}
               </span>
             ) : null}
           </p>
           {lowStock ? (
-            <p className="pt-0.5 text-xs font-medium text-[#E53935]">{t.onlyLeft(stock as number)}</p>
+            <p className="pt-0.5 text-xs font-medium text-destructive">{t.onlyLeft(stock as number)}</p>
           ) : null}
           {soldOut ? (
-            <p className="pt-0.5 text-xs text-[#666666]">{t.soldOut}</p>
+            <p className="pt-0.5 text-xs text-muted-foreground">{t.soldOut}</p>
           ) : null}
 
 
@@ -366,7 +366,7 @@ export function ProductGrid({
   const t = getTranslations(locale).card;
   if (!products.length)
     return (
-      <section className="border-y border-border py-16 text-center">
+      <section className="rounded-2xl border border-border bg-card py-16 text-center">
         <ShoppingBag className="mx-auto size-6 text-muted-foreground" />
         <h2 className="mt-4 text-h3 text-foreground">{emptyTitle ?? t.emptyTitle}</h2>
         <p className="mx-auto mt-2 max-w-sm text-small text-muted-foreground">{emptyText ?? t.emptyText}</p>
@@ -388,7 +388,7 @@ export function DiscoverySkeleton() {
       <div className="mt-16 grid grid-cols-2 gap-3 lg:grid-cols-4">
         {Array.from({ length: 4 }, (_, index) => (
           <div key={index}>
-            <Skeleton className="aspect-[4/5] w-full" />
+            <Skeleton className="aspect-[4/5] w-full rounded-2xl" />
             <Skeleton className="mt-3 h-4 w-2/3" />
             <Skeleton className="mt-2 h-4 w-1/3" />
           </div>

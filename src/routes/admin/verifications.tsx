@@ -13,13 +13,8 @@ import {
 import { AdminGate } from "@/components/admin/AdminGate";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { strParam } from "@/hooks/use-url-state";
-import {
-  AdminCard,
-  StatusPill,
-  EmptyState,
-  TableSkeleton,
-  fmtDateTime,
-} from "@/components/admin/ui";
+import { StatusPill, TableSkeleton, fmtDateTime } from "@/components/admin/ui";
+import { DataTable, EmptyState } from "@/components/dashboard";
 import {
   listVerificationRequests,
   reviewVerificationRequest,
@@ -75,43 +70,50 @@ function VerificationsPage() {
           </Select>
         </div>
 
-        <AdminCard>
-          {isLoading ? (
-            <TableSkeleton />
+        {isLoading ? (
+            <DataTable>
+              <div className="p-4">
+                <TableSkeleton />
+              </div>
+            </DataTable>
           ) : isError || !data ? (
-            <EmptyState title="Could not load requests" />
+            <DataTable>
+              <EmptyState title="Could not load requests" />
+            </DataTable>
           ) : data.length === 0 ? (
-            <EmptyState
-              icon={<BadgeCheck className="h-8 w-8" />}
-              title="No verification requests"
-              text="Requests from eligible sellers will appear here."
-            />
+            <DataTable>
+              <EmptyState
+                icon={<BadgeCheck className="h-8 w-8" />}
+                title="No verification requests"
+                description="Requests from eligible sellers will appear here."
+              />
+            </DataTable>
           ) : (
-            <div className="overflow-x-auto">
+            <DataTable>
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b text-left text-muted-foreground">
-                    <th className="py-2 pr-4">Store</th>
-                    <th className="py-2 pr-4">Seller</th>
-                    <th className="py-2 pr-4">Sales 30d</th>
-                    <th className="py-2 pr-4">Views</th>
-                    <th className="py-2 pr-4">Requested</th>
-                    <th className="py-2 pr-4">Status</th>
-                    <th className="py-2">Actions</th>
+                  <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                    <th className="px-3 py-3 text-start">Store</th>
+                    <th className="px-3 py-3 text-start">Seller</th>
+                    <th className="px-3 py-3 text-end">Sales 30d</th>
+                    <th className="px-3 py-3 text-end">Views</th>
+                    <th className="px-3 py-3 text-start">Requested</th>
+                    <th className="px-3 py-3 text-start">Status</th>
+                    <th className="px-3 py-3 text-start">Actions</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                   {data.map((r) => (
-                    <tr key={r.id} className="border-b last:border-0">
-                      <td className="py-2 pr-4 font-medium">{r.storeName}</td>
-                      <td className="py-2 pr-4">{r.sellerName}</td>
-                      <td className="py-2 pr-4">{r.sales_30d}</td>
-                      <td className="py-2 pr-4">{r.unique_views.toLocaleString()}</td>
-                      <td className="py-2 pr-4">{fmtDateTime(r.requested_at)}</td>
-                      <td className="py-2 pr-4">
+                    <tr key={r.id} className="hover:bg-muted/40">
+                      <td className="px-3 py-3 font-medium">{r.storeName}</td>
+                      <td className="px-3 py-3">{r.sellerName}</td>
+                      <td className="px-3 py-3 text-end tabular-nums">{r.sales_30d}</td>
+                      <td className="px-3 py-3 text-end tabular-nums">{r.unique_views.toLocaleString()}</td>
+                      <td className="px-3 py-3">{fmtDateTime(r.requested_at)}</td>
+                      <td className="px-3 py-3">
                         <StatusPill status={r.status} />
                       </td>
-                      <td className="py-2">
+                      <td className="px-3 py-3">
                         {r.status === "pending" ? (
                           <div className="flex gap-2">
                             <Button
@@ -121,7 +123,7 @@ function VerificationsPage() {
                               }
                               disabled={review.isPending}
                             >
-                              <Check className="mr-1 h-3 w-3" /> Approve
+                              <Check className="me-1 h-3 w-3" /> Approve
                             </Button>
                             <Button
                               size="sm"
@@ -131,7 +133,7 @@ function VerificationsPage() {
                               }
                               disabled={review.isPending}
                             >
-                              <X className="mr-1 h-3 w-3" /> Reject
+                              <X className="me-1 h-3 w-3" /> Reject
                             </Button>
                           </div>
                         ) : (
@@ -142,9 +144,8 @@ function VerificationsPage() {
                   ))}
                 </tbody>
               </table>
-            </div>
+            </DataTable>
           )}
-        </AdminCard>
       </AdminShell>
     </AdminGate>
   );

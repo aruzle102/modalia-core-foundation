@@ -17,13 +17,20 @@ import { AdminGate } from "@/components/admin/AdminGate";
 import { AdminShell } from "@/components/admin/AdminShell";
 import {
   AdminCard,
-  EmptyState,
   TableSkeleton,
   ConfirmDialog,
   Field,
   StatusPill,
   fmtMoney,
 } from "@/components/admin/ui";
+import { DataTable, EmptyState, ErrorState } from "@/components/dashboard";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   listPartnerCoupons,
   createPartnerCoupon,
@@ -75,7 +82,7 @@ function PartnerCouponsPage() {
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [formError, setFormError] = useState<string | null>(null);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["partner-coupons-admin", tab],
     queryFn: () => listPartnerCoupons({ data: { status: tab } }),
   });
@@ -167,7 +174,7 @@ function PartnerCouponsPage() {
         subtitle="Platform-wide tiered promotions (MODALIA × partner)"
         actions={
           <Button size="sm" onClick={() => startEdit(null)}>
-            <Plus className="mr-1 h-4 w-4" /> New partner coupon
+            <Plus className="me-1 h-4 w-4" /> New partner coupon
           </Button>
         }
       >
@@ -186,33 +193,50 @@ function PartnerCouponsPage() {
 
         <AdminCard>
           {isLoading ? (
-            <TableSkeleton />
+            <DataTable>
+              <div className="p-4">
+                <TableSkeleton />
+              </div>
+            </DataTable>
+          ) : isError ? (
+            <DataTable>
+              <ErrorState
+                title="Could not load partner coupons"
+                action={
+                  <Button variant="outline" size="sm" onClick={() => refetch()}>
+                    Retry
+                  </Button>
+                }
+              />
+            </DataTable>
           ) : !data || data.length === 0 ? (
-            <EmptyState
-              icon={<Ticket className="h-8 w-8" />}
-              title="No partner coupons"
-              text="Create a tiered partner coupon: discounts apply once per eligible cart, calculated from the combined merchandise subtotal."
-            />
+            <DataTable>
+              <EmptyState
+                icon={<Ticket className="h-8 w-8" />}
+                title="No partner coupons"
+                description="Create a tiered partner coupon: discounts apply once per eligible cart, calculated from the combined merchandise subtotal."
+              />
+            </DataTable>
           ) : (
-            <div className="overflow-x-auto">
+            <DataTable>
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b text-left text-xs uppercase tracking-wide text-muted-foreground">
-                    <th className="py-2 pr-4">Code</th>
-                    <th className="py-2 pr-4">Partner</th>
-                    <th className="py-2 pr-4">Tiers</th>
-                    <th className="py-2 pr-4">Funding</th>
-                    <th className="py-2 pr-4">Mandatory</th>
-                    <th className="py-2 pr-4">Status</th>
-                    <th className="py-2 text-right">Actions</th>
+                  <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                    <th className="px-3 py-3 text-start">Code</th>
+                    <th className="px-3 py-3 text-start">Partner</th>
+                    <th className="px-3 py-3 text-start">Tiers</th>
+                    <th className="px-3 py-3 text-start">Funding</th>
+                    <th className="px-3 py-3 text-start">Mandatory</th>
+                    <th className="px-3 py-3 text-start">Status</th>
+                    <th className="px-3 py-3 text-end">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y">
+                <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                   {data.map((c) => (
-                    <tr key={c.id}>
-                      <td className="py-3 pr-4 font-mono font-semibold">{c.code}</td>
-                      <td className="py-3 pr-4">{c.partnerName}</td>
-                      <td className="py-3 pr-4 text-xs text-muted-foreground">
+                    <tr key={c.id} className="hover:bg-muted/40">
+                      <td className="px-3 py-3 font-mono font-semibold">{c.code}</td>
+                      <td className="px-3 py-3">{c.partnerName}</td>
+                      <td className="px-3 py-3 text-xs text-muted-foreground">
                         {c.tiers.map((t) => (
                           <div key={t.id}>
                             ≥ {fmtMoney(t.minSubtotal, "DZD", "en")}
@@ -224,18 +248,18 @@ function PartnerCouponsPage() {
                           </div>
                         ))}
                       </td>
-                      <td className="py-3 pr-4 capitalize">{c.fundingModel}</td>
-                      <td className="py-3 pr-4">{c.isMandatory ? "Yes" : "No"}</td>
-                      <td className="py-3 pr-4">
+                      <td className="px-3 py-3 capitalize">{c.fundingModel}</td>
+                      <td className="px-3 py-3">{c.isMandatory ? "Yes" : "No"}</td>
+                      <td className="px-3 py-3">
                         <StatusPill status={c.status === "active" ? "active" : "inactive"} />
                       </td>
-                      <td className="py-3 text-right">
+                      <td className="px-3 py-3 text-end">
                         <div className="flex justify-end gap-2">
                           <Button size="sm" variant="outline" onClick={() => startEdit(c)}>
-                            <Pencil className="mr-1 h-3 w-3" /> Edit
+                            <Pencil className="me-1 h-3 w-3" /> Edit
                           </Button>
                           <Button size="sm" variant="destructive" onClick={() => setDeleting(c.id)}>
-                            <Trash2 className="mr-1 h-3 w-3" /> Delete
+                            <Trash2 className="me-1 h-3 w-3" /> Delete
                           </Button>
                         </div>
                       </td>
@@ -243,18 +267,20 @@ function PartnerCouponsPage() {
                   ))}
                 </tbody>
               </table>
-            </div>
+            </DataTable>
           )}
         </AdminCard>
 
         {editing !== null ? (
-          <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-black/50 p-4">
-            <div className="w-full max-w-2xl rounded-lg bg-background p-6">
-              <h3 className="mb-4 text-lg font-semibold">
-                {editing === "new" ? "New partner coupon" : "Edit partner coupon"}
-              </h3>
+          <Dialog open onOpenChange={(open) => { if (!open) setEditing(null); }}>
+            <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>
+                  {editing === "new" ? "New partner coupon" : "Edit partner coupon"}
+                </DialogTitle>
+              </DialogHeader>
               {formError ? (
-                <p className="mb-3 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
                   {formError}
                 </p>
               ) : null}
@@ -430,20 +456,20 @@ function PartnerCouponsPage() {
                     })
                   }
                 >
-                  <Plus className="mr-1 h-3 w-3" /> Add tier
+                  <Plus className="me-1 h-3 w-3" /> Add tier
                 </Button>
               ) : null}
 
-              <div className="mt-5 flex justify-end gap-2">
+              <DialogFooter className="mt-5">
                 <Button variant="outline" onClick={() => setEditing(null)}>
                   Cancel
                 </Button>
                 <Button onClick={() => save.mutate()} disabled={save.isPending || !!tierError}>
                   {save.isPending ? "Saving…" : "Save"}
                 </Button>
-              </div>
-            </div>
-          </div>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         ) : null}
 
         <ConfirmDialog

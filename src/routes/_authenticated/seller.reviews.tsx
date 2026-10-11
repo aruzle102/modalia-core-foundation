@@ -5,7 +5,8 @@ import { BadgeCheck, Flag, Star } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AdminCard, EmptyState, StatusPill, TableSkeleton, fmtDateTime } from "@/components/admin/ui";
+import { AdminCard, StatusPill, TableSkeleton, fmtDateTime } from "@/components/admin/ui";
+import { EmptyState, ErrorState } from "@/components/dashboard";
 import { listSellerReviews, flagReviewForRemoderation } from "@/lib/seller-orders.functions";
 import { getLocale } from "@/lib/i18n";
 import { numParam, strParam, useUrlState } from "@/hooks/use-url-state";
@@ -84,16 +85,20 @@ function SellerReviewsPage() {
         {reviewsQuery.isLoading ? (
           <TableSkeleton rows={4} />
         ) : reviewsQuery.isError ? (
-          <AdminCard>
-            <EmptyState title="Reviews could not be loaded" text={errMsg(reviewsQuery.error)} />
-          </AdminCard>
+          <ErrorState
+            title="Reviews could not be loaded"
+            description={errMsg(reviewsQuery.error)}
+            action={
+              <Button variant="outline" onClick={() => reviewsQuery.refetch()}>
+                Retry
+              </Button>
+            }
+          />
         ) : reviews.length === 0 ? (
-          <AdminCard>
-            <EmptyState
-              title="No reviews here"
-              text={queue === "all" ? "When customers review your products, they will appear here." : "No reviews with this status."}
-            />
-          </AdminCard>
+          <EmptyState
+            title="No reviews here"
+            description={queue === "all" ? "When customers review your products, they will appear here." : "No reviews with this status."}
+          />
         ) : (
           <div className="space-y-4">
             <div className="space-y-4">

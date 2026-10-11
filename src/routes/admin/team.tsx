@@ -8,11 +8,11 @@ import { AdminShell } from "@/components/admin/AdminShell";
 import {
   AdminCard,
   StatusPill,
-  EmptyState,
   TableSkeleton,
   ConfirmDialog,
   Field,
 } from "@/components/admin/ui";
+import { DataTable, EmptyState, ErrorState } from "@/components/dashboard";
 import { useAdminLocale } from "@/components/admin/useAdminLocale";
 import { getTranslations } from "@/lib/i18n";
 import { useAdminT } from "@/components/admin/use-admin-t";
@@ -96,7 +96,7 @@ function RequireSuperAdmin({ children }: { children: React.ReactNode }) {
       <EmptyState
         icon={<ShieldAlert className="h-8 w-8" />}
         title="Access denied"
-        text="Only the super admin can manage the team."
+        description="Only the super admin can manage the team."
       />
     );
   }
@@ -129,26 +129,34 @@ function TeamManager() {
       }
     >
       {membersQuery.isLoading ? (
-        <TableSkeleton />
+        <DataTable>
+          <div className="p-4">
+            <TableSkeleton />
+          </div>
+        </DataTable>
       ) : membersQuery.isError ? (
-        <EmptyState title={t.title} text={String(membersQuery.error)} />
+        <DataTable>
+          <ErrorState title={t.title} description={String(membersQuery.error)} />
+        </DataTable>
       ) : members.length === 0 ? (
-        <EmptyState title={t.title} text={t.subtitle} />
+        <DataTable>
+          <EmptyState title={t.title} description={t.subtitle} />
+        </DataTable>
       ) : (
-        <div className="overflow-x-auto">
+        <DataTable>
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b text-start text-muted-foreground">
-                <th className="py-2 pe-4 text-start font-medium">{t.email}</th>
-                <th className="py-2 pe-4 text-start font-medium">{t.role}</th>
-                <th className="py-2 pe-4 text-start font-medium">{t.status}</th>
-                <th className="py-2 text-end font-medium">{t.actions}</th>
+              <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                <th className="px-3 py-3 text-start">{t.email}</th>
+                <th className="px-3 py-3 text-start">{t.role}</th>
+                <th className="px-3 py-3 text-start">{t.status}</th>
+                <th className="px-3 py-3 text-end">{t.actions}</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
               {members.map((m) => (
-                <tr key={m.userId} className="border-b last:border-0">
-                  <td className="py-2 pe-4">
+                <tr key={m.userId} className="hover:bg-muted/40">
+                  <td className="px-3 py-2">
                     <span className="font-medium">{m.email || m.userId.slice(0, 8)}</span>
                     {m.locked ? (
                       <span className="ms-2 inline-flex items-center gap-1 text-xs text-muted-foreground">
@@ -156,13 +164,13 @@ function TeamManager() {
                       </span>
                     ) : null}
                   </td>
-                  <td className="py-2 pe-4">
+                  <td className="px-3 py-2">
                     <StatusPill status={roleLabel(t, m.role)} />
                   </td>
-                  <td className="py-2 pe-4">
+                  <td className="px-3 py-2">
                     <StatusPill status={m.active ? t.active : t.inactive} />
                   </td>
-                  <td className="py-2 text-end">
+                  <td className="px-3 py-2 text-end">
                     {m.locked ? null : (
                       <div className="flex items-center justify-end gap-2">
                         <Button variant="ghost" size="sm" onClick={() => setDialog({ mode: "edit", member: m })}>
@@ -178,7 +186,7 @@ function TeamManager() {
               ))}
             </tbody>
           </table>
-        </div>
+        </DataTable>
       )}
 
       {dialog ? (

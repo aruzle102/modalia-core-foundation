@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AdminCard, EmptyState, Field, StatusPill, TableSkeleton, fmtDateTime } from "@/components/admin/ui";
+import { AdminCard, Field, StatusPill, TableSkeleton, fmtDateTime } from "@/components/admin/ui";
+import { EmptyState, FormSection } from "@/components/dashboard";
 import { SellerShell } from "@/components/seller/SellerShell";
 import { STAFF_PERMISSIONS, STAFF_TITLES, STAFF_TITLE_SUGGESTIONS, inviteStaff, listStaff, updateStaff, type StaffTitle } from "@/lib/seller-team.functions";
 import type { SellerPermission } from "@/lib/seller-auth";
@@ -69,9 +70,9 @@ function InviteForm() {
   });
 
   return (
-    <AdminCard
+    <FormSection
       title="Invite a staff member"
-      subtitle="They receive an email invite and appear in your team once they sign in."
+      description="They receive an email invite and appear in your team once they sign in."
       className="mb-8"
     >
       <div className="grid gap-4 sm:grid-cols-2">
@@ -97,7 +98,7 @@ function InviteForm() {
       <div className="mt-5 space-y-4">
         {GROUPS.map((group) => (
           <fieldset key={group}>
-            <legend className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{group}</legend>
+            <legend className="text-[11px] font-semibold uppercase tracking-[0.08em] text-neutral-500 dark:text-neutral-400">{group}</legend>
             <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
               {STAFF_PERMISSIONS.filter((p) => p.group === group).map((p) => (
                 <label key={p.key} className="flex cursor-pointer items-start gap-2.5 rounded-lg border border-border p-2.5 text-small">
@@ -118,7 +119,7 @@ function InviteForm() {
         </Button>
         {message ? <p className="text-small text-muted-foreground">{message}</p> : null}
       </div>
-    </AdminCard>
+    </FormSection>
   );
 }
 
@@ -134,7 +135,7 @@ function StaffTable() {
   if (!data.staff.length) {
     return (
       <AdminCard>
-        <EmptyState title="No staff members yet" text="Invite your first team member above to delegate products, orders or support." />
+        <EmptyState title="No staff members yet" description="Invite your first team member above to delegate products, orders or support." />
       </AdminCard>
     );
   }
@@ -143,7 +144,7 @@ function StaffTable() {
 
   return (
     <AdminCard title="Team members" subtitle={`${data.staff.length} member${data.staff.length === 1 ? "" : "s"}`}>
-      <div className="divide-y divide-border">
+      <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
         {data.staff.map((member) => (
           <div key={member.id} className="flex flex-wrap items-center justify-between gap-4 py-4">
             <div className="min-w-0">

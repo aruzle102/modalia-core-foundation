@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
 import { SellerShell } from "@/components/seller/SellerShell";
-import { AdminCard, EmptyState, TableSkeleton } from "@/components/admin/ui";
+import { AdminCard, TableSkeleton } from "@/components/admin/ui";
+import { DataTable, EmptyState, ErrorState } from "@/components/dashboard";
 import { listSellerProducts } from "@/lib/seller-products.functions";
 import { getLocale } from "@/lib/i18n";
 import { errMsg } from "../admin/_shared";
@@ -134,40 +136,44 @@ function SellerCategoriesPage() {
         {categoriesQuery.isLoading ? (
           <TableSkeleton rows={4} />
         ) : categoriesQuery.isError ? (
-          <AdminCard>
-            <EmptyState title={t.errorTitle} text={errMsg(categoriesQuery.error)} />
-          </AdminCard>
+          <ErrorState
+            title={t.errorTitle}
+            description={errMsg(categoriesQuery.error)}
+            action={
+              <Button variant="outline" onClick={() => categoriesQuery.refetch()}>
+                Retry
+              </Button>
+            }
+          />
         ) : rows.length === 0 ? (
-          <AdminCard>
-            <EmptyState title={t.emptyTitle} text={t.emptyText} />
-          </AdminCard>
+          <DataTable>
+            <EmptyState title={t.emptyTitle} description={t.emptyText} />
+          </DataTable>
         ) : (
-          <AdminCard>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b text-left text-xs uppercase tracking-wide text-muted-foreground">
-                    <th className="px-4 py-3 font-medium">{t.colCategory}</th>
-                    <th className="px-4 py-3 text-right font-medium">{t.colProducts}</th>
+          <DataTable>
+            <table className="w-full min-w-[420px] text-sm">
+              <thead>
+                <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                  <th className="px-4 py-3 text-start">{t.colCategory}</th>
+                  <th className="px-4 py-3 text-end">{t.colProducts}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
+                {rows.map((row) => (
+                  <tr key={row.key} className="hover:bg-muted/40">
+                    <td className="px-4 py-3 font-medium">
+                      {row.key === "__none__" ? t.uncategorized : row.name}
+                    </td>
+                    <td className="px-4 py-3 text-end tabular-nums text-muted-foreground">{row.count}</td>
                   </tr>
-                </thead>
-                <tbody>
-                  {rows.map((row) => (
-                    <tr key={row.key} className="border-b last:border-0">
-                      <td className="px-4 py-3 font-medium">
-                        {row.key === "__none__" ? t.uncategorized : row.name}
-                      </td>
-                      <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">{row.count}</td>
-                    </tr>
-                  ))}
-                  <tr className="font-semibold">
-                    <td className="px-4 py-3">{t.totalRow}</td>
-                    <td className="px-4 py-3 text-right tabular-nums">{categoriesQuery.data?.total ?? 0}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </AdminCard>
+                ))}
+                <tr className="bg-neutral-50 font-semibold dark:bg-neutral-900/60">
+                  <td className="px-4 py-3">{t.totalRow}</td>
+                  <td className="px-4 py-3 text-end tabular-nums">{categoriesQuery.data?.total ?? 0}</td>
+                </tr>
+              </tbody>
+            </table>
+          </DataTable>
         )}
       </div>
     </SellerShell>

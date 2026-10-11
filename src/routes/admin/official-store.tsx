@@ -4,29 +4,46 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   BadgeCheck,
-  Pencil,
-  Star,
-  StarOff,
-  Plus,
+  CheckCircle2,
   ChevronUp,
   ChevronDown,
-  Trash2,
-  Store,
+  Clock,
+  FileText,
+  Layers,
   LayoutDashboard,
+  Mail,
+  MessageSquare,
+  Package,
+  Pencil,
+  Plus,
+  ShoppingCart,
+  Star,
+  StarOff,
+  Store,
+  Ticket,
+  Trash2,
+  TriangleAlert,
+  User,
+  XCircle,
 } from "lucide-react";
 import { AdminGate } from "@/components/admin/AdminGate";
 import { AdminShell } from "@/components/admin/AdminShell";
 import {
   AdminCard,
-  Stat,
   StatusPill,
-  EmptyState,
   TableSkeleton,
   ConfirmDialog,
   Field,
   fmtMoney,
   fmtDateTime,
 } from "@/components/admin/ui";
+import {
+  DataTable,
+  EmptyState,
+  ErrorState,
+  FormSection,
+  StatCard,
+} from "@/components/dashboard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -226,9 +243,9 @@ function OfficialStorePage() {
       >
         {/* Separation notice: the official store is managed as a regular seller store */}
         {official && linked ? (
-          <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
+          <div className="mb-6 rounded-lg border border-border bg-muted/50 p-4 text-sm">
             <p className="font-medium">The official store is managed as a seller store.</p>
-            <p className="mt-1 text-blue-700">
+            <p className="mt-1 text-muted-foreground">
               Add and manage products from the seller dashboard. This admin page is for
               store linking and oversight only.
             </p>
@@ -237,9 +254,9 @@ function OfficialStorePage() {
         {storeQuery.isPending ? (
           <TableSkeleton rows={6} />
         ) : storeQuery.isError ? (
-          <EmptyState
+          <ErrorState
             title={t.common.loadingError}
-            text={errMsg(storeQuery.error)}
+            description={errMsg(storeQuery.error)}
             action={
               <Button
                 type="button"
@@ -254,7 +271,7 @@ function OfficialStorePage() {
         ) : !official ? (
           <EmptyState
             title={t.noOfficialTitle}
-            text={t.noOfficialText}
+            description={t.noOfficialText}
             action={
               <Link
                 to="/admin/stores"
@@ -366,16 +383,26 @@ function OverviewTab({
           <StatusPill status={official.store.verification_status} />
         </div>
         <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Stat label={t.overview.seller} value={official.seller_legal_name ?? "—"} />
-          <Stat
-            label={t.overview.contact}
+          <StatCard
+            title={t.overview.seller}
+            icon={<User className="h-4 w-4" aria-hidden="true" />}
+            value={official.seller_legal_name ?? "—"}
+          />
+          <StatCard
+            title={t.overview.contact}
+            icon={<Mail className="h-4 w-4" aria-hidden="true" />}
             value={official.store.contact_email ?? official.store.contact_phone ?? "—"}
           />
-          <Stat
-            label={t.overview.avgRating}
+          <StatCard
+            title={t.overview.avgRating}
+            icon={<Star className="h-4 w-4" aria-hidden="true" />}
             value={s?.reviews.avgRating != null ? `${s.reviews.avgRating} / 5` : "—"}
           />
-          <Stat label={t.overview.pendingReviews} value={s?.reviews.pending ?? "…"} />
+          <StatCard
+            title={t.overview.pendingReviews}
+            icon={<MessageSquare className="h-4 w-4" aria-hidden="true" />}
+            value={s?.reviews.pending ?? "…"}
+          />
         </div>
         {official.store.description ? (
           <p className="mt-4 text-sm text-muted-foreground">{official.store.description}</p>
@@ -385,47 +412,107 @@ function OverviewTab({
       {statsQuery.isPending ? (
         <TableSkeleton rows={3} />
       ) : statsQuery.isError ? (
-        <EmptyState title={t.common.loadingError} text={errMsg(statsQuery.error)} />
+        <ErrorState title={t.common.loadingError} description={errMsg(statsQuery.error)} />
       ) : s ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <AdminCard title={t.overview.products}>
+          <AdminCard
+            title={t.overview.products}
+            actions={
+              <Button size="sm" variant="outline" onClick={() => go("products")}>
+                {t.overview.goToProducts}
+              </Button>
+            }
+          >
             <div className="grid grid-cols-3 gap-2">
-              <Stat label={t.overview.published} value={s.products.published} />
-              <Stat label={t.overview.drafts} value={s.products.draft} />
-              <Stat label={t.overview.products} value={s.products.total} />
+              <StatCard
+                title={t.overview.published}
+                icon={<CheckCircle2 className="h-4 w-4" aria-hidden="true" />}
+                value={s.products.published}
+              />
+              <StatCard
+                title={t.overview.drafts}
+                icon={<FileText className="h-4 w-4" aria-hidden="true" />}
+                value={s.products.draft}
+              />
+              <StatCard
+                title={t.overview.products}
+                icon={<Package className="h-4 w-4" aria-hidden="true" />}
+                value={s.products.total}
+              />
             </div>
-            <Button size="sm" variant="outline" className="mt-3" onClick={() => go("products")}>
-              {t.overview.goToProducts}
-            </Button>
           </AdminCard>
-          <AdminCard title={t.tabs.inventory}>
+          <AdminCard
+            title={t.tabs.inventory}
+            actions={
+              <Button size="sm" variant="outline" onClick={() => go("inventory")}>
+                {t.tabs.inventory}
+              </Button>
+            }
+          >
             <div className="grid grid-cols-3 gap-2">
-              <Stat label={t.overview.stockOk} value={s.inventory.ok} />
-              <Stat label={t.overview.stockLow} value={s.inventory.low} />
-              <Stat label={t.overview.stockOut} value={s.inventory.out} />
+              <StatCard
+                title={t.overview.stockOk}
+                icon={<CheckCircle2 className="h-4 w-4" aria-hidden="true" />}
+                value={s.inventory.ok}
+              />
+              <StatCard
+                title={t.overview.stockLow}
+                icon={<TriangleAlert className="h-4 w-4" aria-hidden="true" />}
+                value={s.inventory.low}
+              />
+              <StatCard
+                title={t.overview.stockOut}
+                icon={<XCircle className="h-4 w-4" aria-hidden="true" />}
+                value={s.inventory.out}
+              />
             </div>
-            <Button size="sm" variant="outline" className="mt-3" onClick={() => go("inventory")}>
-              {t.tabs.inventory}
-            </Button>
           </AdminCard>
-          <AdminCard title={t.overview.reviews}>
+          <AdminCard
+            title={t.overview.reviews}
+            actions={
+              <Button size="sm" variant="outline" onClick={() => go("reviews")}>
+                {t.tabs.reviews}
+              </Button>
+            }
+          >
             <div className="grid grid-cols-2 gap-2">
-              <Stat label={t.overview.reviews} value={s.reviews.total} />
-              <Stat label={t.overview.pendingReviews} value={s.reviews.pending} />
+              <StatCard
+                title={t.overview.reviews}
+                icon={<MessageSquare className="h-4 w-4" aria-hidden="true" />}
+                value={s.reviews.total}
+              />
+              <StatCard
+                title={t.overview.pendingReviews}
+                icon={<Clock className="h-4 w-4" aria-hidden="true" />}
+                value={s.reviews.pending}
+              />
             </div>
-            <Button size="sm" variant="outline" className="mt-3" onClick={() => go("reviews")}>
-              {t.tabs.reviews}
-            </Button>
           </AdminCard>
-          <AdminCard title={t.overview.orders}>
+          <AdminCard
+            title={t.overview.orders}
+            actions={
+              <Button size="sm" variant="outline" onClick={() => go("offers")}>
+                {t.tabs.offers}
+              </Button>
+            }
+          >
             <div className="grid grid-cols-3 gap-2">
-              <Stat label={t.overview.orders} value={s.orders.total} />
-              <Stat label={t.overview.variants} value={s.variants.total} />
-              <Stat label={t.overview.activeOffers} value={s.coupons.active} />
+              <StatCard
+                title={t.overview.orders}
+                icon={<ShoppingCart className="h-4 w-4" aria-hidden="true" />}
+                value={s.orders.total}
+              />
+              <StatCard
+                title={t.overview.variants}
+                icon={<Layers className="h-4 w-4" aria-hidden="true" />}
+                value={s.variants.total}
+              />
+              <StatCard
+                title={t.overview.activeOffers}
+                icon={<Ticket className="h-4 w-4" aria-hidden="true" />}
+                value={s.coupons.active}
+              />
             </div>
-            <Button size="sm" variant="outline" className="mt-3" onClick={() => go("offers")}>
-              {t.tabs.offers}
-            </Button>
           </AdminCard>
         </div>
       ) : null}
@@ -439,18 +526,18 @@ function OverviewTab({
         }
       >
         {official.recent_products.length === 0 ? (
-          <EmptyState title={t.overview.noProducts} text={t.overview.noProductsText} />
+          <EmptyState title={t.overview.noProducts} description={t.overview.noProductsText} />
         ) : (
-          <div className="overflow-x-auto">
+          <DataTable>
             <table className="w-full min-w-[560px] text-start text-small">
               <thead>
-                <tr className="border-b border-border text-caption text-muted-foreground">
-                  <th className="px-3 py-2 font-medium">{t.products.name}</th>
-                  <th className="px-3 py-2 font-medium">{t.products.price}</th>
-                  <th className="px-3 py-2 font-medium">{t.products.status}</th>
+                <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                  <th className="px-3 py-3 text-start">{t.products.name}</th>
+                  <th className="px-3 py-3 text-end">{t.products.price}</th>
+                  <th className="px-3 py-3 text-start">{t.products.status}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                 {official.recent_products.map((p) => (
                   <tr key={p.id} className="hover:bg-muted/40">
                     <td className="px-3 py-3">
@@ -465,7 +552,9 @@ function OverviewTab({
                           p.slug}
                       </Link>
                     </td>
-                    <td className="px-3 py-3 font-medium">{fmtMoney(p.base_price, "DZD", locale)}</td>
+                    <td className="px-3 py-3 text-end font-medium tabular-nums">
+                      {fmtMoney(p.base_price, "DZD", locale)}
+                    </td>
                     <td className="px-3 py-3">
                       <StatusPill status={p.status} />
                     </td>
@@ -473,7 +562,7 @@ function OverviewTab({
                 ))}
               </tbody>
             </table>
-          </div>
+          </DataTable>
         )}
       </AdminCard>
     </div>
@@ -762,9 +851,9 @@ function ProductsTab({
           {productsQuery.isPending ? (
             <TableSkeleton />
           ) : productsQuery.isError ? (
-            <EmptyState
+            <ErrorState
               title={t.common.loadingError}
-              text={errMsg(productsQuery.error)}
+              description={errMsg(productsQuery.error)}
               action={
                 <Button
                   type="button"
@@ -777,30 +866,30 @@ function ProductsTab({
               }
             />
           ) : products.length === 0 ? (
-            <EmptyState title={t.products.empty} text={t.products.emptyText} />
+            <EmptyState title={t.products.empty} description={t.products.emptyText} />
           ) : (
-            <div className="overflow-x-auto">
+            <DataTable>
               <table className="w-full min-w-[760px] text-start text-small">
                 <thead>
-                  <tr className="border-b border-border text-caption text-muted-foreground">
-                    <th className="w-10 px-3 py-2">
+                  <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                    <th className="w-10 px-3 py-3">
                       <Checkbox
                         checked={products.length > 0 && selected.length === products.length}
                         onCheckedChange={toggleSelectAll}
                         aria-label="Select all products on this page"
                       />
                     </th>
-                    <th className="px-3 py-2 font-medium">{t.products.name}</th>
-                    <th className="px-3 py-2 font-medium">{t.products.price}</th>
-                    <th className="px-3 py-2 font-medium">{t.products.moderation}</th>
-                    <th className="px-3 py-2 font-medium">{t.products.status}</th>
-                    <th className="px-3 py-2 font-medium">★</th>
-                    <th className="px-3 py-2 font-medium text-end">{t.common.actions}</th>
+                    <th className="px-3 py-3 text-start">{t.products.name}</th>
+                    <th className="px-3 py-3 text-end">{t.products.price}</th>
+                    <th className="px-3 py-3 text-start">{t.products.moderation}</th>
+                    <th className="px-3 py-3 text-start">{t.products.status}</th>
+                    <th className="px-3 py-3 text-start">★</th>
+                    <th className="px-3 py-3 text-end">{t.common.actions}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border">
+                <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                   {products.map((p) => (
-                    <tr key={p.id} className="align-top">
+                    <tr key={p.id} className="align-top hover:bg-muted/40">
                       <td className="px-3 py-3">
                         <Checkbox
                           checked={selected.includes(p.id as string)}
@@ -814,7 +903,7 @@ function ProductsTab({
                           {p.slug} · {fmtDateTime(p.created_at, locale)}
                         </p>
                       </td>
-                      <td className="px-3 py-3 whitespace-nowrap">
+                      <td className="px-3 py-3 whitespace-nowrap text-end tabular-nums">
                         {fmtMoney(Number(p.base_price), "DZD", locale)}
                         {p.compare_at_price ? (
                           <span className="ms-2 text-caption text-muted-foreground line-through">
@@ -930,7 +1019,7 @@ function ProductsTab({
                   ))}
                 </tbody>
               </table>
-            </div>
+            </DataTable>
           )}
           <div className="mt-4">
             <Pager page={page} total={total} pageSize={pageSize} onPage={setPage} />
@@ -1295,9 +1384,9 @@ function InventoryTab({
         {invQuery.isPending ? (
           <TableSkeleton />
         ) : invQuery.isError ? (
-          <EmptyState
+          <ErrorState
             title={t.common.loadingError}
-            text={errMsg(invQuery.error)}
+            description={errMsg(invQuery.error)}
             action={
               <Button type="button" variant="outline" size="sm" onClick={() => invQuery.refetch()}>
                 {t.common.tryAgain}
@@ -1305,23 +1394,23 @@ function InventoryTab({
             }
           />
         ) : rows.length === 0 ? (
-          <EmptyState title={t.inventory.empty} text={t.inventory.emptyText} />
+          <EmptyState title={t.inventory.empty} description={t.inventory.emptyText} />
         ) : (
-          <div className="overflow-x-auto">
+          <DataTable>
             <table className="w-full min-w-[720px] text-start text-small">
               <thead>
-                <tr className="border-b border-border text-caption text-muted-foreground">
-                  <th className="px-3 py-2 font-medium">{t.inventory.product}</th>
-                  <th className="px-3 py-2 font-medium">{t.inventory.sku}</th>
-                  <th className="px-3 py-2 font-medium text-end">{t.inventory.onHand}</th>
-                  <th className="px-3 py-2 font-medium text-end">{t.inventory.reserved}</th>
-                  <th className="px-3 py-2 font-medium text-end">{t.inventory.available}</th>
-                  <th className="px-3 py-2 font-medium text-end">{t.inventory.threshold}</th>
-                  <th className="px-3 py-2 font-medium">{t.products.status}</th>
-                  <th className="px-3 py-2 font-medium text-end">{t.common.actions}</th>
+                <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                  <th className="px-3 py-3 text-start">{t.inventory.product}</th>
+                  <th className="px-3 py-3 text-start">{t.inventory.sku}</th>
+                  <th className="px-3 py-3 text-end">{t.inventory.onHand}</th>
+                  <th className="px-3 py-3 text-end">{t.inventory.reserved}</th>
+                  <th className="px-3 py-3 text-end">{t.inventory.available}</th>
+                  <th className="px-3 py-3 text-end">{t.inventory.threshold}</th>
+                  <th className="px-3 py-3 text-start">{t.products.status}</th>
+                  <th className="px-3 py-3 text-end">{t.common.actions}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                 {rows.map((r) => (
                   <tr key={r.variantId} className="align-top hover:bg-muted/40">
                     <td className="px-3 py-3">
@@ -1339,10 +1428,14 @@ function InventoryTab({
                       )}
                     </td>
                     <td className="px-3 py-3 text-caption text-muted-foreground">{r.sku ?? "—"}</td>
-                    <td className="px-3 py-3 text-end font-medium">{r.quantity}</td>
-                    <td className="px-3 py-3 text-end text-muted-foreground">{r.reserved}</td>
-                    <td className="px-3 py-3 text-end font-medium">{r.available}</td>
-                    <td className="px-3 py-3 text-end text-muted-foreground">{r.threshold}</td>
+                    <td className="px-3 py-3 text-end font-medium tabular-nums">{r.quantity}</td>
+                    <td className="px-3 py-3 text-end text-muted-foreground tabular-nums">
+                      {r.reserved}
+                    </td>
+                    <td className="px-3 py-3 text-end font-medium tabular-nums">{r.available}</td>
+                    <td className="px-3 py-3 text-end text-muted-foreground tabular-nums">
+                      {r.threshold}
+                    </td>
                     <td className="px-3 py-3">
                       <StatusPill
                         status={
@@ -1375,7 +1468,7 @@ function InventoryTab({
                 ))}
               </tbody>
             </table>
-          </div>
+          </DataTable>
         )}
         <div className="mt-4">
           <Pager page={page} total={total} pageSize={pageSize} onPage={setPage} />
@@ -1547,9 +1640,9 @@ function CategoriesTab({
         {catQuery.isPending ? (
           <TableSkeleton />
         ) : catQuery.isError ? (
-          <EmptyState
+          <ErrorState
             title={t.common.loadingError}
-            text={errMsg(catQuery.error)}
+            description={errMsg(catQuery.error)}
             action={
               <Button type="button" variant="outline" size="sm" onClick={() => catQuery.refetch()}>
                 {t.common.tryAgain}
@@ -1557,19 +1650,19 @@ function CategoriesTab({
             }
           />
         ) : categories.length === 0 ? (
-          <EmptyState title={t.categories.empty} text={t.categories.emptyText} />
+          <EmptyState title={t.categories.empty} description={t.categories.emptyText} />
         ) : (
-          <div className="overflow-x-auto">
+          <DataTable>
             <table className="w-full min-w-[560px] text-start text-small">
               <thead>
-                <tr className="border-b border-border text-caption text-muted-foreground">
-                  <th className="px-3 py-2 font-medium">{t.categories.category}</th>
-                  <th className="px-3 py-2 font-medium text-end">{t.categories.products}</th>
-                  <th className="px-3 py-2 font-medium text-end">{t.categories.published}</th>
-                  <th className="px-3 py-2 font-medium">{t.categories.status}</th>
+                <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                  <th className="px-3 py-3 text-start">{t.categories.category}</th>
+                  <th className="px-3 py-3 text-end">{t.categories.products}</th>
+                  <th className="px-3 py-3 text-end">{t.categories.published}</th>
+                  <th className="px-3 py-3 text-start">{t.categories.status}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                 {categories.map((c) => (
                   <tr key={c.id} className="hover:bg-muted/40">
                     <td className="px-3 py-3">
@@ -1579,8 +1672,10 @@ function CategoriesTab({
                       </span>
                       <p className="text-caption text-muted-foreground">{c.slug}</p>
                     </td>
-                    <td className="px-3 py-3 text-end font-medium">{c.official_products}</td>
-                    <td className="px-3 py-3 text-end text-muted-foreground">
+                    <td className="px-3 py-3 text-end font-medium tabular-nums">
+                      {c.official_products}
+                    </td>
+                    <td className="px-3 py-3 text-end text-muted-foreground tabular-nums">
                       {c.official_published}
                     </td>
                     <td className="px-3 py-3">
@@ -1590,7 +1685,7 @@ function CategoriesTab({
                 ))}
               </tbody>
             </table>
-          </div>
+          </DataTable>
         )}
       </AdminCard>
     </div>
@@ -1659,9 +1754,9 @@ function CollectionsTab({
         {appearanceQuery.isPending ? (
           <TableSkeleton />
         ) : appearanceQuery.isError ? (
-          <EmptyState
+          <ErrorState
             title={t.common.loadingError}
-            text={errMsg(appearanceQuery.error)}
+            description={errMsg(appearanceQuery.error)}
             action={
               <Button
                 type="button"
@@ -1674,7 +1769,7 @@ function CollectionsTab({
             }
           />
         ) : collections.length === 0 ? (
-          <EmptyState title={t.collections.empty} text={t.collections.emptyText} />
+          <EmptyState title={t.collections.empty} description={t.collections.emptyText} />
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
             {collections.map((c) => (
@@ -1952,9 +2047,9 @@ function OffersTab({
         {couponsQuery.isPending ? (
           <TableSkeleton />
         ) : couponsQuery.isError ? (
-          <EmptyState
+          <ErrorState
             title={t.common.loadingError}
-            text={errMsg(couponsQuery.error)}
+            description={errMsg(couponsQuery.error)}
             action={
               <Button
                 type="button"
@@ -1967,21 +2062,21 @@ function OffersTab({
             }
           />
         ) : coupons.length === 0 ? (
-          <EmptyState title={t.offers.empty} text={t.offers.emptyText} />
+          <EmptyState title={t.offers.empty} description={t.offers.emptyText} />
         ) : (
-          <div className="overflow-x-auto">
+          <DataTable>
             <table className="w-full min-w-[720px] text-start text-small">
               <thead>
-                <tr className="border-b border-border text-caption text-muted-foreground">
-                  <th className="px-3 py-2 font-medium">{t.offers.code}</th>
-                  <th className="px-3 py-2 font-medium">{t.offers.type}</th>
-                  <th className="px-3 py-2 font-medium text-end">{t.offers.value}</th>
-                  <th className="px-3 py-2 font-medium text-end">{t.offers.usage}</th>
-                  <th className="px-3 py-2 font-medium">{t.offers.status}</th>
-                  <th className="px-3 py-2 font-medium text-end">{t.common.actions}</th>
+                <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                  <th className="px-3 py-3 text-start">{t.offers.code}</th>
+                  <th className="px-3 py-3 text-start">{t.offers.type}</th>
+                  <th className="px-3 py-3 text-end">{t.offers.value}</th>
+                  <th className="px-3 py-3 text-end">{t.offers.usage}</th>
+                  <th className="px-3 py-3 text-start">{t.offers.status}</th>
+                  <th className="px-3 py-3 text-end">{t.common.actions}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                 {coupons.map((c) => (
                   <tr key={c.id} className="align-top hover:bg-muted/40">
                     <td className="px-3 py-3">
@@ -1997,12 +2092,12 @@ function OffersTab({
                     <td className="px-3 py-3 text-caption">
                       {c.discount_type === "percentage" ? t.offers.percentage : t.offers.fixed}
                     </td>
-                    <td className="px-3 py-3 text-end font-medium">
+                    <td className="px-3 py-3 text-end font-medium tabular-nums">
                       {c.discount_type === "percentage"
                         ? `${c.discount_value}%`
                         : fmtMoney(Number(c.discount_value), "DZD", locale)}
                     </td>
-                    <td className="px-3 py-3 text-end text-muted-foreground">
+                    <td className="px-3 py-3 text-end text-muted-foreground tabular-nums">
                       {c.usage_count ?? 0}
                       {c.usage_limit ? ` / ${c.usage_limit}` : ""}
                     </td>
@@ -2044,7 +2139,7 @@ function OffersTab({
                 ))}
               </tbody>
             </table>
-          </div>
+          </DataTable>
         )}
         <div className="mt-4">
           <Pager page={page} total={total} pageSize={pageSize} onPage={setPage} />
@@ -2349,9 +2444,9 @@ function ReviewsTab({
         {reviewsQuery.isPending ? (
           <TableSkeleton />
         ) : reviewsQuery.isError ? (
-          <EmptyState
+          <ErrorState
             title={t.common.loadingError}
-            text={errMsg(reviewsQuery.error)}
+            description={errMsg(reviewsQuery.error)}
             action={
               <Button
                 type="button"
@@ -2364,20 +2459,20 @@ function ReviewsTab({
             }
           />
         ) : reviews.length === 0 ? (
-          <EmptyState title={t.reviews.empty} text={t.reviews.emptyText} />
+          <EmptyState title={t.reviews.empty} description={t.reviews.emptyText} />
         ) : (
-          <div className="overflow-x-auto">
+          <DataTable>
             <table className="w-full min-w-[680px] text-start text-small">
               <thead>
-                <tr className="border-b border-border text-caption text-muted-foreground">
-                  <th className="px-3 py-2 font-medium">{t.reviews.queues.pending}</th>
-                  <th className="px-3 py-2 font-medium">{t.products.name}</th>
-                  <th className="px-3 py-2 font-medium">{t.overview.avgRating}</th>
-                  <th className="px-3 py-2 font-medium">{t.products.status}</th>
-                  <th className="px-3 py-2 font-medium text-end">{t.common.actions}</th>
+                <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                  <th className="px-3 py-3 text-start">{t.reviews.queues.pending}</th>
+                  <th className="px-3 py-3 text-start">{t.products.name}</th>
+                  <th className="px-3 py-3 text-start">{t.overview.avgRating}</th>
+                  <th className="px-3 py-3 text-start">{t.products.status}</th>
+                  <th className="px-3 py-3 text-end">{t.common.actions}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                 {reviews.map((r) => {
                   const product = (r as { products?: unknown }).products;
                   const prod = (Array.isArray(product) ? product[0] : product) as {
@@ -2387,7 +2482,7 @@ function ReviewsTab({
                   const reviewer =
                     [r.first_name, r.last_name].filter(Boolean).join(" ") || t.reviews.anonymous;
                   return (
-                    <tr key={r.id} className="align-top">
+                    <tr key={r.id} className="align-top hover:bg-muted/40">
                       <td className="px-3 py-3">
                         <p className="max-w-md whitespace-pre-wrap">{r.body ?? "—"}</p>
                         <p className="mt-1 text-caption text-muted-foreground">
@@ -2404,7 +2499,7 @@ function ReviewsTab({
                       <td className="px-3 py-3 text-caption">
                         {pickName(prod?.name) || prod?.slug || r.product_id.slice(0, 8)}
                       </td>
-                      <td className="px-3 py-3 whitespace-nowrap">{r.rating} / 5</td>
+                      <td className="px-3 py-3 whitespace-nowrap tabular-nums">{r.rating} / 5</td>
                       <td className="px-3 py-3">
                         <StatusPill status={r.moderation_status} />
                       </td>
@@ -2441,7 +2536,7 @@ function ReviewsTab({
                 })}
               </tbody>
             </table>
-          </div>
+          </DataTable>
         )}
         <div className="mt-4">
           <Pager page={page} total={total} pageSize={pageSize} onPage={setPage} />
@@ -2677,9 +2772,9 @@ function AppearanceTab({
   if (appearanceQuery.isPending) return <TableSkeleton rows={5} />;
   if (appearanceQuery.isError || !appearance)
     return (
-      <EmptyState
+      <ErrorState
         title={t.common.loadingError}
-        text={appearanceQuery.isError ? errMsg(appearanceQuery.error) : undefined}
+        description={appearanceQuery.isError ? errMsg(appearanceQuery.error) : undefined}
         action={
           <Button
             type="button"
@@ -2695,9 +2790,9 @@ function AppearanceTab({
 
   return (
     <div className="space-y-6">
-      <AdminCard
+      <FormSection
         title={t.appearance.title}
-        subtitle={t.appearance.subtitle}
+        description={t.appearance.subtitle}
         actions={
           <Button
             size="sm"
@@ -2742,11 +2837,11 @@ function AppearanceTab({
             </div>
           </div>
         </div>
-      </AdminCard>
+      </FormSection>
 
-      <AdminCard
+      <FormSection
         title={t.appearance.sections}
-        subtitle={t.appearance.sectionsHint}
+        description={t.appearance.sectionsHint}
         actions={
           <Button
             size="sm"
@@ -2866,7 +2961,7 @@ function AppearanceTab({
             </div>
           </div>
         </div>
-      </AdminCard>
+      </FormSection>
     </div>
   );
 }

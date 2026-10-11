@@ -5,11 +5,10 @@ import { AdminGate } from "@/components/admin/AdminGate";
 import { SuperAdminGate } from "@/components/admin/SuperAdminGate";
 import { AdminShell } from "@/components/admin/AdminShell";
 import {
-  AdminCard,
-  EmptyState,
   TableSkeleton,
   fmtDateTime,
 } from "@/components/admin/ui";
+import { DataTable, EmptyState, FormSection } from "@/components/dashboard";
 import { useAdminLocale } from "@/components/admin/useAdminLocale";
 import { getTranslations } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
@@ -88,7 +87,7 @@ function AuditLogViewer() {
 
   return (
     <div className="space-y-6">
-      <AdminCard title="Filters">
+      <FormSection title="Filters">
         <div className="flex flex-wrap items-end gap-3">
           <div className="min-w-52 flex-1 space-y-1.5">
             <Label htmlFor="audit-action">Action (contains)</Label>
@@ -115,42 +114,54 @@ function AuditLogViewer() {
             <Button variant="outline" onClick={reset}>Reset</Button>
           </div>
         </div>
-      </AdminCard>
+      </FormSection>
 
-      <AdminCard title="Audit trail" subtitle={`${total} entr${total === 1 ? "y" : "ies"} recorded. Newest first.`}>
+      <section aria-label="Audit trail">
+        <div className="mb-4">
+          <h2 className="text-lg font-semibold tracking-tight">Audit trail</h2>
+          <p className="mt-0.5 text-sm text-muted-foreground">{`${total} entr${total === 1 ? "y" : "ies"} recorded. Newest first.`}</p>
+        </div>
         {logsQuery.isPending ? (
-          <TableSkeleton />
+          <DataTable>
+            <div className="p-4">
+              <TableSkeleton />
+            </div>
+          </DataTable>
         ) : logsQuery.isError ? (
-          <EmptyState title="Could not load audit logs" text={errMsg(logsQuery.error)} />
+          <DataTable>
+            <EmptyState title="Could not load audit logs" description={errMsg(logsQuery.error)} />
+          </DataTable>
         ) : logs.length === 0 ? (
-          <EmptyState title="No audit entries" text="Nothing matches these filters yet." />
+          <DataTable>
+            <EmptyState title="No audit entries" description="Nothing matches these filters yet." />
+          </DataTable>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px] text-start text-small">
+          <DataTable>
+            <table className="w-full min-w-[720px] text-sm">
               <thead>
-                <tr className="border-b border-border text-caption text-muted-foreground">
-                  <th className="px-3 py-2 font-medium">Time</th>
-                  <th className="px-3 py-2 font-medium">Actor</th>
-                  <th className="px-3 py-2 font-medium">Action</th>
-                  <th className="px-3 py-2 font-medium">Resource</th>
-                  <th className="px-3 py-2 font-medium">Resource ID</th>
-                  <th className="px-3 py-2 font-medium">Details</th>
+                <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                  <th className="px-3 py-3 text-start">Time</th>
+                  <th className="px-3 py-3 text-start">Actor</th>
+                  <th className="px-3 py-3 text-start">Action</th>
+                  <th className="px-3 py-3 text-start">Resource</th>
+                  <th className="px-3 py-3 text-start">Resource ID</th>
+                  <th className="px-3 py-3 text-start">Details</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                 {logs.map((log) => {
                   const isOpen = expanded === log["id"];
                   const metadata = log["metadata"] as Record<string, unknown> | null;
                   const hasMetadata =
                     metadata && typeof metadata === "object" && Object.keys(metadata).length > 0;
                   return (
-                    <tr key={log["id"]} className="align-top">
-                      <td className="px-3 py-3 whitespace-nowrap text-caption">{fmtDateTime(log.created_at, locale)}</td>
+                    <tr key={log["id"]} className="align-top hover:bg-muted/40">
+                      <td className="px-3 py-3 whitespace-nowrap text-xs">{fmtDateTime(log.created_at, locale)}</td>
                       <td className="px-3 py-3 font-mono text-xs">
                         {log.actor_id ? log.actor_id.slice(0, 8) : "system"}
                       </td>
                       <td className="px-3 py-3 font-mono text-xs">{log.action}</td>
-                      <td className="px-3 py-3 text-caption">{log.resource}</td>
+                      <td className="px-3 py-3 text-xs">{log.resource}</td>
                       <td className="px-3 py-3 font-mono text-xs break-all">
                         {log.resource_id ? log.resource_id.slice(0, 8) : "—"}
                       </td>
@@ -166,13 +177,13 @@ function AuditLogViewer() {
                               {isOpen ? "Hide" : "View"}
                             </Button>
                             {isOpen ? (
-                              <pre className="mt-2 max-w-md overflow-x-auto border border-border bg-muted/40 p-3 text-xs leading-5">
+                              <pre className="mt-2 max-w-md overflow-x-auto rounded-md border border-border bg-muted/40 p-3 text-xs leading-5">
                                 {JSON.stringify(metadata, null, 2)}
                               </pre>
                             ) : null}
                           </>
                         ) : (
-                          <span className="text-caption text-muted-foreground">—</span>
+                          <span className="text-xs text-muted-foreground">—</span>
                         )}
                       </td>
                     </tr>
@@ -180,12 +191,12 @@ function AuditLogViewer() {
                 })}
               </tbody>
             </table>
-          </div>
+          </DataTable>
         )}
         <div className="mt-4">
           <Pager page={page} total={total} pageSize={pageSize} onPage={setPage} />
         </div>
-      </AdminCard>
+      </section>
     </div>
   );
 }

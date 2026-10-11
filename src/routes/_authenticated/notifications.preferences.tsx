@@ -1,5 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteFooter, SiteHeader } from "@/components/layout/site-shell";
+import { PageHeader } from "@/components/dashboard";
+import { Button } from "@/components/ui/button";
 import { NotificationPreferencesForm } from "@/components/notifications/notification-center";
 import { getLocale, getTranslations, localeDirections } from "@/lib/i18n";
 
@@ -15,20 +17,20 @@ function NotificationPreferencesPage() {
   return (
     <div dir={localeDirections[locale]} lang={locale} className="min-h-screen bg-background">
       <SiteHeader locale={locale} t={t} />
-      <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
-        <p className="text-eyebrow text-muted-foreground">{t.nav.account}</p>
-        <h1 className="mt-2 text-display text-foreground">{t.notifications.preferencesTitle}</h1>
-        <p className="mt-3 text-body text-muted-foreground">{t.notifications.preferencesSubtitle}</p>
-        <div className="mt-4">
-          <Link
-            to="/notifications"
-            search={{ locale }}
-            className="text-sm font-medium text-primary underline-offset-4 hover:underline"
-          >
-            {t.notifications.title}
-          </Link>
-        </div>
-        <section className="mt-8">
+      <main id="main-content" tabIndex={-1} className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
+        <PageHeader
+          eyebrow={t.nav.account}
+          title={t.notifications.preferencesTitle}
+          description={t.notifications.preferencesSubtitle}
+          actions={
+            <Button asChild variant="outline" size="sm">
+              <Link to="/notifications" search={{ locale }}>
+                {t.notifications.title}
+              </Link>
+            </Button>
+          }
+        />
+        <section className="mt-2">
           <NotificationPreferencesForm scope="customer" t={t.notifications} />
         </section>
       </main>

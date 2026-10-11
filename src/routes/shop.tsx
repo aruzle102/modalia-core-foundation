@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, Search, SlidersHorizontal, Sparkles, X } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Search, SlidersHorizontal, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CategoryRail, ProductGrid, StoreRail } from "@/components/marketplace/discovery";
@@ -257,11 +257,11 @@ function SmartSearchBanner({
   if (!suggestion) return null;
   return (
     <div
-      className="mt-4 flex flex-wrap items-center gap-3 rounded-[14px] border border-[#E5E5E5] bg-white px-4 py-3"
+      className="mt-4 flex flex-wrap items-center gap-3 rounded-[14px] border border-border bg-card px-4 py-3"
       role="status"
     >
-      <Sparkles className="size-4 shrink-0 text-[#0A0A0A]" aria-hidden />
-      <p className="min-w-0 flex-1 text-sm text-[#0A0A0A]">
+      <Sparkles className="size-4 shrink-0 text-foreground" aria-hidden />
+      <p className="min-w-0 flex-1 text-sm text-foreground">
         {ts.smartUnderstood(suggestion.summary)}
       </p>
       <div className="flex items-center gap-2">
@@ -503,10 +503,10 @@ function ShopPage() {
   );
 
   return (
-    <div dir={localeDirections[search.locale]} lang={search.locale} className="min-h-screen bg-[#F6F6F4]">
+    <div dir={localeDirections[search.locale]} lang={search.locale} className="min-h-screen bg-muted">
       <SiteHeader locale={search.locale} t={t} />
       <main id="main-content" tabIndex={-1} className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <h1 className="text-display tracking-tight text-[#0A0A0A]">SHOP</h1>
+        <h1 className="text-display tracking-tight text-foreground">SHOP</h1>
 
         <form
           onSubmit={(event) => {
@@ -530,7 +530,7 @@ function ShopPage() {
             name="q"
             defaultValue={search.q}
             placeholder={ts.searchPlaceholder}
-            className="h-11 rounded-[10px] border-[#E5E5E5] bg-white ps-10"
+            className="h-11 rounded-[10px] border-border bg-card ps-10"
           />
         </form>
 
@@ -551,7 +551,7 @@ function ShopPage() {
           onApply={applySmartFilters}
         />
 
-        <div className="mt-8 flex flex-wrap items-center gap-2 border-b border-[#E5E5E5] pb-4" aria-label={ts.filters}>
+        <div className="mt-8 flex flex-wrap items-center gap-2 border-b border-border pb-4" aria-label={ts.filters}>
           {views.map((view) => (
             <Button
               key={view.value || "all"}
@@ -577,7 +577,7 @@ function ShopPage() {
           </div>
         ) : (
           <>
-            <div className="mt-8 flex gap-7 overflow-x-auto border-b border-[#E5E5E5]" role="tablist" aria-label={ts.filters}>
+            <div className="mt-8 flex gap-7 overflow-x-auto border-b border-border" role="tablist" aria-label={ts.filters}>
               <CategoryTab
                 active={search.category === ""}
                 label={ts.all}
@@ -600,7 +600,7 @@ function ShopPage() {
               ))}
             </div>
 
-            <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-y border-[#E5E5E5] py-3">
+            <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-y border-border py-3">
               <div className="flex items-center gap-3">
                 <Button
                   type="button"
@@ -617,9 +617,12 @@ function ShopPage() {
                   {ts.resultsCount(data.total)}
                 </p>
               </div>
-              <div className="flex items-center gap-2">
-                <SlidersHorizontal className="size-4 text-muted-foreground" aria-hidden />
+              <div className="relative flex items-center gap-2">
+                <label htmlFor="shop-sort" className="text-small text-muted-foreground">
+                  {ts.sortLabel}
+                </label>
                 <select
+                  id="shop-sort"
                   aria-label={ts.sortLabel}
                   value={search.sort}
                   onChange={(event) =>
@@ -631,12 +634,13 @@ function ShopPage() {
                       }),
                     })
                   }
-                  className="h-10 rounded-[10px] border border-[#E5E5E5] bg-white px-3 text-small text-[#0A0A0A] outline-none"
+                  className="h-10 cursor-pointer appearance-none rounded-[10px] border border-border bg-card px-3 pe-9 text-small text-foreground outline-none"
                 >
                   <option value="newest">{ts.sortNewest}</option>
                   <option value="price_asc">{ts.sortPriceAsc}</option>
                   <option value="price_desc">{ts.sortPriceDesc}</option>
                 </select>
+                <ChevronDown className="pointer-events-none absolute end-3 size-4 text-muted-foreground" aria-hidden />
               </div>
             </div>
 
@@ -647,7 +651,7 @@ function ShopPage() {
                     key={chip.key}
                     type="button"
                     onClick={chip.clear}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-[#E5E5E5] bg-white py-1 pe-2 ps-3 text-caption text-[#0A0A0A] transition-colors hover:border-[#0A0A0A]/30"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card py-1 pe-2 ps-3 text-caption text-foreground transition-colors hover:border-foreground/30"
                   >
                     {chip.label}
                     <X className="size-3.5 text-muted-foreground" aria-hidden />
@@ -665,7 +669,7 @@ function ShopPage() {
 
             <div className="mt-8 grid gap-10 lg:grid-cols-[15rem_minmax(0,1fr)]">
               <aside className="hidden lg:block">
-                <div className="sticky top-24 rounded-[14px] border border-[#E5E5E5] bg-white p-5">{filtersPanel}</div>
+                <div className="sticky top-24 rounded-[14px] border border-border bg-card p-5">{filtersPanel}</div>
               </aside>
               <div className="min-w-0">
                 <ProductGrid
@@ -741,9 +745,9 @@ function ShopPage() {
             className="absolute inset-0 cursor-default bg-black/50"
             onClick={() => setFiltersOpen(false)}
           />
-          <div className="absolute inset-y-0 start-0 flex w-80 max-w-[85vw] flex-col bg-white shadow-xl">
-            <div className="flex items-center justify-between border-b border-[#E5E5E5] p-4">
-              <h2 className="text-h3 text-[#0A0A0A]">{ts.filters}</h2>
+          <div className="absolute inset-y-0 start-0 flex w-80 max-w-[85vw] flex-col bg-card shadow-xl">
+            <div className="flex items-center justify-between border-b border-border p-4">
+              <h2 className="text-h3 text-foreground">{ts.filters}</h2>
               <Button type="button" variant="ghost" size="icon" onClick={() => setFiltersOpen(false)} aria-label={ts.hideFilters}>
                 <X className="size-5" />
               </Button>

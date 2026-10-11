@@ -3,7 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Layers, Plus } from "lucide-react";
 import { AdminGate } from "@/components/admin/AdminGate";
 import { AdminShell } from "@/components/admin/AdminShell";
-import { AdminCard, EmptyState } from "@/components/admin/ui";
+import { AdminCard } from "@/components/admin/ui";
+import { EmptyState } from "@/components/dashboard";
 import { Button } from "@/components/ui/button";
 import { BackLink } from "@/components/routing/back-link";
 import { listAllCollections } from "@/lib/admin-collections.functions";
@@ -52,7 +53,7 @@ function CollectionsPage() {
         }
       >
         <BackLink back={back} fallbackTo="/admin" fallbackSearch={{ locale }}>
-          <ArrowLeft className="size-4 me-1.5" />
+          <ArrowLeft className="size-4 me-1.5 rtl:rotate-180" />
           {t.back}
         </BackLink>
 
@@ -63,7 +64,7 @@ function CollectionsPage() {
           </div>
         ) : collections.length === 0 ? (
           <AdminCard className="mt-4">
-            <EmptyState title={t.emptyTitle} text={t.emptyText} />
+            <EmptyState title={t.emptyTitle} description={t.emptyText} />
           </AdminCard>
         ) : (
           <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

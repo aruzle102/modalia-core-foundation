@@ -715,9 +715,9 @@ function TrendingSection({
         search={shopSearch}
         viewAll={viewAll}
       />
-      <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 lg:pb-0">
+      <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 lg:pb-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {products.slice(0, 6).map((product) => (
-          <div key={product.id} className="w-40 shrink-0 snap-start sm:w-44">
+          <div key={product.id} className="w-36 shrink-0 snap-start sm:w-44 lg:w-48">
             <ProductCard product={product} locale={locale} />
           </div>
         ))}
@@ -753,9 +753,9 @@ function BestsellersSection({
         viewAll={viewAll}
         tone="rule"
       />
-      <div className="flex snap-x snap-mandatory gap-5 overflow-x-auto pb-2 lg:pb-0">
+      <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 lg:pb-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {data.products.map((product, index) => (
-          <div key={product.id} className="w-40 shrink-0 snap-start sm:w-44">
+          <div key={product.id} className="w-36 shrink-0 snap-start sm:w-44 lg:w-48">
             <p
               aria-hidden
               className="mb-2 font-display text-3xl font-semibold tabular-nums text-muted-foreground/45"
@@ -797,9 +797,9 @@ function PopularNow({
         viewAll={viewAll}
         tone="minimal"
       />
-      <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 lg:pb-0">
+      <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 lg:pb-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {data.products.map((product) => (
-          <div key={product.id} className="w-40 shrink-0 snap-start sm:w-44">
+          <div key={product.id} className="w-36 shrink-0 snap-start sm:w-44 lg:w-48">
             <ProductCard product={product} locale={locale} />
           </div>
         ))}
@@ -842,12 +842,9 @@ function NewArrivalsSection({
         viewAll={viewAll}
         tone="rule"
       />
-      <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 lg:pb-0">
-        {newest.map((product, index) => (
-          <div
-            key={product.id}
-            className={`shrink-0 snap-start ${index % 2 === 0 ? "w-52 sm:w-60" : "w-60 sm:w-72"}`}
-          >
+      <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 lg:pb-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {newest.map((product) => (
+          <div key={product.id} className="w-36 shrink-0 snap-start sm:w-44 lg:w-48">
             <ProductCard product={product} locale={locale} />
           </div>
         ))}
@@ -897,10 +894,10 @@ function CategoryExplorer({
     <section aria-label={copy.sfCatTitle} className="mx-auto max-w-7xl px-4 pt-2 sm:px-6 lg:px-8">
       <Reveal>
         <div className="mb-3">
-          <h2 className="text-xl font-bold tracking-tight text-[#0A0A0A] sm:text-2xl">
+          <h2 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
             {copy.sfCatTitle}
           </h2>
-          <p className="mt-1 text-sm text-[#666666]">{copy.sfCatSubtitle}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{copy.sfCatSubtitle}</p>
         </div>
         <nav
           className="-mx-4 flex snap-x snap-mandatory gap-2 overflow-x-auto px-4 pb-2 sm:gap-3 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
@@ -912,12 +909,12 @@ function CategoryExplorer({
                 ? { to: "/category/$slug", params: { slug } }
                 : { to: "/shop" }) as any}
               search={{ locale } as any}
-              className="group flex shrink-0 snap-start flex-col items-center gap-2.5 rounded-[14px] border border-[#E5E5E5] bg-white px-5 py-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-[#0A0A0A]/25 hover:shadow-[0_10px_24px_-12px_rgba(0,0,0,0.2)] active:scale-[0.97]"
+              className="group flex shrink-0 snap-start flex-col items-center gap-2.5 rounded-[14px] border border-border bg-card px-5 py-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-foreground/25 active:scale-[0.97]"
             >
-              <span className="grid size-11 place-items-center rounded-full bg-[#F6F6F4] text-[#0A0A0A] transition-colors group-hover:bg-[#0A0A0A] group-hover:text-white">
+              <span className="grid size-11 place-items-center rounded-full bg-muted text-foreground transition-colors group-hover:bg-foreground group-hover:text-background">
                 <Icon className="size-5" aria-hidden />
               </span>
-              <span className="whitespace-nowrap text-[12.5px] font-semibold text-[#0A0A0A]">
+              <span className="whitespace-nowrap text-[12.5px] font-semibold text-foreground">
                 {name}
               </span>
             </Link>
@@ -1079,9 +1076,9 @@ function OffersSection({
                 <ArrowRight className={`size-4 ${motionTw.transition.transform} ${motionTw.duration.feedback} group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5 motion-reduce:transition-none`} />
               </Link>
             </div>
-            <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 lg:pb-0">
+            <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 lg:pb-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {offers.map((product) => (
-                <div key={product.id} className="w-40 shrink-0 snap-start sm:w-44">
+                <div key={product.id} className="w-36 shrink-0 snap-start sm:w-44 lg:w-48">
                   <ProductCard product={product} locale={locale} />
                 </div>
               ))}
@@ -1134,22 +1131,22 @@ function FlashSaleSection({
   return (
     <section aria-label={copy.sfFlashTitle} className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
       <Reveal>
-        <div className="overflow-hidden rounded-[20px] border border-[#E5E5E5] bg-white p-6 sm:p-8">
+        <div className="overflow-hidden rounded-[20px] border border-border bg-card p-6 sm:p-8">
           <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
             <div>
-              <h2 className="text-xl font-bold tracking-tight text-[#0A0A0A] sm:text-2xl">
+              <h2 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
                 {copy.sfFlashTitle}
               </h2>
               <div className="mt-3 flex items-center gap-1.5" role="timer" aria-live="off" dir="ltr">
                 {units.map((u, i) => (
                   <span key={u.label} className="flex items-center gap-1.5">
-                    <span className="grid min-w-12 place-items-center rounded-[10px] bg-[#0A0A0A] px-2 py-2">
-                      <span className="text-lg font-bold tabular-nums text-white">
+                    <span className="grid min-w-12 place-items-center rounded-[10px] bg-foreground px-2 py-2">
+                      <span className="text-lg font-bold tabular-nums text-background">
                         {String(u.value).padStart(2, "0")}
                       </span>
                     </span>
-                    <span className="text-[11px] font-bold text-[#E53935]">{u.label}</span>
-                    {i < units.length - 1 ? <span className="text-[#666666]">:</span> : null}
+                    <span className="text-[11px] font-bold text-destructive">{u.label}</span>
+                    {i < units.length - 1 ? <span className="text-muted-foreground">:</span> : null}
                   </span>
                 ))}
               </div>
@@ -1157,7 +1154,7 @@ function FlashSaleSection({
             <Link
               to="/shop"
               search={{ locale, onSale: true } as any}
-              className="group inline-flex shrink-0 items-center gap-1.5 text-[13px] font-semibold text-[#0A0A0A] transition-all hover:gap-2.5"
+              className="group inline-flex shrink-0 items-center gap-1.5 text-[13px] font-semibold text-foreground transition-all hover:gap-2.5"
             >
               {viewAll}
               <ArrowRight className="size-3.5 transition-transform rtl:rotate-180" />
@@ -1473,9 +1470,9 @@ function RecentlyViewed({
         viewAll={viewAll}
         tone="minimal"
       />
-      <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 lg:pb-0">
+      <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 lg:pb-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {items.map((product) => (
-          <div key={product.id} className="w-40 shrink-0 snap-start sm:w-44">
+          <div key={product.id} className="w-36 shrink-0 snap-start sm:w-44 lg:w-48">
             <ProductCard product={product} locale={locale} />
           </div>
         ))}
@@ -1754,13 +1751,13 @@ function BoutiquesGrid({
     <section aria-label={copy.sfStoresTitle} className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
       <Reveal>
         <div className="mb-6 flex items-end justify-between gap-4">
-          <h2 className="text-xl font-bold tracking-tight text-[#0A0A0A] sm:text-2xl">
+          <h2 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
             {copy.sfStoresTitle}
           </h2>
           <Link
             to={"/stores" as any}
             search={{ locale } as any}
-            className="group inline-flex shrink-0 items-center gap-1.5 text-[13px] font-semibold text-[#0A0A0A] transition-all hover:gap-2.5"
+            className="group inline-flex shrink-0 items-center gap-1.5 text-[13px] font-semibold text-foreground transition-all hover:gap-2.5"
           >
             {copy.sfStoresCta}
             <ArrowRight className="size-3.5 transition-transform rtl:rotate-180" />
@@ -1775,7 +1772,7 @@ function BoutiquesGrid({
                 to="/store/$slug"
                 params={{ slug: store.slug }}
                 search={{ locale }}
-                className="group flex flex-col items-center gap-2 rounded-[14px] border border-[#E5E5E5] bg-white p-4 text-center transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_10px_24px_-12px_rgba(0,0,0,0.2)]"
+                className="group flex flex-col items-center gap-2 rounded-[14px] border border-border bg-card p-4 text-center transition-all duration-200 hover:-translate-y-0.5 hover:border-foreground/25"
                 aria-label={store.name}
               >
                 <span className="relative block">
@@ -1784,20 +1781,20 @@ function BoutiquesGrid({
                       src={store.logoPath}
                       alt=""
                       loading="lazy"
-                      className="size-14 rounded-full bg-[#F6F6F4] object-cover ring-1 ring-[#E5E5E5]"
+                      className="size-14 rounded-full bg-muted object-cover ring-1 ring-border"
                     />
                   ) : (
-                    <span className="grid size-14 place-items-center rounded-full bg-[#F6F6F4] text-lg font-bold text-[#0A0A0A]">
+                    <span className="grid size-14 place-items-center rounded-full bg-muted text-lg font-bold text-foreground">
                       {store.name.slice(0, 1).toUpperCase()}
                     </span>
                   )}
                   {store.verified || store.slug === "modalia" ? (
-                    <span className="absolute -bottom-0.5 -right-0.5 grid size-5 place-items-center rounded-full bg-[#16803C] text-white ring-2 ring-white">
+                    <span className="absolute -bottom-0.5 -end-0.5 grid size-5 place-items-center rounded-full bg-green-600 text-white ring-2 ring-card">
                       <BadgeCheck className="size-3" aria-hidden />
                     </span>
                   ) : null}
                 </span>
-                <span className="line-clamp-1 w-full text-[13px] font-semibold text-[#0A0A0A]">
+                <span className="line-clamp-1 w-full text-[13px] font-semibold text-foreground">
                   {store.name}
                 </span>
                 {store.slug === "modalia" ? (
@@ -1809,7 +1806,7 @@ function BoutiquesGrid({
                     alt=""
                     aria-hidden
                     loading="lazy"
-                    className="mt-1 aspect-square w-full rounded-[10px] bg-[#F6F6F4] object-cover"
+                    className="mt-1 aspect-square w-full rounded-[10px] bg-muted object-cover"
                   />
                 ) : null}
               </Link>
@@ -1826,18 +1823,18 @@ function FinalCTA({ locale, copy }: { locale: SupportedLocale; copy: HomeCopy })
   return (
     <section aria-label={copy.sfFinalTitle} className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
       <Reveal>
-        <div className="flex flex-col items-center gap-5 rounded-[20px] bg-[#0A0A0A] px-6 py-14 text-center text-white sm:py-16">
+        <div className="flex flex-col items-center gap-5 rounded-[20px] bg-foreground px-6 py-14 text-center text-background sm:py-16">
           <h2 className="max-w-xl text-2xl font-bold tracking-tight sm:text-3xl">
             {copy.sfFinalTitle}
           </h2>
-          <p className="max-w-md text-[15px] leading-relaxed text-white/70">
+          <p className="max-w-md text-[15px] leading-relaxed text-background/70">
             {copy.sfFinalText}
           </p>
           <div className="mt-1 flex flex-wrap items-center justify-center gap-3">
             <Link
               to="/shop"
               search={{ locale } as any}
-              className="group inline-flex items-center gap-2 rounded-[10px] bg-white px-7 py-3 text-sm font-semibold text-[#0A0A0A] transition-all hover:bg-white/90 active:scale-[0.98]"
+              className="group inline-flex items-center gap-2 rounded-[10px] bg-background px-7 py-3 text-sm font-semibold text-foreground transition-all hover:bg-background/90 active:scale-[0.98]"
             >
               {copy.sfFinalPrimary}
               <ArrowRight className="size-4 transition-transform group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1" />
@@ -1925,7 +1922,7 @@ function HomePage() {
 
 
   return (
-    <div dir={localeDirections[locale]} lang={locale} className="min-h-screen bg-[#F6F6F4]">
+    <div dir={localeDirections[locale]} lang={locale} className="min-h-screen bg-muted">
       <SiteHeader locale={locale} t={t} />
       <main id="main-content" tabIndex={-1}>
         <div className="space-y-4 py-0 sm:space-y-6">

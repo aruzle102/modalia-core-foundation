@@ -155,7 +155,10 @@ function SellerOnboardingPage() {
               <p className="text-body text-foreground" role="alert">
                 {t.errLoad}
               </p>
-              <Button className="mt-4" onClick={() => window.location.reload()}>
+              <Button
+                className="mt-4 h-11 rounded-full px-6"
+                onClick={() => window.location.reload()}
+              >
                 {t.continue}
               </Button>
             </AdminCard>
@@ -178,7 +181,10 @@ function SellerOnboardingPage() {
                   <div>
                     <p className="text-h3 text-foreground">{t.completeTitle}</p>
                     <p className="mt-1 text-body text-muted-foreground">{t.completeText}</p>
-                    <Button className="mt-5 pressable" onClick={() => void nav({ to: "/seller", search: { locale }, replace: true })}>
+                    <Button
+                      className="pressable mt-5 h-11 rounded-full px-6"
+                      onClick={() => void nav({ to: "/seller", search: { locale }, replace: true })}
+                    >
                       {t.goToDashboard}
                     </Button>
                   </div>

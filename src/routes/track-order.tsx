@@ -80,42 +80,48 @@ function OrderTimeline({
 
   return (
     <div className="mt-6">
-      <ol className="flex items-start" aria-label={timelineCurrent}>
+      <ol className="flex" aria-label={timelineCurrent}>
         {JOURNEY.map((step, index) => {
           const done = currentStep >= 0 && index < currentStep;
           const current = index === currentStep;
+          const reached = done || current;
           return (
-            <li key={step} className="flex min-w-0 flex-1 flex-col items-center gap-2 text-center">
+            <li key={step} className="relative min-w-0 flex-1">
+              {/* Connector from the previous step — logical edges keep RTL correct. */}
+              {index > 0 ? (
+                <span
+                  aria-hidden
+                  className={`absolute start-0 top-4 h-px w-1/2 transition-colors ${
+                    reached ? "bg-foreground" : "bg-border"
+                  }`}
+                />
+              ) : null}
               <span
                 aria-hidden
-                className={`grid size-8 place-items-center rounded-full border text-caption font-semibold transition-colors ${
-                  current
+                className={`relative z-10 mx-auto grid size-8 place-items-center rounded-full border text-caption font-semibold transition-colors ${
+                  done
                     ? "border-foreground bg-foreground text-background"
-                    : done
-                      ? "border-foreground bg-foreground/10 text-foreground"
+                    : current
+                      ? "border-foreground bg-background text-foreground ring-2 ring-foreground/25"
                       : "border-border bg-muted text-muted-foreground"
                 }`}
               >
                 {done ? <Check className="size-4" /> : <span>{index + 1}</span>}
               </span>
               <span
-                className={`text-caption leading-tight ${current ? "font-semibold text-foreground" : "text-muted-foreground"}`}
+                className={`mt-2 block px-1 text-center text-caption leading-tight ${
+                  current ? "font-semibold text-foreground" : "text-muted-foreground"
+                }`}
                 aria-current={current ? "step" : undefined}
               >
                 {steps[index] ?? statusLabel(step)}
               </span>
-              {index < JOURNEY.length - 1 ? (
-                <span
-                  aria-hidden
-                  className={`mt-1 hidden h-px w-full ${done || current ? "bg-foreground" : "bg-border"} sm:block`}
-                />
-              ) : null}
             </li>
           );
         })}
       </ol>
       {terminal && status !== "delivered" ? (
-        <p className="mt-5 rounded-[14px] border border-[#E5E5E5] bg-[#F6F6F4] p-4 text-small text-[#666666]">
+        <p className="mt-5 rounded-xl border border-border bg-muted/50 p-4 text-small text-muted-foreground">
           {terminalNotice}
         </p>
       ) : null}
@@ -143,7 +149,7 @@ function TrackOrderPage() {
             e.preventDefault();
             lookup.mutate();
           }}
-          className="mt-8 rounded-[14px] border border-[#E5E5E5] bg-white p-6"
+          className="mt-8 rounded-xl border border-border bg-card p-5 sm:p-6"
         >
           <label className="block text-small">
             {tt.orderCode}
@@ -171,21 +177,21 @@ function TrackOrderPage() {
           </Button>
         </form>
         {lookup.isError ? (
-          <p className="mt-5 text-small text-destructive">
+          <p role="alert" className="mt-5 rounded-xl border border-destructive/20 bg-destructive/10 p-4 text-small text-destructive">
             {lookup.error instanceof Error ? lookup.error.message : tt.lookupFailed}
           </p>
         ) : null}
         {lookup.isSuccess && !lookup.data ? (
-          <p className="mt-5 rounded-[10px] border border-[#E5E5E5] p-4 text-small text-[#666666]">{tt.noMatch}</p>
+          <p className="mt-5 rounded-xl border border-border bg-card p-4 text-small text-muted-foreground">{tt.noMatch}</p>
         ) : null}
         {lookup.data ? (
-          <section className="mt-6 rounded-[14px] border border-[#E5E5E5] bg-white p-6">
+          <section className="mt-6 rounded-xl border border-border bg-card p-5 sm:p-6">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <p className="text-caption text-muted-foreground">{lookup.data.orderNumber}</p>
-                <h2 className="mt-1 text-h3">{t.orders.statusLabel(lookup.data.status)}</h2>
+                <h2 className="mt-1 text-h3 text-foreground">{t.orders.statusLabel(lookup.data.status)}</h2>
               </div>
-              <p className="text-price">{formatPrice(lookup.data.total, locale, lookup.data.currency)}</p>
+              <p className="text-price tabular-nums">{formatPrice(lookup.data.total, locale, lookup.data.currency)}</p>
             </div>
             <p className="mt-4 text-small text-muted-foreground">
               {lookup.data.deliveryMethod === "office" ? tt.officeDelivery : tt.homeDelivery} · {tt.placed}{" "}
@@ -207,7 +213,7 @@ function TrackOrderPage() {
                 {lookup.data.history.map((event: GuestOrderHistoryEvent) => (
                   <li
                     key={`${event.at}-${event.status}`}
-                    className="flex items-start gap-3 rounded-[10px] border border-[#E5E5E5] bg-[#F6F6F4] p-4"
+                    className="flex items-start gap-3 rounded-xl border border-border bg-muted/50 p-4"
                   >
                     <span aria-hidden className="mt-1.5 size-2 shrink-0 rounded-full bg-foreground" />
                     <div className="min-w-0">

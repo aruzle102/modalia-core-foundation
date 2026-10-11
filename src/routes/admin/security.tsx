@@ -5,11 +5,10 @@ import { SuperAdminGate } from "@/components/admin/SuperAdminGate";
 import { AdminShell } from "@/components/admin/AdminShell";
 import {
   AdminCard,
-  Stat,
-  EmptyState,
   TableSkeleton,
   fmtDateTime,
 } from "@/components/admin/ui";
+import { DataTable, EmptyState, StatCard } from "@/components/dashboard";
 import { getSecurityOverview } from "@/lib/admin-ops.functions";
 import { getLocale, getTranslations } from "@/lib/i18n";
 import { errMsg } from "./_shared";
@@ -54,59 +53,67 @@ function SecurityPage() {
         {securityQuery.isPending ? (
           <TableSkeleton rows={6} />
         ) : securityQuery.isError ? (
-          <EmptyState title="Could not load security overview" text={errMsg(securityQuery.error)} />
+          <EmptyState title="Could not load security overview" description={errMsg(securityQuery.error)} />
         ) : !data ? null : (
           <div className="space-y-6">
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {data.roleCounts.map((r) => (
-                <AdminCard key={r.role}>
-                  <Stat label={ROLE_LABELS[r.role] ?? r.role} value={r.count} />
-                </AdminCard>
+                <StatCard key={r.role} title={ROLE_LABELS[r.role] ?? r.role} value={r.count} />
               ))}
-              <AdminCard>
-                <Stat
-                  label="Password reset required"
-                  value={data.passwordResetRequired}
-                  hint="Sellers that must reset their password"
-                />
-              </AdminCard>
+              <StatCard
+                title="Password reset required"
+                value={data.passwordResetRequired}
+                description="Sellers that must reset their password"
+              />
             </div>
 
-            <AdminCard title="Super admins" subtitle="Users with full platform access.">
+            <section aria-label="Super admins">
+              <div className="mb-4">
+                <h2 className="text-lg font-semibold tracking-tight">Super admins</h2>
+                <p className="mt-0.5 text-sm text-muted-foreground">Users with full platform access.</p>
+              </div>
               {data.superAdmins.length === 0 ? (
-                <EmptyState title="No super admins found" text="Nobody currently holds the super_admin role." />
+                <DataTable>
+                  <EmptyState
+                    title="No super admins found"
+                    description="Nobody currently holds the super_admin role."
+                  />
+                </DataTable>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-[520px] text-start text-small">
+                <DataTable>
+                  <table className="w-full min-w-[520px] text-sm">
                     <thead>
-                      <tr className="border-b border-border text-caption text-muted-foreground">
-                        <th className="px-3 py-2 font-medium">Name</th>
-                        <th className="px-3 py-2 font-medium">User ID</th>
-                        <th className="px-3 py-2 font-medium">Granted</th>
+                      <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                        <th className="px-3 py-3 text-start">Name</th>
+                        <th className="px-3 py-3 text-start">User ID</th>
+                        <th className="px-3 py-3 text-start">Granted</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-border">
+                    <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                       {data.superAdmins.map((a) => (
-                        <tr key={a.user_id}>
+                        <tr key={a.user_id} className="hover:bg-muted/40">
                           <td className="px-3 py-3 font-medium">{a.display_name ?? "—"}</td>
-                          <td className="px-3 py-3 font-mono text-caption">{a.user_id.slice(0, 8)}…</td>
-                          <td className="px-3 py-3 text-caption text-muted-foreground">
+                          <td className="px-3 py-3 font-mono text-xs">{a.user_id.slice(0, 8)}…</td>
+                          <td className="px-3 py-3 text-xs text-muted-foreground">
                             {fmtDateTime(a.created_at, locale)}
                           </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
-                </div>
+                </DataTable>
               )}
-            </AdminCard>
+            </section>
 
             <AdminCard
               title="Recent security events"
               subtitle="Audit log entries related to passwords, logins, roles and sessions."
             >
               {data.recentSecurityEvents.length === 0 ? (
-                <EmptyState title="No security events" text="Nothing security-related has been logged yet." />
+                <EmptyState
+                  title="No security events"
+                  description="Nothing security-related has been logged yet."
+                />
               ) : (
                 <ul className="divide-y divide-border">
                   {data.recentSecurityEvents.map((e) => (

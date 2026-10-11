@@ -1,19 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Pencil, Plus } from "lucide-react";
+import { BadgePercent, Layers, Pencil, Plus, Ticket } from "lucide-react";
 import { SellerShell } from "@/components/seller/SellerShell";
 import {
   AdminCard,
   ConfirmDialog,
-  EmptyState,
   Field,
-  Stat,
   StatusPill,
   TableSkeleton,
   fmtDate,
   fmtMoney,
 } from "@/components/admin/ui";
+import { DataTable, EmptyState, ErrorState, StatCard } from "@/components/dashboard";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -32,7 +31,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   createCoupon,
   listCoupons,
@@ -179,62 +177,68 @@ function CouponsPage() {
         {query.isPending ? (
           <TableSkeleton rows={6} />
         ) : query.isError ? (
-          <AdminCard title="Could not load coupons">
-            <p className="text-sm text-destructive">
-              {query.error instanceof Error ? query.error.message : "Unexpected error."}
-            </p>
-            <Button variant="outline" className="mt-4" onClick={() => query.refetch()}>
-              Retry
-            </Button>
-          </AdminCard>
+          <ErrorState
+            title="Could not load coupons"
+            description={query.error instanceof Error ? query.error.message : "Unexpected error."}
+            action={
+              <Button variant="outline" onClick={() => query.refetch()}>
+                Retry
+              </Button>
+            }
+          />
         ) : (
           <>
             <div className="grid gap-4 sm:grid-cols-3">
-              <Stat label="Active coupons" value={stats.active} />
-              <Stat label="Total redemptions" value={stats.redemptions} hint="Times any of your coupons was used" />
-              <Stat label="All coupons" value={stats.total} />
+              <StatCard title="Active coupons" icon={<Ticket className="h-4 w-4" aria-hidden="true" />} value={stats.active} />
+              <StatCard
+                title="Total redemptions"
+                icon={<BadgePercent className="h-4 w-4" aria-hidden="true" />}
+                value={stats.redemptions}
+                description="Times any of your coupons was used"
+              />
+              <StatCard title="All coupons" icon={<Layers className="h-4 w-4" aria-hidden="true" />} value={stats.total} />
             </div>
 
             <AdminCard title="Your coupons" subtitle="Codes are uppercase and unique within your store." className="mt-6">
               {coupons.length === 0 ? (
                 <EmptyState
                   title="No coupons yet"
-                  text="Create a coupon code to reward customers — percentage or fixed-amount, with optional usage limits and validity dates."
+                  description="Create a coupon code to reward customers — percentage or fixed-amount, with optional usage limits and validity dates."
                   action={<Button onClick={openCreate}>Create your first coupon</Button>}
                 />
               ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Code</TableHead>
-                        <TableHead>Discount</TableHead>
-                        <TableHead>Min order</TableHead>
-                        <TableHead>Max discount</TableHead>
-                        <TableHead>Usage</TableHead>
-                        <TableHead>Valid</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-end">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
+                <DataTable>
+                  <table className="w-full min-w-[900px] text-sm">
+                    <thead>
+                      <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                        <th className="px-3 py-3 text-start">Code</th>
+                        <th className="px-3 py-3 text-end">Discount</th>
+                        <th className="px-3 py-3 text-end">Min order</th>
+                        <th className="px-3 py-3 text-end">Max discount</th>
+                        <th className="px-3 py-3 text-end">Usage</th>
+                        <th className="px-3 py-3 text-start">Valid</th>
+                        <th className="px-3 py-3 text-start">Status</th>
+                        <th className="px-3 py-3 text-end">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                       {coupons.map((c) => (
-                        <TableRow key={c.id}>
-                          <TableCell className="font-mono font-semibold">{c.code}</TableCell>
-                          <TableCell>{valueLabel(c, locale)}</TableCell>
-                          <TableCell>{c.min_order_amount != null ? fmtMoney(c.min_order_amount, "DZD", locale) : "—"}</TableCell>
-                          <TableCell>{c.max_discount_amount != null ? fmtMoney(c.max_discount_amount, "DZD", locale) : "—"}</TableCell>
-                          <TableCell className="tabular-nums">
+                        <tr key={c.id} className="hover:bg-muted/40">
+                          <td className="px-3 py-3 font-mono font-semibold">{c.code}</td>
+                          <td className="px-3 py-3 text-end tabular-nums">{valueLabel(c, locale)}</td>
+                          <td className="px-3 py-3 text-end tabular-nums">{c.min_order_amount != null ? fmtMoney(c.min_order_amount, "DZD", locale) : "—"}</td>
+                          <td className="px-3 py-3 text-end tabular-nums">{c.max_discount_amount != null ? fmtMoney(c.max_discount_amount, "DZD", locale) : "—"}</td>
+                          <td className="px-3 py-3 text-end tabular-nums">
                             {c.usage_count ?? 0}
                             {c.usage_limit ? ` / ${c.usage_limit}` : ""}
-                          </TableCell>
-                          <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
+                          </td>
+                          <td className="whitespace-nowrap px-3 py-3 text-xs text-muted-foreground">
                             {c.starts_at ? fmtDate(c.starts_at, locale) : "—"} → {c.ends_at ? fmtDate(c.ends_at, locale) : "—"}
-                          </TableCell>
-                          <TableCell>
+                          </td>
+                          <td className="px-3 py-3">
                             <StatusPill status={c.status} />
-                          </TableCell>
-                          <TableCell>
+                          </td>
+                          <td className="px-3 py-3">
                             <div className="flex justify-end gap-1">
                               <Button variant="ghost" size="sm" onClick={() => openEdit(c)}>
                                 <Pencil className="me-1 h-3.5 w-3.5" />
@@ -255,12 +259,12 @@ function CouponsPage() {
                                 </Button>
                               )}
                             </div>
-                          </TableCell>
-                        </TableRow>
+                          </td>
+                        </tr>
                       ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                    </tbody>
+                  </table>
+                </DataTable>
               )}
             </AdminCard>
           </>

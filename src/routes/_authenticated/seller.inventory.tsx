@@ -1,11 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Minus, Plus, X } from "lucide-react";
+import { BadgeCheck, Check, Layers, Minus, PackageX, Plus, TriangleAlert, X } from "lucide-react";
 import { SellerShell } from "@/components/seller/SellerShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { AdminCard, EmptyState, Stat, StatusPill } from "@/components/admin/ui";
+import { AdminCard, StatusPill } from "@/components/admin/ui";
+import { DataTable, EmptyState, ErrorState, StatCard } from "@/components/dashboard";
 import {
   adjustInventory,
   getInventoryHistory,
@@ -13,7 +14,7 @@ import {
 } from "@/lib/seller-products.functions";
 import { getLocale, getTranslations, localeDirections } from "@/lib/i18n";
 import { numParam, strParam, useBackParam, useUrlState } from "@/hooks/use-url-state";
-import { cn } from "@/lib/utils";
+
 
 export const Route = createFileRoute("/_authenticated/seller/inventory")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -38,10 +39,10 @@ type OverviewRow = {
   status: "ok" | "low" | "out";
 };
 
-const statusTone: Record<OverviewRow["status"], string> = {
-  ok: "text-green-700 dark:text-green-400",
-  low: "text-amber-600",
-  out: "text-destructive",
+const statusClass: Record<OverviewRow["status"], string> = {
+  ok: "active",
+  low: "pending",
+  out: "cancelled",
 };
 
 function InventoryPage() {
@@ -126,10 +127,15 @@ function InventoryPage() {
     <SellerShell title="Inventory" eyebrow="Seller OS">
       <div dir={localeDirections[locale]} className="space-y-4">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Stat label="Variants tracked" value={counts.total} />
-          <Stat label="In stock" value={counts.ok} />
-          <Stat label="Low stock" value={counts.low} hint="At or below threshold" />
-          <Stat label="Out of stock" value={counts.out} />
+          <StatCard title="Variants tracked" icon={<Layers className="h-4 w-4" aria-hidden="true" />} value={counts.total} />
+          <StatCard title="In stock" icon={<BadgeCheck className="h-4 w-4" aria-hidden="true" />} value={counts.ok} />
+          <StatCard
+            title="Low stock"
+            icon={<TriangleAlert className="h-4 w-4" aria-hidden="true" />}
+            value={counts.low}
+            description="At or below threshold"
+          />
+          <StatCard title="Out of stock" icon={<PackageX className="h-4 w-4" aria-hidden="true" />} value={counts.out} />
         </div>
 
         {error ? (
@@ -163,39 +169,39 @@ function InventoryPage() {
               ))}
             </div>
           ) : overview.isError ? (
-            <EmptyState
+            <ErrorState
               title="Could not load inventory"
-              text={overview.error instanceof Error ? overview.error.message : "Try again."}
+              description={overview.error instanceof Error ? overview.error.message : "Try again."}
               action={<Button onClick={() => overview.refetch()}>Retry</Button>}
             />
           ) : !rows.length ? (
             <EmptyState
               title={filter === "all" ? "No variants yet" : `No ${filter} variants`}
-              text={
+              description={
                 filter === "all"
                   ? "Create a product to start tracking stock."
                   : "Everything looks healthy here."
               }
             />
           ) : (
-            <div className="overflow-x-auto">
+            <DataTable>
               <table className="w-full min-w-[780px] text-sm">
                 <thead>
-                  <tr className="border-b text-start text-xs text-muted-foreground">
-                    <th className="px-3 py-2.5 text-start font-medium">Product / SKU</th>
-                    <th className="px-3 py-2.5 text-start font-medium">On hand</th>
-                    <th className="px-3 py-2.5 text-start font-medium">Reserved</th>
-                    <th className="px-3 py-2.5 text-start font-medium">Available</th>
-                    <th className="px-3 py-2.5 text-start font-medium">Low at</th>
-                    <th className="px-3 py-2.5 text-start font-medium">Status</th>
-                    <th className="w-28 px-3 py-2.5 text-end font-medium">Adjust</th>
+                  <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                    <th className="px-3 py-3 text-start">Product / SKU</th>
+                    <th className="px-3 py-3 text-end">On hand</th>
+                    <th className="px-3 py-3 text-end">Reserved</th>
+                    <th className="px-3 py-3 text-end">Available</th>
+                    <th className="px-3 py-3 text-end">Low at</th>
+                    <th className="px-3 py-3 text-start">Status</th>
+                    <th className="w-28 px-3 py-3 text-end">Adjust</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                   {rows.map((r) => {
                     const isEditing = editing === r.variantId;
                     return (
-                      <tr key={r.variantId} className="border-b last:border-0 hover:bg-muted/30">
+                      <tr key={r.variantId} className="hover:bg-muted/40">
                         <td className="px-3 py-3">
                           <Link
                             to="/seller/products/$productId"
@@ -207,7 +213,7 @@ function InventoryPage() {
                           </Link>
                           <p className="font-mono text-xs text-muted-foreground">{r.sku}</p>
                         </td>
-                        <td className="px-3 py-3 tabular-nums">
+                        <td className="px-3 py-3 text-end tabular-nums">
                           {isEditing ? (
                             <div className="flex items-center gap-1">
                               <button
@@ -238,9 +244,9 @@ function InventoryPage() {
                             r.quantity
                           )}
                         </td>
-                        <td className="px-3 py-3 tabular-nums text-muted-foreground">{r.reserved}</td>
-                        <td className="px-3 py-3 tabular-nums font-medium">{r.available}</td>
-                        <td className="px-3 py-3 tabular-nums">
+                        <td className="px-3 py-3 text-end tabular-nums text-muted-foreground">{r.reserved}</td>
+                        <td className="px-3 py-3 text-end tabular-nums font-medium">{r.available}</td>
+                        <td className="px-3 py-3 text-end tabular-nums">
                           {isEditing ? (
                             <Input
                               type="number"
@@ -254,9 +260,7 @@ function InventoryPage() {
                           )}
                         </td>
                         <td className="px-3 py-3">
-                          <span className={cn("text-xs font-semibold uppercase", statusTone[r.status])}>
-                            {r.status}
-                          </span>
+                          <StatusPill status={statusClass[r.status]} label={r.status} />
                         </td>
                         <td className="px-3 py-3 text-end">
                           {isEditing ? (
@@ -290,7 +294,7 @@ function InventoryPage() {
                   })}
                 </tbody>
               </table>
-            </div>
+            </DataTable>
           )}
         </AdminCard>
 
@@ -302,12 +306,10 @@ function InventoryPage() {
               ))}
             </div>
           ) : !logs.length ? (
-            <p className="py-6 text-center text-sm text-muted-foreground">
-              No inventory adjustments recorded yet.
-            </p>
+            <EmptyState title="No adjustments yet" description="No inventory adjustments recorded yet." />
           ) : (
             <>
-              <ul className="divide-y">
+              <ul className="divide-y divide-neutral-100 dark:divide-neutral-800">
                 {logs.map((log) => {
                   const meta = log.metadata ?? {};
                   const names = log.resource_id ? namesByVariant[log.resource_id] : undefined;

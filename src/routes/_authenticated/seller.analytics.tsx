@@ -12,10 +12,11 @@
  */
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { keepPreviousData, queryOptions, useQuery, useSuspenseQuery } from "@tanstack/react-query";
-import { ArrowLeft, Info, Star } from "lucide-react";
+import { ArrowLeft, Banknote, Eye, Gauge, Info, MousePointerClick, Package, Percent, Search, Star, Users, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SellerShell } from "@/components/seller/SellerShell";
-import { AdminCard, EmptyState, Stat, fmtMoney } from "@/components/admin/ui";
+import { AdminCard, fmtMoney } from "@/components/admin/ui";
+import { EmptyState, StatCard, DataTable } from "@/components/dashboard";
 import { FunnelChart } from "@/components/analytics/FunnelChart";
 import { CountUp } from "@/components/motion";
 import { getLocale, getTranslations, type SupportedLocale, type Translation } from "@/lib/i18n";
@@ -151,25 +152,29 @@ function SellerAnalyticsPage() {
           traffic.hasData ? (
             <>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <Stat
-                  label={t.storeViews}
+                <StatCard
+                  title={t.storeViews}
+                  icon={<Eye className="h-4 w-4" aria-hidden="true" />}
                   value={<CountUp value={traffic.totals.storeViews} locale={fmt} />}
-                  hint={t.storeViewsHint}
+                  description={t.storeViewsHint}
                 />
-                <Stat
-                  label={t.productViews}
+                <StatCard
+                  title={t.productViews}
+                  icon={<MousePointerClick className="h-4 w-4" aria-hidden="true" />}
                   value={<CountUp value={traffic.totals.productViews} locale={fmt} />}
-                  hint={t.productViewsHint}
+                  description={t.productViewsHint}
                 />
-                <Stat
-                  label={t.searchAppearances}
+                <StatCard
+                  title={t.searchAppearances}
+                  icon={<Search className="h-4 w-4" aria-hidden="true" />}
                   value={<CountUp value={traffic.searchAppearances.count} locale={fmt} />}
-                  hint={t.searchAppearancesHint}
+                  description={t.searchAppearancesHint}
                 />
-                <Stat
-                  label={t.visitors}
+                <StatCard
+                  title={t.visitors}
+                  icon={<Users className="h-4 w-4" aria-hidden="true" />}
                   value={<CountUp value={traffic.totals.uniqueVisitors} locale={fmt} />}
-                  hint={t.visitorsHint}
+                  description={t.visitorsHint}
                 />
               </div>
               <div className="mt-6">
@@ -184,7 +189,7 @@ function SellerAnalyticsPage() {
               <p className="mt-4 text-small leading-6 text-muted-foreground">{t.searchNotTracked}</p>
             </>
           ) : (
-            <EmptyState title={t.noTrafficTitle} text={t.noTrafficText} />
+            <EmptyState title={t.noTrafficTitle} description={t.noTrafficText} />
           )
         ) : null}
       </AdminCard>
@@ -203,7 +208,7 @@ function SellerAnalyticsPage() {
                   caption={t.funnelCaption}
                 />
             ) : (
-              <EmptyState title={t.noFunnelTitle} text={t.noFunnelText} />
+              <EmptyState title={t.noFunnelTitle} description={t.noFunnelText} />
             )
           ) : null}
         </AdminCard>
@@ -224,7 +229,7 @@ function SellerAnalyticsPage() {
                     </div>
                   ) : (
                     <div className="mt-3">
-                      <EmptyState title={t.noTopTitle} text={t.noTopText} />
+                      <EmptyState title={t.noTopTitle} description={t.noTopText} />
                     </div>
                   )}
                 </section>
@@ -237,13 +242,13 @@ function SellerAnalyticsPage() {
                     </div>
                   ) : (
                     <div className="mt-3">
-                      <EmptyState title={t.noLowTitle} text={t.noLowText} />
+                      <EmptyState title={t.noLowTitle} description={t.noLowText} />
                     </div>
                   )}
                 </section>
               </div>
             ) : (
-              <EmptyState title={t.noTopTitle} text={t.noTopText} />
+              <EmptyState title={t.noTopTitle} description={t.noTopText} />
             )
           ) : null}
         </AdminCard>
@@ -256,17 +261,19 @@ function SellerAnalyticsPage() {
             velocity.hasData ? (
               <>
                 <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-5">
-                  <Stat
-                    label={t.totalUnits}
+                  <StatCard
+                    title={t.totalUnits}
+                    icon={<Package className="h-4 w-4" aria-hidden="true" />}
                     value={<CountUp value={velocity.totals.units} locale={fmt} />}
                   />
-                  <Stat
-                    label={t.avgUnitsPerDay}
+                  <StatCard
+                    title={t.avgUnitsPerDay}
+                    icon={<Gauge className="h-4 w-4" aria-hidden="true" />}
                     value={<CountUp value={velocity.totals.avgUnitsPerDay} locale={fmt} formatOptions={{ maximumFractionDigits: 1 }} />}
                   />
-                  <Stat label={t.revenue} value={fmtMoney(velocity.totals.revenue, "DZD", locale)} />
-                  <Stat label={t.commission} value={fmtMoney(velocity.totals.commission, "DZD", locale)} />
-                  <Stat label={t.net} value={fmtMoney(velocity.totals.net, "DZD", locale)} />
+                  <StatCard title={t.revenue} icon={<Banknote className="h-4 w-4" aria-hidden="true" />} value={fmtMoney(velocity.totals.revenue, "DZD", locale)} />
+                  <StatCard title={t.commission} icon={<Percent className="h-4 w-4" aria-hidden="true" />} value={fmtMoney(velocity.totals.commission, "DZD", locale)} />
+                  <StatCard title={t.net} icon={<Wallet className="h-4 w-4" aria-hidden="true" />} value={fmtMoney(velocity.totals.net, "DZD", locale)} />
                 </div>
                 <div className="mt-6">
                   <VelocityChart
@@ -279,7 +286,7 @@ function SellerAnalyticsPage() {
                 </div>
               </>
             ) : (
-              <EmptyState title={t.noVelocityTitle} text={t.noVelocityText} />
+              <EmptyState title={t.noVelocityTitle} description={t.noVelocityText} />
             )
           ) : null}
         </AdminCard>
@@ -323,13 +330,13 @@ function SellerAnalyticsPage() {
               </div>
             </div>
           ) : (
-            <EmptyState title={t.noReviewsTitle} text={t.noReviewsText} />
+            <EmptyState title={t.noReviewsTitle} description={t.noReviewsText} />
           )}
         </AdminCard>
       </div>
 
       {/* Honest data note */}
-      <div className="mt-6 flex gap-3 rounded-2xl border border-border bg-card p-5">
+      <div className="mt-6 flex gap-3 rounded-xl border border-neutral-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-950">
         <Info className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
         <div>
           <p className="text-small font-semibold">{t.aboutTitle}</p>
@@ -555,37 +562,37 @@ function PerformanceTable({
   locale: SupportedLocale;
 }) {
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-small">
+    <DataTable>
+      <table className="w-full min-w-[640px] text-sm">
         <thead>
-          <tr className="border-b border-border text-caption uppercase tracking-wide text-muted-foreground">
-            <th scope="col" className="w-10 py-2 pe-3 text-start font-medium">#</th>
-            <th scope="col" className="py-2 pe-3 text-start font-medium">{t.colProduct}</th>
-            <th scope="col" className="py-2 pe-3 text-end font-medium">{t.colViews}</th>
-            <th scope="col" className="py-2 pe-3 text-end font-medium">{t.colUnits}</th>
-            <th scope="col" className="py-2 pe-3 text-end font-medium">{t.colRevenue}</th>
-            <th scope="col" className="py-2 text-end font-medium">{t.colConversion}</th>
+          <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+            <th scope="col" className="w-10 px-3 py-3 text-start">#</th>
+            <th scope="col" className="px-3 py-3 text-start">{t.colProduct}</th>
+            <th scope="col" className="px-3 py-3 text-end">{t.colViews}</th>
+            <th scope="col" className="px-3 py-3 text-end">{t.colUnits}</th>
+            <th scope="col" className="px-3 py-3 text-end">{t.colRevenue}</th>
+            <th scope="col" className="px-3 py-3 text-end">{t.colConversion}</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-border">
+        <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
           {rows.map((r, i) => (
-            <tr key={r.productId}>
-              <td className="py-2.5 pe-3 text-caption font-semibold text-muted-foreground tabular-nums">{i + 1}</td>
-              <td className="max-w-0 truncate py-2.5 pe-3 font-medium">{r.name}</td>
-              <td className="py-2.5 pe-3 text-end text-muted-foreground tabular-nums">
+            <tr key={r.productId} className="hover:bg-muted/40">
+              <td className="px-3 py-2.5 text-caption font-semibold text-muted-foreground tabular-nums">{i + 1}</td>
+              <td className="max-w-0 truncate px-3 py-2.5 font-medium">{r.name}</td>
+              <td className="px-3 py-2.5 text-end text-muted-foreground tabular-nums">
                 <CountUp value={r.views} locale={fmt} />
               </td>
-              <td className="py-2.5 pe-3 text-end text-muted-foreground tabular-nums">
+              <td className="px-3 py-2.5 text-end text-muted-foreground tabular-nums">
                 <CountUp value={r.units} locale={fmt} />
               </td>
-              <td className="py-2.5 pe-3 text-end font-medium tabular-nums">{fmtMoney(r.revenue, "DZD", locale)}</td>
-              <td className="py-2.5 text-end tabular-nums text-muted-foreground">
+              <td className="px-3 py-2.5 text-end font-medium tabular-nums">{fmtMoney(r.revenue, "DZD", locale)}</td>
+              <td className="px-3 py-2.5 text-end tabular-nums text-muted-foreground">
                 {r.conversionPct === null ? "—" : `${new Intl.NumberFormat(fmt, { maximumFractionDigits: 1 }).format(r.conversionPct)}%`}
               </td>
             </tr>
           ))}
         </tbody>
       </table>
-    </div>
+    </DataTable>
   );
 }

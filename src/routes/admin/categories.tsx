@@ -10,11 +10,11 @@ import { getTranslations } from "@/lib/i18n";
 import {
   AdminCard,
   StatusPill,
-  EmptyState,
   TableSkeleton,
   ConfirmDialog,
   Field,
 } from "@/components/admin/ui";
+import { DataTable, EmptyState, ErrorState } from "@/components/dashboard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -145,26 +145,37 @@ function CategoriesManager() {
 
       <AdminCard title="Category tree">
         {categoriesQuery.isPending ? (
-          <TableSkeleton />
+          <DataTable>
+            <div className="p-4">
+              <TableSkeleton />
+            </div>
+          </DataTable>
         ) : categoriesQuery.isError ? (
-          <EmptyState title="Could not load categories" text={errMsg(categoriesQuery.error)} />
+          <DataTable>
+            <ErrorState title="Could not load categories" description={errMsg(categoriesQuery.error)} />
+          </DataTable>
         ) : tree.length === 0 ? (
-          <EmptyState title="No categories" text="Create the first category to organize the catalog." />
+          <DataTable>
+            <EmptyState
+              title="No categories"
+              description="Create the first category to organize the catalog."
+            />
+          </DataTable>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[640px] text-start text-small">
+          <DataTable>
+            <table className="w-full min-w-[640px] text-sm">
               <thead>
-                <tr className="border-b border-border text-caption text-muted-foreground">
-                  <th className="px-3 py-2 font-medium">Category</th>
-                  <th className="px-3 py-2 font-medium">Slug</th>
-                  <th className="px-3 py-2 font-medium">Sort order</th>
-                  <th className="px-3 py-2 font-medium">Status</th>
-                  <th className="px-3 py-2 font-medium text-end">Actions</th>
+                <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                  <th className="px-3 py-3 text-start">Category</th>
+                  <th className="px-3 py-3 text-start">Slug</th>
+                  <th className="px-3 py-3 text-start">Sort order</th>
+                  <th className="px-3 py-3 text-start">Status</th>
+                  <th className="px-3 py-3 text-end">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                 {flattenTree(tree).map(({ node, depth }) => (
-                  <tr key={node.id}>
+                  <tr key={node.id} className="hover:bg-muted/40">
                     <td className="px-3 py-3" style={{ paddingInlineStart: `${0.75 + depth * 1.5}rem` }}>
                       <p className="font-medium">{pickName(node.name) || node.slug}</p>
                       <p className="text-caption text-muted-foreground">
@@ -206,7 +217,7 @@ function CategoriesManager() {
                 ))}
               </tbody>
             </table>
-          </div>
+          </DataTable>
         )}
         <p className="mt-3 text-caption text-muted-foreground">
           Adjust the sort order numbers, then press “Save display order”. Parents and children are ordered by sort_order.

@@ -5,7 +5,8 @@ import { Check, Copy, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { AdminCard, EmptyState, Field, TableSkeleton } from "@/components/admin/ui";
+import { AdminCard, Field, TableSkeleton } from "@/components/admin/ui";
+import { EmptyState, ErrorState } from "@/components/dashboard";
 import { getSellerAiCatalog, type AiCatalogProduct } from "@/lib/seller-orders.functions";
 import { aiSellerDraft, aiApplySellerDraft } from "@/lib/ai.functions";
 import { getLocale, getTranslations } from "@/lib/i18n";
@@ -118,7 +119,7 @@ function SellerAiPage() {
     >
       <p className="text-body text-muted-foreground">"Writing helpers that turn your product data into ready-to-paste listing text."</p>
       {/* Honesty banner */}
-      <div className="flex items-start gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4">
+      <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
         <Info className="mt-0.5 size-5 shrink-0 text-amber-600 dark:text-amber-400" />
         <div className="text-sm">
           <p className="font-semibold text-amber-800 dark:text-amber-300">Rule-based assistant — no external AI provider connected.</p>
@@ -133,13 +134,22 @@ function SellerAiPage() {
         <div className="mt-6"><TableSkeleton rows={4} /></div>
       ) : catalogQuery.isError ? (
         <div className="mt-6">
-          <AdminCard><EmptyState title="Products could not be loaded" text={errMsg(catalogQuery.error)} /></AdminCard>
+          <ErrorState
+            title="Products could not be loaded"
+            description={errMsg(catalogQuery.error)}
+            action={
+              <Button variant="outline" onClick={() => catalogQuery.refetch()}>
+                Retry
+              </Button>
+            }
+          />
         </div>
       ) : products.length === 0 ? (
         <div className="mt-6">
-          <AdminCard>
-            <EmptyState title="No products yet" text="Add a product first — the tools will use its name, category, attributes and price." />
-          </AdminCard>
+          <EmptyState
+            title="No products yet"
+            description="Add a product first — the tools will use its name, category, attributes and price."
+          />
         </div>
       ) : (
         <div className="mt-6 space-y-6">
@@ -263,7 +273,7 @@ function AiDraftStudio({ productId, productName }: { productId: string; productN
       actions={<ModaliaIntelligenceIcon size={16} className="text-muted-foreground" />}
     >
       <div className="space-y-5">
-        <div className="flex items-start gap-3 rounded-2xl border border-sky-500/30 bg-sky-500/10 p-4">
+        <div className="flex items-start gap-3 rounded-xl border border-sky-500/30 bg-sky-500/10 p-4">
           <Info className="mt-0.5 size-5 shrink-0 text-sky-600 dark:text-sky-400" />
           <div className="text-sm">
             <p className="font-semibold text-sky-800 dark:text-sky-300">Human approval required.</p>
@@ -391,7 +401,7 @@ function CopyableBlock({
       {multiline ? (
         <Textarea readOnly value={value} rows={12} className={mono ? "font-mono text-xs" : "text-sm leading-6"} dir="auto" />
       ) : (
-        <p className={`mt-2 rounded-xl border border-border p-3 text-sm ${mono ? "font-mono text-xs" : ""}`} dir="auto">
+        <p className={`mt-2 rounded-xl border border-neutral-200 bg-white p-3 text-sm dark:border-neutral-800 dark:bg-neutral-950 ${mono ? "font-mono text-xs" : ""}`} dir="auto">
           {value}
         </p>
       )}

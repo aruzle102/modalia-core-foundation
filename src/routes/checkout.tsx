@@ -335,7 +335,7 @@ function CheckoutPage() {
         <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_360px]">
           <div className="min-w-0">
             {error ? (
-              <p role="alert" className="mb-6 rounded-xl bg-destructive/10 p-3 text-small text-destructive">
+              <p role="alert" className="mb-6 rounded-xl border border-destructive/20 bg-destructive/10 p-3 text-small text-destructive">
                 {error}
               </p>
             ) : null}
@@ -346,7 +346,8 @@ function CheckoutPage() {
                 <p className="text-eyebrow text-muted-foreground">01 · {tc.stepContact}</p>
                 <h1 className="mt-2 text-display">{tc.title}</h1>
                 <p className="mt-3 text-body text-muted-foreground">{tc.intro}</p>
-                <div className="mt-8 grid gap-4 sm:grid-cols-2">
+                <div className="mt-8 rounded-xl border border-border bg-card p-5 sm:p-6">
+                <div className="grid gap-4 sm:grid-cols-2">
                   <label className="block text-small">
                     {tc.firstName}
                     <input
@@ -390,6 +391,7 @@ function CheckoutPage() {
                     <span className="mt-1 block text-caption text-destructive">{tc.phoneInvalid}</span>
                   ) : null}
                 </label>
+                </div>
                 <Button
                   type="button"
                   disabled={!canContinue}
@@ -415,8 +417,8 @@ function CheckoutPage() {
                     {tc.wilayasLoading}
                   </p>
                 ) : (
-                  <>
-                    <div className="mt-8 grid gap-4 sm:grid-cols-2">
+                  <div className="mt-8 rounded-xl border border-border bg-card p-5 sm:p-6">
+                    <div className="grid gap-4 sm:grid-cols-2">
                       <label className="block text-small">
                         {tc.wilaya}
                         <select
@@ -495,7 +497,7 @@ function CheckoutPage() {
                         placeholder={tc.notePlaceholder}
                       />
                     </label>
-                  </>
+                  </div>
                 )}
                 <div className="mt-8 flex gap-3">
                   <Button type="button" variant="outline" onClick={() => goStep(1)} className="h-12">
@@ -530,7 +532,7 @@ function CheckoutPage() {
                   </p>
                 ) : null}
                 {quoteStatus === "error" ? (
-                  <p role="alert" className="mt-8 rounded-xl bg-destructive/10 p-4 text-small text-destructive">
+                  <p role="alert" className="mt-8 rounded-xl border border-destructive/20 bg-destructive/10 p-4 text-small text-destructive">
                     {tc.quoteFailed}
                   </p>
                 ) : null}
@@ -548,7 +550,7 @@ function CheckoutPage() {
                           <div className="flex items-start justify-between gap-3">
                             <div>
                               <h2 className="text-h3 text-foreground">{storeName}</h2>
-                              <p className="mt-1 text-caption text-muted-foreground">
+                              <p className="mt-1 text-caption text-muted-foreground tabular-nums">
                                 {seller.itemCount} · {formatPrice(seller.subtotal, locale)}
                               </p>
                             </div>
@@ -590,7 +592,7 @@ function CheckoutPage() {
                                     <Truck className="size-4" aria-hidden />
                                     {tc.homeDelivery}
                                   </span>
-                                  <span className="mt-1 block text-caption text-muted-foreground">
+                                  <span className="mt-1 block text-caption text-muted-foreground tabular-nums">
                                     {seller.shipping.home !== null ? formatPrice(seller.shipping.home, locale) : tc.shippingUnavailable}
                                   </span>
                                 </span>
@@ -613,7 +615,7 @@ function CheckoutPage() {
                                     <MapPin className="size-4" aria-hidden />
                                     {tc.officePickup}
                                   </span>
-                                  <span className="mt-1 block text-caption text-muted-foreground">
+                                  <span className="mt-1 block text-caption text-muted-foreground tabular-nums">
                                     {office ? formatPrice(office.price, locale) : tc.officeUnavailableHint}
                                   </span>
                                 </span>
@@ -704,14 +706,14 @@ function CheckoutPage() {
                             <dl className="mt-4 space-y-1.5 border-t border-border pt-4 text-small">
                               <div className="flex justify-between">
                                 <dt className="text-muted-foreground">{tc.products}</dt>
-                                <dd className="text-foreground">{formatPrice(seller.subtotal, locale)}</dd>
+                                <dd className="tabular-nums text-foreground">{formatPrice(seller.subtotal, locale)}</dd>
                               </div>
                               <div className="flex justify-between">
                                 <dt className="text-muted-foreground">
                                   {tc.shipping} · {method === "home" ? tc.homeDelivery : tc.officePickup}
                                   {officeName ? ` — ${officeName}` : ""}
                                 </dt>
-                                <dd className="text-foreground">
+                                <dd className="tabular-nums text-foreground">
                                   {shipPrice !== null ? formatPrice(shipPrice, locale) : "—"}
                                 </dd>
                               </div>
@@ -729,7 +731,7 @@ function CheckoutPage() {
                       </h2>
                       {quote.coupon ? (
                         <div className="mt-3 flex items-center justify-between gap-3">
-                          <p className="text-small text-foreground">
+                          <p className="text-small text-foreground tabular-nums">
                             <Check className="me-2 inline size-4 text-verified" aria-hidden />
                             {tc.couponApplied}: <span className="font-medium" dir="ltr">{quote.coupon.code}</span>
                             {" — "}−{formatPrice(quote.coupon.discountAmount, locale)}
@@ -780,23 +782,23 @@ function CheckoutPage() {
                       <dl className="space-y-2 text-small">
                         <div className="flex justify-between">
                           <dt className="text-muted-foreground">{tc.products}</dt>
-                          <dd className="text-foreground">{formatPrice(quote.totals.subtotal, locale)}</dd>
+                          <dd className="tabular-nums text-foreground">{formatPrice(quote.totals.subtotal, locale)}</dd>
                         </div>
                         <div className="flex justify-between">
                           <dt className="text-muted-foreground">{tc.shipping}</dt>
-                          <dd className="text-foreground">
+                          <dd className="tabular-nums text-foreground">
                             {quote.totals.shipping !== null ? formatPrice(quote.totals.shipping, locale) : "—"}
                           </dd>
                         </div>
                         {quote.totals.discount > 0 ? (
                           <div className="flex justify-between">
                             <dt className="text-muted-foreground">{tc.discount}</dt>
-                            <dd className="text-verified">−{formatPrice(quote.totals.discount, locale)}</dd>
+                            <dd className="tabular-nums text-verified">−{formatPrice(quote.totals.discount, locale)}</dd>
                           </div>
                         ) : null}
                         <div className="flex justify-between border-t border-border pt-3 text-base font-semibold">
                           <dt className="text-foreground">{tc.totalDue}</dt>
-                          <dd className="text-foreground">
+                          <dd className="tabular-nums text-foreground">
                             {quote.totals.total !== null ? formatPrice(quote.totals.total, locale) : "—"}
                           </dd>
                         </div>
@@ -863,7 +865,7 @@ function CheckoutPage() {
                     </div>
                   </div>
                 ) : quoteStatus === "error" ? (
-                  <p role="alert" className="mt-8 rounded-xl bg-destructive/10 p-4 text-small text-destructive">
+                  <p role="alert" className="mt-8 rounded-xl border border-destructive/20 bg-destructive/10 p-4 text-small text-destructive">
                     {tc.quoteFailed}
                   </p>
                 ) : (
@@ -907,23 +909,23 @@ function CheckoutPage() {
                   <dl className="mt-6 space-y-2 rounded-xl border border-border bg-card p-5 text-small">
                     <div className="flex justify-between">
                       <dt className="text-muted-foreground">{tc.products}</dt>
-                      <dd className="text-foreground">{formatPrice(quote.totals.subtotal, locale)}</dd>
+                      <dd className="tabular-nums text-foreground">{formatPrice(quote.totals.subtotal, locale)}</dd>
                     </div>
                     <div className="flex justify-between">
                       <dt className="text-muted-foreground">{tc.shipping}</dt>
-                      <dd className="text-foreground">
+                      <dd className="tabular-nums text-foreground">
                         {quote.totals.shipping !== null ? formatPrice(quote.totals.shipping, locale) : "—"}
                       </dd>
                     </div>
                     {quote.totals.discount > 0 ? (
                       <div className="flex justify-between">
                         <dt className="text-muted-foreground">{tc.discount}</dt>
-                        <dd className="text-verified">−{formatPrice(quote.totals.discount, locale)}</dd>
+                        <dd className="tabular-nums text-verified">−{formatPrice(quote.totals.discount, locale)}</dd>
                       </div>
                     ) : null}
                     <div className="flex justify-between border-t border-border pt-3 text-base font-semibold">
                       <dt className="text-foreground">{tc.totalDue}</dt>
-                      <dd className="text-foreground">
+                      <dd className="tabular-nums text-foreground">
                         {quote.totals.total !== null ? formatPrice(quote.totals.total, locale) : "—"}
                       </dd>
                     </div>
@@ -966,11 +968,11 @@ function CheckoutPage() {
               <dl className="mt-4 space-y-2 border-t border-border pt-4 text-small">
                 <div className="flex justify-between">
                   <dt className="text-muted-foreground">{tc.products}</dt>
-                  <dd className="text-foreground">{formatPrice(quote.totals.subtotal, locale)}</dd>
+                  <dd className="tabular-nums text-foreground">{formatPrice(quote.totals.subtotal, locale)}</dd>
                 </div>
                 <div className="flex justify-between">
                   <dt className="text-muted-foreground">{tc.shipping}</dt>
-                  <dd className="text-foreground">
+                  <dd className="tabular-nums text-foreground">
                     {quoteStatus === "loading" ? (
                       <Loader2 className="size-4 animate-spin" aria-hidden />
                     ) : quote.totals.shipping !== null ? (
@@ -983,12 +985,12 @@ function CheckoutPage() {
                 {quote.totals.discount > 0 ? (
                   <div className="flex justify-between">
                     <dt className="text-muted-foreground">{tc.discount}</dt>
-                    <dd className="text-verified">−{formatPrice(quote.totals.discount, locale)}</dd>
+                    <dd className="tabular-nums text-verified">−{formatPrice(quote.totals.discount, locale)}</dd>
                   </div>
                 ) : null}
                 <div className="flex justify-between border-t border-border pt-3 font-semibold">
                   <dt className="text-foreground">{tc.totalDue}</dt>
-                  <dd className="text-foreground">
+                  <dd className="tabular-nums text-foreground">
                     {quote.totals.total !== null ? formatPrice(quote.totals.total, locale) : "—"}
                   </dd>
                 </div>

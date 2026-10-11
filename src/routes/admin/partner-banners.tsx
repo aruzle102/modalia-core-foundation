@@ -10,11 +10,11 @@ import { AdminGate } from "@/components/admin/AdminGate";
 import { AdminShell } from "@/components/admin/AdminShell";
 import {
   AdminCard,
-  EmptyState,
   TableSkeleton,
   ConfirmDialog,
   Field,
 } from "@/components/admin/ui";
+import { EmptyState } from "@/components/dashboard";
 import {
   listPartnerBanners,
   createPartnerBanner,
@@ -87,7 +87,7 @@ function PartnerBannersPage() {
         subtitle="Rotating ads at the top of the homepage"
         actions={
           <Button size="sm" onClick={() => startEdit(null)}>
-            <Plus className="mr-1 h-4 w-4" /> Add banner
+            <Plus className="me-1 h-4 w-4" /> Add banner
           </Button>
         }
       >
@@ -98,22 +98,22 @@ function PartnerBannersPage() {
             <EmptyState
               icon={<ImagePlus className="h-8 w-8" />}
               title="No banners"
-              text="Add partner banners to show rotating ads on the homepage."
+              description="Add partner banners to show rotating ads on the homepage."
             />
           ) : (
             <div className="grid gap-4 sm:grid-cols-2">
               {data.map((b) => (
-                <div key={b.id} className={`overflow-hidden rounded-lg border ${b.isActive ? "" : "opacity-50"}`}>
+                <div key={b.id} className={`overflow-hidden rounded-xl border border-border bg-card ${b.isActive ? "" : "opacity-50"}`}>
                   <img src={b.imageUrl} alt={b.title} className="h-28 w-full object-cover" />
                   <div className="p-3">
                     <p className="font-medium">{b.title}</p>
                     <p className="truncate text-xs text-muted-foreground">{b.linkUrl}</p>
                     <div className="mt-2 flex gap-2">
                       <Button size="sm" variant="outline" onClick={() => startEdit(b)}>
-                        <Pencil className="mr-1 h-3 w-3" /> Edit
+                        <Pencil className="me-1 h-3 w-3" /> Edit
                       </Button>
                       <Button size="sm" variant="destructive" onClick={() => setDeleting(b.id)}>
-                        <Trash2 className="mr-1 h-3 w-3" /> Delete
+                        <Trash2 className="me-1 h-3 w-3" /> Delete
                       </Button>
                     </div>
                   </div>
@@ -125,7 +125,7 @@ function PartnerBannersPage() {
 
         {editing !== null ? (
           <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4">
-            <div className="w-full max-w-md rounded-lg bg-background p-6">
+            <div className="w-full max-w-md rounded-xl border border-border bg-card p-6">
               <h3 className="mb-4 text-lg font-semibold">{editing === "new" ? "Add banner" : "Edit banner"}</h3>
               <div className="space-y-3">
                 <Field label="Title">

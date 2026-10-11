@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Check, Crown, EyeOff, KeyRound, UserCheck } from "lucide-react";
-import { AdminCard, EmptyState, TableSkeleton } from "@/components/admin/ui";
+import { TableSkeleton } from "@/components/admin/ui";
+import { EmptyState, FormSection } from "@/components/dashboard";
 import { SellerShell } from "@/components/seller/SellerShell";
 import { useSellerSession } from "@/components/seller/ui";
 import { RouteError } from "@/components/routing/route-states";
@@ -174,13 +175,11 @@ function SellerPermissionsPage() {
         ) : status === "error" ? (
           <RouteError message={error ?? t.loadError} reset={retry} />
         ) : !seller || !Array.isArray(seller.permissions) || seller.permissions.length === 0 ? (
-          <AdminCard>
-            <EmptyState
-              title={t.emptyTitle}
-              text={t.emptyText}
-              icon={<KeyRound className="size-5 text-muted-foreground" />}
-            />
-          </AdminCard>
+          <EmptyState
+            title={t.emptyTitle}
+            description={t.emptyText}
+            icon={<KeyRound className="size-5 text-muted-foreground" />}
+          />
         ) : (
           <PermissionsBody seller={seller} t={t} />
         )}
@@ -201,7 +200,7 @@ function PermissionsBody({
 
   return (
     <div className="space-y-6">
-      <AdminCard title={t.roleLabel}>
+      <FormSection title={t.roleLabel}>
         <div className="flex flex-wrap items-center gap-3">
           {seller.isOwner ? (
             <Crown className="size-5 shrink-0 text-amber-500" aria-hidden />
@@ -218,24 +217,24 @@ function PermissionsBody({
             ) : null}
           </div>
         </div>
-      </AdminCard>
+      </FormSection>
 
-      <AdminCard title={t.grantedTitle(granted.length)}>
-        <ul className="divide-y divide-border">
+      <FormSection title={t.grantedTitle(granted.length)}>
+        <ul className="divide-y divide-neutral-100 dark:divide-neutral-800">
           {granted.map((p) => (
             <PermissionRow key={p} permission={p} description={t.descriptions[p]} granted />
           ))}
         </ul>
-      </AdminCard>
+      </FormSection>
 
       {notGranted.length > 0 ? (
-        <AdminCard title={t.notGrantedTitle(notGranted.length)}>
-          <ul className="divide-y divide-border">
+        <FormSection title={t.notGrantedTitle(notGranted.length)}>
+          <ul className="divide-y divide-neutral-100 dark:divide-neutral-800">
             {notGranted.map((p) => (
               <PermissionRow key={p} permission={p} description={t.descriptions[p]} granted={false} />
             ))}
           </ul>
-        </AdminCard>
+        </FormSection>
       ) : null}
     </div>
   );

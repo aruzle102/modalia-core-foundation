@@ -33,12 +33,12 @@ import { AdminGate } from "@/components/admin/AdminGate";
 import { AdminShell } from "@/components/admin/AdminShell";
 import {
   ConfirmDialog,
-  EmptyState,
   Field,
   StatusPill,
   TableSkeleton,
   fmtDateTime,
 } from "@/components/admin/ui";
+import { EmptyState, ErrorState } from "@/components/dashboard";
 import { useAdminLocale } from "@/components/admin/useAdminLocale";
 import { errMsg, pickName } from "./_shared";
 import { Button } from "@/components/ui/button";
@@ -322,13 +322,15 @@ function BuilderManager() {
 
   if (sectionsQuery.isError || !sectionsQuery.data) {
     return (
-      <div role="alert" className="border border-destructive/40 bg-destructive/5 p-6">
-        <p className="font-medium text-destructive">Homepage sections failed to load</p>
-        <p className="mt-2 text-sm text-destructive">{errMsg(sectionsQuery.error)}</p>
-        <Button className="mt-4" onClick={() => sectionsQuery.refetch()}>
-          <RefreshCw className="size-4" /> Retry
-        </Button>
-      </div>
+      <ErrorState
+        title="Homepage sections failed to load"
+        description={errMsg(sectionsQuery.error)}
+        action={
+          <Button variant="outline" size="sm" onClick={() => sectionsQuery.refetch()}>
+            <RefreshCw className="size-4 me-1.5" /> Retry
+          </Button>
+        }
+      />
     );
   }
 
@@ -349,7 +351,7 @@ function BuilderManager() {
       {items.length === 0 ? (
         <EmptyState
           title="No homepage sections"
-          text="Add your first section to start building the storefront homepage."
+          description="Add your first section to start building the storefront homepage."
           action={
             <Button onClick={() => setAddOpen(true)}>
               <Plus className="size-4" /> Add section

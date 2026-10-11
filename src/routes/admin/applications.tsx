@@ -26,13 +26,13 @@ import { numParam, strParam, useDebouncedUrlParam, useUrlState } from "@/hooks/u
 import {
   AdminCard,
   StatusPill,
-  EmptyState,
   TableSkeleton,
   ConfirmDialog,
   Field,
   fmtDateTime,
   timeAgo,
 } from "@/components/admin/ui";
+import { DataTable, EmptyState, ErrorState, StatCard } from "@/components/dashboard";
 import { useAdminLocale } from "@/components/admin/useAdminLocale";
 import { getTranslations } from "@/lib/i18n";
 import {
@@ -167,9 +167,9 @@ function ApplicationsPage() {
           {isLoading ? (
             <TableSkeleton rows={8} />
           ) : isError ? (
-            <EmptyState
+            <ErrorState
               title="Could not load applications"
-              text="Something went wrong while fetching the applications."
+              description="Something went wrong while fetching the applications."
               action={
                 <Button variant="outline" size="sm" onClick={() => refetch()}>
                   Retry
@@ -179,28 +179,28 @@ function ApplicationsPage() {
           ) : items.length === 0 ? (
             <EmptyState
               title="No applications found"
-              text="Try adjusting the search or status filter."
+              description="Try adjusting the search or status filter."
             />
           ) : (
-            <div className="overflow-x-auto">
+            <DataTable>
               <table className="w-full min-w-[880px] text-sm">
                 <thead>
-                  <tr className="border-b text-start text-xs uppercase tracking-wide text-muted-foreground">
-                    <th className="py-2 pe-4 text-start font-medium">Applicant</th>
-                    <th className="py-2 pe-4 text-start font-medium">Store</th>
-                    <th className="py-2 pe-4 text-start font-medium">Categories</th>
-                    <th className="py-2 pe-4 text-start font-medium">Phone</th>
-                    <th className="py-2 pe-4 text-start font-medium">Email</th>
-                    <th className="py-2 pe-4 text-start font-medium">Status</th>
-                    <th className="py-2 text-start font-medium">Submitted</th>
+                  <tr className="border-b border-neutral-200 text-left text-[11px] font-semibold uppercase tracking-wider text-neutral-500">
+                    <th className="py-2 pe-4 text-start">Applicant</th>
+                    <th className="py-2 pe-4 text-start">Store</th>
+                    <th className="py-2 pe-4 text-start">Categories</th>
+                    <th className="py-2 pe-4 text-start">Phone</th>
+                    <th className="py-2 pe-4 text-start">Email</th>
+                    <th className="py-2 pe-4 text-start">Status</th>
+                    <th className="py-2 text-start">Submitted</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-neutral-100">
                   {items.map((app) => (
                     <tr
                       key={app.id}
                       onClick={() => openApplication(app.id)}
-                      className="cursor-pointer border-b last:border-0 transition-colors hover:bg-muted/50"
+                      className="cursor-pointer transition-colors hover:bg-muted/40"
                     >
                       <td className="py-3 pe-4 font-medium">
                         {app.first_name} {app.last_name}
@@ -225,7 +225,7 @@ function ApplicationsPage() {
                   ))}
                 </tbody>
               </table>
-            </div>
+            </DataTable>
           )}
           {total > 0 && (
             <div className="mt-4">
@@ -334,7 +334,7 @@ function ApplicationDrawer({
           {detailQuery.isLoading ? (
             <TableSkeleton rows={6} />
           ) : detailQuery.isError || !app ? (
-            <EmptyState title="Could not load application" text="Please try again." />
+            <ErrorState title="Could not load application" description="Please try again." />
           ) : (
             <div className="space-y-6">
               {/* Applicant */}
@@ -603,7 +603,7 @@ function ModerationBriefCard() {
       {briefQuery.isLoading ? (
         <TableSkeleton rows={3} />
       ) : briefQuery.isError || !brief ? (
-        <EmptyState title="Brief unavailable" text={briefQuery.isError ? errMsg(briefQuery.error) : "No data."} />
+        <EmptyState title="Brief unavailable" description={briefQuery.isError ? errMsg(briefQuery.error) : "No data."} />
       ) : (
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -613,10 +613,7 @@ function ModerationBriefCard() {
               { label: "Open support tickets", value: brief.counts.openTickets },
               { label: "Oldest application waiting (days)", value: brief.counts.oldestApplicationWaitingDays },
             ].map((stat) => (
-              <div key={stat.label} className="rounded-xl border border-border p-3">
-                <p className="text-2xl font-bold">{stat.value}</p>
-                <p className="mt-1 text-xs text-muted-foreground">{stat.label}</p>
-              </div>
+              <StatCard key={stat.label} title={stat.label} value={stat.value} />
             ))}
           </div>
 

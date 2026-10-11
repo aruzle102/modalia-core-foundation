@@ -3,7 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, Eye, Hammer, LayoutTemplate } from "lucide-react";
 import { AdminGate } from "@/components/admin/AdminGate";
 import { AdminShell } from "@/components/admin/AdminShell";
-import { AdminCard, EmptyState, StatRow, StatRows } from "@/components/admin/ui";
+import { AdminCard } from "@/components/admin/ui";
+import { EmptyState, StatCard } from "@/components/dashboard";
 import { Button } from "@/components/ui/button";
 import { getHomepageSections } from "@/lib/admin-homepage.functions";
 import { getLocale, getTranslations } from "@/lib/i18n";
@@ -57,11 +58,15 @@ function HomepageOverviewPage() {
           </>
         }
       >
-        <StatRows>
-          <StatRow label="Sections" value={String(sections.length)} />
-          <StatRow label="Enabled" value={String(enabled.length)} />
-          <StatRow label="Disabled" value={String(sections.length - enabled.length)} />
-        </StatRows>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <StatCard title="Sections" value={String(sections.length)} loading={sectionsQuery.isPending} />
+          <StatCard title="Enabled" value={String(enabled.length)} loading={sectionsQuery.isPending} />
+          <StatCard
+            title="Disabled"
+            value={String(sections.length - enabled.length)}
+            loading={sectionsQuery.isPending}
+          />
+        </div>
 
         <AdminCard className="mt-6">
           <div className="flex items-center gap-3">
@@ -77,7 +82,7 @@ function HomepageOverviewPage() {
             <Button className="ms-auto" asChild>
               <Link to="/admin/homepage/builder" search={{ locale, create: "" }}>
                 Open builder
-                <ArrowRight className="size-4 ms-1.5" aria-hidden="true" />
+                <ArrowRight className="size-4 ms-1.5 rtl:rotate-180" aria-hidden="true" />
               </Link>
             </Button>
           </div>

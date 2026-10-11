@@ -1,18 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Pencil, Plus } from "lucide-react";
+import { Building2, Home, Package, Pencil, Plus, BadgeCheck } from "lucide-react";
 import { SellerShell } from "@/components/seller/SellerShell";
 import {
   AdminCard,
   ConfirmDialog,
-  EmptyState,
   Field,
-  Stat,
   StatusPill,
   TableSkeleton,
   fmtMoney,
 } from "@/components/admin/ui";
+import { DataTable, EmptyState, ErrorState, StatCard } from "@/components/dashboard";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -31,7 +30,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   deleteShippingRule,
   getShippingRules,
@@ -131,12 +129,15 @@ const EMPTY_OFFICE_FORM: OfficeForm = {
 
 function SectionError({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
-    <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
-      <p className="text-sm text-destructive">{message}</p>
-      <Button variant="outline" size="sm" className="mt-3" onClick={onRetry}>
-        Retry
-      </Button>
-    </div>
+    <ErrorState
+      title="Section could not be loaded"
+      description={message}
+      action={
+        <Button variant="outline" size="sm" onClick={onRetry}>
+          Retry
+        </Button>
+      }
+    />
   );
 }
 
@@ -464,11 +465,11 @@ function ShippingPage() {
           </Button>
         }
       >
-        <div className="grid gap-4 sm:grid-cols-4">
-          <Stat label={t.stats.rules} value={rules.length} />
-          <Stat label={t.stats.home} value={home} />
-          <Stat label={t.stats.office} value={office} />
-          <Stat label={t.stats.enabled} value={enabledCount} />
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard title={t.stats.rules} icon={<Package className="h-4 w-4" aria-hidden="true" />} value={rules.length} />
+          <StatCard title={t.stats.home} icon={<Home className="h-4 w-4" aria-hidden="true" />} value={home} />
+          <StatCard title={t.stats.office} icon={<Building2 className="h-4 w-4" aria-hidden="true" />} value={office} />
+          <StatCard title={t.stats.enabled} icon={<BadgeCheck className="h-4 w-4" aria-hidden="true" />} value={enabledCount} />
         </div>
 
         {/* Office-delivery master switch */}
@@ -512,7 +513,7 @@ function ShippingPage() {
           ) : matrixWilayaIds.length === 0 ? (
             <EmptyState
               title={t.prices.empty}
-              text={t.prices.emptyText}
+              description={t.prices.emptyText}
               action={
                 <div className="flex w-full max-w-sm gap-2">
                   <Select value="" onValueChange={addWilaya}>
@@ -532,35 +533,35 @@ function ShippingPage() {
             />
           ) : (
             <>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>{t.rules.wilaya}</TableHead>
+              <DataTable>
+                <table className="w-full min-w-[900px] text-sm">
+                  <thead>
+                    <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                      <th className="px-3 py-3 text-start">{t.rules.wilaya}</th>
                       {METHODS.map((m) =>
                         BANDS.map((b) => (
-                          <TableHead key={`${m}-${b.key}`} className="whitespace-nowrap">
+                          <th key={`${m}-${b.key}`} className="whitespace-nowrap px-3 py-3 text-start">
                             {m === "home" ? t.prices.home : t.prices.office} ·{" "}
                             {b.key === "small" ? t.prices.bandSmall : t.prices.bandLarge}
-                          </TableHead>
+                          </th>
                         )),
                       )}
-                      <TableHead className="text-end">{t.rules.actions}</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
+                      <th className="px-3 py-3 text-end">{t.rules.actions}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                     {matrixWilayaIds.map((wilayaId) => {
                       const w = wilayas.find((x) => x.id === wilayaId);
                       const isAdded = addedWilayas.includes(wilayaId);
                       const saving = saveRowMutation.isPending && saveRowMutation.variables === wilayaId;
                       return (
-                        <TableRow key={wilayaId}>
-                          <TableCell className="font-medium whitespace-nowrap">
+                        <tr key={wilayaId} className="hover:bg-muted/40">
+                          <td className="whitespace-nowrap px-3 py-3 font-medium">
                             {w ? `${w.code} · ${placeName(w.name, locale, w.code)}` : wilayaId}
-                          </TableCell>
+                          </td>
                           {METHODS.map((m) =>
                             BANDS.map((b) => (
-                              <TableCell key={`${m}-${b.key}`}>
+                              <td key={`${m}-${b.key}`} className="px-3 py-3">
                                 <Input
                                   type="number"
                                   min="0"
@@ -571,10 +572,10 @@ function ShippingPage() {
                                   onChange={(e) => setCellValue(wilayaId, m, b.key, e.target.value)}
                                   aria-label={`${w?.code ?? ""} ${m} ${b.key}`}
                                 />
-                              </TableCell>
+                              </td>
                             )),
                           )}
-                          <TableCell>
+                          <td className="px-3 py-3">
                             <div className="flex items-center justify-end gap-2">
                               {savedRows[wilayaId] && (
                                 <span className="text-xs text-emerald-600 dark:text-emerald-400">{t.prices.saved}</span>
@@ -595,13 +596,13 @@ function ShippingPage() {
                             {rowErrors[wilayaId] && (
                               <p className="mt-1 text-end text-xs text-destructive">{rowErrors[wilayaId]}</p>
                             )}
-                          </TableCell>
-                        </TableRow>
+                          </td>
+                        </tr>
                       );
                     })}
-                  </TableBody>
-                </Table>
-              </div>
+                  </tbody>
+                </table>
+              </DataTable>
               <div className="mt-4 flex w-full max-w-sm items-center gap-2">
                 <Select value="" onValueChange={addWilaya}>
                   <SelectTrigger>
@@ -629,51 +630,51 @@ function ShippingPage() {
           ) : query.isError ? (
             <SectionError message={rulesError ?? t.loadError} onRetry={() => query.refetch()} />
           ) : rules.length === 0 ? (
-            <EmptyState title={t.prices.empty} text={t.rules.hint} />
+            <EmptyState title={t.prices.empty} description={t.rules.hint} />
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t.rules.wilaya}</TableHead>
-                    <TableHead>{t.rules.commune}</TableHead>
-                    <TableHead>{t.rules.method}</TableHead>
-                    <TableHead>{t.rules.band}</TableHead>
-                    <TableHead>{t.rules.price}</TableHead>
-                    <TableHead>{t.rules.enabled}</TableHead>
-                    <TableHead className="text-end">{t.rules.actions}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+            <DataTable>
+              <table className="w-full min-w-[860px] text-sm">
+                <thead>
+                  <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                    <th className="px-3 py-3 text-start">{t.rules.wilaya}</th>
+                    <th className="px-3 py-3 text-start">{t.rules.commune}</th>
+                    <th className="px-3 py-3 text-start">{t.rules.method}</th>
+                    <th className="px-3 py-3 text-start">{t.rules.band}</th>
+                    <th className="px-3 py-3 text-end">{t.rules.price}</th>
+                    <th className="px-3 py-3 text-start">{t.rules.enabled}</th>
+                    <th className="px-3 py-3 text-end">{t.rules.actions}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                   {rules.map((r) => (
-                    <TableRow key={r.id}>
-                      <TableCell className="font-medium">
+                    <tr key={r.id} className="hover:bg-muted/40">
+                      <td className="px-3 py-3 font-medium">
                         {r.wilayas ? `${r.wilayas.code} · ${placeName(r.wilayas.name, locale, r.wilayas.code)}` : "—"}
-                      </TableCell>
-                      <TableCell>
+                      </td>
+                      <td className="px-3 py-3">
                         {r.communes
                           ? `${r.communes.code} · ${placeName(r.communes.name, locale, r.communes.code)}`
                           : t.rules.allCommunes}
-                      </TableCell>
-                      <TableCell>
+                      </td>
+                      <td className="px-3 py-3">
                         <StatusPill status={r.delivery_method === "home" ? "confirmed" : "pending"} />
                         <span className="ms-2 text-xs text-muted-foreground">
                           {r.delivery_method === "home" ? t.rules.home : t.rules.office}
                         </span>
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap tabular-nums">
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-3 tabular-nums">
                         {bandLabel(Number(r.min_weight_grams), r.max_weight_grams != null ? Number(r.max_weight_grams) : null)}
-                      </TableCell>
-                      <TableCell className="font-semibold">{fmtMoney(r.price, "DZD", locale)}</TableCell>
-                      <TableCell>
+                      </td>
+                      <td className="px-3 py-3 text-end font-semibold tabular-nums">{fmtMoney(r.price, "DZD", locale)}</td>
+                      <td className="px-3 py-3">
                         <Switch
                           checked={r.enabled}
                           disabled={toggleMutation.isPending}
                           onCheckedChange={(v) => toggleMutation.mutate({ id: r.id, enabled: v })}
                           aria-label={r.enabled ? t.dialog.off : t.dialog.on}
                         />
-                      </TableCell>
-                      <TableCell>
+                      </td>
+                      <td className="px-3 py-3">
                         <div className="flex justify-end gap-1">
                           <Button variant="ghost" size="sm" onClick={() => openEdit(r)}>
                             <Pencil className="me-1 h-3.5 w-3.5" />
@@ -683,12 +684,12 @@ function ShippingPage() {
                             {t.rules.delete}
                           </Button>
                         </div>
-                      </TableCell>
-                    </TableRow>
+                      </td>
+                    </tr>
                   ))}
-                </TableBody>
-              </Table>
-            </div>
+                </tbody>
+              </table>
+            </DataTable>
           )}
         </AdminCard>
 
@@ -714,49 +715,49 @@ function ShippingPage() {
           ) : offices.length === 0 ? (
             <EmptyState
               title={t.offices.empty}
-              text={t.offices.emptyText}
+              description={t.offices.emptyText}
               action={<Button onClick={openCreateOffice}>{t.offices.add}</Button>}
             />
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t.offices.name}</TableHead>
-                    <TableHead>{t.offices.wilaya}</TableHead>
-                    <TableHead>{t.offices.address}</TableHead>
-                    <TableHead>{t.offices.phone}</TableHead>
-                    <TableHead>{t.offices.hours}</TableHead>
-                    <TableHead>{t.offices.active}</TableHead>
-                    <TableHead className="text-end">{t.rules.actions}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+            <DataTable>
+              <table className="w-full min-w-[860px] text-sm">
+                <thead>
+                  <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                    <th className="px-3 py-3 text-start">{t.offices.name}</th>
+                    <th className="px-3 py-3 text-start">{t.offices.wilaya}</th>
+                    <th className="px-3 py-3 text-start">{t.offices.address}</th>
+                    <th className="px-3 py-3 text-start">{t.offices.phone}</th>
+                    <th className="px-3 py-3 text-start">{t.offices.hours}</th>
+                    <th className="px-3 py-3 text-start">{t.offices.active}</th>
+                    <th className="px-3 py-3 text-end">{t.rules.actions}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                   {offices.map((o) => (
-                    <TableRow key={o.id}>
-                      <TableCell className="font-medium">{o.name}</TableCell>
-                      <TableCell className="whitespace-nowrap">
+                    <tr key={o.id} className="hover:bg-muted/40">
+                      <td className="px-3 py-3 font-medium">{o.name}</td>
+                      <td className="whitespace-nowrap px-3 py-3">
                         {o.wilayas ? `${o.wilayas.code} · ${placeName(o.wilayas.name, locale, o.wilayas.code)}` : "—"}
                         {o.communes && (
                           <span className="block text-xs text-muted-foreground">
                             {placeName(o.communes.name, locale, o.communes.code)}
                           </span>
                         )}
-                      </TableCell>
-                      <TableCell className="max-w-52 truncate text-sm text-muted-foreground">{o.address ?? "—"}</TableCell>
-                      <TableCell className="whitespace-nowrap tabular-nums">{o.phone ?? "—"}</TableCell>
-                      <TableCell className="max-w-40 truncate text-sm text-muted-foreground">
+                      </td>
+                      <td className="max-w-52 truncate px-3 py-3 text-sm text-muted-foreground">{o.address ?? "—"}</td>
+                      <td className="whitespace-nowrap px-3 py-3 tabular-nums">{o.phone ?? "—"}</td>
+                      <td className="max-w-40 truncate px-3 py-3 text-sm text-muted-foreground">
                         {o.opening_hours ?? "—"}
-                      </TableCell>
-                      <TableCell>
+                      </td>
+                      <td className="px-3 py-3">
                         <Switch
                           checked={o.active}
                           disabled={officeToggleMutation.isPending}
                           onCheckedChange={(v) => officeToggleMutation.mutate({ id: o.id, active: v })}
                           aria-label={o.active ? t.dialog.off : t.dialog.on}
                         />
-                      </TableCell>
-                      <TableCell>
+                      </td>
+                      <td className="px-3 py-3">
                         <div className="flex justify-end gap-1">
                           <Button variant="ghost" size="sm" onClick={() => openEditOffice(o)}>
                             <Pencil className="me-1 h-3.5 w-3.5" />
@@ -766,12 +767,12 @@ function ShippingPage() {
                             {t.rules.delete}
                           </Button>
                         </div>
-                      </TableCell>
-                    </TableRow>
+                      </td>
+                    </tr>
                   ))}
-                </TableBody>
-              </Table>
-            </div>
+                </tbody>
+              </table>
+            </DataTable>
           )}
         </AdminCard>
 

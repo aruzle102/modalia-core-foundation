@@ -7,11 +7,11 @@ import { AdminShell } from "@/components/admin/AdminShell";
 import {
   AdminCard,
   StatusPill,
-  EmptyState,
   TableSkeleton,
   Field,
   fmtDateTime,
 } from "@/components/admin/ui";
+import { DataTable, EmptyState, ErrorState } from "@/components/dashboard";
 import { useAdminLocale } from "@/components/admin/useAdminLocale";
 import { getTranslations } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
@@ -109,29 +109,40 @@ function ReviewsManager() {
         subtitle={`${total} review(s) in this queue.`}
       >
         {reviewsQuery.isPending ? (
-          <TableSkeleton />
+          <DataTable>
+            <div className="p-4">
+              <TableSkeleton />
+            </div>
+          </DataTable>
         ) : reviewsQuery.isError ? (
-          <EmptyState title="Could not load reviews" text={errMsg(reviewsQuery.error)} />
+          <DataTable>
+            <ErrorState title="Could not load reviews" description={errMsg(reviewsQuery.error)} />
+          </DataTable>
         ) : reviews.length === 0 ? (
-          <EmptyState title="Queue is empty" text="Nothing needs attention here right now." />
+          <DataTable>
+            <EmptyState
+              title="Queue is empty"
+              description="Nothing needs attention here right now."
+            />
+          </DataTable>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[680px] text-start text-small">
+          <DataTable>
+            <table className="w-full min-w-[680px] text-sm">
               <thead>
-                <tr className="border-b border-border text-caption text-muted-foreground">
-                  <th className="px-3 py-2 font-medium">Review</th>
-                  <th className="px-3 py-2 font-medium">Product</th>
-                  <th className="px-3 py-2 font-medium">Rating</th>
-                  <th className="px-3 py-2 font-medium">Status</th>
-                  <th className="px-3 py-2 font-medium text-end">Actions</th>
+                <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                  <th className="px-3 py-3 text-start">Review</th>
+                  <th className="px-3 py-3 text-start">Product</th>
+                  <th className="px-3 py-3 text-end">Rating</th>
+                  <th className="px-3 py-3 text-start">Status</th>
+                  <th className="px-3 py-3 text-end">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                 {reviews.map((r) => {
                   const product = r.products;
                   const reviewer = [r.first_name, r.last_name].filter(Boolean).join(" ") || "Anonymous";
                   return (
-                    <tr key={r.id} className="align-top">
+                    <tr key={r.id} className="align-top hover:bg-muted/40">
                       <td className="px-3 py-3">
                         <p className="max-w-md whitespace-pre-wrap">{r.body ?? "—"}</p>
                         {r.image_url ? (
@@ -157,7 +168,7 @@ function ReviewsManager() {
                       <td className="px-3 py-3 text-caption">
                         {pickName(product.name) || product.slug || r.product_id.slice(0, 8)}
                       </td>
-                      <td className="px-3 py-3 whitespace-nowrap">{r.rating} / 5</td>
+                      <td className="whitespace-nowrap px-3 py-3 text-end tabular-nums">{r.rating} / 5</td>
                       <td className="px-3 py-3"><StatusPill status={r.moderation_status} /></td>
                       <td className="px-3 py-3">
                         <div className="flex flex-wrap justify-end gap-1.5">
@@ -192,7 +203,7 @@ function ReviewsManager() {
                 })}
               </tbody>
             </table>
-          </div>
+          </DataTable>
         )}
         <div className="mt-4">
           <Pager page={page} total={total} pageSize={pageSize} onPage={setPage} />

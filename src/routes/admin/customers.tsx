@@ -6,12 +6,11 @@ import { AdminGate } from "@/components/admin/AdminGate";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { Pager, errMsg } from "./_shared";
 import {
-  AdminCard,
-  EmptyState,
   TableSkeleton,
   fmtDateTime,
   fmtMoney,
 } from "@/components/admin/ui";
+import { DataTable, EmptyState } from "@/components/dashboard";
 import { Input } from "@/components/ui/input";
 import { listAdminCustomers, listGuestCustomers } from "@/lib/admin-ops.functions";
 import { getLocale, getTranslations, type SupportedLocale } from "@/lib/i18n";
@@ -87,11 +86,15 @@ function CustomersPage() {
           ))}
         </div>
 
-        <AdminCard
-          title={tab === "registered" ? "Registered customers" : "Guest buyers"}
-          subtitle={`${total} total`}
-          actions={
-            tab === "registered" ? (
+        <section aria-label={tab === "registered" ? "Registered customers" : "Guest buyers"}>
+          <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold tracking-tight">
+                {tab === "registered" ? "Registered customers" : "Guest buyers"}
+              </h2>
+              <p className="mt-0.5 text-sm text-muted-foreground">{`${total} total`}</p>
+            </div>
+            {tab === "registered" ? (
               <div className="relative">
                 <Search className="absolute top-1/2 start-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
@@ -101,16 +104,26 @@ function CustomersPage() {
                   className="w-52 ps-9"
                 />
               </div>
-            ) : undefined
-          }
-        >
+            ) : null}
+          </div>
           {isPending ? (
-            <TableSkeleton />
+            <DataTable>
+              <div className="p-4">
+                <TableSkeleton />
+              </div>
+            </DataTable>
           ) : isError ? (
-            <EmptyState title="Could not load customers" text={errMsg(error)} />
+            <DataTable>
+              <EmptyState title="Could not load customers" description={errMsg(error)} />
+            </DataTable>
           ) : tab === "registered" ? (
             (registeredQuery.data?.items ?? []).length === 0 ? (
-              <EmptyState title="No customers yet" text="Customer profiles appear after shoppers sign up." />
+              <DataTable>
+                <EmptyState
+                  title="No customers yet"
+                  description="Customer profiles appear after shoppers sign up."
+                />
+              </DataTable>
             ) : (
               <CustomerTable
                 locale={locale}
@@ -125,7 +138,12 @@ function CustomersPage() {
               />
             )
           ) : (guestQuery.data?.items ?? []).length === 0 ? (
-            <EmptyState title="No guest orders" text="Guest buyers appear after a checkout without an account." />
+            <DataTable>
+              <EmptyState
+                title="No guest orders"
+                description="Guest buyers appear after a checkout without an account."
+              />
+            </DataTable>
           ) : (
             <CustomerTable
               locale={locale}
@@ -139,7 +157,7 @@ function CustomersPage() {
               }))}
             />
           )}
-        </AdminCard>
+        </section>
         <div className="mt-4">
           <Pager page={page} total={total} pageSize={pageSize} onPage={setPage} />
         </div>
@@ -156,31 +174,31 @@ function CustomerTable({
   locale: SupportedLocale;
 }) {
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[680px] text-start text-small">
+    <DataTable>
+      <table className="w-full min-w-[680px] text-sm">
         <thead>
-          <tr className="border-b border-border text-caption text-muted-foreground">
-            <th className="px-3 py-2 font-medium">Customer</th>
-            <th className="px-3 py-2 font-medium">Contact</th>
-            <th className="px-3 py-2 font-medium">Orders</th>
-            <th className="px-3 py-2 font-medium">Total spent</th>
-            <th className="px-3 py-2 font-medium">Last order</th>
+          <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+            <th className="px-3 py-3 text-start">Customer</th>
+            <th className="px-3 py-3 text-start">Contact</th>
+            <th className="px-3 py-3 text-end">Orders</th>
+            <th className="px-3 py-3 text-end">Total spent</th>
+            <th className="px-3 py-3 text-start">Last order</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-border">
+        <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
           {rows.map((r) => (
             <tr key={r.key} className="hover:bg-muted/40">
               <td className="px-3 py-3 font-medium">{r.name}</td>
-              <td className="px-3 py-3 text-caption" dir="ltr">{r.contact}</td>
-              <td className="px-3 py-3">{r.orders}</td>
-              <td className="px-3 py-3 font-medium">{fmtMoney(r.total, "DZD", locale)}</td>
-              <td className="px-3 py-3 text-caption text-muted-foreground">
+              <td className="px-3 py-3 text-xs" dir="ltr">{r.contact}</td>
+              <td className="px-3 py-3 text-end tabular-nums">{r.orders}</td>
+              <td className="px-3 py-3 text-end font-medium tabular-nums">{fmtMoney(r.total, "DZD", locale)}</td>
+              <td className="px-3 py-3 text-xs text-muted-foreground">
                 {r.last ? fmtDateTime(r.last, locale) : "—"}
               </td>
             </tr>
           ))}
         </tbody>
       </table>
-    </div>
+    </DataTable>
   );
 }

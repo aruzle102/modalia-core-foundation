@@ -2,7 +2,8 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { AlertTriangle, KeyRound, LogOut, MailCheck, MailWarning, ShieldCheck, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { AdminCard, EmptyState, TableSkeleton, fmtDateTime } from "@/components/admin/ui";
+import { TableSkeleton, fmtDateTime } from "@/components/admin/ui";
+import { ErrorState, FormSection } from "@/components/dashboard";
 import { SellerShell } from "@/components/seller/SellerShell";
 import { useSellerSession } from "@/components/seller/ui";
 import { RouteError, RoutePending } from "@/components/routing/route-states";
@@ -101,21 +102,19 @@ function SellerSecurityPage() {
         {authQuery.isLoading ? (
           <TableSkeleton rows={3} />
         ) : authQuery.isError ? (
-          <AdminCard>
-            <EmptyState
-              title="Account details could not be loaded"
-              text={errMsg(authQuery.error)}
-              action={
-                <Button type="button" variant="outline" size="sm" onClick={() => authQuery.refetch()}>
-                  Try again
-                </Button>
-              }
-            />
-          </AdminCard>
+          <ErrorState
+            title="Account details could not be loaded"
+            description={errMsg(authQuery.error)}
+            action={
+              <Button type="button" variant="outline" size="sm" onClick={() => authQuery.refetch()}>
+                Try again
+              </Button>
+            }
+          />
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
             {/* Password */}
-            <AdminCard
+            <FormSection
               title="Password"
               actions={<KeyRound className="size-5 text-muted-foreground" aria-hidden="true" />}
             >
@@ -135,10 +134,10 @@ function SellerSecurityPage() {
                   </Link>
                 </Button>
               </div>
-            </AdminCard>
+            </FormSection>
 
             {/* Email verification — real status from the auth user, nothing invented */}
-            <AdminCard
+            <FormSection
               title="Email verification"
               actions={
                 emailVerified ? (
@@ -158,10 +157,10 @@ function SellerSecurityPage() {
                   "Password recovery goes through this email — verify it in your inbox or ask the platform team to resend the verification link."
                 </p>
               ) : null}
-            </AdminCard>
+            </FormSection>
 
             {/* Session info — only what the client can actually know */}
-            <AdminCard
+            <FormSection
               title="Current session"
               actions={<UserCheck className="size-5 text-muted-foreground" aria-hidden="true" />}
             >
@@ -178,10 +177,10 @@ function SellerSecurityPage() {
               <p className="mt-3 text-xs text-muted-foreground">
                 "Detailed device and location history isn't tracked for seller accounts — only your current sign-in is shown here."
               </p>
-            </AdminCard>
+            </FormSection>
 
             {/* Sign out everywhere */}
-            <AdminCard
+            <FormSection
               title="Sign out"
               actions={<ShieldCheck className="size-5 text-muted-foreground" aria-hidden="true" />}
             >
@@ -205,7 +204,7 @@ function SellerSecurityPage() {
                   </p>
                 ) : null}
               </div>
-            </AdminCard>
+            </FormSection>
           </div>
         )}
       </div>

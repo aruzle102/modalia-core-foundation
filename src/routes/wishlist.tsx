@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Heart, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SiteFooter, SiteHeader } from "@/components/layout/site-shell";
+import { PageHeader, EmptyState, ErrorState } from "@/components/dashboard";
 import { formatPrice } from "@/lib/i18n/format";
 import { getLocale, getTranslations, localeDirections } from "@/lib/i18n";
 import { readWishlist, toggleWishlist, type WishlistItem } from "@/lib/wishlist-store";
@@ -28,7 +29,15 @@ export const Route = createFileRoute("/wishlist")({
 
 function WishlistError() {
   const { locale } = Route.useSearch();
-  return <div role="alert" className="px-6 py-24 text-center text-muted-foreground">{getTranslations(locale).common.loadError}</div>;
+  return (
+    <div className="min-h-screen bg-background">
+      <SiteHeader locale={locale} t={getTranslations(locale)} />
+      <main id="main-content" tabIndex={-1} className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+        <ErrorState title={getTranslations(locale).common.loadError} />
+      </main>
+      <SiteFooter locale={locale} t={getTranslations(locale)} />
+    </div>
+  );
 }
 
 function WishlistPage() {
@@ -62,24 +71,26 @@ function WishlistPage() {
     <div dir={localeDirections[locale]} lang={locale} className="min-h-screen bg-background">
       <SiteHeader locale={locale} t={t} />
       <main id="main-content" tabIndex={-1} className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <p className="text-eyebrow text-muted-foreground">{tw.eyebrow}</p>
-        <h1 className="mt-2 text-display">{t.nav.wishlist}</h1>
-        <p className="mt-3 text-body text-muted-foreground">{tw.text}</p>
+        <PageHeader eyebrow={tw.eyebrow} title={t.nav.wishlist} description={tw.text} />
         {!items.length ? (
-          <section className="mt-10 rounded-[14px] border border-[#E5E5E5] bg-white p-12 text-center">
-            <Heart className="mx-auto size-8" />
-            <h2 className="mt-5 text-h3">{tw.emptyTitle}</h2>
-            <Button asChild className="mt-6">
-              <Link
-                to="/shop"
-                search={{ locale, q: "", category: "", sort: "newest", page: 1, focus: "", view: "" , brands: [], stores: [], colors: [], sizes: [], inStock: false, onSale: false }}
-              >
-                {tw.discoverProducts}
-              </Link>
-            </Button>
+          <section className="mt-2">
+            <EmptyState
+              icon={<Heart className="h-5 w-5" />}
+              title={tw.emptyTitle}
+              action={
+                <Button asChild>
+                  <Link
+                    to="/shop"
+                    search={{ locale, q: "", category: "", sort: "newest", page: 1, focus: "", view: "" , brands: [], stores: [], colors: [], sizes: [], inStock: false, onSale: false }}
+                  >
+                    {tw.discoverProducts}
+                  </Link>
+                </Button>
+              }
+            />
           </section>
         ) : (
-          <div className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+          <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
             {items.map((item) => {
               const live = liveById.get(item.productId);
               const known = liveQuery.data ? Boolean(live) : true;
@@ -93,14 +104,14 @@ function WishlistPage() {
               return (
                 <article
                   key={item.productId}
-                  className="group rounded-[14px] border border-[#E5E5E5] bg-white p-2"
+                  className="group overflow-hidden rounded-xl border border-border bg-card transition-shadow hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] dark:hover:shadow-[0_4px_16px_rgba(0,0,0,0.4)]"
                 >
                   <Link
                     to="/product/$slug"
                     params={{ slug: live?.slug ?? item.slug }}
                     search={{ locale }}
                   >
-                    <div className="relative aspect-[4/5] overflow-hidden rounded-[14px] bg-[#F6F6F4]">
+                    <div className="relative aspect-[4/5] overflow-hidden bg-muted">
                       {item.image ? (
                         <img
                           src={item.image}
@@ -115,16 +126,16 @@ function WishlistPage() {
                         </span>
                       ) : null}
                       {unavailable ? (
-                        <span className="absolute start-2 top-2 rounded-md bg-[#F6F6F4] px-2 py-1 text-caption font-medium text-[#666666]">
+                        <span className="absolute start-2 top-2 rounded-md bg-muted px-2 py-1 text-caption font-medium text-muted-foreground">
                           {tw.unavailable}
                         </span>
                       ) : null}
                     </div>
                     <div className="p-3">
                       <p className="text-caption text-muted-foreground">{item.storeName}</p>
-                      <h3 className="mt-1 line-clamp-2 text-small font-medium">{item.name}</h3>
+                      <h3 className="mt-1 line-clamp-2 text-small font-medium text-foreground">{item.name}</h3>
                       <p className="mt-2 flex flex-wrap items-baseline gap-2">
-                        <span className="font-semibold">{formatPrice(price, locale)}</span>
+                        <span className="font-semibold tabular-nums text-foreground">{formatPrice(price, locale)}</span>
                         {compareAt != null && compareAt > price ? (
                           <span className="text-caption text-muted-foreground line-through">
                             {formatPrice(compareAt, locale)}
@@ -136,10 +147,12 @@ function WishlistPage() {
                       ) : null}
                     </div>
                   </Link>
-                  <Button variant="ghost" size="sm" className="w-full" onClick={() => remove(item)}>
-                    <Trash2 />
-                    {tw.remove}
-                  </Button>
+                  <div className="border-t border-border px-2 py-1.5">
+                    <Button variant="ghost" size="sm" className="w-full text-muted-foreground hover:text-destructive" onClick={() => remove(item)}>
+                      <Trash2 />
+                      {tw.remove}
+                    </Button>
+                  </div>
                 </article>
               );
             })}

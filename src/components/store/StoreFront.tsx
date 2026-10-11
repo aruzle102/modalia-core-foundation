@@ -203,7 +203,7 @@ export function StoreFront({
               </div>
               <div className="-mx-4 mt-8 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
                 {collection.products.map((product) => (
-                  <div key={product.id} className="w-44 shrink-0 snap-start sm:w-56">
+                  <div key={product.id} className="w-36 shrink-0 snap-start sm:w-44 lg:w-48">
                     <ProductCard product={product} locale={locale} />
                   </div>
                 ))}

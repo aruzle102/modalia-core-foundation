@@ -10,7 +10,8 @@ import { Switch } from "@/components/ui/switch";
 import { AdminGate } from "@/components/admin/AdminGate";
 import { SuperAdminGate } from "@/components/admin/SuperAdminGate";
 import { AdminShell } from "@/components/admin/AdminShell";
-import { AdminCard, TableSkeleton, Field } from "@/components/admin/ui";
+import { TableSkeleton, Field } from "@/components/admin/ui";
+import { FormSection } from "@/components/dashboard";
 import { getMaintenanceSettings, updateMaintenanceSettings } from "@/lib/maintenance.functions";
 import { getLocale } from "@/lib/i18n";
 
@@ -59,15 +60,15 @@ function MaintenancePage() {
     <AdminGate>
       <SuperAdminGate>
         <AdminShell title="Maintenance mode" subtitle="Take the public storefront offline for maintenance">
-          <AdminCard
+          <FormSection
             title="Storefront status"
-            subtitle="Admin, seller and sign-in routes always stay accessible — only the public storefront is affected."
+            description="Admin, seller and sign-in routes always stay accessible — only the public storefront is affected."
           >
             {isPending ? (
               <TableSkeleton />
             ) : (
               <div className="max-w-xl space-y-5">
-                <label className="flex items-center justify-between gap-4 rounded-lg border p-4">
+                <label className="flex items-center justify-between gap-4 rounded-xl border border-border bg-card p-4">
                   <span>
                     <span className="block text-sm font-semibold">Maintenance mode</span>
                     <span className="block text-xs text-muted-foreground">
@@ -92,14 +93,14 @@ function MaintenancePage() {
                     {save.isPending ? "Saving…" : "Save"}
                   </Button>
                   {enabled ? (
-                    <p className="flex items-center gap-2 text-sm text-amber-600">
+                    <p className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400">
                       <Wrench className="h-4 w-4" /> The storefront is currently in maintenance mode.
                     </p>
                   ) : null}
                 </div>
               </div>
             )}
-          </AdminCard>
+          </FormSection>
         </AdminShell>
       </SuperAdminGate>
     </AdminGate>

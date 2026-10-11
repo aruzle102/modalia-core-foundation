@@ -26,9 +26,7 @@ import { AdminShell } from "@/components/admin/AdminShell";
 import { pickName } from "./_shared";
 import {
   AdminCard,
-  Stat,
   StatusPill,
-  EmptyState,
   TableSkeleton,
   ConfirmDialog,
   Field,
@@ -36,6 +34,7 @@ import {
   fmtDateTime,
   timeAgo,
 } from "@/components/admin/ui";
+import { DataTable, EmptyState, FormSection, StatCard } from "@/components/dashboard";
 import {
   getSellerProfile,
   getSellerMonthlyProfit,
@@ -344,7 +343,7 @@ function SellerWorkspacePage() {
         actions={
           <Button variant="outline" size="sm" asChild>
             <BackLink back={back} fallbackTo="/admin/sellers">
-              <ArrowLeft className="size-4 me-1.5" />
+              <ArrowLeft className="size-4 me-1.5 rtl:rotate-180" />
               {p.backToSellers}
             </BackLink>
           </Button>
@@ -354,7 +353,7 @@ function SellerWorkspacePage() {
           <TableSkeleton rows={10} />
         ) : profileQuery.isError || !seller ? (
           <AdminCard title={p.couldNotLoad}>
-            <EmptyState title={p.couldNotLoad} text={p.couldNotLoadDesc} />
+            <EmptyState title={p.couldNotLoad} description={p.couldNotLoadDesc} />
           </AdminCard>
         ) : (
           <div className="space-y-6">
@@ -598,12 +597,12 @@ function OverviewTab({ profile, sellerId, locale }: { profile: Profile; sellerId
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <Stat label={p.products} value={String(profile.stats.productCount)} hint={p.liveCatalogHint} />
-        <Stat label={p.deliveredSales} value={fmtMoney(profile.stats.salesTotal, "DZD", locale)} hint={p.deliveredSalesHint} />
-        <Stat
-          label={p.commissionPayable}
+        <StatCard title={p.products} value={String(profile.stats.productCount)} description={p.liveCatalogHint} />
+        <StatCard title={p.deliveredSales} value={fmtMoney(profile.stats.salesTotal, "DZD", locale)} description={p.deliveredSalesHint} />
+        <StatCard
+          title={p.commissionPayable}
           value={fmtMoney(profile.stats.commissionPayable, "DZD", locale)}
-          hint={p.commissionPayableHint}
+          description={p.commissionPayableHint}
         />
       </div>
 
@@ -653,10 +652,10 @@ function OverviewTab({ profile, sellerId, locale }: { profile: Profile; sellerId
         ) : (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-              <Stat label={p.revenue} value={fmtMoney(profitQuery.data.revenue, "DZD", locale)} hint={p.revenueHint} />
-              <Stat label={p.costTotal} value={fmtMoney(profitQuery.data.costTotal, "DZD", locale)} hint={p.costTotalHint} />
-              <Stat label={p.sellerProfit} value={fmtMoney(profitQuery.data.sellerProfit, "DZD", locale)} hint={p.sellerProfitHint} />
-              <Stat label={p.platformProfit} value={fmtMoney(profitQuery.data.platformProfit, "DZD", locale)} hint={p.platformProfitHint} />
+              <StatCard title={p.revenue} value={fmtMoney(profitQuery.data.revenue, "DZD", locale)} description={p.revenueHint} />
+              <StatCard title={p.costTotal} value={fmtMoney(profitQuery.data.costTotal, "DZD", locale)} description={p.costTotalHint} />
+              <StatCard title={p.sellerProfit} value={fmtMoney(profitQuery.data.sellerProfit, "DZD", locale)} description={p.sellerProfitHint} />
+              <StatCard title={p.platformProfit} value={fmtMoney(profitQuery.data.platformProfit, "DZD", locale)} description={p.platformProfitHint} />
             </div>
             <p className="text-xs text-muted-foreground">
               {p.ordersCount}: <span className="font-semibold tabular-nums">{profitQuery.data.orderCount}</span>
@@ -826,7 +825,7 @@ function StoreTab({ profile, locale }: { profile: Profile; locale: SupportedLoca
           </div>
         </dl>
       ) : (
-        <EmptyState title={p.noStore} text={p.noStoreDesc} />
+        <EmptyState title={p.noStore} description={p.noStoreDesc} />
       )}
     </AdminCard>
   );
@@ -863,28 +862,28 @@ function ProductsTab({ sellerId, locale }: { sellerId: string; locale: Supported
         <EmptyState title={p.noProducts} />
       ) : (
         <div className="space-y-4">
-          <div className="overflow-x-auto">
+          <DataTable>
             <table className="w-full min-w-96 text-sm">
               <thead>
-                <tr className="border-b text-xs uppercase tracking-wide text-muted-foreground">
-                  <th className="py-1.5 pe-3 text-start font-medium">{p.name}</th>
-                  <th className="py-1.5 pe-3 text-start font-medium">{p.status}</th>
-                  <th className="py-1.5 text-start font-medium">{p.date}</th>
+                <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                  <th className="px-4 py-3 text-start">{p.name}</th>
+                  <th className="px-4 py-3 text-start">{p.status}</th>
+                  <th className="px-4 py-3 text-start">{p.date}</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                 {productsQuery.data.products.map((prod) => (
-                  <tr key={prod.id} className="border-b last:border-0">
-                    <td className="py-1.5 pe-3 font-medium">{productName(prod.name, common.unnamedProduct)}</td>
-                    <td className="py-1.5 pe-3"><StatusPill status={prod.moderation_status ?? prod.status} /></td>
-                    <td className="py-1.5 whitespace-nowrap text-muted-foreground" title={fmtDateTime(prod.created_at, locale)}>
+                  <tr key={prod.id} className="hover:bg-muted/40">
+                    <td className="px-4 py-3 font-medium">{productName(prod.name, common.unnamedProduct)}</td>
+                    <td className="px-4 py-3"><StatusPill status={prod.moderation_status ?? prod.status} /></td>
+                    <td className="px-4 py-3 whitespace-nowrap text-muted-foreground" title={fmtDateTime(prod.created_at, locale)}>
                       {timeAgo(prod.created_at, locale)}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </div>
+          </DataTable>
           <div className="flex items-center justify-between">
             <span className="text-xs text-muted-foreground">{total} {p.productsSubtitle}</span>
             <div className="flex gap-2">
@@ -932,30 +931,30 @@ function OrdersTab({ sellerId, locale }: { sellerId: string; locale: SupportedLo
         <EmptyState title={p.noOrders} />
       ) : (
         <div className="space-y-4">
-          <div className="overflow-x-auto">
+          <DataTable>
             <table className="w-full min-w-96 text-sm">
               <thead>
-                <tr className="border-b text-xs uppercase tracking-wide text-muted-foreground">
-                  <th className="py-1.5 pe-3 text-start font-medium">{p.order}</th>
-                  <th className="py-1.5 pe-3 text-start font-medium">{p.status}</th>
-                  <th className="py-1.5 pe-3 text-start font-medium">{p.subtotal}</th>
-                  <th className="py-1.5 text-start font-medium">{p.date}</th>
+                <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                  <th className="px-4 py-3 text-start">{p.order}</th>
+                  <th className="px-4 py-3 text-start">{p.status}</th>
+                  <th className="px-4 py-3 text-end">{p.subtotal}</th>
+                  <th className="px-4 py-3 text-start">{p.date}</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                 {ordersQuery.data.orders.map((o) => (
-                  <tr key={o.id} className="border-b last:border-0">
-                    <td className="py-1.5 pe-3 font-mono text-xs" dir="ltr">{o.orderNumber ?? o.id.slice(0, 8)}</td>
-                    <td className="py-1.5 pe-3"><StatusPill status={o.status} /></td>
-                    <td className="py-1.5 pe-3 whitespace-nowrap">{fmtMoney(o.grandTotal, "DZD", locale)}</td>
-                    <td className="py-1.5 whitespace-nowrap text-muted-foreground" title={fmtDateTime(o.createdAt, locale)}>
+                  <tr key={o.id} className="hover:bg-muted/40">
+                    <td className="px-4 py-3 font-mono text-xs" dir="ltr">{o.orderNumber ?? o.id.slice(0, 8)}</td>
+                    <td className="px-4 py-3"><StatusPill status={o.status} /></td>
+                    <td className="px-4 py-3 whitespace-nowrap text-end tabular-nums">{fmtMoney(o.grandTotal, "DZD", locale)}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-muted-foreground" title={fmtDateTime(o.createdAt, locale)}>
                       {timeAgo(o.createdAt, locale)}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </div>
+          </DataTable>
           <div className="flex items-center justify-end gap-2">
             <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>←</Button>
             <Button variant="outline" size="sm" disabled={page * 20 >= total} onClick={() => setPage(page + 1)}>→</Button>
@@ -986,35 +985,35 @@ function CustomersTab({ sellerId, locale }: { sellerId: string; locale: Supporte
       ) : customersQuery.data.customers.length === 0 ? (
         <EmptyState title={p.noCustomers} />
       ) : (
-        <div className="overflow-x-auto">
+        <DataTable>
           <table className="w-full min-w-96 text-sm">
             <thead>
-              <tr className="border-b text-xs uppercase tracking-wide text-muted-foreground">
-                <th className="py-1.5 pe-3 text-start font-medium">{p.user}</th>
-                <th className="py-1.5 pe-3 text-start font-medium">{p.ordersCount}</th>
-                <th className="py-1.5 pe-3 text-start font-medium">{p.totalSpent}</th>
-                <th className="py-1.5 text-start font-medium">{p.lastOrder}</th>
+              <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                <th className="px-4 py-3 text-start">{p.user}</th>
+                <th className="px-4 py-3 text-end">{p.ordersCount}</th>
+                <th className="px-4 py-3 text-end">{p.totalSpent}</th>
+                <th className="px-4 py-3 text-start">{p.lastOrder}</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
               {customersQuery.data.customers.map((c, i) => (
-                <tr key={i} className="border-b last:border-0">
-                  <td className="py-1.5 pe-3">
+                <tr key={i} className="hover:bg-muted/40">
+                  <td className="px-4 py-3">
                     <span className="block font-medium">{String(c.name)}</span>
                     <span className="block text-xs text-muted-foreground" dir="ltr">
                       {String(c.email ?? c.phone ?? "")}
                     </span>
                   </td>
-                  <td className="py-1.5 pe-3 tabular-nums">{String(c.orders)}</td>
-                  <td className="py-1.5 pe-3 whitespace-nowrap">{fmtMoney(Number(c.spent), "DZD", locale)}</td>
-                  <td className="py-1.5 whitespace-nowrap text-muted-foreground">
+                  <td className="px-4 py-3 text-end tabular-nums">{String(c.orders)}</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-end tabular-nums">{fmtMoney(Number(c.spent), "DZD", locale)}</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-muted-foreground">
                     {c.lastOrderAt ? timeAgo(String(c.lastOrderAt), locale) : "—"}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
+        </DataTable>
       )}
     </AdminCard>
   );
@@ -1088,10 +1087,10 @@ function AnalyticsTab({ profile, sellerId, locale }: { profile: Profile; sellerI
           />
         ) : (
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            <Stat label={p.revenue} value={fmtMoney(profitQuery.data.revenue, "DZD", locale)} hint={p.revenueHint} />
-            <Stat label={p.costTotal} value={fmtMoney(profitQuery.data.costTotal, "DZD", locale)} hint={p.costTotalHint} />
-            <Stat label={p.sellerProfit} value={fmtMoney(profitQuery.data.sellerProfit, "DZD", locale)} hint={p.sellerProfitHint} />
-            <Stat label={p.platformProfit} value={fmtMoney(profitQuery.data.platformProfit, "DZD", locale)} hint={p.platformProfitHint} />
+            <StatCard title={p.revenue} value={fmtMoney(profitQuery.data.revenue, "DZD", locale)} description={p.revenueHint} />
+            <StatCard title={p.costTotal} value={fmtMoney(profitQuery.data.costTotal, "DZD", locale)} description={p.costTotalHint} />
+            <StatCard title={p.sellerProfit} value={fmtMoney(profitQuery.data.sellerProfit, "DZD", locale)} description={p.sellerProfitHint} />
+            <StatCard title={p.platformProfit} value={fmtMoney(profitQuery.data.platformProfit, "DZD", locale)} description={p.platformProfitHint} />
           </div>
         )}
       </AdminCard>
@@ -1117,7 +1116,7 @@ function CommissionTab({
   const { p } = useWorkspaceT(locale);
   const seller = profile.seller;
   return (
-    <AdminCard title={p.commission} subtitle={p.commissionSubtitle}>
+    <FormSection title={p.commission} description={p.commissionSubtitle}>
       <div className="flex items-end gap-2">
         <div className="text-3xl font-bold">{(Number(seller.commission_rate) * 100).toFixed(1)}%</div>
         <span className="pb-1 text-xs text-muted-foreground">{p.currentRate}</span>
@@ -1145,32 +1144,32 @@ function CommissionTab({
       {profile.commissionHistory.length === 0 ? (
         <p className="text-sm text-muted-foreground">{p.noRateHistory}</p>
       ) : (
-        <div className="overflow-x-auto">
+        <DataTable>
           <table className="w-full min-w-72 text-sm">
             <thead>
-              <tr className="border-b text-xs uppercase tracking-wide text-muted-foreground">
-                <th className="py-1.5 pe-3 text-start font-medium">{p.rate}</th>
-                <th className="py-1.5 pe-3 text-start font-medium">{p.effectiveFrom}</th>
-                <th className="py-1.5 text-start font-medium">{p.changedBy}</th>
+              <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                <th className="px-4 py-3 text-end">{p.rate}</th>
+                <th className="px-4 py-3 text-start">{p.effectiveFrom}</th>
+                <th className="px-4 py-3 text-start">{p.changedBy}</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
               {profile.commissionHistory.map((h) => (
-                <tr key={h.id} className="border-b last:border-0">
-                  <td className="py-1.5 pe-3 font-medium">{(Number(h.rate) * 100).toFixed(1)}%</td>
-                  <td className="py-1.5 pe-3 text-muted-foreground" title={fmtDateTime(h.effective_from, locale)}>
+                <tr key={h.id} className="hover:bg-muted/40">
+                  <td className="px-4 py-3 font-medium text-end tabular-nums">{(Number(h.rate) * 100).toFixed(1)}%</td>
+                  <td className="px-4 py-3 text-muted-foreground" title={fmtDateTime(h.effective_from, locale)}>
                     {timeAgo(h.effective_from, locale)}
                   </td>
-                  <td className="py-1.5 font-mono text-xs text-muted-foreground">
+                  <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
                     {h.changed_by ? String(h.changed_by).slice(0, 8) : "—"}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
+        </DataTable>
       )}
-    </AdminCard>
+    </FormSection>
   );
 }
 
@@ -1181,32 +1180,32 @@ function SettlementsTab({ profile, locale }: { profile: Profile; locale: Support
       {profile.settlements.length === 0 ? (
         <EmptyState title={p.noSettlements} />
       ) : (
-        <div className="overflow-x-auto">
+        <DataTable>
           <table className="w-full min-w-96 text-sm">
             <thead>
-              <tr className="border-b text-xs uppercase tracking-wide text-muted-foreground">
-                <th className="py-1.5 pe-3 text-start font-medium">{p.amount}</th>
-                <th className="py-1.5 pe-3 text-start font-medium">{p.status}</th>
-                <th className="py-1.5 pe-3 text-start font-medium">{p.reference}</th>
-                <th className="py-1.5 text-start font-medium">{p.settled}</th>
+              <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                <th className="px-4 py-3 text-end">{p.amount}</th>
+                <th className="px-4 py-3 text-start">{p.status}</th>
+                <th className="px-4 py-3 text-start">{p.reference}</th>
+                <th className="px-4 py-3 text-start">{p.settled}</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
               {profile.settlements.map((s) => (
-                <tr key={s.id} className="border-b last:border-0">
-                  <td className="py-1.5 pe-3 font-medium whitespace-nowrap">
+                <tr key={s.id} className="hover:bg-muted/40">
+                  <td className="px-4 py-3 font-medium whitespace-nowrap text-end tabular-nums">
                     {fmtMoney(s.amount, "DZD", locale)} {s.currency}
                   </td>
-                  <td className="py-1.5 pe-3"><StatusPill status={s.status} /></td>
-                  <td className="py-1.5 pe-3 font-mono text-xs" dir="ltr">{s.payment_reference ?? "—"}</td>
-                  <td className="py-1.5 whitespace-nowrap text-muted-foreground">
+                  <td className="px-4 py-3"><StatusPill status={s.status} /></td>
+                  <td className="px-4 py-3 font-mono text-xs" dir="ltr">{s.payment_reference ?? "—"}</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-muted-foreground">
                     {s.settled_at ? timeAgo(s.settled_at, locale) : "—"}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
+        </DataTable>
       )}
     </AdminCard>
   );
@@ -1232,32 +1231,32 @@ function ShippingTab({ sellerId, locale }: { sellerId: string; locale: Supported
       ) : shippingQuery.data.offices.length === 0 ? (
         <EmptyState title={p.noOffices} />
       ) : (
-        <div className="overflow-x-auto">
+        <DataTable>
           <table className="w-full min-w-96 text-sm">
             <thead>
-              <tr className="border-b text-xs uppercase tracking-wide text-muted-foreground">
-                <th className="py-1.5 pe-3 text-start font-medium">{p.officeName}</th>
-                <th className="py-1.5 pe-3 text-start font-medium">{p.wilaya}</th>
-                <th className="py-1.5 pe-3 text-start font-medium">{p.status}</th>
-                <th className="py-1.5 text-start font-medium">{p.date}</th>
+              <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                <th className="px-4 py-3 text-start">{p.officeName}</th>
+                <th className="px-4 py-3 text-start">{p.wilaya}</th>
+                <th className="px-4 py-3 text-start">{p.status}</th>
+                <th className="px-4 py-3 text-start">{p.date}</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
               {shippingQuery.data.offices.map((o) => (
-                <tr key={String(o.id)} className="border-b last:border-0">
-                  <td className="py-1.5 pe-3 font-medium">{String(o.name ?? "—")}</td>
-                  <td className="py-1.5 pe-3" dir="ltr">{String(o.wilaya_id ?? "—")}</td>
-                  <td className="py-1.5 pe-3">
+                <tr key={String(o.id)} className="hover:bg-muted/40">
+                  <td className="px-4 py-3 font-medium">{String(o.name ?? "—")}</td>
+                  <td className="px-4 py-3" dir="ltr">{String(o.wilaya_id ?? "—")}</td>
+                  <td className="px-4 py-3">
                     <StatusPill status={o.active ? "active" : "inactive"} />
                   </td>
-                  <td className="py-1.5 whitespace-nowrap text-muted-foreground">
+                  <td className="px-4 py-3 whitespace-nowrap text-muted-foreground">
                     {o.created_at ? timeAgo(String(o.created_at), locale) : "—"}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
+        </DataTable>
       )}
     </AdminCard>
   );
@@ -1278,27 +1277,27 @@ function StaffTab({
       {profile.staff.length === 0 ? (
         <EmptyState title={p.noStaff} />
       ) : (
-        <div className="overflow-x-auto">
+        <DataTable>
           <table className="w-full min-w-72 text-sm">
             <thead>
-              <tr className="border-b text-xs uppercase tracking-wide text-muted-foreground">
-                <th className="py-1.5 pe-3 text-start font-medium">{p.user}</th>
-                <th className="py-1.5 pe-3 text-start font-medium">{p.role}</th>
-                <th className="py-1.5 pe-3 text-start font-medium">{p.added}</th>
-                <th className="py-1.5 text-end font-medium">
+              <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                <th className="px-4 py-3 text-start">{p.user}</th>
+                <th className="px-4 py-3 text-start">{p.role}</th>
+                <th className="px-4 py-3 text-start">{p.added}</th>
+                <th className="px-4 py-3 text-end">
                   <span className="sr-only">{p.editPerms}</span>
                 </th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
               {profile.staff.map((m) => (
-                <tr key={m.id} className="border-b last:border-0">
-                  <td className="py-1.5 pe-3 font-mono text-xs" dir="ltr">{m.user_id.slice(0, 8)}…</td>
-                  <td className="py-1.5 pe-3"><StatusPill status={m.role} /></td>
-                  <td className="py-1.5 whitespace-nowrap text-muted-foreground" title={fmtDateTime(m.created_at, locale)}>
+                <tr key={m.id} className="hover:bg-muted/40">
+                  <td className="px-4 py-3 font-mono text-xs" dir="ltr">{m.user_id.slice(0, 8)}…</td>
+                  <td className="px-4 py-3"><StatusPill status={m.role} /></td>
+                  <td className="px-4 py-3 whitespace-nowrap text-muted-foreground" title={fmtDateTime(m.created_at, locale)}>
                     {timeAgo(m.created_at, locale)}
                   </td>
-                  <td className="py-1.5 text-end">
+                  <td className="px-4 py-3 text-end">
                     <Button
                       variant="ghost"
                       size="sm"
@@ -1321,7 +1320,7 @@ function StaffTab({
               ))}
             </tbody>
           </table>
-        </div>
+        </DataTable>
       )}
     </AdminCard>
   );
@@ -1389,7 +1388,7 @@ function VerificationTab({
     <div className="space-y-6">
     <AdminCard title={p.verification}>
       {!store ? (
-        <EmptyState title={p.noStore} text={p.noStoreDesc} />
+        <EmptyState title={p.noStore} description={p.noStoreDesc} />
       ) : (
         <div className="space-y-4">
           <div className="flex items-center gap-3">

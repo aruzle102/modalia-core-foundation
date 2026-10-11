@@ -4,7 +4,8 @@ import { queryOptions, useMutation, useQueryClient, useSuspenseQuery } from "@ta
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { AdminCard, EmptyState, Field, StatusPill, TableSkeleton, fmtDateTime } from "@/components/admin/ui";
+import { AdminCard, Field, StatusPill, TableSkeleton, fmtDateTime } from "@/components/admin/ui";
+import { EmptyState, FormSection } from "@/components/dashboard";
 import { SellerShell } from "@/components/seller/SellerShell";
 import { createSupportRequest, listSupportRequests } from "@/lib/seller-support.functions";
 import { getLocale, getTranslations, type SupportedLocale } from "@/lib/i18n";
@@ -64,7 +65,7 @@ function RequestForm({ t }: { t: SupportT }) {
   });
 
   return (
-    <AdminCard title={t.formTitle} subtitle={t.formSubtitle} className="mb-8">
+    <FormSection title={t.formTitle} description={t.formSubtitle} className="mb-8">
       <Field label={t.subjectLabel}>
         <Input placeholder={t.subjectPlaceholder} value={subject} onChange={(e) => setSubject(e.target.value)} />
       </Field>
@@ -79,7 +80,7 @@ function RequestForm({ t }: { t: SupportT }) {
         </Button>
         {status ? <p className="text-small text-muted-foreground">{status}</p> : null}
       </div>
-    </AdminCard>
+    </FormSection>
   );
 }
 
@@ -89,7 +90,7 @@ function RequestList({ t, locale }: { t: SupportT; locale: SupportedLocale }) {
   return (
     <AdminCard title={t.listTitle} subtitle={t.listSubtitle(data.requests.length)}>
       {data.requests.length ? (
-        <div className="divide-y divide-border">
+        <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
           {data.requests.map((r) => (
             <div key={r.id} className="py-5">
               <div className="flex flex-wrap items-center justify-between gap-3">
@@ -101,8 +102,8 @@ function RequestList({ t, locale }: { t: SupportT; locale: SupportedLocale }) {
               </div>
               <p className="mt-2 max-w-3xl text-small text-muted-foreground">{r.message}</p>
               {r.adminResponse ? (
-                <div className="mt-3 rounded-xl bg-muted p-4">
-                  <p className="text-caption font-semibold uppercase tracking-wide text-muted-foreground">
+                <div className="mt-3 rounded-xl border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-800 dark:bg-neutral-900">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-neutral-500 dark:text-neutral-400">
                     {t.teamLabel}{r.respondedAt ? ` · ${fmtDateTime(r.respondedAt, locale)}` : ""}
                   </p>
                   <p className="mt-1.5 text-small">{r.adminResponse}</p>
@@ -112,7 +113,7 @@ function RequestList({ t, locale }: { t: SupportT; locale: SupportedLocale }) {
           ))}
         </div>
       ) : (
-        <EmptyState title={t.emptyTitle} text={t.emptyText} />
+        <EmptyState title={t.emptyTitle} description={t.emptyText} />
       )}
     </AdminCard>
   );

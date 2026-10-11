@@ -1,6 +1,7 @@
 import { useBlocker } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, Check, Info } from "lucide-react";
+import { cn } from "@/lib/utils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -230,20 +231,20 @@ export function OnboardingWizard({
       {/* Stepper */}
       <nav aria-label={formatStepOf(t.stepOf, step + 1, STEP_KEYS.length)}>
         <div role="list" aria-hidden="false">
-          <Stagger className="flex flex-1 items-center gap-2" stepMs={70} maxMs={280}>
+          <Stagger className="flex flex-1 items-center gap-1.5 sm:gap-2" stepMs={70} maxMs={280}>
             {STEP_KEYS.map((key, index) => {
               const done = index < step;
               const current = index === step;
               return (
-                <div key={key} role="listitem" className="flex flex-1 items-center gap-2 last:flex-none">
+                <div key={key} role="listitem" className="flex flex-1 items-center gap-1.5 last:flex-none sm:gap-2">
                   <span
                     aria-current={current ? "step" : undefined}
                     className={
                       current
-                        ? "flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ink text-sm font-semibold text-background"
+                        ? "flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand text-sm font-semibold text-white ring-4 ring-brand/15"
                         : done
-                          ? "flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand text-sm text-white"
-                          : "flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border text-sm text-muted-foreground"
+                          ? "flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand/15 text-sm text-brand dark:bg-brand/25"
+                          : "flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-card text-sm text-muted-foreground"
                     }
                   >
                     {done ? <Check className="h-4 w-4" aria-hidden="true" /> : <span aria-hidden="true">{index + 1}</span>}
@@ -258,7 +259,10 @@ export function OnboardingWizard({
                     {t.steps[key]}
                   </span>
                   {index < STEP_KEYS.length - 1 ? (
-                    <span className="mx-1 h-px flex-1 bg-border" aria-hidden="true" />
+                    <span
+                      className={cn("mx-1 h-0.5 flex-1 rounded-full", index < step ? "bg-brand/60" : "bg-border")}
+                      aria-hidden="true"
+                    />
                   ) : null}
                 </div>
               );
@@ -296,10 +300,10 @@ export function OnboardingWizard({
               <p className="mt-2 text-body text-muted-foreground">{t.profileSub}</p>
               <div className="mt-6 grid gap-5 sm:grid-cols-2">
                 <Field label={t.firstName} error={fieldError && firstName.trim().length < 1 ? fieldError : undefined}>
-                  <Input value={firstName} onChange={(e) => touch(setFirstName)(e.target.value)} maxLength={100} autoComplete="given-name" />
+                  <Input className="h-11" value={firstName} onChange={(e) => touch(setFirstName)(e.target.value)} maxLength={100} autoComplete="given-name" />
                 </Field>
                 <Field label={t.lastName} error={fieldError && lastName.trim().length < 1 ? fieldError : undefined}>
-                  <Input value={lastName} onChange={(e) => touch(setLastName)(e.target.value)} maxLength={100} autoComplete="family-name" />
+                  <Input className="h-11" value={lastName} onChange={(e) => touch(setLastName)(e.target.value)} maxLength={100} autoComplete="family-name" />
                 </Field>
                 <Field label={t.email}>
                   <Input
@@ -309,7 +313,7 @@ export function OnboardingWizard({
                     onChange={(e) => touch(setEmail)(e.target.value)}
                     maxLength={160}
                     autoComplete="email"
-                    className="text-start"
+                    className="h-11 text-start"
                   />
                 </Field>
                 <Field label={t.phone}>
@@ -320,11 +324,12 @@ export function OnboardingWizard({
                     onChange={(e) => touch(setPhone)(e.target.value)}
                     maxLength={30}
                     autoComplete="tel"
-                    className="text-start"
+                    className="h-11 text-start"
                   />
                 </Field>
                 <Field label={t.wilaya}>
                   <Input
+                    className="h-11"
                     value={wilaya}
                     onChange={(e) => touch(setWilaya)(e.target.value)}
                     maxLength={100}
@@ -333,6 +338,7 @@ export function OnboardingWizard({
                 </Field>
                 <Field label={t.address}>
                   <Input
+                    className="h-11"
                     value={address}
                     onChange={(e) => touch(setAddress)(e.target.value)}
                     maxLength={500}
@@ -351,10 +357,10 @@ export function OnboardingWizard({
                 <div className="mt-6 grid gap-5">
                   <div className="grid gap-5 sm:grid-cols-2">
                     <Field label={t.storeName}>
-                      <Input value={storeName} onChange={(e) => touch(setStoreName)(e.target.value)} maxLength={160} />
+                      <Input className="h-11" value={storeName} onChange={(e) => touch(setStoreName)(e.target.value)} maxLength={160} />
                     </Field>
                     <Field label={t.storeUrlLabel} hint={t.storeUrlNote}>
-                      <Input dir="ltr" value={storeUrl ?? ""} readOnly aria-readonly="true" className="text-start" />
+                      <Input dir="ltr" value={storeUrl ?? ""} readOnly aria-readonly="true" className="h-11 text-start" />
                     </Field>
                   </div>
                   <Field label={t.description}>
@@ -368,7 +374,7 @@ export function OnboardingWizard({
                         value={contactEmail}
                         onChange={(e) => touch(setContactEmail)(e.target.value)}
                         maxLength={160}
-                        className="text-start"
+                        className="h-11 text-start"
                       />
                     </Field>
                     <Field label={t.contactPhone}>
@@ -378,16 +384,16 @@ export function OnboardingWizard({
                         value={contactPhone}
                         onChange={(e) => touch(setContactPhone)(e.target.value)}
                         maxLength={30}
-                        className="text-start"
+                        className="h-11 text-start"
                       />
                     </Field>
                   </div>
                   <div className="grid gap-5 sm:grid-cols-2">
                     <Field label={t.logoPath} hint={t.logoHint}>
-                      <Input dir="ltr" value={logoPath} onChange={(e) => touch(setLogoPath)(e.target.value)} maxLength={500} className="text-start" />
+                      <Input dir="ltr" value={logoPath} onChange={(e) => touch(setLogoPath)(e.target.value)} maxLength={500} className="h-11 text-start" />
                     </Field>
                     <Field label={t.bannerPath} hint={t.bannerHint}>
-                      <Input dir="ltr" value={bannerPath} onChange={(e) => touch(setBannerPath)(e.target.value)} maxLength={500} className="text-start" />
+                      <Input dir="ltr" value={bannerPath} onChange={(e) => touch(setBannerPath)(e.target.value)} maxLength={500} className="h-11 text-start" />
                     </Field>
                   </div>
                 </div>
@@ -414,12 +420,18 @@ export function OnboardingWizard({
           ) : null}
 
           {fieldError && step !== 0 && step !== 3 ? (
-            <p role="alert" className="mt-5 rounded-md bg-destructive/10 p-3 text-small text-destructive">
+            <p
+              role="alert"
+              className="mt-5 rounded-xl border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive dark:border-destructive/30"
+            >
               {fieldError}
             </p>
           ) : null}
           {saveError ? (
-            <p role="alert" className="mt-5 rounded-md bg-destructive/10 p-3 text-small text-destructive">
+            <p
+              role="alert"
+              className="mt-5 rounded-xl border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive dark:border-destructive/30"
+            >
               {saveError}
             </p>
           ) : null}
@@ -428,7 +440,12 @@ export function OnboardingWizard({
           <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
             <div>
               {step > 0 ? (
-                <Button variant="ghost" onClick={() => setStep(step - 1)} disabled={saving}>
+                <Button
+                  variant="ghost"
+                  onClick={() => setStep(step - 1)}
+                  disabled={saving}
+                  className="h-11 rounded-full px-5"
+                >
                   <ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />
                   {t.back}
                 </Button>
@@ -436,17 +453,30 @@ export function OnboardingWizard({
             </div>
             <div className="flex flex-wrap items-center gap-3">
               {step < 3 ? (
-                <Button variant="ghost" onClick={() => void handleFinish(true)} disabled={saving}>
+                <Button
+                  variant="ghost"
+                  onClick={() => void handleFinish(true)}
+                  disabled={saving}
+                  className="h-11 rounded-full px-5"
+                >
                   {t.skip}
                 </Button>
               ) : null}
               {step < 3 ? (
-                <Button onClick={() => void handleContinue()} disabled={saving} className="pressable">
+                <Button
+                  onClick={() => void handleContinue()}
+                  disabled={saving}
+                  className="pressable h-11 rounded-full px-6"
+                >
                   {saving ? t.saving : t.continue}
                   <ArrowRight className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />
                 </Button>
               ) : (
-                <Button onClick={() => void handleFinish(false)} disabled={saving} className="pressable">
+                <Button
+                  onClick={() => void handleFinish(false)}
+                  disabled={saving}
+                  className="pressable h-11 rounded-full px-6"
+                >
                   {saving ? t.saving : t.completeSetup}
                   <Check className="h-4 w-4" aria-hidden="true" />
                 </Button>

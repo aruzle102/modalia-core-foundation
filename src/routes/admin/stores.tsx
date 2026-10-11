@@ -4,13 +4,8 @@ import { Search } from "lucide-react";
 import { AdminGate } from "@/components/admin/AdminGate";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { Pager, errMsg } from "./_shared";
-import {
-  AdminCard,
-  StatusPill,
-  EmptyState,
-  TableSkeleton,
-  fmtDateTime,
-} from "@/components/admin/ui";
+import { StatusPill, TableSkeleton, fmtDateTime } from "@/components/admin/ui";
+import { DataTable, EmptyState } from "@/components/dashboard";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -87,10 +82,12 @@ function StoresList() {
         subtitle={st.subtitle}
         breadcrumbs={[{ label: t.stores }]}
       >
-        <AdminCard
-          title={t.stores}
-          subtitle={st.storesCount(total)}
-          actions={
+        <section aria-label={t.stores}>
+          <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold tracking-tight">{t.stores}</h2>
+              <p className="mt-0.5 text-sm text-muted-foreground">{st.storesCount(total)}</p>
+            </div>
             <div className="flex flex-wrap items-center gap-2">
               <div className="relative">
                 <Search className="absolute top-1/2 start-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -114,28 +111,35 @@ function StoresList() {
                 </SelectContent>
               </Select>
             </div>
-          }
-        >
+          </div>
           {storesQuery.isPending ? (
-            <TableSkeleton />
+            <DataTable>
+              <div className="p-4">
+                <TableSkeleton />
+              </div>
+            </DataTable>
           ) : storesQuery.isError ? (
-            <EmptyState title={st.couldNotLoad} text={errMsg(storesQuery.error)} />
+            <DataTable>
+              <EmptyState title={st.couldNotLoad} description={errMsg(storesQuery.error)} />
+            </DataTable>
           ) : items.length === 0 ? (
-            <EmptyState title={st.noStores} text={st.noStoresDesc} />
+            <DataTable>
+              <EmptyState title={st.noStores} description={st.noStoresDesc} />
+            </DataTable>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[720px] text-start text-small">
+            <DataTable>
+              <table className="w-full min-w-[720px] text-sm">
                 <thead>
-                  <tr className="border-b border-border text-caption text-muted-foreground">
-                    <th className="px-3 py-2 font-medium">{st.store}</th>
-                    <th className="px-3 py-2 font-medium">{st.seller}</th>
-                    <th className="px-3 py-2 font-medium">{st.status}</th>
-                    <th className="px-3 py-2 font-medium">{st.verification}</th>
-                    <th className="px-3 py-2 font-medium">{st.products}</th>
-                    <th className="px-3 py-2 font-medium">{st.created}</th>
+                  <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                    <th className="px-3 py-3 text-start">{st.store}</th>
+                    <th className="px-3 py-3 text-start">{st.seller}</th>
+                    <th className="px-3 py-3 text-start">{st.status}</th>
+                    <th className="px-3 py-3 text-start">{st.verification}</th>
+                    <th className="px-3 py-3 text-end">{st.products}</th>
+                    <th className="px-3 py-3 text-start">{st.created}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border">
+                <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                   {items.map((s) => (
                     <tr key={s.id} className="hover:bg-muted/40">
                       <td className="px-3 py-3">
@@ -147,26 +151,26 @@ function StoresList() {
                         >
                           {s.name}
                         </Link>
-                        <p className="text-caption text-muted-foreground">/{s.slug}</p>
+                        <p className="text-xs text-muted-foreground">/{s.slug}</p>
                       </td>
-                      <td className="px-3 py-3 text-caption">{s.seller_legal_name ?? "—"}</td>
+                      <td className="px-3 py-3 text-xs">{s.seller_legal_name ?? "—"}</td>
                       <td className="px-3 py-3">
                         <StatusPill status={s.status} />
                       </td>
                       <td className="px-3 py-3">
                         <StatusPill status={s.verification_status} />
                       </td>
-                      <td className="px-3 py-3 font-medium">{s.product_count}</td>
-                      <td className="px-3 py-3 text-caption text-muted-foreground">
+                      <td className="px-3 py-3 text-end font-medium tabular-nums">{s.product_count}</td>
+                      <td className="px-3 py-3 text-xs text-muted-foreground">
                         {fmtDateTime(s.created_at, locale)}
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-            </div>
+            </DataTable>
           )}
-        </AdminCard>
+        </section>
         <div className="mt-4">
           <Pager page={page} total={total} pageSize={storesQuery.data?.pageSize ?? 25} onPage={setPage} />
         </div>

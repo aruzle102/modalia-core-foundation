@@ -3,6 +3,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { EmptyState, ErrorState } from "@/components/dashboard";
+import { getTranslations } from "@/lib/i18n";
 import type { SupportedLocale } from "@/config/platform";
 import {
   getPreferences,
@@ -64,11 +66,7 @@ export function NotificationList({
   });
 
   if (listQuery.isError) {
-    return (
-      <p role="alert" className="rounded-xl border border-border bg-card px-6 py-12 text-center text-sm text-muted-foreground">
-        {t.emptyHint}
-      </p>
-    );
+    return <ErrorState title={getTranslations(locale).common.loadError} />;
   }
 
   const items = listQuery.data?.notifications ?? [];
@@ -100,11 +98,7 @@ export function NotificationList({
           ))}
         </div>
       ) : items.length === 0 ? (
-        <div className="rounded-xl border border-border bg-card px-6 py-16 text-center">
-          <Bell className="mx-auto h-10 w-10 text-muted-foreground/40" />
-          <p className="mt-4 text-base font-semibold">{t.empty}</p>
-          <p className="mt-1 text-sm text-muted-foreground">{t.emptyHint}</p>
-        </div>
+        <EmptyState icon={<Bell className="h-5 w-5" />} title={t.empty} description={t.emptyHint} />
       ) : (
         <>
           <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
@@ -215,11 +209,7 @@ export function NotificationPreferencesForm({
   }
 
   if (prefsQuery.isError || !prefsQuery.data) {
-    return (
-      <p role="alert" className="rounded-xl border border-border bg-card px-6 py-12 text-center text-sm text-muted-foreground">
-        {t.saveError}
-      </p>
-    );
+    return <ErrorState title={t.saveError} />;
   }
 
   const { keys, prefs } = prefsQuery.data;

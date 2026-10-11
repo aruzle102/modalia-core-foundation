@@ -1,17 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { PackagePlus, Plus, Trash2, X } from "lucide-react";
+import { BadgeCheck, Layers, PackagePlus, Plus, Trash2, X } from "lucide-react";
 import { SellerShell } from "@/components/seller/SellerShell";
 import {
   AdminCard,
   ConfirmDialog,
-  EmptyState,
   Field,
-  Stat,
   TableSkeleton,
   fmtMoney,
 } from "@/components/admin/ui";
+import { EmptyState, ErrorState, StatCard } from "@/components/dashboard";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -155,18 +154,26 @@ function BundlesPage() {
         {query.isPending ? (
           <TableSkeleton rows={4} />
         ) : query.isError ? (
-          <AdminCard title="Could not load bundles">
-            <p className="text-sm text-destructive">
-              {query.error instanceof Error ? query.error.message : "Unexpected error."}
-            </p>
-            <Button variant="outline" className="mt-4" onClick={() => query.refetch()}>Retry</Button>
-          </AdminCard>
+          <ErrorState
+            title="Could not load bundles"
+            description={query.error instanceof Error ? query.error.message : "Unexpected error."}
+            action={
+              <Button variant="outline" onClick={() => query.refetch()}>
+                Retry
+              </Button>
+            }
+          />
         ) : (
           <>
             <div className="grid gap-4 sm:grid-cols-3">
-              <Stat label="Bundles" value={stats.bundles} />
-              <Stat label="Bundled items" value={stats.items} />
-              <Stat label="Fulfillable now" value={stats.fulfillable} hint="At least one full bundle in stock" />
+              <StatCard title="Bundles" icon={<Layers className="h-4 w-4" aria-hidden="true" />} value={stats.bundles} />
+              <StatCard title="Bundled items" icon={<PackagePlus className="h-4 w-4" aria-hidden="true" />} value={stats.items} />
+              <StatCard
+                title="Fulfillable now"
+                icon={<BadgeCheck className="h-4 w-4" aria-hidden="true" />}
+                value={stats.fulfillable}
+                description="At least one full bundle in stock"
+              />
             </div>
 
             <div className="mt-6 space-y-4">
@@ -174,7 +181,7 @@ function BundlesPage() {
                 <AdminCard title="Bundles">
                   <EmptyState
                     title="No bundles yet"
-                    text="Group products into a bundle — for example a skincare set or a starter kit — and Modalia checks every item is yours and in stock."
+                    description="Group products into a bundle — for example a skincare set or a starter kit — and Modalia checks every item is yours and in stock."
                     action={
                       <Button onClick={openCreate}>
                         <PackagePlus className="me-2 h-4 w-4" />
@@ -196,7 +203,7 @@ function BundlesPage() {
                       </Button>
                     }
                   >
-                    <ul className="divide-y divide-border">
+                    <ul className="divide-y divide-neutral-100 dark:divide-neutral-800">
                       {b.items.map((item, i) => (
                         <li key={`${item.product_id}-${item.variant_id ?? "all"}-${i}`} className="flex flex-wrap items-center justify-between gap-3 py-3">
                           <div className="min-w-0">

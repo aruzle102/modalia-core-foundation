@@ -8,11 +8,11 @@ import { AdminShell } from "@/components/admin/AdminShell";
 import {
   AdminCard,
   StatusPill,
-  EmptyState,
   TableSkeleton,
   Field,
   fmtMoney,
 } from "@/components/admin/ui";
+import { DataTable, EmptyState, ErrorState } from "@/components/dashboard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -153,9 +153,15 @@ function ShippingManager() {
     <div className="space-y-6">
       <AdminCard title="Wilaya">
         {wilayasQuery.isPending ? (
-          <TableSkeleton />
+          <DataTable>
+            <div className="p-4">
+              <TableSkeleton />
+            </div>
+          </DataTable>
         ) : wilayasQuery.isError ? (
-          <EmptyState title="Could not load wilayas" text={errMsg(wilayasQuery.error)} />
+          <DataTable>
+            <ErrorState title="Could not load wilayas" description={errMsg(wilayasQuery.error)} />
+          </DataTable>
         ) : (
           <div className="flex flex-wrap items-end gap-4">
             <div className="min-w-60 flex-1 space-y-1.5">
@@ -172,7 +178,7 @@ function ShippingManager() {
               </Select>
             </div>
             {selectedWilaya ? (
-              <div className="flex items-center gap-3 border border-border px-4 py-2.5">
+              <div className="flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-2.5">
                 <div>
                   <p className="font-medium">{selectedWilaya.code} — {pickName(selectedWilaya.name)}</p>
                   <p className="text-caption text-muted-foreground">
@@ -195,30 +201,38 @@ function ShippingManager() {
         subtitle="Home / stop-desk pricing per weight tier. These apply when a seller has no custom rule."
       >
         {rulesQuery.isPending ? (
-          <TableSkeleton />
+          <DataTable>
+            <div className="p-4">
+              <TableSkeleton />
+            </div>
+          </DataTable>
         ) : rulesQuery.isError ? (
-          <EmptyState title="Could not load rules" text={errMsg(rulesQuery.error)} />
+          <DataTable>
+            <ErrorState title="Could not load rules" description={errMsg(rulesQuery.error)} />
+          </DataTable>
         ) : platformRules.length === 0 ? (
-          <EmptyState
-            title="No platform rules for this wilaya"
-            text="Add home and stop-desk prices for the weight tiers below."
-          />
+          <DataTable>
+            <EmptyState
+              title="No platform rules for this wilaya"
+              description="Add home and stop-desk prices for the weight tiers below."
+            />
+          </DataTable>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[620px] text-start text-small">
+          <DataTable>
+            <table className="w-full min-w-[620px] text-sm">
               <thead>
-                <tr className="border-b border-border text-caption text-muted-foreground">
-                  <th className="px-3 py-2 font-medium">Delivery</th>
-                  <th className="px-3 py-2 font-medium">Weight tier</th>
-                  <th className="px-3 py-2 font-medium">Commune</th>
-                  <th className="px-3 py-2 font-medium">Price</th>
-                  <th className="px-3 py-2 font-medium">Enabled</th>
-                  <th className="px-3 py-2 font-medium text-end">Actions</th>
+                <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                  <th className="px-3 py-3 text-start">Delivery</th>
+                  <th className="px-3 py-3 text-start">Weight tier</th>
+                  <th className="px-3 py-3 text-start">Commune</th>
+                  <th className="px-3 py-3 text-start">Price</th>
+                  <th className="px-3 py-3 text-start">Enabled</th>
+                  <th className="px-3 py-3 text-end">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                 {platformRules.map((r) => (
-                  <tr key={r.id}>
+                  <tr key={r.id} className="hover:bg-muted/40">
                     <td className="px-3 py-3 capitalize">{r.delivery_method === "home" ? "Home" : "Stop desk"}</td>
                     <td className="px-3 py-3">{weightLabel(r)}</td>
                     <td className="px-3 py-3 text-caption">
@@ -241,7 +255,7 @@ function ShippingManager() {
                 ))}
               </tbody>
             </table>
-          </div>
+          </DataTable>
         )}
         {sellerRules.length > 0 ? (
           <p className="mt-3 text-caption text-muted-foreground">
@@ -257,15 +271,26 @@ function ShippingManager() {
 
       <AdminCard title="Communes" subtitle="Toggle which communes are deliverable in this wilaya.">
         {communesQuery.isPending ? (
-          <TableSkeleton />
+          <DataTable>
+            <div className="p-4">
+              <TableSkeleton />
+            </div>
+          </DataTable>
         ) : communesQuery.isError ? (
-          <EmptyState title="Could not load communes" text={errMsg(communesQuery.error)} />
+          <DataTable>
+            <ErrorState title="Could not load communes" description={errMsg(communesQuery.error)} />
+          </DataTable>
         ) : communes.length === 0 ? (
-          <EmptyState title="No communes" text="No communes are registered for this wilaya." />
+          <DataTable>
+            <EmptyState
+              title="No communes"
+              description="No communes are registered for this wilaya."
+            />
+          </DataTable>
         ) : (
           <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {communes.map((c) => (
-              <li key={c.id} className="flex items-center justify-between gap-3 border border-border px-3 py-2.5">
+              <li key={c.id} className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card px-3 py-2.5">
                 <div>
                   <p className="text-small font-medium">{pickName(c.name) || c.code}</p>
                   <p className="text-caption text-muted-foreground"><StatusPill status={c.active ? "active" : "inactive"} /></p>

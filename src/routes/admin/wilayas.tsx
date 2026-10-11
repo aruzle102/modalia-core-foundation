@@ -3,12 +3,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { AdminGate } from "@/components/admin/AdminGate";
 import { AdminShell } from "@/components/admin/AdminShell";
-import {
-  AdminCard,
-  StatusPill,
-  EmptyState,
-  TableSkeleton,
-} from "@/components/admin/ui";
+import { StatusPill, TableSkeleton } from "@/components/admin/ui";
+import { DataTable, EmptyState } from "@/components/dashboard";
 import { Switch } from "@/components/ui/switch";
 import { listAdminWilayas } from "@/lib/admin-ops.functions";
 import { setWilayaActive } from "@/lib/admin-catalog.functions";
@@ -54,32 +50,44 @@ function WilayasPage() {
         subtitle="The 58 Algerian wilayas: delivery availability, communes and shipping rules."
         breadcrumbs={[{ label: t.wilayas }]}
       >
-        <AdminCard title={t.wilayas} subtitle={`${items.length} wilaya(s)`}>
+        <section aria-label={t.wilayas}>
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold tracking-tight">{t.wilayas}</h2>
+            <p className="mt-0.5 text-sm text-muted-foreground">{`${items.length} wilaya(s)`}</p>
+          </div>
           {wilayasQuery.isPending ? (
-            <TableSkeleton rows={10} />
+            <DataTable>
+              <div className="p-4">
+                <TableSkeleton rows={10} />
+              </div>
+            </DataTable>
           ) : wilayasQuery.isError ? (
-            <EmptyState title="Could not load wilayas" text={errMsg(wilayasQuery.error)} />
+            <DataTable>
+              <EmptyState title="Could not load wilayas" description={errMsg(wilayasQuery.error)} />
+            </DataTable>
           ) : items.length === 0 ? (
-            <EmptyState title="No wilayas" text="The wilayas table has not been seeded yet." />
+            <DataTable>
+              <EmptyState title="No wilayas" description="The wilayas table has not been seeded yet." />
+            </DataTable>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[680px] text-start text-small">
+            <DataTable>
+              <table className="w-full min-w-[680px] text-sm">
                 <thead>
-                  <tr className="border-b border-border text-caption text-muted-foreground">
-                    <th className="px-3 py-2 font-medium">Code</th>
-                    <th className="px-3 py-2 font-medium">Wilaya</th>
-                    <th className="px-3 py-2 font-medium">Communes</th>
-                    <th className="px-3 py-2 font-medium">Shipping rules</th>
-                    <th className="px-3 py-2 font-medium">Status</th>
-                    <th className="px-3 py-2 font-medium">Deliverable</th>
+                  <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                    <th className="px-3 py-3 text-start">Code</th>
+                    <th className="px-3 py-3 text-start">Wilaya</th>
+                    <th className="px-3 py-3 text-end">Communes</th>
+                    <th className="px-3 py-3 text-end">Shipping rules</th>
+                    <th className="px-3 py-3 text-start">Status</th>
+                    <th className="px-3 py-3 text-start">Deliverable</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border">
+                <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                   {items.map((w) => (
                     <tr key={w.id} className="hover:bg-muted/40">
                       <td className="px-3 py-3 font-mono">{w.code}</td>
                       <td className="px-3 py-3 font-medium">{pickName(w.name)}</td>
-                      <td className="px-3 py-3">
+                      <td className="px-3 py-3 text-end tabular-nums">
                         <Link
                           to="/admin/communes"
                           search={{ locale, wilaya: w.id, q: "", page: 1 }}
@@ -88,7 +96,7 @@ function WilayasPage() {
                           {w.commune_count}
                         </Link>
                       </td>
-                      <td className="px-3 py-3">
+                      <td className="px-3 py-3 text-end tabular-nums">
                         <Link
                           to="/admin/shipping"
                           search={{ locale, wilaya: w.id }}
@@ -111,9 +119,9 @@ function WilayasPage() {
                   ))}
                 </tbody>
               </table>
-            </div>
+            </DataTable>
           )}
-        </AdminCard>
+        </section>
       </AdminShell>
     </AdminGate>
   );

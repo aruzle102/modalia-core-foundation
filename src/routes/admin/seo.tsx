@@ -5,11 +5,10 @@ import { toast } from "sonner";
 import { AdminGate } from "@/components/admin/AdminGate";
 import { AdminShell } from "@/components/admin/AdminShell";
 import {
-  AdminCard,
-  EmptyState,
   TableSkeleton,
   Field,
 } from "@/components/admin/ui";
+import { EmptyState, FormSection } from "@/components/dashboard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -117,11 +116,11 @@ function SeoPage() {
         breadcrumbs={[{ label: t.seo }]}
       >
         <div className="space-y-6">
-          <AdminCard title="Default metadata" subtitle="Used when a page does not set its own tags.">
+          <FormSection title="Default metadata" description="Used when a page does not set its own tags.">
             {settingsQuery.isPending ? (
               <TableSkeleton rows={4} />
             ) : settingsQuery.isError ? (
-              <EmptyState title="Could not load SEO settings" text={errMsg(settingsQuery.error)} />
+              <EmptyState title="Could not load SEO settings" description={errMsg(settingsQuery.error)} />
             ) : (
               <div className="space-y-4">
                 <Field label="Default site title">
@@ -157,10 +156,10 @@ function SeoPage() {
                 </div>
               </div>
             )}
-          </AdminCard>
+          </FormSection>
 
-          <AdminCard title="Platform capabilities" subtitle="SEO infrastructure already serving the storefront.">
-            <ul className="divide-y divide-border">
+          <FormSection title="Platform capabilities" description="SEO infrastructure already serving the storefront.">
+            <ul className="divide-y divide-neutral-100 dark:divide-neutral-800">
               {CAPABILITIES.map((c) => (
                 <li key={c.name} className="flex flex-wrap items-start justify-between gap-3 py-4">
                   <div className="min-w-0 max-w-xl">
@@ -180,7 +179,7 @@ function SeoPage() {
                 </li>
               ))}
             </ul>
-          </AdminCard>
+          </FormSection>
         </div>
       </AdminShell>
     </AdminGate>

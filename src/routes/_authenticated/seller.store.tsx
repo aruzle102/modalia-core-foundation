@@ -3,6 +3,7 @@ import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { SellerShell } from "@/components/seller/SellerShell";
 import { StoreStudio } from "@/components/seller/StoreStudio";
 import { VerificationCard } from "@/components/seller/VerificationCard";
+import { EmptyState } from "@/components/dashboard";
 import { getStoreStudio } from "@/lib/seller-store.functions";
 import { getLocale, getTranslations } from "@/lib/i18n";
 import { RouteError } from "@/components/routing/route-states";
@@ -50,7 +51,7 @@ function StoreStudioPage() {
       {data ? (
         <StoreStudio data={data} locale={locale} initialTab="profile" />
       ) : (
-        <p className="py-10 text-small text-muted-foreground">{t.notFound}</p>
+        <EmptyState title={t.notFound} />
       )}
     </SellerShell>
   );

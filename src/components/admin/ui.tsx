@@ -134,8 +134,17 @@ function statusTone(status: string): string {
   return "bg-neutral-500/10 text-neutral-600 ring-neutral-500/20 dark:bg-neutral-400/10 dark:text-neutral-300 dark:ring-neutral-400/20";
 }
 
-export function StatusPill({ status, className }: { status: string; className?: string }) {
-  const label = status.toLowerCase().replace(/_/g, " ");
+export function StatusPill({
+  status,
+  label,
+  className,
+}: {
+  status: string;
+  /** Optional display label. Defaults to the raw status (lowercased, underscores to spaces). Pass a localized label when one exists. */
+  label?: string;
+  className?: string;
+}) {
+  const text = label ?? status.toLowerCase().replace(/_/g, " ");
   return (
     <span
       className={cn(
@@ -144,7 +153,7 @@ export function StatusPill({ status, className }: { status: string; className?: 
         className,
       )}
     >
-      {label}
+      {text}
     </span>
   );
 }

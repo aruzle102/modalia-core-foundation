@@ -3,7 +3,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Eye, Plus } from "lucide-react";
 import { AdminGate } from "@/components/admin/AdminGate";
 import { AdminShell } from "@/components/admin/AdminShell";
-import { AdminCard, EmptyState } from "@/components/admin/ui";
+import { AdminCard } from "@/components/admin/ui";
+import { EmptyState } from "@/components/dashboard";
 import { Button } from "@/components/ui/button";
 import { BackLink } from "@/components/routing/back-link";
 import {
@@ -73,7 +74,7 @@ function BannersPage() {
         }
       >
         <BackLink back={back} fallbackTo="/admin/homepage" fallbackSearch={{ locale }}>
-          <ArrowLeft className="size-4 me-1.5" />
+          <ArrowLeft className="size-4 me-1.5 rtl:rotate-180" />
           Back
         </BackLink>
 
@@ -97,7 +98,7 @@ function BannersPage() {
           <AdminCard className="mt-4">
             <EmptyState
               title="No banners yet"
-              text="Create a hero, app or editorial banner from the homepage builder."
+              description="Create a hero, app or editorial banner from the homepage builder."
             />
           </AdminCard>
         ) : (

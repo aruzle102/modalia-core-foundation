@@ -1,19 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { AlertTriangle, Info, RefreshCw } from "lucide-react";
+import { Banknote, Info, MousePointerClick, Percent, Receipt, RefreshCw, ShoppingBag, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AdminGate } from "@/components/admin/AdminGate";
 import { AdminShell } from "@/components/admin/AdminShell";
 import {
   AdminCard,
-  EmptyState,
   SegmentedControl,
-  Stat,
   TableSkeleton,
   fmtMoney,
 } from "@/components/admin/ui";
+import { DataTable, EmptyState, ErrorState, FormSection, StatCard } from "@/components/dashboard";
 import {
   getCommerceOverview,
   getCommerceTimeseries,
@@ -138,14 +137,14 @@ function SalesBars({ data }: { data: TimeseriesBucket[] }) {
 
 function QueryError({ onRetry }: { onRetry: () => void }) {
   return (
-    <div className="flex items-center justify-between gap-4 rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
-      <span className="flex items-center gap-2">
-        <AlertTriangle className="h-4 w-4" /> Could not load analytics data.
-      </span>
-      <Button variant="ghost" size="sm" onClick={onRetry}>
-        <RefreshCw className="mr-1 h-3 w-3" /> Retry
-      </Button>
-    </div>
+    <ErrorState
+      title="Could not load analytics data."
+      action={
+        <Button variant="outline" size="sm" onClick={onRetry}>
+          <RefreshCw className="me-1 h-3 w-3" /> Retry
+        </Button>
+      }
+    />
   );
 }
 
@@ -220,7 +219,7 @@ function AdminAnalyticsPage() {
         }
       >
         {range === "custom" ? (
-          <AdminCard title="Custom range">
+          <FormSection title="Custom range">
             <div className="flex flex-wrap items-end gap-3">
               <label className="text-sm">
                 <span className="mb-1 block text-muted-foreground">From</span>
@@ -237,14 +236,12 @@ function AdminAnalyticsPage() {
             {!valid ? (
               <p className="mt-2 text-sm text-destructive">Pick a valid date range (from before to).</p>
             ) : null}
-          </AdminCard>
+          </FormSection>
         ) : null}
 
         {!valid ? (
           <div className="mt-6">
-            <AdminCard title="Invalid range">
-              <EmptyState title="Choose a valid date range" text="The custom range needs a start date before the end date." />
-            </AdminCard>
+            <EmptyState title="Choose a valid date range" description="The custom range needs a start date before the end date." />
           </div>
         ) : overviewQ.isPending ? (
           <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -261,7 +258,7 @@ function AdminAnalyticsPage() {
             <AdminCard title="No orders yet">
               <EmptyState
                 title="No commerce data in this range"
-                text="Analytics appear here once customers place orders. All numbers come from real order rows — nothing is simulated."
+                description="Analytics appear here once customers place orders. All numbers come from real order rows — nothing is simulated."
               />
             </AdminCard>
           </div>
@@ -269,19 +266,19 @@ function AdminAnalyticsPage() {
           <>
             {/* KPI cards */}
             <section aria-label="Key metrics" className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              <Stat label="GMV" value={fmtMoney(o.gmv, "DZD", locale)} hint={`${o.orders_live} live orders`} />
-              <Stat label="Orders" value={String(o.orders_placed)} hint={`${o.delivered_orders} delivered · ${o.cancelled_orders} cancelled`} />
-              <Stat label="Average order value" value={fmtMoney(o.aov, "DZD", locale)} hint={`${o.units_sold} units sold`} />
-              <Stat
-                label="Platform commission"
+              <StatCard title="GMV" value={fmtMoney(o.gmv, "DZD", locale)} description={`${o.orders_live} live orders`} />
+              <StatCard title="Orders" value={String(o.orders_placed)} description={`${o.delivered_orders} delivered · ${o.cancelled_orders} cancelled`} />
+              <StatCard title="Average order value" value={fmtMoney(o.aov, "DZD", locale)} description={`${o.units_sold} units sold`} />
+              <StatCard
+                title="Platform commission"
                 value={fmtMoney(o.platform_commission, "DZD", locale)}
-                hint={`Pending: ${fmtMoney(o.commission_pending, "DZD", locale)}`}
+                description={`Pending: ${fmtMoney(o.commission_pending, "DZD", locale)}`}
               />
-              <Stat label="Seller net earnings" value={fmtMoney(o.seller_net, "DZD", locale)} hint="Delivered sales minus commission" />
-              <Stat
-                label="Conversion"
+              <StatCard title="Seller net earnings" value={fmtMoney(o.seller_net, "DZD", locale)} description="Delivered sales minus commission" />
+              <StatCard
+                title="Conversion"
                 value={o.visitors > 0 ? pct(o.conversion_rate) : "—"}
-                hint={o.visitors > 0 ? `${o.visitors.toLocaleString()} visitors` : "No visitor data yet"}
+                description={o.visitors > 0 ? `${o.visitors.toLocaleString()} visitors` : "No visitor data yet"}
               />
             </section>
 
@@ -310,7 +307,7 @@ function AdminAnalyticsPage() {
               </AdminCard>
               <AdminCard title="Storefront funnel" subtitle="Visitor behavior from analytics events">
                 {o.visitors === 0 ? (
-                  <EmptyState title="No visitor data yet" text="Funnel metrics appear once storefront events are recorded." />
+                  <EmptyState title="No visitor data yet" description="Funnel metrics appear once storefront events are recorded." />
                 ) : (
                   <dl className="grid grid-cols-2 gap-4 text-sm">
                     <div><dt className="text-muted-foreground">Visitors</dt><dd className="text-xl font-semibold tabular-nums">{o.visitors.toLocaleString()}</dd></div>
@@ -335,7 +332,7 @@ function AdminAnalyticsPage() {
                 ) : bySellerQ.isError ? (
                   <QueryError onRetry={() => void bySellerQ.refetch()} />
                 ) : (bySellerQ.data ?? []).filter((s) => s.orders_placed > 0).length === 0 ? (
-                  <EmptyState title="No seller activity" text="Per-seller numbers appear once sellers receive orders." />
+                  <EmptyState title="No seller activity" description="Per-seller numbers appear once sellers receive orders." />
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
@@ -377,7 +374,7 @@ function AdminAnalyticsPage() {
                 ) : commissionQ.isError ? (
                   <QueryError onRetry={() => void commissionQ.refetch()} />
                 ) : (commissionQ.data ?? []).length === 0 ? (
-                  <EmptyState title="No commission yet" text="Monthly commission rows appear once orders are delivered." />
+                  <EmptyState title="No commission yet" description="Monthly commission rows appear once orders are delivered." />
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">

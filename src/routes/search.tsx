@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, Search, SlidersHorizontal, Store, X } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Search, SlidersHorizontal, Store, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ProductGrid } from "@/components/marketplace/discovery";
@@ -253,9 +253,40 @@ function SearchPage() {
           </section>
         ) : null}
 
-        {/* Toolbar: sort + filter toggle */}
-        <div className="mt-8 flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2">
+        {/* Toolbar: filter toggle + result count + sort — mirrors the /shop filter bar */}
+        <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-y border-border py-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              className="lg:hidden"
+              onClick={() =>
+                navigate({
+                  to: "/search",
+                  search: { ...search, filtersOpen: !search.filtersOpen },
+                })
+              }
+            >
+              <SlidersHorizontal className="size-4" aria-hidden="true" />
+              {ts.filters ?? "Filters"}
+            </Button>
+            <p className="text-small text-muted-foreground" aria-live="polite">
+              {ts.resultCount
+                ? ts.resultCount(data.total)
+                : `${data.total} ${data.total === 1 ? "result" : "results"}`}
+            </p>
+            {hasActiveFilters ? (
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="inline-flex items-center gap-1 text-caption font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+              >
+                <X className="size-3.5" aria-hidden="true" />
+                {ts.clearAll ?? "Clear all"}
+              </button>
+            ) : null}
+          </div>
+          <div className="relative flex items-center gap-2">
             <label htmlFor="search-sort" className="text-small text-muted-foreground">
               {ts.sortBy ?? "Sort by"}
             </label>
@@ -263,7 +294,7 @@ function SearchPage() {
               id="search-sort"
               value={search.sort}
               onChange={(e) => updateSort(e.target.value as (typeof SORTS)[number])}
-              className="h-10 cursor-pointer appearance-none rounded-full border border-border bg-background px-4 pe-8 text-small text-foreground outline-none"
+              className="h-10 cursor-pointer appearance-none rounded-[10px] border border-border bg-card px-3 pe-9 text-small text-foreground outline-none"
             >
               {SORTS.map((s) => (
                 <option key={s} value={s}>
@@ -271,31 +302,8 @@ function SearchPage() {
                 </option>
               ))}
             </select>
+            <ChevronDown className="pointer-events-none absolute end-3 size-4 text-muted-foreground" aria-hidden="true" />
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="lg:hidden"
-            onClick={() =>
-              navigate({
-                to: "/search",
-                search: { ...search, filtersOpen: !search.filtersOpen },
-              })
-            }
-          >
-            <SlidersHorizontal className="size-4" aria-hidden="true" />
-            {ts.filters ?? "Filters"}
-          </Button>
-          {hasActiveFilters ? (
-            <button
-              type="button"
-              onClick={clearFilters}
-              className="inline-flex items-center gap-1 text-caption font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-            >
-              <X className="size-3.5" aria-hidden="true" />
-              {ts.clearAll ?? "Clear all"}
-            </button>
-          ) : null}
         </div>
 
         {/* Results grid */}

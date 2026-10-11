@@ -7,14 +7,13 @@ import { AdminGate } from "@/components/admin/AdminGate";
 import { AdminShell } from "@/components/admin/AdminShell";
 import {
   AdminCard,
-  Stat,
   StatusPill,
-  EmptyState,
   TableSkeleton,
   Field,
   fmtMoney,
   fmtDateTime,
 } from "@/components/admin/ui";
+import { DataTable, EmptyState, ErrorState, StatCard } from "@/components/dashboard";
 import { useAdminLocale } from "@/components/admin/useAdminLocale";
 import { getTranslations } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
@@ -164,29 +163,29 @@ function SettlementsManager() {
         {settlementsQuery.isPending ? (
           <TableSkeleton />
         ) : settlementsQuery.isError ? (
-          <EmptyState title="Could not load settlements" text={errMsg(settlementsQuery.error)} />
+          <ErrorState title="Could not load settlements" description={errMsg(settlementsQuery.error)} />
         ) : settlements.length === 0 ? (
-          <EmptyState title="No settlements" text="No settlements match these filters." />
+          <EmptyState title="No settlements" description="No settlements match these filters." />
         ) : (
-          <div className="overflow-x-auto">
+          <DataTable>
             <table className="w-full min-w-[760px] text-start text-small">
               <thead>
-                <tr className="border-b border-border text-caption text-muted-foreground">
-                  <th className="px-3 py-2 font-medium">Seller</th>
-                  <th className="px-3 py-2 font-medium">Amount</th>
-                  <th className="px-3 py-2 font-medium">Period</th>
-                  <th className="px-3 py-2 font-medium">Status</th>
-                  <th className="px-3 py-2 font-medium">Reference</th>
-                  <th className="px-3 py-2 font-medium">{t.proof}</th>
-                  <th className="px-3 py-2 font-medium">Created</th>
-                  <th className="px-3 py-2 font-medium text-end">Actions</th>
+                <tr className="border-b border-neutral-200 text-left text-[11px] font-semibold uppercase tracking-wider text-neutral-500">
+                  <th className="px-3 py-2">Seller</th>
+                  <th className="px-3 py-2">Amount</th>
+                  <th className="px-3 py-2">Period</th>
+                  <th className="px-3 py-2">Status</th>
+                  <th className="px-3 py-2">Reference</th>
+                  <th className="px-3 py-2">{t.proof}</th>
+                  <th className="px-3 py-2">Created</th>
+                  <th className="px-3 py-2 text-end">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <tbody className="divide-y divide-neutral-100">
                 {settlements.map((s) => (
-                  <tr key={s.id} className="align-top">
+                  <tr key={s.id} className="align-top hover:bg-muted/40">
                     <td className="px-3 py-3 font-medium">{sellerName(s.seller_id)}</td>
-                    <td className="px-3 py-3 whitespace-nowrap font-medium">{fmtMoney(Number(s.amount), "DZD", locale)}</td>
+                    <td className="px-3 py-3 whitespace-nowrap font-medium text-right tabular-nums">{fmtMoney(Number(s.amount), "DZD", locale)}</td>
                     <td className="px-3 py-3 text-caption">
                       {s.period_start ?? "—"} → {s.period_end ?? "—"}
                     </td>
@@ -215,7 +214,7 @@ function SettlementsManager() {
                 ))}
               </tbody>
             </table>
-          </div>
+          </DataTable>
         )}
         <div className="mt-4">
           <Pager page={page} total={total} pageSize={pageSize} onPage={setPage} />
@@ -318,10 +317,10 @@ function CreateSettlementDialog({
                 <p className="mt-2 text-small text-destructive">{errMsg(referenceQuery.error)}</p>
               ) : ref ? (
                 <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                  <Stat label="Fulfilled orders" value={String(ref.orderCount)} />
-                  <Stat label="Earned" value={fmtMoney(ref.earnedTotal, "DZD", locale)} />
-                  <Stat label="Settled" value={fmtMoney(ref.settledTotal, "DZD", locale)} />
-                  <Stat label="Available" value={fmtMoney(ref.available, "DZD", locale)} />
+                  <StatCard title="Fulfilled orders" value={String(ref.orderCount)} />
+                  <StatCard title="Earned" value={fmtMoney(ref.earnedTotal, "DZD", locale)} />
+                  <StatCard title="Settled" value={fmtMoney(ref.settledTotal, "DZD", locale)} />
+                  <StatCard title="Available" value={fmtMoney(ref.available, "DZD", locale)} />
                 </div>
               ) : null}
               {ref ? (

@@ -5,7 +5,8 @@ import { Activity, AlertTriangle, CheckCircle2, RefreshCw, XCircle } from "lucid
 import { Button } from "@/components/ui/button";
 import { AdminGate } from "@/components/admin/AdminGate";
 import { AdminShell } from "@/components/admin/AdminShell";
-import { AdminCard, EmptyState, TableSkeleton } from "@/components/admin/ui";
+import { AdminCard, TableSkeleton } from "@/components/admin/ui";
+import { EmptyState } from "@/components/dashboard";
 import { runSystemHealthChecks, type HealthCheck, type HealthStatus } from "@/lib/system-health.functions";
 import { getLocale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -85,7 +86,7 @@ function SystemHealthPage() {
             }}
             disabled={isFetching}
           >
-            <RefreshCw className={cn("mr-1 h-4 w-4", isFetching && "animate-spin")} />
+            <RefreshCw className={cn("me-1 h-4 w-4", isFetching && "animate-spin")} />
             Re-run checks
           </Button>
         }
@@ -99,7 +100,7 @@ function SystemHealthPage() {
             <EmptyState
               icon={<Activity className="h-8 w-8" />}
               title="Could not run diagnostics"
-              text="The health check service failed. Please try again."
+              description="The health check service failed. Please try again."
             />
           </AdminCard>
         ) : (

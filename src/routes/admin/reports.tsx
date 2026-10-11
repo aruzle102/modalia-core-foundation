@@ -16,10 +16,10 @@ import { strParam } from "@/hooks/use-url-state";
 import {
   AdminCard,
   StatusPill,
-  EmptyState,
   TableSkeleton,
   fmtDateTime,
 } from "@/components/admin/ui";
+import { EmptyState } from "@/components/dashboard";
 import { listProblemReports, updateProblemReport } from "@/lib/problem-reports.functions";
 
 export const Route = createFileRoute("/admin/reports")({
@@ -82,12 +82,12 @@ function ReportsPage() {
             <EmptyState
               icon={<Flag className="h-8 w-8" />}
               title="No problem reports"
-              text="User reports will appear here."
+              description="User reports will appear here."
             />
           ) : (
             <div className="space-y-4">
               {data.map((r) => (
-                <div key={r.id} className="rounded-lg border p-4">
+                <div key={r.id} className="rounded-xl border border-border bg-card p-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <p className="font-semibold">{r.subject}</p>

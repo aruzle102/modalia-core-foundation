@@ -1,8 +1,16 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { SiteFooter, SiteHeader } from "@/components/layout/site-shell";
+import {
+  AuthPage as AuthShell,
+  AuthCard,
+  AuthCenter,
+  AuthField,
+  AuthInput,
+  AuthMessage,
+  AuthSubmit,
+  AuthTextButton,
+} from "@/components/auth/AuthForm";
 import { supabase } from "@/integrations/supabase/client";
 import {
   checkLoginAllowed,
@@ -105,100 +113,73 @@ function AuthPage() {
     mode === "signin" ? ta.welcomeBack : mode === "signup" ? ta.createAccount : ta.forgotTitle;
   const sub = mode === "signin" ? ta.signinSub : mode === "signup" ? ta.signupSub : ta.forgotSub;
   return (
-    <div dir={localeDirections[locale]} lang={locale} className="min-h-screen bg-background">
+    <AuthShell dir={localeDirections[locale]} lang={locale}>
       <SiteHeader locale={locale} t={t} />
-      <main
-        id="main-content"
-        tabIndex={-1}
-        className="mx-auto flex min-h-[calc(100vh-16rem)] max-w-md items-center px-4 py-10"
-      >
-        <form
-          onSubmit={submit}
-          className="w-full rounded-3xl border border-border bg-card p-6 sm:p-8"
-        >
-          <p className="text-eyebrow text-muted-foreground">MODALIA</p>
-          <h1 className="mt-2 text-display">{title}</h1>
-          <p className="mt-3 text-small text-muted-foreground">{sub}</p>
-          {mode === "signup" ? (
-            <label className="mt-7 block text-small">
-              {ta.name}
-              <Input
-                className="mt-2"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+      <AuthCenter className="min-h-[calc(100vh-16rem)]">
+        <AuthCard eyebrow="MODALIA" title={title} subtitle={sub}>
+          <form onSubmit={submit} className="space-y-5">
+            {mode === "signup" ? (
+              <AuthField label={ta.name}>
+                <AuthInput
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  autoComplete="name"
+                  maxLength={100}
+                />
+              </AuthField>
+            ) : null}
+            <AuthField label={ta.email}>
+              <AuthInput
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
+                autoComplete="email"
+                maxLength={160}
               />
-            </label>
-          ) : null}
-          <label className="mt-5 block text-small">
-            {ta.email}
-            <Input
-              className="mt-2"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </label>
-          {mode === "forgot" ? null : (
-            <label className="mt-5 block text-small">
-              {ta.password}
-              <Input
-                className="mt-2"
-                type="password"
-                minLength={8}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </label>
-          )}
-          {message ? <p className="mt-5 rounded-xl bg-muted p-3 text-small">{message}</p> : null}
-          <Button className="mt-6 h-12 w-full rounded-full" disabled={loading}>
-            {loading
-              ? ta.wait
-              : mode === "forgot"
+            </AuthField>
+            {mode === "forgot" ? null : (
+              <AuthField label={ta.password}>
+                <AuthInput
+                  type="password"
+                  minLength={8}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  autoComplete={mode === "signin" ? "current-password" : "new-password"}
+                />
+              </AuthField>
+            )}
+            {message ? <AuthMessage>{message}</AuthMessage> : null}
+            <AuthSubmit loading={loading} loadingLabel={ta.wait}>
+              {mode === "forgot"
                 ? ta.sendResetLink
                 : mode === "signin"
                   ? ta.signin
                   : ta.createAccountCta}
-          </Button>
+            </AuthSubmit>
+          </form>
           {mode === "signin" ? (
-            <button
-              type="button"
-              className="mt-4 w-full text-small underline underline-offset-4"
-              onClick={() => setMode("forgot")}
-            >
-              {ta.forgotPassword}
-            </button>
+            <AuthTextButton onClick={() => setMode("forgot")}>{ta.forgotPassword}</AuthTextButton>
           ) : null}
           {mode === "forgot" ? (
-            <button
-              type="button"
-              className="mt-4 w-full text-small underline underline-offset-4"
-              onClick={() => setMode("signin")}
-            >
-              {ta.backToSignIn}
-            </button>
+            <AuthTextButton onClick={() => setMode("signin")}>{ta.backToSignIn}</AuthTextButton>
           ) : (
-            <button
-              type="button"
-              className="mt-5 w-full text-small underline underline-offset-4"
-              onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
-            >
+            <AuthTextButton onClick={() => setMode(mode === "signin" ? "signup" : "signin")}>
               {mode === "signin" ? ta.needAccount : ta.haveAccount}
-            </button>
+            </AuthTextButton>
           )}
           <Link
             to="/"
             search={{ locale }}
-            className="mt-5 block text-center text-caption text-muted-foreground"
+            className="mt-5 block text-center text-xs text-muted-foreground underline-offset-4 hover:underline"
           >
             {ta.backToModalia}
           </Link>
-        </form>
-      </main>
+        </AuthCard>
+      </AuthCenter>
       <SiteFooter locale={locale} t={t} />
-    </div>
+    </AuthShell>
   );
 }

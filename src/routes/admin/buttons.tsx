@@ -4,7 +4,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, MousePointerClick, Plus, Pencil, Trash2 } from "lucide-react";
 import { AdminGate } from "@/components/admin/AdminGate";
 import { AdminShell } from "@/components/admin/AdminShell";
-import { AdminCard, EmptyState } from "@/components/admin/ui";
+import { AdminCard } from "@/components/admin/ui";
+import { EmptyState } from "@/components/dashboard";
 import { Button } from "@/components/ui/button";
 import { BackLink } from "@/components/routing/back-link";
 import {
@@ -91,7 +92,7 @@ function ButtonsPage() {
         }
       >
         <BackLink back={back} fallbackTo="/admin" fallbackSearch={{ locale }}>
-          <ArrowLeft className="size-4 me-1.5" />
+          <ArrowLeft className="size-4 me-1.5 rtl:rotate-180" />
           Back
         </BackLink>
 
@@ -109,12 +110,11 @@ function ButtonsPage() {
             <div className="h-20 animate-pulse rounded-xl bg-muted" />
           </div>
         ) : buttons.length === 0 && !showForm ? (
-          <AdminCard className="mt-4">
-            <EmptyState
-              title="No buttons configured"
-              text="Create your first site button. Only safe predefined actions are allowed."
-            />
-          </AdminCard>
+          <EmptyState
+            className="mt-4"
+            title="No buttons configured"
+            description="Create your first site button. Only safe predefined actions are allowed."
+          />
         ) : (
           <div className="mt-4 space-y-6">
             {grouped.map((g) => (

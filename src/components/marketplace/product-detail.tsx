@@ -276,7 +276,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
         {/* ——— Gallery with hover magnifier ——— */}
         <section aria-label={t.productMedia} className="min-w-0">
           <div
-            className="relative aspect-[4/5] cursor-zoom-in overflow-hidden rounded-[14px] border border-[#E5E5E5] bg-[#F6F6F4]"
+            className="relative aspect-[4/5] cursor-zoom-in overflow-hidden rounded-xl border border-border bg-muted"
             onMouseMove={handleZoomMove}
             onMouseEnter={() => {
               if (canMagnify()) setZoomed(true);
@@ -315,7 +315,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
                 {product.name}
               </div>
             )}
-            <span className="pointer-events-none absolute bottom-3 end-3 hidden rounded-full bg-white/85 px-3 py-1 text-caption text-[#666666] backdrop-blur-sm [@media(pointer:fine)]:block">
+            <span className="pointer-events-none absolute bottom-3 end-3 hidden rounded-full bg-card/85 px-3 py-1 text-caption text-muted-foreground backdrop-blur-sm [@media(pointer:fine)]:block">
               {t.zoomHint}
             </span>
           </div>
@@ -335,7 +335,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
                     setView3d(false);
                     setZoomed(false);
                   }}
-                  className="size-16 shrink-0 overflow-hidden rounded-[10px] p-0 aria-pressed:border-foreground aria-pressed:ring-1 aria-pressed:ring-foreground"
+                  className="size-16 shrink-0 overflow-hidden rounded-lg p-0 aria-pressed:border-foreground aria-pressed:ring-1 aria-pressed:ring-foreground"
                 >
                   <span className="block size-full">
                     {item.url ? (
@@ -358,7 +358,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
                     setView3d(true);
                     setZoomed(false);
                   }}
-                  className="grid size-16 shrink-0 place-items-center gap-0.5 rounded-[10px] p-0 aria-pressed:border-foreground aria-pressed:ring-1 aria-pressed:ring-foreground"
+                  className="grid size-16 shrink-0 place-items-center gap-0.5 rounded-lg p-0 aria-pressed:border-foreground aria-pressed:ring-1 aria-pressed:ring-foreground"
                 >
                   <Box className="size-5" aria-hidden />
                   <span className="text-caption font-medium leading-none">3D</span>
@@ -375,7 +375,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
               {product.brand ? (
                 <p className="text-eyebrow text-muted-foreground">{product.brand.name}</p>
               ) : null}
-              <h1 className="mt-2 font-display text-4xl font-semibold leading-tight tracking-tight text-foreground">
+              <h1 className="mt-2 font-display text-3xl font-semibold leading-tight tracking-tight text-foreground sm:text-4xl">
                 {product.name}
               </h1>
             </div>
@@ -414,7 +414,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
             </Link>
           ) : null}
 
-          <div className="mt-5 flex items-center gap-2">
+          <div className="mt-4 flex items-center gap-2">
             {product.reviewSummary.average != null ? (
               <a href="#reviews" onClick={goToReviews} className="inline-flex items-center gap-1.5 text-small text-foreground">
                 <span className="inline-flex" aria-hidden>
@@ -425,7 +425,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
                     />
                   ))}
                 </span>
-                <span className="font-medium">{product.reviewSummary.average.toFixed(1)}</span>
+                <span className="font-medium tabular-nums">{product.reviewSummary.average.toFixed(1)}</span>
                 <span className="text-muted-foreground underline-offset-4 hover:underline">
                   {t.reviews(product.reviewSummary.count)}
                 </span>
@@ -436,13 +436,13 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
           </div>
 
           <div className="mt-5 flex flex-wrap items-baseline gap-3">
-            <p className="text-display text-foreground">{formatPrice(price, locale)}</p>
+            <p className="text-display tabular-nums text-foreground">{formatPrice(price, locale)}</p>
             {compareAtPrice && compareAtPrice > price ? (
               <>
-                <p className="text-body text-muted-foreground line-through">
+                <p className="text-body tabular-nums text-muted-foreground line-through">
                   {formatPrice(compareAtPrice, locale)}
                 </p>
-                <span className="rounded-md bg-[#E53935] px-2.5 py-1 text-caption font-semibold text-white">
+                <span className="rounded-md bg-destructive px-2.5 py-1 text-caption font-semibold text-destructive-foreground">
                   −{sale}%
                 </span>
               </>
@@ -450,7 +450,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
           </div>
 
           {product.shortDescription ? (
-            <p className="mt-5 text-body leading-relaxed text-muted-foreground">{product.shortDescription}</p>
+            <p className="mt-4 text-body leading-relaxed text-muted-foreground">{product.shortDescription}</p>
           ) : null}
 
           {product.options.length ? (
@@ -513,7 +513,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
             ) : available ? (
               <>
                 <p className="inline-flex items-center gap-2 text-small font-medium text-foreground">
-                  <span className="size-2 rounded-full bg-[#16803C]" aria-hidden />
+                  <span className="size-2 rounded-full bg-verified" aria-hidden />
                   {t.inStock}
                 </p>
                 {lowStock ? (
@@ -533,7 +533,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
           ) : null}
 
           <div className="mt-6 flex items-center gap-3">
-            <div className="flex h-11 items-center rounded-[10px] border border-[#E5E5E5]">
+            <div className="flex h-11 items-center rounded-lg border border-border">
               <Button
                 type="button"
                 variant="ghost"
@@ -544,7 +544,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
               >
                 <Minus className="size-4" />
               </Button>
-              <output className="w-8 text-center text-small font-medium" aria-label={t.quantity} aria-live="polite">
+              <output className="w-8 text-center text-small font-medium tabular-nums" aria-label={t.quantity} aria-live="polite">
                 {quantity}
               </output>
               <Button
@@ -558,7 +558,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
                 <Plus className="size-4" />
               </Button>
             </div>
-            <span className="text-caption text-muted-foreground">
+            <span className="text-caption tabular-nums text-muted-foreground">
               {available ? t.available(stock) : ""}
             </span>
           </div>
@@ -568,7 +568,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
               type="button"
               disabled={!canPurchase}
               onClick={handleBuyNow}
-              className="h-12 bg-[#0A0A0A] font-semibold text-white hover:bg-black"
+              className="h-12 bg-foreground font-semibold text-background hover:bg-foreground/90"
             >
               {sf.sfBuyNow}
             </Button>
@@ -577,7 +577,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
               variant="outline"
               disabled={!canPurchase}
               onClick={() => addToCart()}
-              className="h-12 border-[#0A0A0A] bg-white text-[#0A0A0A] hover:bg-[#F6F6F4] hover:text-[#0A0A0A]"
+              className="h-12"
             >
               <ShoppingBag className="size-4" />
               {sf.sfAddToCart}
@@ -602,11 +602,11 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
       </div>
 
       {/* ——— Product information tabs ——— */}
-      <section className="mt-16 scroll-mt-24 border-t border-[#E5E5E5] pt-10 lg:mt-20">
+      <section className="mt-10 scroll-mt-24 border-t border-border pt-8 lg:mt-14">
         <div
           role="tablist"
           aria-label={product.name}
-          className="flex gap-7 overflow-x-auto border-b border-[#E5E5E5]"
+          className="flex gap-7 overflow-x-auto border-b border-border"
         >
           {(
             [
@@ -627,13 +627,13 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
                 aria-controls={`tab-panel-${tab.id}`}
                 onClick={() => setActiveTab(tab.id)}
                 className={`relative shrink-0 pb-3 text-small transition-colors ${
-                  isActive ? "text-[#0A0A0A]" : "text-[#666666] hover:text-[#0A0A0A]"
+                  isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <span className={isActive ? "font-semibold" : "font-medium"}>{tab.label}</span>
                 <span
                   aria-hidden
-                  className={`absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-[#0A0A0A] ${motionTw.transition.opacity} ${motionTw.duration.feedback} ${
+                  className={`absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-foreground ${motionTw.transition.opacity} ${motionTw.duration.feedback} ${
                     isActive ? "opacity-100" : "opacity-0"
                   }`}
                 />
@@ -642,7 +642,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
           })}
         </div>
 
-        <div className="mt-6 rounded-[14px] border border-[#E5E5E5] bg-white p-6 sm:p-8">
+        <div className="mt-6 rounded-xl border border-border bg-card p-6 sm:p-8">
           {activeTab === "description" ? (
             <div role="tabpanel" id="tab-panel-description" aria-labelledby="tab-description">
               {descriptionParagraphs.length ? (
@@ -650,9 +650,9 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
                   {descriptionParagraphs.map((paragraph, index) => (
                     <p
                       key={index}
-                      className={`text-body leading-loose text-[#666666] ${
+                      className={`text-body leading-loose text-muted-foreground ${
                         index === 0
-                          ? "text-[#0A0A0A]/90 first-letter:float-start first-letter:me-3 first-letter:font-display first-letter:text-5xl first-letter:font-semibold first-letter:leading-[0.9]"
+                          ? "text-foreground/90 first-letter:float-start first-letter:me-3 first-letter:font-display first-letter:text-5xl first-letter:font-semibold first-letter:leading-[0.9]"
                           : ""
                       }`}
                     >
@@ -661,7 +661,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
                   ))}
                 </div>
               ) : (
-                <p className="text-body text-[#666666]">{sf.sfNoDescription}</p>
+                <p className="text-body text-muted-foreground">{sf.sfNoDescription}</p>
               )}
             </div>
           ) : null}
@@ -670,21 +670,21 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
             <div role="tabpanel" id="tab-panel-details" aria-labelledby="tab-details">
               <dl className="max-w-xl space-y-3 text-small">
                 {product.brand ? (
-                  <div className="flex justify-between gap-4 border-b border-[#F6F6F4] pb-3">
-                    <dt className="text-[#666666]">{t.brand}</dt>
-                    <dd className="font-medium text-[#0A0A0A]">{product.brand.name}</dd>
+                  <div className="flex justify-between gap-4 border-b border-border pb-3">
+                    <dt className="text-muted-foreground">{t.brand}</dt>
+                    <dd className="font-medium text-foreground">{product.brand.name}</dd>
                   </div>
                 ) : null}
                 {product.category ? (
-                  <div className="flex justify-between gap-4 border-b border-[#F6F6F4] pb-3">
-                    <dt className="text-[#666666]">{t.category}</dt>
-                    <dd className="font-medium text-[#0A0A0A]">{product.category.name}</dd>
+                  <div className="flex justify-between gap-4 border-b border-border pb-3">
+                    <dt className="text-muted-foreground">{t.category}</dt>
+                    <dd className="font-medium text-foreground">{product.category.name}</dd>
                   </div>
                 ) : null}
                 {product.weightGrams ? (
                   <div className="flex justify-between gap-4">
-                    <dt className="text-[#666666]">{t.weight}</dt>
-                    <dd className="font-medium text-[#0A0A0A]">{formatNumber(product.weightGrams, locale)} {t.weightUnit}</dd>
+                    <dt className="text-muted-foreground">{t.weight}</dt>
+                    <dd className="font-medium tabular-nums text-foreground">{formatNumber(product.weightGrams, locale)} {t.weightUnit}</dd>
                   </div>
                 ) : null}
               </dl>
@@ -693,23 +693,23 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
 
           {activeTab === "delivery" ? (
             <div role="tabpanel" id="tab-panel-delivery" aria-labelledby="tab-delivery" className="max-w-3xl">
-              <h3 className="text-nav font-medium text-[#0A0A0A]">{t.shippingTitle}</h3>
-              <p className="mt-2 text-small leading-relaxed text-[#666666]">{t.shippingBody}</p>
-              <h3 className="mt-6 text-nav font-medium text-[#0A0A0A]">{t.returns}</h3>
-              <p className="mt-2 text-small leading-relaxed text-[#666666]">{t.returnsBody}</p>
+              <h3 className="text-nav font-medium text-foreground">{t.shippingTitle}</h3>
+              <p className="mt-2 text-small leading-relaxed text-muted-foreground">{t.shippingBody}</p>
+              <h3 className="mt-6 text-nav font-medium text-foreground">{t.returns}</h3>
+              <p className="mt-2 text-small leading-relaxed text-muted-foreground">{t.returnsBody}</p>
             </div>
           ) : null}
 
           {activeTab === "reviews" ? (
             <div role="tabpanel" id="reviews" aria-labelledby="tab-reviews" className="scroll-mt-24">
-              <p className="text-eyebrow text-[#666666]">{t.customerReviews}</p>
+              <p className="text-eyebrow text-muted-foreground">{t.customerReviews}</p>
               <div className="mt-2 flex flex-wrap items-end justify-between gap-4">
-                <h2 className="font-display text-3xl font-semibold tracking-tight text-[#0A0A0A]">{t.reviewsTitle}</h2>
+                <h2 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">{t.reviewsTitle}</h2>
                 {product.reviewSummary.average != null ? (
-                  <p className="inline-flex items-center gap-2 text-price text-[#0A0A0A]">
+                  <p className="inline-flex items-center gap-2 text-price tabular-nums text-foreground">
                     <Star className="size-5 fill-current" aria-hidden />
                     {product.reviewSummary.average.toFixed(1)}
-                    <span className="text-small font-normal text-[#666666]">
+                    <span className="text-small font-normal text-muted-foreground">
                       / 5 · {t.reviews(product.reviewSummary.count)}
                     </span>
                   </p>
@@ -724,50 +724,53 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
                       const percent =
                         product.reviewSummary.count > 0 ? (count / product.reviewSummary.count) * 100 : 0;
                       return (
-                        <div key={star} className="flex items-center gap-3 text-caption text-[#666666]">
-                          <span className="inline-flex w-8 items-center gap-1">
+                        <div key={star} className="flex items-center gap-3 text-caption text-muted-foreground">
+                          <span className="inline-flex w-8 items-center gap-1 tabular-nums">
                             {star}
                             <Star className="size-3 fill-current" aria-hidden />
                           </span>
                           <div
-                            className="h-1.5 flex-1 overflow-hidden rounded-full bg-[#F6F6F4]"
+                            className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted"
                             role="img"
                             aria-label={`${count} ${t.reviews(count)}`}
                           >
-                            <div className="h-full rounded-full bg-[#0A0A0A]" style={{ width: `${percent}%` }} />
+                            <div className="h-full rounded-full bg-foreground" style={{ width: `${percent}%` }} />
                           </div>
-                          <span className="w-8 text-end">{count}</span>
+                          <span className="w-8 text-end tabular-nums">{count}</span>
                         </div>
                       );
                     })}
                   </div>
-                  <div className="mt-8 grid gap-x-8 gap-y-2 md:grid-cols-2">
+                  <div className="mt-8 grid gap-4 md:grid-cols-2">
                     {product.reviews.map((review) => (
-                      <article key={review.id} className="border-t border-[#E5E5E5] py-6">
+                      <article key={review.id} className="rounded-xl border border-border bg-background p-5">
                         <div className="flex items-center justify-between gap-4">
-                          <p className="text-nav text-[#0A0A0A]">{review.firstName ?? t.anonymousReviewer}</p>
+                          <p className="text-nav font-medium text-foreground">{review.firstName ?? t.anonymousReviewer}</p>
                           <span className="inline-flex" aria-label={`${review.rating} / 5`}>
                             {[1, 2, 3, 4, 5].map((star) => (
                               <Star
                                 key={star}
                                 aria-hidden
-                                className={`size-3.5 ${star <= review.rating ? "fill-current text-[#0A0A0A]" : "text-[#E5E5E5]"}`}
+                                className={`size-3.5 ${star <= review.rating ? "fill-current text-foreground" : "text-muted-foreground/30"}`}
                               />
                             ))}
                           </span>
                         </div>
                         {review.verifiedPurchase ? (
-                          <p className="mt-1.5 text-caption text-[#666666]">{t.verified}</p>
+                          <p className="mt-1.5 inline-flex items-center gap-1 text-caption text-muted-foreground">
+                            <ShieldCheck className="size-3.5" aria-hidden />
+                            {t.verified}
+                          </p>
                         ) : null}
                         {review.body ? (
-                          <p className="mt-3 text-small leading-relaxed text-[#666666]">{review.body}</p>
+                          <p className="mt-3 text-small leading-relaxed text-muted-foreground">{review.body}</p>
                         ) : null}
                         {review.imageUrl ? (
                           <img
                             src={review.imageUrl}
                             alt=""
                             loading="lazy"
-                            className="mt-3 size-20 rounded-[10px] border border-[#E5E5E5] object-cover"
+                            className="mt-3 size-20 rounded-lg border border-border object-cover"
                           />
                         ) : null}
                       </article>
@@ -775,7 +778,12 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
                   </div>
                 </>
               ) : (
-                <p className="mt-6 text-body text-[#666666]">{t.noPublishedReviews}</p>
+                <div className="mt-8 flex flex-col items-center gap-3 rounded-xl border border-dashed border-border bg-background px-6 py-12 text-center">
+                  <span className="grid size-12 place-items-center rounded-full bg-muted">
+                    <Star className="size-5 text-muted-foreground" aria-hidden />
+                  </span>
+                  <p className="max-w-sm text-small leading-relaxed text-muted-foreground">{t.noPublishedReviews}</p>
+                </div>
               )}
 
               <ReviewForm productId={product.id} locale={locale} />
@@ -786,9 +794,9 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
 
       {/* ——— Related ——— */}
       {product.related.length ? (
-        <section className="mt-20 border-t border-[#E5E5E5] pt-12 lg:mt-24">
+        <section className="mt-10 border-t border-border pt-8 lg:mt-14">
           <p className="text-eyebrow text-muted-foreground">{t.relatedEyebrow}</p>
-          <h2 className="mt-2 font-display text-3xl font-semibold tracking-tight text-foreground">
+          <h2 className="mt-2 font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
             {t.relatedTitle}
           </h2>
           <div className="mt-8">
@@ -799,9 +807,9 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
 
       {/* ——— Similar (same category, closest price — no store priority) ——— */}
       {product.similar.length ? (
-        <section className="mt-20 border-t border-[#E5E5E5] pt-12 lg:mt-24">
+        <section className="mt-10 border-t border-border pt-8 lg:mt-14">
           <p className="text-eyebrow text-muted-foreground">{t.similarEyebrow}</p>
-          <h2 className="mt-2 font-display text-3xl font-semibold tracking-tight text-foreground">
+          <h2 className="mt-2 font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
             {t.similarTitle}
           </h2>
           <div className="mt-8">
@@ -815,9 +823,9 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
 
       {/* ——— More from this store (real storefront products; hidden when none) ——— */}
       {product.fromStore.length ? (
-        <section className="mt-20 border-t border-[#E5E5E5] pt-12 lg:mt-24">
+        <section className="mt-10 border-t border-border pt-8 lg:mt-14">
           <p className="text-eyebrow text-muted-foreground">{t.fromStoreEyebrow}</p>
-          <h2 className="mt-2 font-display text-3xl font-semibold tracking-tight text-foreground">
+          <h2 className="mt-2 font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
             {t.fromStoreTitle}
           </h2>
           <div className="mt-8">
@@ -835,7 +843,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
         <div
           aria-hidden={ctaVisible}
           inert={ctaVisible}
-          className={`fixed inset-x-0 bottom-0 z-40 border-t border-[#E5E5E5] bg-white/95 backdrop-blur ${motionTw.transition.transform} ${motionTw.duration.base} motion-reduce:transition-none md:hidden ${
+          className={`fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 backdrop-blur ${motionTw.transition.transform} ${motionTw.duration.base} motion-reduce:transition-none md:hidden ${
             ctaVisible ? "translate-y-full" : "translate-y-0"
           }`}
         >
@@ -848,9 +856,9 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
             ) : null}
             <div className="min-w-0 flex-1">
               <p className="truncate text-small font-medium text-foreground">{product.name}</p>
-              <p className="text-small font-semibold text-foreground">{formatPrice(price, locale)}</p>
+              <p className="text-small font-semibold tabular-nums text-foreground">{formatPrice(price, locale)}</p>
             </div>
-            <Button type="button" onClick={handleBuyNow} className="h-11 shrink-0 bg-[#0A0A0A] font-semibold text-white hover:bg-black">
+            <Button type="button" onClick={handleBuyNow} className="h-11 shrink-0 bg-foreground font-semibold text-background hover:bg-foreground/90">
               {sf.sfBuyNow}
             </Button>
           </div>
@@ -881,9 +889,9 @@ function ViewedTogether({
   });
   if (!data?.hasData || data.products.length === 0) return null;
   return (
-    <section className="mt-20 border-t border-[#E5E5E5] pt-12 lg:mt-24">
+    <section className="mt-10 border-t border-border pt-8 lg:mt-14">
       <p className="text-eyebrow text-muted-foreground">{copy.viewedTogetherEyebrow}</p>
-      <h2 className="mt-2 font-display text-3xl font-semibold tracking-tight text-foreground">
+      <h2 className="mt-2 font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
         {copy.viewedTogetherTitle}
       </h2>
       <div className="mt-8">

@@ -23,11 +23,11 @@ import { AdminShell } from "@/components/admin/AdminShell";
 import {
   AdminCard,
   ConfirmDialog,
-  EmptyState,
   Field,
   TableSkeleton,
   fmtDateTime,
 } from "@/components/admin/ui";
+import { EmptyState, ErrorState } from "@/components/dashboard";
 import { useAdminLocale } from "@/components/admin/useAdminLocale";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -210,7 +210,7 @@ function ProductTab({
         {searchQuery.isPending ? (
           <TableSkeleton rows={3} />
         ) : searchQuery.isError ? (
-          <EmptyState title="Error" text={errMsg(searchQuery.error)} />
+          <ErrorState title="Error" description={errMsg(searchQuery.error)} />
         ) : products.length > 0 ? (
           <ul className="mt-3 divide-y divide-border rounded-md border border-border">
             {products.slice(0, 8).map((p) => (
@@ -384,7 +384,7 @@ function ProductMediaManager({
       {mediaQuery.isPending ? (
         <TableSkeleton rows={4} />
       ) : mediaQuery.isError ? (
-        <EmptyState title="Error" text={errMsg(mediaQuery.error)} />
+        <ErrorState title="Error" description={errMsg(mediaQuery.error)} />
       ) : (
         <>
           <h3 className="mb-2 text-sm font-medium">{t.uploadTitle}</h3>
@@ -400,7 +400,7 @@ function ProductMediaManager({
             {t.tabs.product} ({items.length})
           </h3>
           {items.length === 0 ? (
-            <EmptyState title={t.noMedia} text={t.noMediaText} />
+            <EmptyState title={t.noMedia} description={t.noMediaText} />
           ) : (
             <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {items.map((m, i) => (
@@ -760,9 +760,9 @@ function StorageTab({
         {mediaQuery.isPending ? (
           <TableSkeleton rows={6} />
         ) : mediaQuery.isError ? (
-          <EmptyState title="Error" text={errMsg(mediaQuery.error)} />
+          <ErrorState title="Error" description={errMsg(mediaQuery.error)} />
         ) : entries.length === 0 ? (
-          <EmptyState title={t.noMedia} text={t.storageSub} />
+          <EmptyState title={t.noMedia} description={t.storageSub} />
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {folders.map((f) => (

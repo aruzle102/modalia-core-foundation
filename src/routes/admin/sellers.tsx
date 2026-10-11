@@ -19,13 +19,13 @@ import { Pager } from "./_shared";
 import {
   AdminCard,
   StatusPill,
-  EmptyState,
   TableSkeleton,
   ConfirmDialog,
   fmtMoney,
   fmtDateTime,
   timeAgo,
 } from "@/components/admin/ui";
+import { DataTable, EmptyState, ErrorState } from "@/components/dashboard";
 import { useAdminLocale } from "@/components/admin/useAdminLocale";
 import { getTranslations } from "@/lib/i18n";
 import { listSellers, updateSellerStatus } from "@/lib/admin-sellers.functions";
@@ -179,42 +179,50 @@ function SellersList() {
           }
         >
           {isLoading ? (
-            <TableSkeleton rows={8} />
+            <DataTable>
+              <div className="p-4">
+                <TableSkeleton rows={8} />
+              </div>
+            </DataTable>
           ) : isError ? (
-            <EmptyState
-              title="Could not load sellers"
-              text="Something went wrong while fetching the sellers."
-              action={
-                <Button variant="outline" size="sm" onClick={() => refetch()}>
-                  Retry
-                </Button>
-              }
-            />
+            <DataTable>
+              <ErrorState
+                title="Could not load sellers"
+                description="Something went wrong while fetching the sellers."
+                action={
+                  <Button variant="outline" size="sm" onClick={() => refetch()}>
+                    Retry
+                  </Button>
+                }
+              />
+            </DataTable>
           ) : items.length === 0 ? (
-            <EmptyState title={t.noSellers} text={t.adjustFilters} />
+            <DataTable>
+              <EmptyState title={t.noSellers} description={t.adjustFilters} />
+            </DataTable>
           ) : (
-            <div className="overflow-x-auto">
+            <DataTable>
               <table className="w-full min-w-[1100px] text-sm">
                 <thead>
-                  <tr className="border-b text-xs uppercase tracking-wide text-muted-foreground">
-                    <th className="py-2 pe-4 text-start font-medium">{t.colName}</th>
-                    <th className="py-2 pe-4 text-start font-medium">{t.colStore}</th>
-                    <th className="py-2 pe-4 text-start font-medium">{t.colStatus}</th>
-                    <th className="py-2 pe-4 text-end font-medium">{t.products}</th>
-                    <th className="py-2 pe-4 text-end font-medium">{t.orders}</th>
-                    <th className="py-2 pe-4 text-end font-medium">{t.sales}</th>
-                    <th className="py-2 pe-4 text-end font-medium">{t.colCommission}</th>
-                    <th className="py-2 pe-4 text-start font-medium">{t.colCreated}</th>
-                    <th className="py-2 text-end font-medium">{t.colActions}</th>
+                  <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                    <th className="px-3 py-3 text-start">{t.colName}</th>
+                    <th className="px-3 py-3 text-start">{t.colStore}</th>
+                    <th className="px-3 py-3 text-start">{t.colStatus}</th>
+                    <th className="px-3 py-3 text-end">{t.products}</th>
+                    <th className="px-3 py-3 text-end">{t.orders}</th>
+                    <th className="px-3 py-3 text-end">{t.sales}</th>
+                    <th className="px-3 py-3 text-end">{t.colCommission}</th>
+                    <th className="px-3 py-3 text-start">{t.colCreated}</th>
+                    <th className="px-3 py-3 text-end">{t.colActions}</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                   {items.map((seller) => {
                     const store = Array.isArray(seller.stores) ? seller.stores[0] : null;
                     const s = stats[seller.id] ?? { productCount: 0, orderCount: 0, salesTotal: 0 };
                     return (
-                      <tr key={seller.id} className="border-b last:border-0 hover:bg-muted/50">
-                        <td className="py-3 pe-4">
+                      <tr key={seller.id} className="hover:bg-muted/40">
+                        <td className="px-3 py-3">
                           <Link
                             to="/admin/sellers/$sellerId"
                             params={{ sellerId: seller.id }}
@@ -227,7 +235,7 @@ function SellersList() {
                             {seller.email ?? "—"}
                           </p>
                         </td>
-                        <td className="py-3 pe-4">
+                        <td className="px-3 py-3">
                           {store ? (
                             <>
                               <span className="font-medium">{store.name}</span>
@@ -242,24 +250,24 @@ function SellersList() {
                             <span className="text-muted-foreground">—</span>
                           )}
                         </td>
-                        <td className="py-3 pe-4">
+                        <td className="px-3 py-3">
                           <StatusPill status={seller.account_status} />
                         </td>
-                        <td className="py-3 pe-4 text-end tabular-nums">{s.productCount}</td>
-                        <td className="py-3 pe-4 text-end tabular-nums">{s.orderCount}</td>
-                        <td className="py-3 pe-4 text-end tabular-nums whitespace-nowrap">
+                        <td className="px-3 py-3 text-end tabular-nums">{s.productCount}</td>
+                        <td className="px-3 py-3 text-end tabular-nums">{s.orderCount}</td>
+                        <td className="whitespace-nowrap px-3 py-3 text-end tabular-nums">
                           {fmtMoney(s.salesTotal, "DZD", locale)}
                         </td>
-                        <td className="py-3 pe-4 text-end tabular-nums whitespace-nowrap">
+                        <td className="whitespace-nowrap px-3 py-3 text-end tabular-nums">
                           {(Number(seller.commission_rate) * 100).toFixed(1)}%
                         </td>
                         <td
-                          className="py-3 pe-4 whitespace-nowrap text-muted-foreground"
+                          className="whitespace-nowrap px-3 py-3 text-muted-foreground"
                           title={fmtDateTime(seller.created_at, locale)}
                         >
                           {timeAgo(seller.created_at, locale)}
                         </td>
-                        <td className="py-3">
+                        <td className="px-3 py-3">
                           <div className="flex flex-wrap justify-end gap-1.5">
                             <Button size="sm" variant="ghost" asChild>
                               <Link
@@ -310,7 +318,7 @@ function SellersList() {
                   })}
                 </tbody>
               </table>
-            </div>
+            </DataTable>
           )}
           {total > 0 && (
             <div className="mt-4">

@@ -8,13 +8,13 @@ import { AdminShell } from "@/components/admin/AdminShell";
 import {
   AdminCard,
   StatusPill,
-  EmptyState,
   TableSkeleton,
   ConfirmDialog,
   Field,
   fmtMoney,
   fmtDateTime,
 } from "@/components/admin/ui";
+import { DataTable, EmptyState, ErrorState } from "@/components/dashboard";
 import { useAdminLocale } from "@/components/admin/useAdminLocale";
 import { getTranslations } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
@@ -137,28 +137,39 @@ function CouponsManager() {
 
       <AdminCard title="Coupons">
         {couponsQuery.isPending ? (
-          <TableSkeleton />
+          <DataTable>
+            <div className="p-4">
+              <TableSkeleton />
+            </div>
+          </DataTable>
         ) : couponsQuery.isError ? (
-          <EmptyState title="Could not load coupons" text={errMsg(couponsQuery.error)} />
+          <DataTable>
+            <ErrorState title="Could not load coupons" description={errMsg(couponsQuery.error)} />
+          </DataTable>
         ) : coupons.length === 0 ? (
-          <EmptyState title="No coupons" text="Create the first discount code to boost sales." />
+          <DataTable>
+            <EmptyState
+              title="No coupons"
+              description="Create the first discount code to boost sales."
+            />
+          </DataTable>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[820px] text-start text-small">
+          <DataTable>
+            <table className="w-full min-w-[820px] text-sm">
               <thead>
-                <tr className="border-b border-border text-caption text-muted-foreground">
-                  <th className="px-3 py-2 font-medium">Code</th>
-                  <th className="px-3 py-2 font-medium">Discount</th>
-                  <th className="px-3 py-2 font-medium">Scope</th>
-                  <th className="px-3 py-2 font-medium">Usage</th>
-                  <th className="px-3 py-2 font-medium">Validity</th>
-                  <th className="px-3 py-2 font-medium">Status</th>
-                  <th className="px-3 py-2 font-medium text-end">Actions</th>
+                <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                  <th className="px-3 py-3 text-start">Code</th>
+                  <th className="px-3 py-3 text-start">Discount</th>
+                  <th className="px-3 py-3 text-start">Scope</th>
+                  <th className="px-3 py-3 text-start">Usage</th>
+                  <th className="px-3 py-3 text-start">Validity</th>
+                  <th className="px-3 py-3 text-start">Status</th>
+                  <th className="px-3 py-3 text-end">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                 {coupons.map((c) => (
-                  <tr key={c.id} className="align-top">
+                  <tr key={c.id} className="align-top hover:bg-muted/40">
                     <td className="px-3 py-3">
                       <p className="font-mono font-semibold">{c.code}</p>
                       <p className="text-caption text-muted-foreground">
@@ -209,7 +220,7 @@ function CouponsManager() {
                 ))}
               </tbody>
             </table>
-          </div>
+          </DataTable>
         )}
         <div className="mt-4">
           <Pager page={page} total={total} pageSize={pageSize} onPage={setPage} />

@@ -26,9 +26,7 @@ import { AdminShell } from "@/components/admin/AdminShell";
 import { pickName } from "./_shared";
 import {
   AdminCard,
-  Stat,
   StatusPill,
-  EmptyState,
   TableSkeleton,
   ConfirmDialog,
   fmtMoney,
@@ -36,6 +34,7 @@ import {
   timeAgo,
   SegmentedControl,
 } from "@/components/admin/ui";
+import { DataTable, EmptyState, FormSection, StatCard } from "@/components/dashboard";
 import { getStoreProfile, updateStoreStatus } from "@/lib/admin-stores.functions";
 import { updateStoreVerification } from "@/lib/admin-sellers.functions";
 import { useAdminT } from "@/components/admin/use-admin-t";
@@ -256,7 +255,7 @@ function StoreProfilePage() {
         actions={
           <Button variant="outline" size="sm" asChild>
             <BackLink back={back} fallbackTo="/admin/stores">
-              <ArrowLeft className="size-4 me-1.5" />
+              <ArrowLeft className="size-4 me-1.5 rtl:rotate-180" />
               {p.backToStores}
             </BackLink>
           </Button>
@@ -266,7 +265,7 @@ function StoreProfilePage() {
           <TableSkeleton rows={10} />
         ) : profileQuery.isError || !store ? (
           <AdminCard title={p.couldNotLoad}>
-            <EmptyState title={p.couldNotLoad} text={p.couldNotLoadDesc} />
+            <EmptyState title={p.couldNotLoad} description={p.couldNotLoadDesc} />
           </AdminCard>
         ) : (
           <div className="space-y-6">
@@ -524,11 +523,11 @@ function StoreProfilePage() {
           }}
         />
         {manualForm !== null && store ? (
-          <div className="mt-4 rounded-lg border border-dashed p-4">
-            <p className="mb-3 text-sm font-semibold">{sellerT.confirmManualVerifyTitle}</p>
-            <p className="mb-3 text-sm text-muted-foreground">
-              {sellerT.confirmManualVerifyDesc(store.name)}
-            </p>
+          <FormSection
+            title={sellerT.confirmManualVerifyTitle}
+            description={sellerT.confirmManualVerifyDesc(store.name)}
+            className="mt-4"
+          >
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="block text-sm">
                 <span className="mb-1 block font-medium">{sellerT.verificationNote}</span>
@@ -564,7 +563,7 @@ function StoreProfilePage() {
                 {common.cancel}
               </Button>
             </div>
-          </div>
+          </FormSection>
         ) : null}
       </AdminShell>
     </AdminGate>
@@ -694,18 +693,18 @@ function OverviewTab({
 
       {/* KPI stats */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <Stat label={p.productsCount} value={String(profile.stats.productCount)} hint={p.productsHint} />
-        <Stat label={p.ordersCount} value={String(profile.stats.orderCount)} hint={p.ordersHint} />
-        <Stat label={p.deliveredSales} value={fmtMoney(profile.stats.salesTotal, "DZD", locale)} hint={p.deliveredSalesHint} />
+        <StatCard title={p.productsCount} value={String(profile.stats.productCount)} description={p.productsHint} />
+        <StatCard title={p.ordersCount} value={String(profile.stats.orderCount)} description={p.ordersHint} />
+        <StatCard title={p.deliveredSales} value={fmtMoney(profile.stats.salesTotal, "DZD", locale)} description={p.deliveredSalesHint} />
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <Stat label={p.reviewsCount} value={String(profile.stats.reviewCount)} hint={p.reviewsHint} />
-        <Stat
-          label={p.avgRating}
+        <StatCard title={p.reviewsCount} value={String(profile.stats.reviewCount)} description={p.reviewsHint} />
+        <StatCard
+          title={p.avgRating}
           value={profile.stats.avgRating !== null ? profile.stats.avgRating.toFixed(1) : "—"}
-          hint={p.avgRatingHint}
+          description={p.avgRatingHint}
         />
-        <Stat label={p.activeOffers} value={String(profile.stats.activeOfferCount)} hint={p.activeOffersHint} />
+        <StatCard title={p.activeOffers} value={String(profile.stats.activeOfferCount)} description={p.activeOffersHint} />
       </div>
 
       {/* Orders by status */}
@@ -807,19 +806,19 @@ function OverviewTab({
         {profile.promotions.length === 0 ? (
           <EmptyState title={p.noOffers} />
         ) : (
-          <div className="overflow-x-auto">
+          <DataTable>
             <table className="w-full min-w-96 text-sm">
               <thead>
-                <tr className="border-b text-xs uppercase tracking-wide text-muted-foreground">
-                  <th className="py-1.5 pe-3 text-start font-medium">{p.name}</th>
-                  <th className="py-1.5 pe-3 text-start font-medium">{p.salePrice}</th>
-                  <th className="py-1.5 text-start font-medium">{p.endsAt}</th>
+                <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                  <th className="px-4 py-3 text-start">{p.name}</th>
+                  <th className="px-4 py-3 text-end">{p.salePrice}</th>
+                  <th className="px-4 py-3 text-start">{p.endsAt}</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                 {profile.promotions.map((promo) => (
-                  <tr key={promo.id} className="border-b last:border-0">
-                    <td className="py-1.5 pe-3">
+                  <tr key={promo.id} className="hover:bg-muted/40">
+                    <td className="px-4 py-3">
                       {promo.product ? (
                         <Link
                           to="/admin/products/$productId"
@@ -833,17 +832,17 @@ function OverviewTab({
                         <span className="font-mono text-xs" dir="ltr">{promo.product_id}</span>
                       )}
                     </td>
-                    <td className="py-1.5 pe-3 whitespace-nowrap font-medium">
+                    <td className="px-4 py-3 whitespace-nowrap font-medium text-end tabular-nums">
                       {fmtMoney(promo.sale_price, "DZD", locale)}
                     </td>
-                    <td className="py-1.5 whitespace-nowrap text-muted-foreground" title={fmtDateTime(promo.ends_at, locale)}>
+                    <td className="px-4 py-3 whitespace-nowrap text-muted-foreground" title={fmtDateTime(promo.ends_at, locale)}>
                       {timeAgo(promo.ends_at, locale)}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </div>
+          </DataTable>
         )}
       </AdminCard>
 
@@ -856,20 +855,20 @@ function OverviewTab({
           {profile.recentProducts.length === 0 ? (
             <EmptyState title={p.noProducts} />
           ) : (
-            <div className="overflow-x-auto">
+            <DataTable>
               <table className="w-full min-w-96 text-sm">
                 <thead>
-                  <tr className="border-b text-xs uppercase tracking-wide text-muted-foreground">
-                    <th className="py-1.5 pe-3 text-start font-medium">{p.name}</th>
-                    <th className="py-1.5 pe-3 text-start font-medium">{p.price}</th>
-                    <th className="py-1.5 pe-3 text-start font-medium">{p.moderation}</th>
-                    <th className="py-1.5 text-start font-medium">{p.status}</th>
+                  <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                    <th className="px-4 py-3 text-start">{p.name}</th>
+                    <th className="px-4 py-3 text-end">{p.price}</th>
+                    <th className="px-4 py-3 text-start">{p.moderation}</th>
+                    <th className="px-4 py-3 text-start">{p.status}</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                   {profile.recentProducts.map((prod) => (
-                    <tr key={prod.id} className="border-b last:border-0">
-                      <td className="py-1.5 pe-3">
+                    <tr key={prod.id} className="hover:bg-muted/40">
+                      <td className="px-4 py-3">
                         <Link
                           to="/admin/products/$productId"
                           params={{ productId: prod.id }}
@@ -879,18 +878,18 @@ function OverviewTab({
                           {productName(prod.name, common.unnamedProduct)}
                         </Link>
                       </td>
-                      <td className="py-1.5 pe-3 whitespace-nowrap">{fmtMoney(prod.base_price, "DZD", locale)}</td>
-                      <td className="py-1.5 pe-3">
+                      <td className="px-4 py-3 whitespace-nowrap text-end tabular-nums">{fmtMoney(prod.base_price, "DZD", locale)}</td>
+                      <td className="px-4 py-3">
                         <StatusPill status={prod.moderation_status} />
                       </td>
-                      <td className="py-1.5">
+                      <td className="px-4 py-3">
                         <StatusPill status={prod.status} />
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-            </div>
+            </DataTable>
           )}
         </AdminCard>
 
@@ -898,28 +897,28 @@ function OverviewTab({
           {profile.recentOrders.length === 0 ? (
             <EmptyState title={p.noOrders} />
           ) : (
-            <div className="overflow-x-auto">
+            <DataTable>
               <table className="w-full min-w-96 text-sm">
                 <thead>
-                  <tr className="border-b text-xs uppercase tracking-wide text-muted-foreground">
-                    <th className="py-1.5 pe-3 text-start font-medium">{p.order}</th>
-                    <th className="py-1.5 pe-3 text-start font-medium">{p.status}</th>
-                    <th className="py-1.5 pe-3 text-start font-medium">{p.subtotal}</th>
-                    <th className="py-1.5 text-start font-medium">{p.date}</th>
+                  <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                    <th className="px-4 py-3 text-start">{p.order}</th>
+                    <th className="px-4 py-3 text-start">{p.status}</th>
+                    <th className="px-4 py-3 text-end">{p.subtotal}</th>
+                    <th className="px-4 py-3 text-start">{p.date}</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                   {profile.recentOrders.map((o) => {
                     const orderNumber =
                       (o.orders as { order_number?: string } | null)?.order_number ?? o.order_id.slice(0, 8);
                     return (
-                      <tr key={o.id} className="border-b last:border-0">
-                        <td className="py-1.5 pe-3 font-mono text-xs" dir="ltr">{orderNumber}</td>
-                        <td className="py-1.5 pe-3">
+                      <tr key={o.id} className="hover:bg-muted/40">
+                        <td className="px-4 py-3 font-mono text-xs" dir="ltr">{orderNumber}</td>
+                        <td className="px-4 py-3">
                           <StatusPill status={o.status} />
                         </td>
-                        <td className="py-1.5 pe-3 whitespace-nowrap">{fmtMoney(o.subtotal, "DZD", locale)}</td>
-                        <td className="py-1.5 whitespace-nowrap text-muted-foreground" title={fmtDateTime(o.created_at, locale)}>
+                        <td className="px-4 py-3 whitespace-nowrap text-end tabular-nums">{fmtMoney(o.subtotal, "DZD", locale)}</td>
+                        <td className="px-4 py-3 whitespace-nowrap text-muted-foreground" title={fmtDateTime(o.created_at, locale)}>
                           {timeAgo(o.created_at, locale)}
                         </td>
                       </tr>
@@ -927,7 +926,7 @@ function OverviewTab({
                   })}
                 </tbody>
               </table>
-            </div>
+            </DataTable>
           )}
         </AdminCard>
       </div>
@@ -1031,7 +1030,7 @@ function AnalyticsTab({
         {analyticsQuery.isPending ? (
           <TableSkeleton rows={4} />
         ) : analyticsQuery.isError ? (
-          <EmptyState title="Could not load analytics" text="Please try again." />
+          <EmptyState title="Could not load analytics" description="Please try again." />
         ) : (
           <SalesChart data={analyticsQuery.data.series} />
         )}
@@ -1041,21 +1040,21 @@ function AnalyticsTab({
         {analyticsQuery.isPending ? (
           <TableSkeleton rows={6} />
         ) : analyticsQuery.isError || analyticsQuery.data.topProducts.length === 0 ? (
-          <EmptyState title="No product sales" text="No order items found in the selected period." />
+          <EmptyState title="No product sales" description="No order items found in the selected period." />
         ) : (
-          <div className="overflow-x-auto">
+          <DataTable>
             <table className="w-full min-w-96 text-sm">
               <thead>
-                <tr className="border-b text-xs uppercase tracking-wide text-muted-foreground">
-                  <th className="py-1.5 pe-3 text-start font-medium">Product</th>
-                  <th className="py-1.5 pe-3 text-start font-medium">Units</th>
-                  <th className="py-1.5 text-start font-medium">Revenue</th>
+                <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                  <th className="px-4 py-3 text-start">Product</th>
+                  <th className="px-4 py-3 text-end">Units</th>
+                  <th className="px-4 py-3 text-end">Revenue</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                 {analyticsQuery.data.topProducts.map((tp) => (
-                  <tr key={tp.product_id} className="border-b last:border-0">
-                    <td className="py-1.5 pe-3 font-medium">
+                  <tr key={tp.product_id} className="hover:bg-muted/40">
+                    <td className="px-4 py-3 font-medium">
                       {tp.product_id === "unknown" ? (
                         <span className="text-muted-foreground">Unknown product</span>
                       ) : (
@@ -1069,15 +1068,15 @@ function AnalyticsTab({
                         </Link>
                       )}
                     </td>
-                    <td className="py-1.5 pe-3 tabular-nums">{tp.units}</td>
-                    <td className="py-1.5 whitespace-nowrap font-medium tabular-nums">
+                    <td className="px-4 py-3 text-end tabular-nums">{tp.units}</td>
+                    <td className="px-4 py-3 whitespace-nowrap font-medium text-end tabular-nums">
                       {fmtMoney(tp.revenue, "DZD", locale)}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </div>
+          </DataTable>
         )}
       </AdminCard>
     </div>
@@ -1154,25 +1153,25 @@ function ProductsTab({
       {productsQuery.isPending ? (
         <TableSkeleton rows={8} />
       ) : productsQuery.isError ? (
-        <EmptyState title="Could not load products" text="Please try again." />
+        <EmptyState title="Could not load products" description="Please try again." />
       ) : products.length === 0 ? (
-        <EmptyState title="No products" text="This store has no products yet." />
+        <EmptyState title="No products" description="This store has no products yet." />
       ) : (
-        <div className="overflow-x-auto">
+        <DataTable>
           <table className="w-full min-w-[40rem] text-sm">
             <thead>
-              <tr className="border-b text-xs uppercase tracking-wide text-muted-foreground">
-                <th className="py-1.5 pe-3 text-start font-medium">Product</th>
-                <th className="py-1.5 pe-3 text-start font-medium">Price</th>
-                <th className="py-1.5 pe-3 text-start font-medium">Moderation</th>
-                <th className="py-1.5 pe-3 text-start font-medium">Status</th>
-                <th className="py-1.5 text-end font-medium">Actions</th>
+              <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                <th className="px-4 py-3 text-start">Product</th>
+                <th className="px-4 py-3 text-end">Price</th>
+                <th className="px-4 py-3 text-start">Moderation</th>
+                <th className="px-4 py-3 text-start">Status</th>
+                <th className="px-4 py-3 text-end">Actions</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
               {products.map((prod) => (
-                <tr key={prod.id} className="border-b last:border-0">
-                  <td className="py-1.5 pe-3">
+                <tr key={prod.id} className="hover:bg-muted/40">
+                  <td className="px-4 py-3">
                     <Link
                       to="/admin/products/$productId"
                       params={{ productId: prod.id }}
@@ -1187,16 +1186,16 @@ function ProductsTab({
                       </p>
                     ) : null}
                   </td>
-                  <td className="py-1.5 pe-3 whitespace-nowrap tabular-nums">
+                  <td className="px-4 py-3 whitespace-nowrap text-end tabular-nums">
                     {fmtMoney(prod.base_price ?? 0, "DZD", locale)}
                   </td>
-                  <td className="py-1.5 pe-3">
+                  <td className="px-4 py-3">
                     <StatusPill status={prod.moderation_status ?? "—"} />
                   </td>
-                  <td className="py-1.5 pe-3">
+                  <td className="px-4 py-3">
                     <StatusPill status={prod.status ?? "—"} />
                   </td>
-                  <td className="py-1.5">
+                  <td className="px-4 py-3">
                     <div className="flex justify-end gap-1.5">
                       {prod.moderation_status !== "approved" && (
                         <Button
@@ -1255,16 +1254,18 @@ function ProductsTab({
               ))}
             </tbody>
           </table>
-        </div>
+        </DataTable>
       )}
 
       {moderating && moderating.decision !== "approve" && (
-        <div className="mt-3 rounded-md border border-dashed p-3">
-          <p className="mb-2 text-sm font-semibold">
-            {moderating.decision === "reject"
+        <FormSection
+          className="mt-3"
+          title={
+            moderating.decision === "reject"
               ? `Reject "${moderating.name}"? The product is hidden and the seller is notified.`
-              : `Hide "${moderating.name}"? The product is hidden and the seller is notified.`}
-          </p>
+              : `Hide "${moderating.name}"? The product is hidden and the seller is notified.`
+          }
+        >
           <label className="block text-sm">
             <span className="mb-1 block font-medium">Reason (sent to the seller)</span>
             <Input
@@ -1293,7 +1294,7 @@ function ProductsTab({
               Cancel
             </Button>
           </div>
-        </div>
+        </FormSection>
       )}
 
       <ConfirmDialog
@@ -1330,25 +1331,25 @@ function OrdersTab({ storeId, locale }: { storeId: string; locale: "ar" | "fr" |
       {ordersQuery.isPending ? (
         <TableSkeleton rows={8} />
       ) : ordersQuery.isError ? (
-        <EmptyState title="Could not load orders" text="Please try again." />
+        <EmptyState title="Could not load orders" description="Please try again." />
       ) : orders.length === 0 ? (
-        <EmptyState title="No orders" text="This store has no orders yet." />
+        <EmptyState title="No orders" description="This store has no orders yet." />
       ) : (
-        <div className="overflow-x-auto">
+        <DataTable>
           <table className="w-full min-w-[36rem] text-sm">
             <thead>
-              <tr className="border-b text-xs uppercase tracking-wide text-muted-foreground">
-                <th className="py-1.5 pe-3 text-start font-medium">Order</th>
-                <th className="py-1.5 pe-3 text-start font-medium">Status</th>
-                <th className="py-1.5 pe-3 text-start font-medium">Subtotal</th>
-                <th className="py-1.5 pe-3 text-start font-medium">Commission</th>
-                <th className="py-1.5 text-start font-medium">Date</th>
+              <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                <th className="px-4 py-3 text-start">Order</th>
+                <th className="px-4 py-3 text-start">Status</th>
+                <th className="px-4 py-3 text-end">Subtotal</th>
+                <th className="px-4 py-3 text-end">Commission</th>
+                <th className="px-4 py-3 text-start">Date</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
               {orders.map((o) => (
-                <tr key={o.id} className="border-b last:border-0">
-                  <td className="py-1.5 pe-3">
+                <tr key={o.id} className="hover:bg-muted/40">
+                  <td className="px-4 py-3">
                     <Link
                       to="/admin/orders/$orderId"
                       params={{ orderId: o.order_id }}
@@ -1372,23 +1373,23 @@ function OrdersTab({ storeId, locale }: { storeId: string; locale: "ar" | "fr" |
                       {o.order_number ?? o.order_id.slice(0, 8)}
                     </Link>
                   </td>
-                  <td className="py-1.5 pe-3">
+                  <td className="px-4 py-3">
                     <StatusPill status={o.status ?? "—"} />
                   </td>
-                  <td className="py-1.5 pe-3 whitespace-nowrap tabular-nums">
+                  <td className="px-4 py-3 whitespace-nowrap text-end tabular-nums">
                     {fmtMoney(o.subtotal ?? 0, "DZD", locale)}
                   </td>
-                  <td className="py-1.5 pe-3 whitespace-nowrap tabular-nums">
+                  <td className="px-4 py-3 whitespace-nowrap text-end tabular-nums">
                     {fmtMoney(o.commission_total ?? 0, "DZD", locale)}
                   </td>
-                  <td className="py-1.5 whitespace-nowrap text-muted-foreground" title={fmtDateTime(o.created_at, locale)}>
+                  <td className="px-4 py-3 whitespace-nowrap text-muted-foreground" title={fmtDateTime(o.created_at, locale)}>
                     {timeAgo(o.created_at, locale)}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
+        </DataTable>
       )}
     </AdminCard>
   );
@@ -1411,42 +1412,42 @@ function FinanceTab({ storeId, locale }: { storeId: string; locale: "ar" | "fr" 
         <TableSkeleton rows={6} />
       ) : financeQuery.isError || !financeQuery.data ? (
         <AdminCard title="Finance">
-          <EmptyState title="Could not load finance" text="Please try again." />
+          <EmptyState title="Could not load finance" description="Please try again." />
         </AdminCard>
       ) : (
         <>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <Stat
-              label="Gross sales (delivered)"
+            <StatCard
+              title="Gross sales (delivered)"
               value={fmtMoney(financeQuery.data.grossSales, "DZD", locale)}
-              hint={`${financeQuery.data.deliveredCount} delivered orders`}
+              description={`${financeQuery.data.deliveredCount} delivered orders`}
             />
-            <Stat
-              label="Platform commission"
+            <StatCard
+              title="Platform commission"
               value={fmtMoney(financeQuery.data.commissionEarned, "DZD", locale)}
-              hint="Earned on delivered sales"
+              description="Earned on delivered sales"
             />
-            <Stat
-              label="Seller net"
+            <StatCard
+              title="Seller net"
               value={fmtMoney(financeQuery.data.sellerNet, "DZD", locale)}
-              hint="Gross sales minus commission"
+              description="Gross sales minus commission"
             />
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <Stat
-              label="Pending sales"
+            <StatCard
+              title="Pending sales"
               value={fmtMoney(financeQuery.data.pendingSales, "DZD", locale)}
-              hint="Orders not yet delivered"
+              description="Orders not yet delivered"
             />
-            <Stat
-              label="Pending commission"
+            <StatCard
+              title="Pending commission"
               value={fmtMoney(financeQuery.data.pendingCommission, "DZD", locale)}
-              hint="Commission on pending orders"
+              description="Commission on pending orders"
             />
-            <Stat
-              label="Total orders"
+            <StatCard
+              title="Total orders"
               value={String(financeQuery.data.orderCount)}
-              hint="All seller orders"
+              description="All seller orders"
             />
           </div>
           <AdminCard title="How it is computed" subtitle="Source of truth">
@@ -1540,7 +1541,7 @@ function SellerTab({
           </div>
         </dl>
       ) : (
-        <EmptyState title={p.couldNotLoad} text="No seller is linked to this store." />
+        <EmptyState title={p.couldNotLoad} description="No seller is linked to this store." />
       )}
     </AdminCard>
   );
@@ -1580,9 +1581,9 @@ function NotificationsTab({
   const canSend = title.trim().length > 0 && message.trim().length > 0 && !sendMutation.isPending;
 
   return (
-    <AdminCard
+    <FormSection
       title="Notify seller"
-      subtitle={
+      description={
         sellerName
           ? `Send a message to the team of "${storeName}" (${sellerName}). It appears in their notification center.`
           : `Send a message to the team of "${storeName}". It appears in their notification center.`
@@ -1631,6 +1632,6 @@ function NotificationsTab({
           Sent notifications are recorded in the audit log and cannot be edited or recalled.
         </p>
       </div>
-    </AdminCard>
+    </FormSection>
   );
 }

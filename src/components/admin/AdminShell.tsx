@@ -412,11 +412,11 @@ export function AdminShell({
             <span className="hidden sm:inline">{t.signOut}</span>
           </button>
         </div>
-        {/* Mobile nav: compact horizontally-scrollable under the topbar */}
-        <nav className="border-t lg:hidden" aria-label="Admin">
+        {/* Mobile nav: compact horizontally-scrollable under the topbar (dark, matching the desktop sidebar) */}
+        <nav className="border-t border-white/10 bg-neutral-950 lg:hidden dark:bg-black" aria-label="Admin">
           <div className="flex gap-1 overflow-x-auto px-3 py-2">
             {allItems.map((item) => (
-              <NavLink key={String(item.to)} item={item} compact />
+              <NavLink key={String(item.to)} item={item} compact onDark />
             ))}
           </div>
         </nav>

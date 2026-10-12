@@ -255,7 +255,7 @@ export const getMyAdminIdentity = createServerFn({ method: "GET" })
       return { kind: "super_admin" as const, permissions: [...ALL_ADMIN_PERMISSIONS] as AdminPermission[] };
     }
     if (identity.kind === "member") {
-      return { kind: "member" as const, role: identity.role, permissions: identity.permissions };
+      return { kind: "member" as const, role: identity.role, permissions: identity.permissions, active: identity.active };
     }
     return { kind: "none" as const, permissions: [] as AdminPermission[] };
   });

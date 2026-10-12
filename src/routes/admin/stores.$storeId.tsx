@@ -276,7 +276,13 @@ function StoreProfilePage() {
               actions={
                 <div className="flex flex-wrap gap-2">
                   <Button size="sm" variant="outline" asChild>
-                    <Link to="/store/$slug" params={{ slug: store.slug }} search={{ locale }}>
+                    <Link
+                      to="/store/$slug"
+                      params={{ slug: store.slug }}
+                      search={{ locale }}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
                       <ExternalLink className="size-4 me-1.5" />
                       {p.viewPublicStore}
                     </Link>

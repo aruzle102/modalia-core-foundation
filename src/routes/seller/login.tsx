@@ -257,16 +257,8 @@ function SellerLoginPage() {
               {t.backToSignIn}
             </AuthTextButton>
           )}
-          <p className="mt-7 text-center text-sm text-muted-foreground">
-            {t.noAccount}{" "}
-            <Link
-              to="/become-a-seller"
-              search={{ locale }}
-              className="underline underline-offset-4 hover:text-foreground"
-            >
-              {t.becomeSeller}
-            </Link>
-          </p>
+          {/* Seller applications are handled by the dedicated onboarding route,
+              not by an account-creation CTA on the seller sign-in screen. */}
           <Link
             to="/"
             search={{ locale }}

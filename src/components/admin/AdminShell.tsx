@@ -387,7 +387,7 @@ export function AdminShell({
             </span>
           </Link>
           <div className="flex-1" />
-          <CommandBar />
+          <CommandBar identity={identityQuery.data} />
           <QuickCreate />
           <NotificationBell
             scope="admin"

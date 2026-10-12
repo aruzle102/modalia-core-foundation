@@ -26,6 +26,7 @@ import { getOfficialStore } from "@/lib/admin-official-store.functions";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { getTranslations } from "@/lib/i18n";
+import { canSeeNavItem, type AdminIdentity, type AdminPermission } from "@/lib/admin-permissions";
 import { useAdminLocale } from "./useAdminLocale";
 
 interface SearchItem {
@@ -50,7 +51,7 @@ interface SearchItem {
  * / seller (+ store) / coupon and opening shipping, homepage, settings and the
  * official storefront.
  */
-export function CommandBar() {
+export function CommandBar({ identity }: { identity?: AdminIdentity | undefined }) {
   const locale = useAdminLocale();
   const t = getTranslations(locale).commandBar;
   const [open, setOpen] = useState(false);
@@ -117,67 +118,75 @@ export function CommandBar() {
   const { actions, results } = useMemo(() => {
     const groups = t.groups;
     const actions: SearchItem[] = [];
+    const canAccess = (permission: AdminPermission | "super_admin") =>
+      !identity ||
+      canSeeNavItem(permission, {
+        kind: identity.kind,
+        permissions: identity.kind === "member" ? identity.permissions : [],
+      });
+    const addAction = (permission: AdminPermission | "super_admin", action: SearchItem) => {
+      if (canAccess(permission)) actions.push(action);
+    };
 
     const official = officialStore.data?.official?.store ?? null;
     const officialReady = officialStore.isSuccess;
-    actions.push(
-      {
+    addAction("products.manage", {
         key: "action-create-product",
         group: groups.actions,
         label: t.createProduct,
         sub: t.createProductHint,
         icon: <Plus className="h-4 w-4 text-muted-foreground" />,
         run: () => go("/admin/products", { search: { create: "product" } }),
-      },
-      {
+      });
+    addAction("sellers.manage", {
         key: "action-create-seller",
         group: groups.actions,
         label: t.createSeller,
         sub: t.createSellerHint,
         icon: <UserPlus className="h-4 w-4 text-muted-foreground" />,
         run: () => go("/admin/sellers", { search: { create: "seller" } }),
-      },
-      {
+      });
+    addAction("stores.manage", {
         key: "action-create-store",
         group: groups.actions,
         label: t.createStore,
         sub: t.createStoreHint,
         icon: <Store className="h-4 w-4 text-muted-foreground" />,
         run: () => go("/admin/sellers", { search: { create: "seller" } }),
-      },
-      {
+      });
+    addAction("coupons.manage", {
         key: "action-create-coupon",
         group: groups.actions,
         label: t.createCoupon,
         sub: t.createCouponHint,
         icon: <Ticket className="h-4 w-4 text-muted-foreground" />,
         run: () => go("/admin/coupons", { search: { create: "coupon" } }),
-      },
-      {
+      });
+    addAction("shipping.manage", {
         key: "action-open-shipping",
         group: groups.actions,
         label: t.openShipping,
         sub: t.openShippingHint,
         icon: <Truck className="h-4 w-4 text-muted-foreground" />,
         run: () => go("/admin/shipping", {}),
-      },
-      {
+      });
+    addAction("content.manage", {
         key: "action-open-homepage",
         group: groups.actions,
         label: t.openHomepage,
         sub: t.openHomepageHint,
         icon: <LayoutTemplate className="h-4 w-4 text-muted-foreground" />,
         run: () => go("/admin/homepage", {}),
-      },
-      {
+      });
+    addAction("super_admin", {
         key: "action-open-settings",
         group: groups.actions,
         label: t.openSettings,
         sub: t.openSettingsHint,
         icon: <Settings className="h-4 w-4 text-muted-foreground" />,
         run: () => go("/admin/settings", {}),
-      },
-      {
+      });
+    addAction("content.manage", {
         key: "action-official-store",
         group: groups.actions,
         label: t.openOfficialStore,
@@ -198,8 +207,7 @@ export function CommandBar() {
             );
           }
         },
-      },
-    );
+      });
 
     const results: SearchItem[] = [];
     const data = search.data;
@@ -296,6 +304,7 @@ export function CommandBar() {
     go,
     locale,
     close,
+    identity,
   ]);
 
   const items = useMemo(() => [...actions, ...results], [actions, results]);

@@ -443,12 +443,15 @@ export function SellerShell({
   actions,
   breadcrumbs,
   children,
+  mainClassName,
 }: {
   title: string;
   eyebrow?: string;
   actions?: ReactNode;
   breadcrumbs?: Crumb[];
   children: ReactNode;
+  /** Optional extra classes for the <main> content area (e.g. page background). */
+  mainClassName?: string;
 }) {
   const { status, error, seller, suspendedReason, retry } = useSellerSession();
   // V8 Sec 47: admin support-mode handshake (?support=<token>). While it
@@ -742,7 +745,7 @@ export function SellerShell({
           <SellerSidebarNav groups={navGroups} dark collapsed={sidebarCollapsed} />
         </aside>
 
-        <main id="main-content" tabIndex={-1} className="min-w-0 flex-1">
+        <main id="main-content" tabIndex={-1} className={cn("min-w-0 flex-1", mainClassName)}>
           <div className="mx-auto w-full max-w-7xl px-4 py-6 lg:px-8">
             {breadcrumbs && breadcrumbs.length > 0 ? <Crumbs items={breadcrumbs} /> : null}
             <PageHeader eyebrow={eyebrow} title={title} actions={actions} />

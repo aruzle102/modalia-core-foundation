@@ -215,13 +215,13 @@ function NavLink({ item, compact, onDark }: { item: NavItem; compact?: boolean; 
       {...(item.exact ? { activeOptions: { exact: true } } : {})}
       activeProps={{
         className: onDark
-          ? "bg-white text-neutral-950 font-semibold shadow-md [&_svg]:text-neutral-950"
+          ? "bg-white/10 text-white font-semibold [&_svg]:text-white"
           : "bg-neutral-900 text-white font-medium shadow-sm dark:bg-white dark:text-neutral-900 [&_svg]:text-current",
       }}
       className={cn(
         "group relative flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-all duration-200",
         onDark
-          ? "text-neutral-400 hover:bg-white/10 hover:text-white [&_svg]:text-neutral-500 hover:[&_svg]:text-white"
+          ? "text-[#b9babf] hover:bg-white/10 hover:text-white [&_svg]:text-[#b9babf]/70 hover:[&_svg]:text-white"
           : "text-muted-foreground hover:bg-neutral-100 hover:text-neutral-900 dark:hover:bg-neutral-800/60 dark:hover:text-neutral-100",
         compact && "shrink-0 whitespace-nowrap py-1.5",
       )}
@@ -289,7 +289,7 @@ function SidebarNav({ groups, dark }: { groups: NavGroup[]; dark?: boolean }) {
               className={cn(
                 "flex w-full items-center justify-between rounded-lg px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] transition-colors duration-200",
                 dark
-                  ? "text-neutral-500 hover:bg-white/5 hover:text-neutral-300"
+                  ? "text-[#b9babf]/70 hover:bg-white/5 hover:text-white"
                   : "text-neutral-500 hover:bg-neutral-100 hover:text-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-800/60 dark:hover:text-neutral-200",
                 active && (dark ? "text-white" : "text-neutral-900 dark:text-neutral-100"),
               )}
@@ -375,7 +375,7 @@ export function AdminShell({
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+      <header className="sticky top-0 z-40 border-b bg-white dark:bg-[#1a2035]">
         <div className="flex h-14 items-center gap-3 px-4">
           <Link to="/admin" search={{ locale }} className="flex items-center gap-2">
             <span className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-xs font-bold text-primary-foreground">
@@ -413,7 +413,7 @@ export function AdminShell({
           </button>
         </div>
         {/* Mobile nav: compact horizontally-scrollable under the topbar (dark, matching the desktop sidebar) */}
-        <nav className="border-t border-white/10 bg-neutral-950 lg:hidden dark:bg-black" aria-label="Admin">
+        <nav className="border-t border-white/10 bg-[#1a2035] lg:hidden dark:bg-[#1a2035]" aria-label="Admin">
           <div className="flex gap-1 overflow-x-auto px-3 py-2">
             {allItems.map((item) => (
               <NavLink key={String(item.to)} item={item} compact onDark />
@@ -423,9 +423,17 @@ export function AdminShell({
       </header>
 
       <div className="flex">
-        <aside className="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-68 shrink-0 self-start overflow-y-auto bg-neutral-950 text-neutral-200 lg:block dark:bg-black">
-          <div className="px-4 pb-2 pt-5">
-            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-neutral-500">Control Center</p>
+        <aside className="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-68 shrink-0 self-start overflow-y-auto bg-[#1a2035] text-[#b9babf] lg:block dark:bg-[#1a2035]">
+          <div className="flex items-center gap-2.5 px-4 pb-3 pt-5">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-sm font-extrabold text-[#1a2035]">
+              M
+            </span>
+            <span className="flex min-w-0 flex-col leading-none">
+              <span className="truncate text-sm font-bold tracking-tight text-white">MODALIA</span>
+              <span className="mt-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#b9babf]/70">
+                Control Center
+              </span>
+            </span>
           </div>
           <SidebarNav groups={groups} dark />
         </aside>

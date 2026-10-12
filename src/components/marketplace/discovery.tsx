@@ -81,8 +81,8 @@ export function ProductCard({
 
 
   return (
-    <article className="group relative min-w-0 overflow-hidden rounded-2xl border border-border bg-card transition-colors duration-200 hover:border-foreground/25">
-      {/* Image wrapper — buttons are siblings of the Link, not nested inside */}
+    <article className="group relative flex min-w-0 flex-col overflow-hidden rounded-xl border border-border/60 bg-card shadow-[0_2px_12px_-4px_rgba(0,0,0,0.08)] transition-shadow duration-300 hover:shadow-[0_16px_36px_-14px_rgba(0,0,0,0.22)]">
+      {/* Image — square-ish, image-first. Wishlist is a sibling of the Link, not nested inside. */}
       <div className="relative">
         <Link
           to="/product/$slug"
@@ -91,14 +91,13 @@ export function ProductCard({
           className="block"
           aria-label={product.name}
         >
-          {/* Image — 4:5, image-first */}
-          <div className={`relative aspect-[4/5] overflow-hidden bg-muted ${soldOut ? "saturate-50" : ""}`}>
+          <div className={`relative aspect-square overflow-hidden bg-muted ${soldOut ? "saturate-50" : ""}`}>
           {product.imagePath ? (
             <img
               src={product.imagePath}
               alt={product.imageAlt || product.name}
               loading="lazy"
-              className={`size-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.02] motion-reduce:transition-none motion-reduce:group-hover:scale-100 ${soldOut ? "opacity-75" : ""}`}
+              className={`size-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03] motion-reduce:transition-none motion-reduce:group-hover:scale-100 ${soldOut ? "opacity-75" : ""}`}
             />
           ) : product.secondImagePath ? (
             <img
@@ -123,82 +122,75 @@ export function ProductCard({
               className="absolute inset-0 size-full object-cover opacity-0 transition-opacity duration-500 group-hover:opacity-100 motion-reduce:transition-none motion-reduce:group-hover:opacity-0"
             />
           ) : null}
-
-          {/* Badges — real data only */}
-          <div className="pointer-events-none absolute start-2.5 top-2.5 z-10 flex flex-col items-start gap-1.5">
-            {sale != null ? (
-              <span className="rounded-md bg-destructive px-2 py-1 text-[11px] font-bold text-destructive-foreground">
-                -{sale}%
-              </span>
-            ) : null}
-            {fresh ? (
-              <span className="rounded-md bg-foreground px-2 py-1 text-[11px] font-bold uppercase tracking-wide text-background">
-                {t.new}
-              </span>
-            ) : null}
-          </div>
-
           </div>
         </Link>
 
-        {/* Action buttons — siblings of Link, positioned over image */}
+        {/* Badges — real data only, stacked pills top-start like the reference */}
+        <div className="pointer-events-none absolute start-3 top-3 z-10 flex flex-col items-start gap-1.5">
+          {fresh ? (
+            <span className="rounded-full bg-blue-500 px-2.5 py-1 text-[11px] font-bold text-white shadow-sm">
+              {t.new}
+            </span>
+          ) : null}
+          {sale != null ? (
+            <span className="rounded-full bg-rose-500 px-2.5 py-1 text-[11px] font-bold text-white shadow-sm">
+              -{sale}%
+            </span>
+          ) : null}
+        </div>
+
+        {/* Wishlist — white circle top-end with shadow, heart fills red when active */}
         <button
           type="button"
           onClick={handleWishlist}
           onTouchStart={handleWishlist}
           aria-pressed={wishlisted}
           aria-label={t.wishlist(product.name)}
-          className="absolute end-2 top-2 z-10 grid size-10 place-items-center rounded-full bg-card text-foreground shadow-sm transition-transform hover:scale-105 active:scale-95 touch-manipulation"
+          className="absolute end-3 top-3 z-10 grid size-9 place-items-center rounded-full bg-white text-neutral-900 shadow-md transition-transform hover:scale-105 active:scale-95 touch-manipulation dark:bg-neutral-900 dark:text-white"
         >
-          <Heart className={`size-4 ${wishlisted ? "fill-destructive text-destructive" : ""}`} aria-hidden="true" />
+          <Heart className={`size-4 ${wishlisted ? "fill-rose-500 text-rose-500" : ""}`} aria-hidden="true" />
         </button>
-        {!soldOut ? (
-          <button
-            type="button"
-            onClick={handleQuickAdd}
-            aria-label={t.quickAdd}
-            className="absolute bottom-2 end-2 z-10 grid size-10 place-items-center rounded-full bg-foreground text-background shadow-sm transition-transform hover:scale-105 active:scale-95 touch-manipulation"
-          >
-            <ShoppingBag className="size-4" aria-hidden="true" />
-          </button>
-        ) : null}
       </div>
 
-      <Link
-        to="/product/$slug"
-        params={{ slug: product.slug }}
-        search={{ locale }}
-        className="block"
-        aria-label={product.name}
-      >
-        {/* Info */}
-        <div className="space-y-1 px-3 pb-3 pt-2.5">
-          <p className="truncate text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-            {product.storeName}
-          </p>
-          <h3 className="line-clamp-2 min-h-[2.5em] text-[13.5px] font-medium leading-snug text-foreground">
+      {/* Info — name, price, then full-width Add to Cart (sibling of the Link, not nested) */}
+      <div className="flex flex-1 flex-col px-4 pb-4 pt-3">
+        <Link
+          to="/product/$slug"
+          params={{ slug: product.slug }}
+          search={{ locale }}
+          className="block"
+          aria-label={product.name}
+        >
+          <h3 className="line-clamp-2 min-h-[2.6em] text-[15px] font-bold leading-snug text-foreground">
             {product.name}
           </h3>
-          <p className="flex items-baseline gap-1.5 pt-0.5">
-            <span className="text-base font-bold tabular-nums tracking-tight text-foreground">
+          <p className="mt-1.5 flex items-baseline gap-2">
+            <span className="text-lg font-extrabold tabular-nums tracking-tight text-foreground">
               {formatPrice(product.price, locale)}
             </span>
             {sale != null && product.compareAtPrice ? (
-              <span className="text-[12.5px] tabular-nums text-muted-foreground line-through">
+              <span className="text-sm tabular-nums text-muted-foreground line-through">
                 {formatPrice(product.compareAtPrice, locale)}
               </span>
             ) : null}
           </p>
-          {lowStock ? (
-            <p className="pt-0.5 text-xs font-medium text-destructive">{t.onlyLeft(stock as number)}</p>
-          ) : null}
-          {soldOut ? (
-            <p className="pt-0.5 text-xs text-muted-foreground">{t.soldOut}</p>
-          ) : null}
-
-
+        </Link>
+        {lowStock ? (
+          <p className="pt-1 text-xs font-medium text-destructive">{t.onlyLeft(stock as number)}</p>
+        ) : null}
+        <div className="mt-auto pt-3">
+          <button
+            type="button"
+            onClick={handleQuickAdd}
+            disabled={soldOut}
+            aria-label={soldOut ? t.soldOut : t.quickAdd}
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-neutral-900 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-neutral-700 active:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-50 touch-manipulation dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200 dark:active:bg-neutral-300"
+          >
+            <ShoppingBag className="size-4" aria-hidden="true" />
+            {soldOut ? t.soldOut : t.quickAdd}
+          </button>
         </div>
-      </Link>
+      </div>
     </article>
   );
 }
@@ -388,7 +380,7 @@ export function DiscoverySkeleton() {
       <div className="mt-16 grid grid-cols-2 gap-3 lg:grid-cols-4">
         {Array.from({ length: 4 }, (_, index) => (
           <div key={index}>
-            <Skeleton className="aspect-[4/5] w-full rounded-2xl" />
+            <Skeleton className="aspect-square w-full rounded-xl" />
             <Skeleton className="mt-3 h-4 w-2/3" />
             <Skeleton className="mt-2 h-4 w-1/3" />
           </div>

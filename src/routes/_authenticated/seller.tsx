@@ -13,17 +13,17 @@ import {
   ShoppingBag,
   Wallet,
 } from "lucide-react";
+import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { SellerShell } from "@/components/seller/SellerShell";
 import { getLocale, getTranslations } from "@/lib/i18n";
 import { localeTag } from "@/lib/i18n/format";
-import { AdminCard, StatusPill, fmtDate, fmtMoney } from "@/components/admin/ui";
-import { StatCard } from "@/components/dashboard/StatCard";
-import { DataTable } from "@/components/dashboard/DataTable";
+import { StatusPill, fmtDate, fmtMoney } from "@/components/admin/ui";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { ErrorState } from "@/components/dashboard/ErrorState";
 import { CountUp } from "@/components/motion";
-import { Donut, SalesLine, TopList } from "@/components/seller/SellerCharts";
+import { Donut, SalesLine } from "@/components/seller/SellerCharts";
+import { cn } from "@/lib/utils";
 import { OnboardingNudge } from "@/components/seller/OnboardingNudge";
 import {
   getSellerOrderStatusBreakdown,
@@ -46,6 +46,95 @@ const recentQuery = queryOptions({
   queryKey: ["seller-recent-orders", 8],
   queryFn: () => getSellerRecentOrders({ data: { limit: 8 } }),
 });
+
+/* 21st.dev "Dashboard with Collapsible Sidebar" visual language, adapted to
+   real seller data. White cards on a light-gray page, soft colored icon
+   tiles, no fabricated trend deltas. */
+
+const tileStyles = {
+  blue: "bg-blue-100 text-blue-600 dark:bg-blue-950/70 dark:text-blue-400",
+  green: "bg-emerald-100 text-emerald-600 dark:bg-emerald-950/70 dark:text-emerald-400",
+  purple: "bg-violet-100 text-violet-600 dark:bg-violet-950/70 dark:text-violet-400",
+  orange: "bg-orange-100 text-orange-600 dark:bg-orange-950/70 dark:text-orange-400",
+} as const;
+
+type TileColor = keyof typeof tileStyles;
+
+function MetricCard({
+  icon,
+  tile,
+  label,
+  value,
+  sub,
+}: {
+  icon: ReactNode;
+  tile: TileColor;
+  label: string;
+  value: ReactNode;
+  sub?: ReactNode;
+}) {
+  return (
+    <div className="rounded-xl bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)] dark:bg-neutral-900 dark:shadow-none dark:ring-1 dark:ring-neutral-800">
+      <span
+        className={cn("flex h-10 w-10 items-center justify-center rounded-lg", tileStyles[tile])}
+        aria-hidden="true"
+      >
+        {icon}
+      </span>
+      <p className="mt-4 text-[13px] text-neutral-500 dark:text-neutral-400">{label}</p>
+      <p className="mt-1 text-2xl font-bold tracking-tight text-neutral-950 tabular-nums dark:text-white">
+        {value}
+      </p>
+      {sub ? <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">{sub}</p> : null}
+    </div>
+  );
+}
+
+function SectionCard({
+  title,
+  subtitle,
+  action,
+  children,
+  className,
+}: {
+  title: string;
+  subtitle?: string;
+  action?: ReactNode;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <section
+      className={cn(
+        "rounded-xl bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)] dark:bg-neutral-900 dark:shadow-none dark:ring-1 dark:ring-neutral-800",
+        className,
+      )}
+    >
+      <div className="mb-2 flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="text-[15px] font-bold text-neutral-950 dark:text-white">{title}</h2>
+          {subtitle ? (
+            <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">{subtitle}</p>
+          ) : null}
+        </div>
+        {action}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function ViewAllLink({ to, search, children }: { to: string; search: Record<string, unknown>; children: ReactNode }) {
+  return (
+    <Link
+      to={to}
+      search={search}
+      className="shrink-0 text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+    >
+      {children}
+    </Link>
+  );
+}
 
 export const Route = createFileRoute("/_authenticated/seller")({
   validateSearch: (search: Record<string, unknown>) => ({ locale: getLocale(typeof search["locale"] === "string" ? search["locale"] : undefined) }),
@@ -120,6 +209,7 @@ function SellerOverviewPage() {
     <SellerShell
       title={overview.seller.legalName}
       eyebrow="Seller overview"
+      mainClassName="bg-[#f8f9fc] dark:bg-neutral-950"
       actions={
         <>
           <Button asChild>
@@ -142,83 +232,93 @@ function SellerOverviewPage() {
       ) : null}
 
       {/* KPI grid — every figure computed from real rows, see seller-dashboard.functions.ts */}
-      <section aria-label="Key metrics" className="grid grid-cols-2 gap-4 lg:grid-cols-3">
-        <StatCard
-          featured
-          title="Net earnings"
-          icon={<Wallet className="h-4 w-4" aria-hidden="true" />}
+      <section aria-label="Key metrics" className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <MetricCard
+          tile="blue"
+          icon={<Wallet className="h-5 w-5" aria-hidden="true" />}
+          label="Net earnings"
           value={fmtMoney(kpis.netEarnings, currency, locale)}
-          description="Delivered sales minus commission payable"
+          sub="Delivered sales minus commission payable"
         />
-        <StatCard
-          title="Delivered sales"
-          icon={<Banknote className="h-4 w-4" aria-hidden="true" />}
+        <MetricCard
+          tile="green"
+          icon={<Banknote className="h-5 w-5" aria-hidden="true" />}
+          label="Delivered sales"
           value={fmtMoney(kpis.totalDeliveredSales, currency, locale)}
-          description={`${kpis.deliveredCount} delivered ${kpis.deliveredCount === 1 ? "order" : "orders"}`}
+          sub={`${kpis.deliveredCount} delivered ${kpis.deliveredCount === 1 ? "order" : "orders"}`}
         />
-        <StatCard
-          title="Orders"
-          icon={<ShoppingBag className="h-4 w-4" aria-hidden="true" />}
+        <MetricCard
+          tile="purple"
+          icon={<ShoppingBag className="h-5 w-5" aria-hidden="true" />}
+          label="Orders"
           value={String(kpis.ordersCount)}
-          description={kpis.pendingOrdersCount > 0 ? `${kpis.pendingOrdersCount} awaiting fulfilment` : "All orders fulfilled"}
+          sub={kpis.pendingOrdersCount > 0 ? `${kpis.pendingOrdersCount} awaiting fulfilment` : "All orders fulfilled"}
         />
-        <StatCard
-          title="Avg. order value"
-          icon={<Receipt className="h-4 w-4" aria-hidden="true" />}
+        <MetricCard
+          tile="orange"
+          icon={<Receipt className="h-5 w-5" aria-hidden="true" />}
+          label="Avg. order value"
           value={fmtMoney(kpis.averageOrderValue, currency, locale)}
-          description="Across delivered orders"
+          sub="Across delivered orders"
         />
-        <StatCard
-          title="Commission payable"
-          icon={<Percent className="h-4 w-4" aria-hidden="true" />}
+        <MetricCard
+          tile="blue"
+          icon={<Percent className="h-5 w-5" aria-hidden="true" />}
+          label="Commission payable"
           value={fmtMoney(kpis.commissionPayable, currency, locale)}
-          description="Owed on delivered sales"
+          sub="Owed on delivered sales"
         />
-        <StatCard
-          title="Pending settlement"
-          icon={<Clock className="h-4 w-4" aria-hidden="true" />}
+        <MetricCard
+          tile="green"
+          icon={<Clock className="h-5 w-5" aria-hidden="true" />}
+          label="Pending settlement"
           value={fmtMoney(kpis.pendingSettlementAmount, currency, locale)}
-          description={kpis.pendingSettlementAmount > 0 ? "Queued for payout" : "Nothing queued"}
+          sub={kpis.pendingSettlementAmount > 0 ? "Queued for payout" : "Nothing queued"}
         />
-        <StatCard
-          title="Products"
-          icon={<Package className="h-4 w-4" aria-hidden="true" />}
+        <MetricCard
+          tile="orange"
+          icon={<Package className="h-5 w-5" aria-hidden="true" />}
+          label="Products"
           value={String(kpis.productsCount)}
-          description={stockIssues > 0 ? `${kpis.lowStockCount} low · ${kpis.outOfStockCount} out of stock` : "Stock levels healthy"}
+          sub={stockIssues > 0 ? `${kpis.lowStockCount} low · ${kpis.outOfStockCount} out of stock` : "Stock levels healthy"}
         />
-        <StatCard
-          title="Settled to date"
-          icon={<BadgeCheck className="h-4 w-4" aria-hidden="true" />}
+        <MetricCard
+          tile="purple"
+          icon={<BadgeCheck className="h-5 w-5" aria-hidden="true" />}
+          label="Settled to date"
           value={fmtMoney(kpis.settledAmount, currency, locale)}
-          description="Approved / paid settlements"
+          sub="Approved / paid settlements"
         />
       </section>
 
       {/* Today — real rows only. View cards show an honest "not tracked yet"
           state when the analytics pipeline has nothing for this store;
           conversion is omitted unless views are measurable. */}
-      <AdminCard title={t.today.title} subtitle={t.today.subtitle} className="mt-8">
+      <SectionCard title={t.today.title} className="mt-8">
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 xl:grid-cols-5">
-          <StatCard
-            title={t.today.sales}
-            icon={<Banknote className="h-4 w-4" aria-hidden="true" />}
+          <MetricCard
+            tile="green"
+            icon={<Banknote className="h-5 w-5" aria-hidden="true" />}
+            label={t.today.sales}
             value={
               <>
                 <CountUp value={today.todaySales} locale={tag} formatOptions={{ maximumFractionDigits: 2 }} />{" "}
                 {currency}
               </>
             }
-            description={t.today.salesHint}
+            sub={t.today.salesHint}
           />
-          <StatCard
-            title={t.today.orders}
-            icon={<ShoppingBag className="h-4 w-4" aria-hidden="true" />}
+          <MetricCard
+            tile="purple"
+            icon={<ShoppingBag className="h-5 w-5" aria-hidden="true" />}
+            label={t.today.orders}
             value={<CountUp value={today.todayOrdersCount} locale={tag} />}
-            description={t.today.ordersHint}
+            sub={t.today.ordersHint}
           />
-          <StatCard
-            title={t.today.storeViews}
-            icon={<Eye className="h-4 w-4" aria-hidden="true" />}
+          <MetricCard
+            tile="blue"
+            icon={<Eye className="h-5 w-5" aria-hidden="true" />}
+            label={t.today.storeViews}
             value={
               today.viewsMeasurable && today.storeViews != null ? (
                 <CountUp value={today.storeViews} locale={tag} />
@@ -226,11 +326,12 @@ function SellerOverviewPage() {
                 t.today.viewsNotTracked
               )
             }
-            description={today.viewsMeasurable ? undefined : t.today.viewsNotTrackedHint}
+            sub={today.viewsMeasurable ? undefined : t.today.viewsNotTrackedHint}
           />
-          <StatCard
-            title={t.today.productViews}
-            icon={<Eye className="h-4 w-4" aria-hidden="true" />}
+          <MetricCard
+            tile="blue"
+            icon={<Eye className="h-5 w-5" aria-hidden="true" />}
+            label={t.today.productViews}
             value={
               today.viewsMeasurable && today.productViews != null ? (
                 <CountUp value={today.productViews} locale={tag} />
@@ -238,12 +339,13 @@ function SellerOverviewPage() {
                 t.today.viewsNotTracked
               )
             }
-            description={today.viewsMeasurable ? undefined : t.today.viewsNotTrackedHint}
+            sub={today.viewsMeasurable ? undefined : t.today.viewsNotTrackedHint}
           />
           {today.conversionRate != null ? (
-            <StatCard
-              title={t.today.conversion}
-              icon={<Percent className="h-4 w-4" aria-hidden="true" />}
+            <MetricCard
+              tile="orange"
+              icon={<Percent className="h-5 w-5" aria-hidden="true" />}
+              label={t.today.conversion}
               value={
                 <CountUp
                   value={today.conversionRate / 100}
@@ -251,11 +353,11 @@ function SellerOverviewPage() {
                   formatOptions={{ style: "percent", maximumFractionDigits: 1 }}
                 />
               }
-              description={t.today.conversionHint}
+              sub={t.today.conversionHint}
             />
           ) : null}
         </div>
-      </AdminCard>
+      </SectionCard>
 
       {/* Settlement nudge */}
       {kpis.pendingSettlementAmount > 0 ? (
@@ -279,38 +381,44 @@ function SellerOverviewPage() {
 
       {/* Top products + stock alerts */}
       <section className="mt-8 grid gap-6 lg:grid-cols-2">
-        <AdminCard
+        <SectionCard
           title="Top products"
-          subtitle="By revenue across non-cancelled orders"
-          actions={
-            <Button asChild variant="ghost" size="sm">
-              <Link to="/seller/analytics" search={{ locale, days: 30 }}>
-                Details <ArrowRight className="ms-1 h-4 w-4 rtl:rotate-180" aria-hidden="true" />
-              </Link>
-            </Button>
+          action={
+            <ViewAllLink to="/seller/analytics" search={{ locale, days: 30 }}>
+              View all
+            </ViewAllLink>
           }
         >
           {topProducts === null ? (
             <p className="text-small text-muted-foreground">{t.sectionLoadError}</p>
+          ) : topProducts.length > 0 ? (
+            <ul className="divide-y divide-neutral-100 dark:divide-neutral-800">
+              {topProducts.map((p) => (
+                <li key={p.name} className="flex items-baseline justify-between gap-3 py-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-neutral-900 dark:text-neutral-100">{p.name}</p>
+                    <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
+                      {p.units} {p.units === 1 ? "unit" : "units"} sold
+                    </p>
+                  </div>
+                  <p className="shrink-0 text-sm font-semibold text-neutral-950 tabular-nums dark:text-white">
+                    {fmtMoney(p.revenue, currency, locale)}
+                  </p>
+                </li>
+              ))}
+            </ul>
           ) : (
-            <TopList
-              rows={topProducts.map((p) => ({
-                label: p.name,
-                value: fmtMoney(p.revenue, currency, locale),
-                hint: `${p.units} ${p.units === 1 ? "unit" : "units"} sold`,
-              }))}
-            />
+            <p className="py-6 text-small text-muted-foreground">
+              Nothing to rank yet — data will appear here once orders exist.
+            </p>
           )}
-        </AdminCard>
-        <AdminCard
+        </SectionCard>
+        <SectionCard
           title="Stock alerts"
-          subtitle={stockIssues > 0 ? `${stockIssues} variants need attention` : "All variants above their low-stock threshold"}
-          actions={
-            <Button asChild variant="ghost" size="sm">
-              <Link to="/seller/products" search={{ locale, q: "", status: "", moderation: "", page: 1 }}>
-                Manage inventory <ArrowRight className="ms-1 h-4 w-4 rtl:rotate-180" aria-hidden="true" />
-              </Link>
-            </Button>
+          action={
+            <ViewAllLink to="/seller/products" search={{ locale, q: "", status: "", moderation: "", page: 1 }}>
+              Manage inventory
+            </ViewAllLink>
           }
         >
           {lowStockAlerts.length > 0 ? (
@@ -331,69 +439,70 @@ function SellerOverviewPage() {
           ) : (
             <EmptyState title="Stock levels healthy" description="No variant is at or below its low-stock threshold." />
           )}
-        </AdminCard>
+        </SectionCard>
       </section>
 
       {/* Charts */}
       <section className="mt-8 grid gap-6 lg:grid-cols-3">
-        <AdminCard title="Sales — last 30 days" subtitle="Delivered sales and order counts per day" className="lg:col-span-2">
+        <SectionCard
+          title="Sales — last 30 days"
+          subtitle="Delivered sales and order counts per day"
+          className="lg:col-span-2"
+        >
           {series === null ? (
             <p className="text-small text-muted-foreground">{t.sectionLoadError}</p>
           ) : (
             <SalesLine data={series} />
           )}
-        </AdminCard>
-        <AdminCard title="Order statuses" subtitle="Your orders by current status">
+        </SectionCard>
+        <SectionCard title="Order statuses" subtitle="Your orders by current status">
           {breakdown === null ? (
             <p className="text-small text-muted-foreground">{t.sectionLoadError}</p>
           ) : (
             <Donut data={breakdown.map((b) => ({ label: b.status, value: b.count }))} centerLabel="orders" />
           )}
-        </AdminCard>
+        </SectionCard>
       </section>
 
-      {/* Recent orders */}
-      <AdminCard
-        title="Recent orders"
-        subtitle="Latest orders across your store"
+      {/* Recent activity — built from the seller's real recent orders */}
+      <SectionCard
+        title="Recent Activity"
         className="mt-8"
-        actions={
-          <Button asChild variant="ghost" size="sm">
-            <Link to="/seller/orders" search={{ locale, q: "", status: "", page: 1 }}>
-              All orders <ArrowRight className="ms-1 h-4 w-4 rtl:rotate-180" aria-hidden="true" />
-            </Link>
-          </Button>
+        action={
+          <ViewAllLink to="/seller/orders" search={{ locale, q: "", status: "", page: 1 }}>
+            View all
+          </ViewAllLink>
         }
       >
         {recent === null ? (
           <p className="text-small text-muted-foreground">{t.sectionLoadError}</p>
         ) : recent.length > 0 ? (
-          <DataTable>
-            <table className="w-full min-w-[640px] text-small">
-              <thead>
-                <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
-                  <th scope="col" className="py-2.5 ps-4 pe-4 text-start font-semibold">Order</th>
-                  <th scope="col" className="py-2.5 pe-4 text-start font-semibold">Customer</th>
-                  <th scope="col" className="py-2.5 pe-4 text-start font-semibold">Status</th>
-                  <th scope="col" className="py-2.5 pe-4 text-start font-semibold">Date</th>
-                  <th scope="col" className="py-2.5 pe-4 text-end font-semibold">Total</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
-                {recent.map((o) => (
-                  <tr key={o.id} className="transition-colors hover:bg-muted/40">
-                    <td className="py-3 ps-4 pe-4 font-medium tabular-nums">{o.orderNumber}</td>
-                    <td className="py-3 pe-4 text-muted-foreground">{o.customer}</td>
-                    <td className="py-3 pe-4">
-                      <StatusPill status={o.status} />
-                    </td>
-                    <td className="py-3 pe-4 text-muted-foreground">{fmtDate(o.createdAt, locale)}</td>
-                    <td className="py-3 pe-4 text-end font-medium tabular-nums">{fmtMoney(o.total, currency, locale)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </DataTable>
+          <ul className="divide-y divide-neutral-100 dark:divide-neutral-800">
+            {recent.map((o) => (
+              <li key={o.id} className="flex items-center gap-3 py-3">
+                <span
+                  className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-full", tileStyles.blue)}
+                  aria-hidden="true"
+                >
+                  <ShoppingBag className="h-4 w-4" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-neutral-950 tabular-nums dark:text-white">
+                    Order {o.orderNumber}
+                  </p>
+                  <p className="mt-0.5 truncate text-xs text-neutral-500 dark:text-neutral-400">
+                    {o.customer} · {fmtMoney(o.total, currency, locale)}
+                  </p>
+                </div>
+                <div className="flex shrink-0 flex-col items-end gap-1.5">
+                  <StatusPill status={o.status} />
+                  <span className="text-[11px] text-neutral-400 dark:text-neutral-500">
+                    {fmtDate(o.createdAt, locale)}
+                  </span>
+                </div>
+              </li>
+            ))}
+          </ul>
         ) : (
           <EmptyState
             title="No orders yet"
@@ -405,7 +514,7 @@ function SellerOverviewPage() {
             }
           />
         )}
-      </AdminCard>
+      </SectionCard>
     </SellerShell>
   );
 }

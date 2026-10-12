@@ -1,6 +1,6 @@
 import { useState, type MouseEvent } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Heart, ShoppingBag } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight, Heart, ShoppingBag } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatPrice } from "@/lib/i18n/format";
 import { getTranslations } from "@/lib/i18n";
@@ -34,6 +34,9 @@ export function ProductCard({
   locale: SupportedLocale;
 }) {
   const [wishlisted, setWishlisted] = useState(() => isWishlisted(product.id));
+  // Image carousel (Product Card 1 reference): arrows + indicators
+  const images = [product.imagePath, product.secondImagePath].filter(Boolean) as string[];
+  const [imgIndex, setImgIndex] = useState(0);
   const t = getTranslations(locale).card;
   const sf = getTranslations(locale).home;
 
@@ -43,6 +46,7 @@ export function ProductCard({
   const fresh = isNewProduct(product.createdAt);
   const stock = product.totalStock;
   const soldOut = stock === 0;
+  const showArrows = images.length > 1 && !soldOut;
   const lowStock = stock != null && stock > 0 && stock <= LOW_STOCK_THRESHOLD;
 
   // Honest quick-add: raise a mode:"add" request for the catalog card.
@@ -82,7 +86,8 @@ export function ProductCard({
 
   return (
     <article className="group relative flex min-w-0 flex-col overflow-hidden rounded-xl border border-border/60 bg-card shadow-[0_2px_12px_-4px_rgba(0,0,0,0.08)] transition-shadow duration-300 hover:shadow-[0_16px_36px_-14px_rgba(0,0,0,0.22)]">
-      {/* Image — square-ish, image-first. Wishlist is a sibling of the Link, not nested inside. */}
+      {/* Image carousel — Product Card 1 reference: arrows + indicators.
+          Arrows stopPropagation so they don't trigger the product link. */}
       <div className="relative">
         <Link
           to="/product/$slug"
@@ -92,38 +97,51 @@ export function ProductCard({
           aria-label={product.name}
         >
           <div className={`relative aspect-square overflow-hidden bg-muted ${soldOut ? "saturate-50" : ""}`}>
-          {product.imagePath ? (
-            <img
-              src={product.imagePath}
-              alt={product.imageAlt || product.name}
-              loading="lazy"
-              className={`size-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03] motion-reduce:transition-none motion-reduce:group-hover:scale-100 ${soldOut ? "opacity-75" : ""}`}
-            />
-          ) : product.secondImagePath ? (
-            <img
-              src={product.secondImagePath}
-              alt={product.secondImageAlt || product.name}
-              loading="lazy"
-              className="size-full object-cover"
-            />
-          ) : (
-            <div className="flex size-full items-end p-5 text-sm text-muted-foreground">
-              Modalia
-              <br />
-              {product.name}
-            </div>
-          )}
-          {product.imagePath && product.secondImagePath && !soldOut ? (
-            <img
-              src={product.secondImagePath}
-              alt=""
-              aria-hidden
-              loading="lazy"
-              className="absolute inset-0 size-full object-cover opacity-0 transition-opacity duration-500 group-hover:opacity-100 motion-reduce:transition-none motion-reduce:group-hover:opacity-0"
-            />
-          ) : null}
+            {images.length > 0 ? (
+              <img
+                key={imgIndex}
+                src={images[imgIndex]}
+                alt={product.imageAlt || product.name}
+                loading="lazy"
+                className={`size-full object-cover ${soldOut ? "opacity-75 saturate-50" : ""}`}
+              />
+            ) : (
+              <div className="flex size-full items-end p-5 text-sm text-muted-foreground">
+                Modalia
+                <br />
+                {product.name}
+              </div>
+            )}
           </div>
         </Link>
+        {showArrows ? (
+          <>
+            <button
+              type="button"
+              aria-label="Previous image"
+              onClick={(e) => { e.stopPropagation(); e.preventDefault(); setImgIndex((i) => (i - 1 + images.length) % images.length); }}
+              className="absolute start-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-neutral-800 opacity-0 shadow-md transition-opacity group-hover:opacity-100 hover:bg-white focus-visible:opacity-100"
+            >
+              <ChevronLeft className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              aria-label="Next image"
+              onClick={(e) => { e.stopPropagation(); e.preventDefault(); setImgIndex((i) => (i + 1) % images.length); }}
+              className="absolute end-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-neutral-800 opacity-0 shadow-md transition-opacity group-hover:opacity-100 hover:bg-white focus-visible:opacity-100"
+            >
+              <ChevronRight className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />
+            </button>
+            <div className="absolute bottom-2 left-1/2 z-10 flex -translate-x-1/2 gap-1.5 rtl:translate-x-1/2" aria-hidden="true">
+              {images.map((_, i) => (
+                <span
+                  key={i}
+                  className={`h-1.5 rounded-full transition-all ${i === imgIndex ? "w-4 bg-white" : "w-1.5 bg-white/60"}`}
+                />
+              ))}
+            </div>
+          </>
+        ) : null}
 
         {/* Badges — real data only, stacked pills top-start like the reference */}
         <div className="pointer-events-none absolute start-3 top-3 z-10 flex flex-col items-start gap-1.5">

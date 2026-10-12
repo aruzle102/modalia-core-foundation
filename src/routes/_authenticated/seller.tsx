@@ -11,6 +11,8 @@ import {
   Percent,
   Receipt,
   ShoppingBag,
+  TrendingDown,
+  TrendingUp,
   Wallet,
 } from "lucide-react";
 import type { ReactNode } from "react";
@@ -36,7 +38,7 @@ import {
 
 const overviewQuery = queryOptions({ queryKey: ["seller-overview"], queryFn: () => getSellerOverview() });
 const todayQuery = queryOptions({ queryKey: ["seller-today-stats"], queryFn: () => getSellerTodayStats() });
-const seriesQuery = queryOptions({ queryKey: ["seller-series", 30], queryFn: () => getSellerSalesSeries({ data: { days: 30 } }) });
+const seriesQuery = queryOptions({ queryKey: ["seller-series", 60], queryFn: () => getSellerSalesSeries({ data: { days: 60 } }) });
 const topProductsQuery = queryOptions({
   queryKey: ["seller-top-products", 5],
   queryFn: () => getSellerTopProducts({ data: { limit: 5 } }),
@@ -60,34 +62,71 @@ const tileStyles = {
 
 type TileColor = keyof typeof tileStyles;
 
+/* 21st.dev "Dashboard with Collapsible Sidebar" MetricCard — faithful to reference:
+   icon tile top-left, trend arrow top-right, label, big value, trend text. */
 function MetricCard({
   icon,
   tile,
   label,
   value,
+  trend,
+  trendUp,
   sub,
 }: {
   icon: ReactNode;
   tile: TileColor;
   label: string;
   value: ReactNode;
+  trend?: string | null;
+  trendUp?: boolean | null;
   sub?: ReactNode;
 }) {
   return (
-    <div className="rounded-xl bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)] dark:bg-neutral-900 dark:shadow-none dark:ring-1 dark:ring-neutral-800">
-      <span
-        className={cn("flex h-10 w-10 items-center justify-center rounded-lg", tileStyles[tile])}
-        aria-hidden="true"
-      >
-        {icon}
-      </span>
+    <div className="rounded-xl bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.08)] dark:bg-neutral-900 dark:shadow-none dark:ring-1 dark:ring-neutral-800">
+      <div className="flex items-start justify-between">
+        <span
+          className={cn("flex h-10 w-10 items-center justify-center rounded-lg", tileStyles[tile])}
+          aria-hidden="true"
+        >
+          {icon}
+        </span>
+        {trendUp === true ? (
+          <TrendingUp className="h-4 w-4 text-emerald-500" aria-hidden="true" />
+        ) : trendUp === false ? (
+          <TrendingDown className="h-4 w-4 text-rose-500" aria-hidden="true" />
+        ) : null}
+      </div>
       <p className="mt-4 text-[13px] text-neutral-500 dark:text-neutral-400">{label}</p>
-      <p className="mt-1 text-2xl font-bold tracking-tight text-neutral-950 tabular-nums dark:text-white">
+      <p className="mt-1 text-[26px] font-bold tracking-tight text-neutral-950 tabular-nums dark:text-white">
         {value}
       </p>
-      {sub ? <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">{sub}</p> : null}
+      {trend ? (
+        <p className={cn("mt-1 text-xs font-medium", trendUp === false ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400")}>
+          {trend}
+        </p>
+      ) : sub ? (
+        <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">{sub}</p>
+      ) : null}
     </div>
   );
+}
+
+/* Compute % change: current 30d vs prior 30d from the 60-day series.
+   Returns null when there is not enough data (honest, not fabricated). */
+function trendOf(series: { sales: number; orders: number }[] | null, key: "sales" | "orders"): { pct: number; up: boolean } | null {
+  if (!series || series.length < 40) return null;
+  const cur = series.slice(-30).reduce((s, p) => s + p[key], 0);
+  const prev = series.slice(-60, -30).reduce((s, p) => s + p[key], 0);
+  if (prev <= 0) return cur > 0 ? { pct: 100, up: true } : null;
+  const pct = ((cur - prev) / prev) * 100;
+  if (Math.abs(pct) < 0.05) return null;
+  return { pct, up: pct >= 0 };
+}
+
+function trendText(t: { pct: number; up: boolean } | null): string | null {
+  if (!t) return null;
+  const sign = t.up ? "+" : "";
+  return `${sign}${t.pct.toFixed(1)}% vs prior 30 days`;
 }
 
 function SectionCard({
@@ -204,6 +243,9 @@ function SellerOverviewPage() {
 
   const { kpis, currency, lowStockAlerts } = overview;
   const stockIssues = kpis.lowStockCount + kpis.outOfStockCount;
+  // Real trends from the 60-day sales series (current 30d vs prior 30d)
+  const salesTrend = trendOf(series, "sales");
+  const ordersTrend = trendOf(series, "orders");
 
   return (
     <SellerShell
@@ -238,6 +280,8 @@ function SellerOverviewPage() {
           icon={<Wallet className="h-5 w-5" aria-hidden="true" />}
           label="Net earnings"
           value={fmtMoney(kpis.netEarnings, currency, locale)}
+          trend={trendText(salesTrend)}
+          trendUp={salesTrend?.up ?? null}
           sub="Delivered sales minus commission payable"
         />
         <MetricCard
@@ -245,6 +289,8 @@ function SellerOverviewPage() {
           icon={<Banknote className="h-5 w-5" aria-hidden="true" />}
           label="Delivered sales"
           value={fmtMoney(kpis.totalDeliveredSales, currency, locale)}
+          trend={trendText(salesTrend)}
+          trendUp={salesTrend?.up ?? null}
           sub={`${kpis.deliveredCount} delivered ${kpis.deliveredCount === 1 ? "order" : "orders"}`}
         />
         <MetricCard
@@ -252,6 +298,8 @@ function SellerOverviewPage() {
           icon={<ShoppingBag className="h-5 w-5" aria-hidden="true" />}
           label="Orders"
           value={String(kpis.ordersCount)}
+          trend={trendText(ordersTrend)}
+          trendUp={ordersTrend?.up ?? null}
           sub={kpis.pendingOrdersCount > 0 ? `${kpis.pendingOrdersCount} awaiting fulfilment` : "All orders fulfilled"}
         />
         <MetricCard

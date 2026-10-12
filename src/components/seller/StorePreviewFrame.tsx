@@ -38,14 +38,14 @@ export function StorePreviewFrame({
     if (containerRef.current) observer.observe(containerRef.current);
     if (contentRef.current) observer.observe(contentRef.current);
     return () => observer.disconnect();
-  }, [width, children]);
+  }, [width]);
 
   return (
-    <div className="overflow-x-auto rounded-2xl border border-border bg-muted/40 p-4">
+    <div className="overflow-hidden rounded-2xl border border-border bg-muted/40 p-4">
       <p className="mb-3 text-caption font-medium uppercase tracking-wide text-muted-foreground">
         {label} · {width}px
       </p>
-      <div ref={containerRef} className="w-full overflow-hidden rounded-xl border border-border bg-background shadow-sm">
+      <div ref={containerRef} className="w-full min-w-0 overflow-hidden rounded-xl border border-border bg-background shadow-sm">
         <div style={{ height: contentHeight * scale }} className="relative">
           <div
             ref={contentRef}

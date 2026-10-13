@@ -15,10 +15,10 @@ import {
   fmtDateTime,
   timeAgo,
 } from "@/components/admin/ui";
-import { DataTable, EmptyState, ErrorState } from "@/components/dashboard";
+import { DataTable, EmptyState, ErrorState, StatCard } from "@/components/dashboard";
 import { useAdminLocale } from "@/components/admin/useAdminLocale";
 import { getTranslations } from "@/lib/i18n";
-import { listAdminCommissions } from "@/lib/admin-catalog.functions";
+import { listAdminCommissions, getCommissionSummary } from "@/lib/admin-catalog.functions";
 import { updateCommissionRate } from "@/lib/admin-sellers.functions";
 import { errMsg, Pager } from "./_shared";
 import { numParam, strParam, useBackParam, useDebouncedUrlParam, useUrlState } from "@/hooks/use-url-state";
@@ -79,6 +79,14 @@ function CommissionsPage() {
     retry: false,
   });
 
+  const summaryQuery = useQuery({
+    queryKey: ["admin-commissions-summary"],
+    queryFn: () => getCommissionSummary({ data: {} }),
+    retry: false,
+    staleTime: 60_000,
+  });
+  const summary = summaryQuery.data;
+
   const rows = query.data?.rows ?? [];
   const total = query.data?.total ?? 0;
   const pageSize = query.data?.pageSize ?? 25;
@@ -99,6 +107,34 @@ function CommissionsPage() {
         subtitle={t.subtitle}
         breadcrumbs={[{ label: nav.commissions }]}
       >
+        {/* Summary stats */}
+        <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <StatCard
+            title={t.statPlatformCommission}
+            value={summary ? fmtMoney(summary.commission, "DZD", locale) : "—"}
+            description={t.statPlatformCommissionDesc}
+            loading={summaryQuery.isPending}
+          />
+          <StatCard
+            title={t.statGrossSales}
+            value={summary ? fmtMoney(summary.gross, "DZD", locale) : "—"}
+            description={t.statGrossSalesDesc}
+            loading={summaryQuery.isPending}
+          />
+          <StatCard
+            title={t.statNetSellers}
+            value={summary ? fmtMoney(summary.net, "DZD", locale) : "—"}
+            description={t.statNetSellersDesc}
+            loading={summaryQuery.isPending}
+          />
+          <StatCard
+            title={t.statAvgRate}
+            value={summary ? `${(summary.avgRate * 100).toFixed(1)}%` : "—"}
+            description={t.statAvgRateDesc}
+            loading={summaryQuery.isPending}
+          />
+        </div>
+
         <AdminCard
           title={t.title}
           subtitle={t.totalSellers(total)}
@@ -144,9 +180,9 @@ function CommissionsPage() {
                     <th className="px-3 py-3 text-start">{t.seller}</th>
                     <th className="px-3 py-3 text-end">{t.rate}</th>
                     <th className="px-3 py-3 text-end">{t.orders}</th>
-                    <th className="px-3 py-3 text-end">{t.gross}</th>
-                    <th className="px-3 py-3 text-end">{t.commission}</th>
-                    <th className="px-3 py-3 text-end">{t.net}</th>
+                    <th className="px-3 py-3 text-end" title={t.colGrossHint}>{t.gross}</th>
+                    <th className="px-3 py-3 text-end" title={t.colCommissionHint}>{t.commission}</th>
+                    <th className="px-3 py-3 text-end" title={t.colNetHint}>{t.net}</th>
                     <th className="px-3 py-3 text-end">{t.history}</th>
                   </tr>
                 </thead>

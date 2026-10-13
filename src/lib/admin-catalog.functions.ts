@@ -2053,3 +2053,45 @@ export const listStoreProducts = createServerFn({ method: "GET" })
     );
     return { products: enriched };
   });
+
+/* ── Commission summary stats ─────────────────────────────────────── */
+
+/** Admin: global commission summary for the commissions dashboard header. */
+export const getCommissionSummary = createServerFn({ method: "GET" })
+  .middleware(adminOnly)
+  .validator(() => ({}))
+  .handler(async ({ context }) => {
+    await assertAdmin(context);
+    const supabaseAdmin = await adminClient();
+
+    const [sellersRes, ordersRes] = await Promise.all([
+      supabaseAdmin.from("sellers").select("id, commission_rate", { count: "exact" }),
+      supabaseAdmin
+        .from("seller_orders")
+        .select("subtotal, commission_total")
+        .in("status", ["delivered", "fulfilled"]),
+    ]);
+    if (sellersRes.error) throw new Error(sellersRes.error.message);
+    if (ordersRes.error) throw new Error(ordersRes.error.message);
+
+    const sellers = sellersRes.data ?? [];
+    const orders = ordersRes.data ?? [];
+
+    let gross = 0;
+    let commission = 0;
+    for (const o of orders) {
+      gross += Number(o.subtotal ?? 0);
+      commission += Number(o.commission_total ?? 0);
+    }
+
+    const rates = sellers.map((s) => Number(s.commission_rate ?? 0)).filter((r) => r > 0);
+    const avgRate = rates.length ? rates.reduce((a, b) => a + b, 0) / rates.length : 0;
+
+    return {
+      sellerCount: sellersRes.count ?? sellers.length,
+      gross,
+      commission,
+      net: gross - commission,
+      avgRate,
+    };
+  });

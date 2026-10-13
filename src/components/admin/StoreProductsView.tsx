@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { ProductEditor } from "@/components/seller/ProductEditor";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AdminCard, StatusPill, TableSkeleton, fmtMoney } from "@/components/admin/ui";
 import { EmptyState } from "@/components/dashboard";
 import { Button } from "@/components/ui/button";
@@ -30,7 +32,7 @@ type StoreProduct = {
  */
 export function StoreProductsView({ sellerId, onBack }: { sellerId: string; onBack: () => void }) {
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
+  const [editingId, setEditingId] = useState<string | null>(null);
   const productsQuery = useQuery({
     queryKey: ["admin-store-products", sellerId],
     queryFn: () => listStoreProducts({ data: { sellerId } }),
@@ -149,13 +151,7 @@ export function StoreProductsView({ sellerId, onBack }: { sellerId: string; onBa
                       </Button>
                       <Button
                         type="button" size="sm" variant="outline"
-                        onClick={() => {
-                          void navigate({
-                            to: "/admin/products/$productId",
-                            params: { productId: p.id },
-                            search: { back: `/admin/products?tab=stores&storeId=${sellerId}` },
-                          });
-                        }}
+                        onClick={() => setEditingId(p.id)}
                       >
                         Edit
                       </Button>
@@ -192,6 +188,25 @@ export function StoreProductsView({ sellerId, onBack }: { sellerId: string; onBa
           })}
         </div>
       )}
+      <Dialog open={editingId !== null} onOpenChange={(open) => { if (!open) setEditingId(null); }}>
+        <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Product</DialogTitle>
+          </DialogHeader>
+          {editingId ? (
+            <ProductEditor
+              mode="edit"
+              productId={editingId}
+              adminMode
+              onSaved={() => {
+                setEditingId(null);
+                refresh();
+                toast.success("Product saved. Seller notified.");
+              }}
+            />
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

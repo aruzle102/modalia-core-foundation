@@ -40,6 +40,49 @@ import { getLocale, getTranslations } from "@/lib/i18n";
 import type { SupportedLocale } from "@/config/platform";
 
 /* ---------------------------------------------------------------------------
+ * Kaiadmin-style stat cards: horizontal layout with solid colored icon tile.
+ * Faithful to the Kaiadmin reference: [icon square] [label + big number].
+ * ------------------------------------------------------------------------- */
+
+const kaiIconTiles = {
+  blue: "bg-[#1572e8]",
+  sky: "bg-[#48abf7]",
+  green: "bg-[#31ce36]",
+  purple: "bg-[#6861ce]",
+  orange: "bg-[#ffad46]",
+  red: "bg-[#f25961]",
+} as const;
+
+function KaiStatCard({
+  icon,
+  color,
+  label,
+  value,
+}: {
+  icon: ReactNode;
+  color: keyof typeof kaiIconTiles;
+  label: string;
+  value: ReactNode;
+}) {
+  return (
+    <div className="flex items-center gap-4 rounded-xl bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.08)] dark:bg-neutral-900 dark:shadow-none dark:ring-1 dark:ring-neutral-800">
+      <span
+        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-lg text-white ${kaiIconTiles[color]}`}
+        aria-hidden="true"
+      >
+        {icon}
+      </span>
+      <span className="min-w-0">
+        <span className="block truncate text-[13px] text-neutral-500 dark:text-neutral-400">{label}</span>
+        <span className="mt-0.5 block text-2xl font-bold tracking-tight text-neutral-950 tabular-nums dark:text-white">
+          {value}
+        </span>
+      </span>
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------------------------
  * Simple admin dashboard. Everything here is a real number from a server
  * function — no invented figures. Empty data renders as zero / empty states.
  * ------------------------------------------------------------------------- */
@@ -401,30 +444,30 @@ function DashboardContent({ locale }: { locale: Locale }) {
           <h2 className="text-lg font-semibold tracking-tight">{s.today}</h2>
           <p className="mt-0.5 text-sm text-muted-foreground">{s.todayHint}</p>
         </div>
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
-          <StatCard
-            featured
-            title={s.revenue}
-            icon={<Banknote className="h-4 w-4" aria-hidden="true" />}
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <KaiStatCard
+            color="green"
+            icon={<Banknote className="h-6 w-6" aria-hidden="true" />}
+            label={s.revenue}
             value={fmtMoney(m.metrics.salesDelivered, "DZD", locale)}
-            description={s.revenueHint}
           />
-          <StatCard
-            title={s.orders}
-            icon={<ShoppingBag className="h-4 w-4" aria-hidden="true" />}
+          <KaiStatCard
+            color="purple"
+            icon={<ShoppingBag className="h-6 w-6" aria-hidden="true" />}
+            label={s.orders}
             value={String(m.metrics.ordersTotal)}
-            description={s.ordersHint}
           />
-          <StatCard
-            title={s.activeSellers}
-            icon={<Users className="h-4 w-4" aria-hidden="true" />}
+          <KaiStatCard
+            color="blue"
+            icon={<Users className="h-6 w-6" aria-hidden="true" />}
+            label={s.activeSellers}
             value={String(m.metrics.activeSellers)}
           />
-          <StatCard
-            title={s.pendingOrders}
-            icon={<Clock className="h-4 w-4" aria-hidden="true" />}
+          <KaiStatCard
+            color="orange"
+            icon={<Clock className="h-6 w-6" aria-hidden="true" />}
+            label={s.pendingOrders}
             value={String(pendingOrdersCount)}
-            description={s.pendingOrdersHint}
           />
         </div>
       </section>

@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Fragment, useState } from "react";
-import { Search } from "lucide-react";
+import { toast } from "sonner";
+import { Check, Pencil, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AdminGate } from "@/components/admin/AdminGate";
@@ -18,6 +19,7 @@ import { DataTable, EmptyState, ErrorState } from "@/components/dashboard";
 import { useAdminLocale } from "@/components/admin/useAdminLocale";
 import { getTranslations } from "@/lib/i18n";
 import { listAdminCommissions } from "@/lib/admin-catalog.functions";
+import { updateCommissionRate } from "@/lib/admin-sellers.functions";
 import { errMsg, Pager } from "./_shared";
 import { numParam, strParam, useBackParam, useDebouncedUrlParam, useUrlState } from "@/hooks/use-url-state";
 import { useAdminT } from "@/components/admin/use-admin-t";
@@ -45,7 +47,31 @@ function CommissionsPage() {
     onCommit: () => url.set({ page: 1 }),
   });
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editRate, setEditRate] = useState("");
+  const queryClient = useQueryClient();
   const setPage = (next: number) => url.set({ page: next }, { push: true });
+
+  const rateMutation = useMutation({
+    mutationFn: (input: { sellerId: string; rate: number }) =>
+      updateCommissionRate({ data: input }),
+    onSuccess: (res) => {
+      toast.success(t.rateUpdated((res.rate * 100).toFixed(1)));
+      setEditingId(null);
+      setEditRate("");
+      queryClient.invalidateQueries({ queryKey: ["admin-commissions"] });
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const submitRate = (sellerId: string) => {
+    const parsed = Number(editRate.replace(",", "."));
+    if (!Number.isFinite(parsed) || parsed < 0 || parsed > 100) {
+      toast.error(t.invalidRate);
+      return;
+    }
+    rateMutation.mutate({ sellerId, rate: parsed });
+  };
 
   const query = useQuery({
     queryKey: ["admin-commissions", q, page],
@@ -97,7 +123,7 @@ function CommissionsPage() {
           ) : query.isError ? (
             <DataTable>
               <ErrorState
-                title="Could not load commissions"
+                title={t.loadError}
                 description={errMsg(query.error)}
                 action={
                   <Button variant="outline" size="sm" onClick={() => query.refetch()}>
@@ -144,7 +170,59 @@ function CommissionsPage() {
                             </p>
                           </td>
                           <td className="px-3 py-3 text-end font-medium tabular-nums">
-                            {(r.commissionRate * 100).toFixed(1)}%
+                            {editingId === r.sellerId ? (
+                              <span className="inline-flex items-center gap-1.5">
+                                <Input
+                                  value={editRate}
+                                  onChange={(e) => setEditRate(e.target.value)}
+                                  placeholder={(r.commissionRate * 100).toFixed(1)}
+                                  inputMode="decimal"
+                                  dir="ltr"
+                                  className="h-8 w-20 text-end"
+                                  autoFocus
+                                />
+                                <span className="text-muted-foreground">%</span>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="size-8"
+                                  disabled={rateMutation.isPending}
+                                  onClick={() => submitRate(r.sellerId)}
+                                  aria-label={t.save}
+                                >
+                                  <Check className="size-4 text-emerald-600" />
+                                </Button>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="size-8"
+                                  onClick={() => {
+                                    setEditingId(null);
+                                    setEditRate("");
+                                  }}
+                                  aria-label={t.cancel}
+                                >
+                                  <X className="size-4" />
+                                </Button>
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5">
+                                {(r.commissionRate * 100).toFixed(1)}%
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="size-7"
+                                  onClick={() => {
+                                    setEditingId(r.sellerId);
+                                    setEditRate((r.commissionRate * 100).toFixed(1));
+                                  }}
+                                  aria-label={t.editRate}
+                                  title={t.editRate}
+                                >
+                                  <Pencil className="size-3.5 opacity-60" />
+                                </Button>
+                              </span>
+                            )}
                           </td>
                           <td className="px-3 py-3 text-end tabular-nums">{r.orderCount}</td>
                           <td className="whitespace-nowrap px-3 py-3 text-end tabular-nums">
@@ -212,7 +290,7 @@ function CommissionsPage() {
                 </tbody>
                 <tfoot>
                   <tr className="border-t-2">
-                    <td className="px-3 py-3 font-medium" colSpan={3}>Page totals</td>
+                    <td className="px-3 py-3 font-medium" colSpan={3}>{t.pageTotals}</td>
                     <td className="whitespace-nowrap px-3 py-3 text-end font-medium tabular-nums">{fmtMoney(totals.gross, "DZD", locale)}</td>
                     <td className="whitespace-nowrap px-3 py-3 text-end font-medium tabular-nums text-brand">
                       {fmtMoney(totals.commission, "DZD", locale)}

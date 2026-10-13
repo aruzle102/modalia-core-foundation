@@ -47,13 +47,7 @@ export const Route = createFileRoute("/admin/sellers")({
   component: SellersPage,
 });
 
-const ACCOUNT_STATUS_OPTIONS = [
-  { value: "all", label: "All statuses" },
-  { value: "pending", label: "Pending" },
-  { value: "active", label: "Active" },
-  { value: "suspended", label: "Suspended" },
-  { value: "disabled", label: "Disabled" },
-] as const;
+const ACCOUNT_STATUS_VALUES = ["all", "pending", "active", "suspended", "disabled"] as const;
 
 type StatusAction = "active" | "suspended" | "disabled";
 
@@ -134,12 +128,12 @@ function SellersList() {
   return (
     <AdminGate>
       <AdminShell
-        title="Sellers"
-        subtitle="Manage seller accounts, stores, verification, and commissions."
+        title={t.title}
+        subtitle={t.subtitle}
         breadcrumbs={[{ label: nav.sellers }]}
       >
         <AdminCard
-          title="Sellers"
+          title={t.title}
           subtitle={`${total} total`}
           actions={
             <div className="flex flex-wrap items-center gap-2">
@@ -148,7 +142,7 @@ function SellersList() {
                 <Input
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
-                  placeholder="Search name, email, phone, store…"
+                  placeholder={t.searchPh}
                   className="w-64 ps-8"
                 />
               </div>
@@ -157,12 +151,12 @@ function SellersList() {
                 onValueChange={(v) => setStatusFilter(v)}
               >
                 <SelectTrigger className="w-44">
-                  <SelectValue placeholder="Account status" />
+                  <SelectValue placeholder={t.statusFilter} />
                 </SelectTrigger>
                 <SelectContent>
-                  {ACCOUNT_STATUS_OPTIONS.map((o) => (
-                    <SelectItem key={o.value} value={o.value}>
-                      {o.label}
+                  {ACCOUNT_STATUS_VALUES.map((v) => (
+                    <SelectItem key={v} value={v}>
+                      {t.statusLabels[v]}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -187,8 +181,8 @@ function SellersList() {
           ) : isError ? (
             <DataTable>
               <ErrorState
-                title="Could not load sellers"
-                description="Something went wrong while fetching the sellers."
+                title={t.listLoadError}
+                description={t.listLoadErrorText}
                 action={
                   <Button variant="outline" size="sm" onClick={() => refetch()}>
                     Retry

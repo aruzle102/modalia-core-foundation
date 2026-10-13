@@ -59,24 +59,15 @@ export const Route = createFileRoute("/admin/applications")({
   component: ApplicationsPage,
 });
 
-const STATUS_OPTIONS = [
-  { value: "all", label: "All statuses" },
-  { value: "pending", label: "Pending" },
-  { value: "under_review", label: "Under review" },
-  { value: "approved", label: "Approved" },
-  { value: "rejected", label: "Rejected" },
-  { value: "converted", label: "Converted" },
-  { value: "suspended", label: "Suspended" },
+const STATUS_VALUES = [
+  "all",
+  "pending",
+  "under_review",
+  "approved",
+  "rejected",
+  "converted",
+  "suspended",
 ] as const;
-
-const TIMELINE_LABELS: Record<string, string> = {
-  submitted: "Submitted",
-  reviewed: "Reviewed",
-  approved: "Approved",
-  rejected: "Rejected",
-  account_created: "Seller account created",
-  store_activated: "Store activated",
-};
 
 function formatCategories(value: unknown): string[] {
   if (Array.isArray(value)) return value.filter((v): v is string => typeof v === "string");
@@ -85,6 +76,7 @@ function formatCategories(value: unknown): string[] {
 
 function ApplicationsPage() {
   const locale = useAdminLocale();
+  const t = getTranslations(locale).admin.applications;
   const nav = getTranslations(locale).adminNav.items;
   const queryClient = useQueryClient();
   const url = useUrlState({ status: "all", page: 1 });
@@ -125,14 +117,14 @@ function ApplicationsPage() {
   return (
     <AdminGate>
       <AdminShell
-        title="Seller Applications"
-        subtitle="Review applications, approve sellers, and provision seller accounts."
+        title={t.title}
+        subtitle={t.subtitle}
         breadcrumbs={[{ label: nav.sellerApplications }]}
       >
         <ModerationBriefCard />
         <AdminCard
-          title="Applications"
-          subtitle={`${total} total`}
+          title={t.cardTitle}
+          subtitle={t.total(total)}
           actions={
             <div className="flex flex-wrap items-center gap-2">
               <div className="relative">
@@ -140,7 +132,7 @@ function ApplicationsPage() {
                 <Input
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
-                  placeholder="Search name, email, store, phone…"
+                  placeholder={t.searchPh}
                   className="w-64 ps-8"
                 />
               </div>
@@ -150,13 +142,13 @@ function ApplicationsPage() {
                   url.set({ status: v, page: 1 });
                 }}
               >
-                <SelectTrigger className="w-44">
-                  <SelectValue placeholder="Status" />
+                <SelectTrigger className="w-44" aria-label={t.statusFilter}>
+                  <SelectValue placeholder={t.statusFilter} />
                 </SelectTrigger>
                 <SelectContent>
-                  {STATUS_OPTIONS.map((o) => (
-                    <SelectItem key={o.value} value={o.value}>
-                      {o.label}
+                  {STATUS_VALUES.map((v) => (
+                    <SelectItem key={v} value={v}>
+                      {t.statuses[v]}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -168,57 +160,57 @@ function ApplicationsPage() {
             <TableSkeleton rows={8} />
           ) : isError ? (
             <ErrorState
-              title="Could not load applications"
-              description="Something went wrong while fetching the applications."
+              title={t.loadError}
+              description={t.loadErrorText}
               action={
                 <Button variant="outline" size="sm" onClick={() => refetch()}>
-                  Retry
+                  {t.retry}
                 </Button>
               }
             />
           ) : items.length === 0 ? (
             <EmptyState
-              title="No applications found"
-              description="Try adjusting the search or status filter."
+              title={t.noResults}
+              description={t.noResultsText}
             />
           ) : (
             <DataTable>
-              <table className="w-full min-w-[880px] text-sm">
+              <table className="w-full min-w-[960px] text-sm">
                 <thead>
-                  <tr className="border-b border-neutral-200 text-left text-[11px] font-semibold uppercase tracking-wider text-neutral-500">
-                    <th className="py-2 pe-4 text-start">Applicant</th>
-                    <th className="py-2 pe-4 text-start">Store</th>
-                    <th className="py-2 pe-4 text-start">Categories</th>
-                    <th className="py-2 pe-4 text-start">Phone</th>
-                    <th className="py-2 pe-4 text-start">Email</th>
-                    <th className="py-2 pe-4 text-start">Status</th>
-                    <th className="py-2 text-start">Submitted</th>
+                  <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                    <th className="px-3 py-3 text-start">{t.colApplicant}</th>
+                    <th className="px-3 py-3 text-start">{t.colStore}</th>
+                    <th className="px-3 py-3 text-start">{t.colCategories}</th>
+                    <th className="px-3 py-3 text-start">{t.colPhone}</th>
+                    <th className="px-3 py-3 text-start">{t.colEmail}</th>
+                    <th className="px-3 py-3 text-start">{t.colStatus}</th>
+                    <th className="px-3 py-3 text-start">{t.colSubmitted}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-neutral-100">
+                <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                   {items.map((app) => (
                     <tr
                       key={app.id}
                       onClick={() => openApplication(app.id)}
                       className="cursor-pointer transition-colors hover:bg-muted/40"
                     >
-                      <td className="py-3 pe-4 font-medium">
+                      <td className="max-w-44 truncate px-3 py-3 font-medium">
                         {app.first_name} {app.last_name}
                       </td>
-                      <td className="py-3 pe-4">{app.proposed_store_name}</td>
-                      <td className="py-3 pe-4">
-                        <span className="line-clamp-1 max-w-48 text-muted-foreground">
+                      <td className="max-w-44 truncate px-3 py-3">{app.proposed_store_name}</td>
+                      <td className="px-3 py-3">
+                        <span className="line-clamp-1 max-w-40 text-muted-foreground">
                           {formatCategories(app.product_categories).join(", ") || "—"}
                         </span>
                       </td>
-                      <td className="py-3 pe-4 whitespace-nowrap" dir="ltr">
+                      <td className="whitespace-nowrap px-3 py-3" dir="ltr">
                         {app.phone}
                       </td>
-                      <td className="py-3 pe-4 max-w-56 truncate">{app.email}</td>
-                      <td className="py-3 pe-4">
+                      <td className="max-w-48 truncate px-3 py-3" dir="ltr">{app.email}</td>
+                      <td className="whitespace-nowrap px-3 py-3">
                         <StatusPill status={app.status} />
                       </td>
-                      <td className="py-3 whitespace-nowrap text-muted-foreground" title={fmtDateTime(app.created_at, locale)}>
+                      <td className="whitespace-nowrap px-3 py-3 text-muted-foreground" title={fmtDateTime(app.created_at, locale)}>
                         {timeAgo(app.created_at, locale)}
                       </td>
                     </tr>
@@ -258,6 +250,7 @@ function ApplicationDrawer({
   onChanged: () => void;
 }) {
   const locale = useAdminLocale();
+  const t = getTranslations(locale).admin.applications;
   const queryClient = useQueryClient();
   const [confirmApprove, setConfirmApprove] = useState(false);
   const [confirmReject, setConfirmReject] = useState(false);
@@ -294,10 +287,10 @@ function ApplicationDrawer({
     onSuccess: (res) => {
       toast.success(
         res.status === "approved"
-          ? "Application approved."
+          ? t.approvedMsg
           : res.status === "rejected"
-            ? "Application rejected."
-            : "Application moved to under review.",
+            ? t.rejectedMsg
+            : t.underReviewMsg,
       );
       setConfirmApprove(false);
       setConfirmReject(false);
@@ -310,7 +303,7 @@ function ApplicationDrawer({
   const notesMutation = useMutation({
     mutationFn: () => updateApplicationNotes({ data: { id: applicationId, adminNotes: notes ?? "" } }),
     onSuccess: () => {
-      toast.success("Admin notes saved.");
+      toast.success(t.notesSaved);
       refresh();
     },
     onError: (err: Error) => toast.error(err.message),
@@ -320,12 +313,12 @@ function ApplicationDrawer({
     <div className="fixed inset-0 z-50">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} aria-hidden />
       <aside className="absolute inset-y-0 end-0 flex w-full max-w-2xl flex-col bg-background shadow-xl">
-        <div className="flex items-center justify-between border-b px-5 py-4">
-          <div className="flex items-center gap-3">
-            <h2 className="text-lg font-semibold">Application detail</h2>
+        <div className="flex items-center justify-between gap-3 border-b px-5 py-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <h2 className="truncate text-lg font-semibold">{t.detailTitle}</h2>
             {app && <StatusPill status={app.status} />}
           </div>
-          <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close">
+          <Button variant="ghost" size="icon" onClick={onClose} aria-label={t.close}>
             <X className="size-4" />
           </Button>
         </div>
@@ -334,35 +327,35 @@ function ApplicationDrawer({
           {detailQuery.isLoading ? (
             <TableSkeleton rows={6} />
           ) : detailQuery.isError || !app ? (
-            <ErrorState title="Could not load application" description="Please try again." />
+            <ErrorState title={t.detailLoadError} description={t.retry} />
           ) : (
             <div className="space-y-6">
               {/* Applicant */}
               <section>
                 <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                  Applicant
+                  {t.applicantSection}
                 </h3>
                 <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <div>
-                    <dt className="text-xs text-muted-foreground">Full name</dt>
-                    <dd className="font-medium">
+                  <div className="min-w-0">
+                    <dt className="text-xs text-muted-foreground">{t.fullName}</dt>
+                    <dd className="truncate font-medium">
                       {app.first_name} {app.last_name}
                     </dd>
                   </div>
-                  <div>
-                    <dt className="text-xs text-muted-foreground">Proposed store name</dt>
-                    <dd className="font-medium">{app.proposed_store_name}</dd>
+                  <div className="min-w-0">
+                    <dt className="text-xs text-muted-foreground">{t.proposedStore}</dt>
+                    <dd className="truncate font-medium">{app.proposed_store_name}</dd>
                   </div>
-                  <div>
-                    <dt className="text-xs text-muted-foreground">Email</dt>
-                    <dd className="break-all" dir="ltr">{app.email}</dd>
+                  <div className="min-w-0">
+                    <dt className="text-xs text-muted-foreground">{t.email}</dt>
+                    <dd className="truncate break-all" dir="ltr">{app.email}</dd>
                   </div>
-                  <div>
-                    <dt className="text-xs text-muted-foreground">Phone</dt>
+                  <div className="min-w-0">
+                    <dt className="text-xs text-muted-foreground">{t.phone}</dt>
                     <dd dir="ltr">{app.phone}</dd>
                   </div>
                   <div className="sm:col-span-2">
-                    <dt className="text-xs text-muted-foreground">Product categories</dt>
+                    <dt className="text-xs text-muted-foreground">{t.productCategories}</dt>
                     <dd className="mt-1 flex flex-wrap gap-1.5">
                       {formatCategories(app.product_categories).length ? (
                         formatCategories(app.product_categories).map((c) => (
@@ -376,13 +369,13 @@ function ApplicationDrawer({
                     </dd>
                   </div>
                   <div className="sm:col-span-2">
-                    <dt className="text-xs text-muted-foreground">Business description</dt>
-                    <dd className="mt-1 whitespace-pre-wrap text-sm">{app.business_description}</dd>
+                    <dt className="text-xs text-muted-foreground">{t.businessDesc}</dt>
+                    <dd className="mt-1 whitespace-pre-wrap break-words text-sm">{app.business_description}</dd>
                   </div>
                   {app.additional_information && (
                     <div className="sm:col-span-2">
-                      <dt className="text-xs text-muted-foreground">Additional information</dt>
-                      <dd className="mt-1 whitespace-pre-wrap text-sm">{app.additional_information}</dd>
+                      <dt className="text-xs text-muted-foreground">{t.additionalInfo}</dt>
+                      <dd className="mt-1 whitespace-pre-wrap break-words text-sm">{app.additional_information}</dd>
                     </div>
                   )}
                 </dl>
@@ -391,13 +384,13 @@ function ApplicationDrawer({
               {/* Timeline */}
               <section>
                 <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                  Timeline
+                  {t.timelineSection}
                 </h3>
                 <ol className="space-y-2.5 border-s-2 border-muted ps-4">
                   {timeline.map((step) => (
                     <li key={step.key} className="relative">
                       <span className="absolute -start-[21px] top-1 size-2.5 rounded-full bg-primary" />
-                      <p className="text-sm font-medium">{TIMELINE_LABELS[step.key] ?? step.key}</p>
+                      <p className="text-sm font-medium">{t.timelineLabels[step.key as keyof typeof t.timelineLabels] ?? step.key}</p>
                       <p className="text-xs text-muted-foreground" title={fmtDateTime(step.at, locale)}>
                         {fmtDateTime(step.at, locale)} · {timeAgo(step.at, locale)}
                       </p>
@@ -410,17 +403,17 @@ function ApplicationDrawer({
               {(app.rejection_reason || app.reviewed_at) && (
                 <section>
                   <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                    Review
+                    {t.reviewSection}
                   </h3>
                   {app.rejection_reason && (
                     <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm">
-                      <p className="font-medium">Rejection reason</p>
-                      <p className="mt-1 whitespace-pre-wrap">{app.rejection_reason}</p>
+                      <p className="font-medium">{t.rejectionReasonLabel}</p>
+                      <p className="mt-1 whitespace-pre-wrap break-words">{app.rejection_reason}</p>
                     </div>
                   )}
                   {app.reviewed_at && (
                     <p className="mt-2 text-xs text-muted-foreground">
-                      Reviewed {timeAgo(app.reviewed_at, locale)}
+                      {t.reviewedAt(timeAgo(app.reviewed_at, locale))}
                     </p>
                   )}
                 </section>
@@ -428,12 +421,12 @@ function ApplicationDrawer({
 
               {/* Admin notes */}
               <section>
-                <Field label="Admin notes" hint="Internal only — never shown to the seller.">
+                <Field label={t.notesLabel} hint={t.notesHint}>
                   <Textarea
                     value={notes ?? ""}
                     onChange={(e) => setNotes(e.target.value)}
                     rows={3}
-                    placeholder="Internal notes about this application…"
+                    placeholder={t.notesPh}
                   />
                 </Field>
                 <Button
@@ -443,7 +436,7 @@ function ApplicationDrawer({
                   disabled={notesMutation.isPending || notes === (app.admin_notes ?? "")}
                   onClick={() => notesMutation.mutate()}
                 >
-                  {notesMutation.isPending ? "Saving…" : "Save notes"}
+                  {notesMutation.isPending ? t.saving : t.saveNotes}
                 </Button>
               </section>
 
@@ -451,29 +444,29 @@ function ApplicationDrawer({
               {(app.status === "pending" || app.status === "under_review") && (
                 <section className="rounded-lg border p-4">
                   <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                    Decision
+                    {t.decisionSection}
                   </h3>
                   {app.status === "under_review" && (
                     <p className="mb-3 text-sm text-muted-foreground">
-                      This application is under review — record a final decision below.
+                      {t.underReviewHint}
                     </p>
                   )}
-                  <Field label="Rejection reason" hint="Required if you reject this application.">
+                  <Field label={t.rejectReasonLabel} hint={t.rejectReasonHint}>
                     <Textarea
                       value={rejectionReason}
                       onChange={(e) => setRejectionReason(e.target.value)}
                       rows={2}
-                      placeholder="Why is this application being rejected?"
+                      placeholder={t.rejectReasonPh}
                     />
                   </Field>
                   <div className="mt-3 flex flex-wrap gap-2">
                     <Button onClick={() => setConfirmApprove(true)}>
                       <Check className="size-4 me-1.5" />
-                      Approve
+                      {t.approve}
                     </Button>
                     <Button variant="destructive" onClick={() => setConfirmReject(true)}>
                       <X className="size-4 me-1.5" />
-                      Reject
+                      {t.reject}
                     </Button>
                     {app.status === "pending" && (
                       <Button
@@ -481,7 +474,7 @@ function ApplicationDrawer({
                         onClick={() => reviewMutation.mutate({ decision: "start_review" })}
                         disabled={reviewMutation.isPending}
                       >
-                        Mark under review
+                        {t.markUnderReview}
                       </Button>
                     )}
                   </div>
@@ -492,17 +485,14 @@ function ApplicationDrawer({
                 <section className="rounded-lg border border-primary/40 bg-primary/5 p-4">
                   <div className="flex items-start gap-3">
                     <UserPlus className="mt-0.5 size-5 shrink-0 text-primary" />
-                    <div>
-                      <p className="font-semibold">Provision the seller account</p>
+                    <div className="min-w-0">
+                      <p className="font-semibold">{t.provisionTitle}</p>
                       <p className="mt-1 text-sm text-muted-foreground">
-                        Launch the onboarding wizard to configure the seller, login, store,
-                        commission and permissions, then create everything in one step. The
-                        temporary password is displayed once — share it with the seller through a
-                        secure channel.
+                        {t.provisionText}
                       </p>
                       <Button className="mt-3" onClick={() => setWizardOpen(true)}>
                         <UserPlus className="size-4 me-1.5" />
-                        Create seller &amp; store
+                        {t.provisionCta}
                       </Button>
                     </div>
                   </div>
@@ -519,7 +509,7 @@ function ApplicationDrawer({
                   >
                     <Button variant="outline">
                       <Eye className="size-4 me-1.5" />
-                      View seller profile
+                      {t.viewSeller}
                     </Button>
                   </Link>
                 </section>
@@ -532,24 +522,24 @@ function ApplicationDrawer({
       <ConfirmDialog
         open={confirmApprove}
         onOpenChange={setConfirmApprove}
-        title="Approve this application?"
-        description={`Approving ${app?.first_name ?? ""} ${app?.last_name ?? ""} marks the application as approved. You will still need to create the seller account in a separate step.`}
-        confirmLabel="Approve application"
+        title={t.confirmApproveTitle}
+        description={t.confirmApproveDesc(`${app?.first_name ?? ""} ${app?.last_name ?? ""}`.trim())}
+        confirmLabel={t.confirmApproveLabel}
         onConfirm={() => reviewMutation.mutate({ decision: "approve" })}
       />
       <ConfirmDialog
         open={confirmReject}
         onOpenChange={setConfirmReject}
-        title="Reject this application?"
+        title={t.confirmRejectTitle}
         description={
           rejectionReason.trim()
-            ? `The application will be rejected with the reason you entered.`
-            : "Enter a rejection reason first — it is required."
+            ? t.confirmRejectDescWithReason
+            : t.confirmRejectDescNeedReason
         }
-        confirmLabel="Reject application"
+        confirmLabel={t.confirmRejectLabel}
         onConfirm={() => {
           if (!rejectionReason.trim()) {
-            toast.error("A rejection reason is required.");
+            toast.error(t.rejectReasonRequired);
             return;
           }
           reviewMutation.mutate({ decision: "reject", rejectionReason: rejectionReason.trim() });
@@ -582,6 +572,8 @@ function ApplicationDrawer({
  * Counts and one-line facts only — no invented judgments.
  */
 function ModerationBriefCard() {
+  const locale = useAdminLocale();
+  const t = getTranslations(locale).admin.applications;
   const briefQuery = useQuery({
     queryKey: ["admin-moderation-brief"],
     queryFn: () => aiAdminModerationBrief({ data: { locale: "en" } }),
@@ -592,26 +584,26 @@ function ModerationBriefCard() {
 
   return (
     <AdminCard
-      title="Moderation brief"
-      subtitle="Rule-based summary from live data — every decision still needs a human."
+      title={t.briefTitle}
+      subtitle={t.briefSubtitle}
       actions={
         <Button variant="outline" size="sm" onClick={() => briefQuery.refetch()} disabled={briefQuery.isFetching}>
-          Refresh
+          {t.refresh}
         </Button>
       }
     >
       {briefQuery.isLoading ? (
         <TableSkeleton rows={3} />
       ) : briefQuery.isError || !brief ? (
-        <EmptyState title="Brief unavailable" description={briefQuery.isError ? errMsg(briefQuery.error) : "No data."} />
+        <EmptyState title={t.briefUnavailable} description={briefQuery.isError ? errMsg(briefQuery.error) : "No data."} />
       ) : (
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {[
-              { label: "Pending applications", value: brief.counts.pendingApplications },
-              { label: "Products awaiting moderation", value: brief.counts.pendingProducts },
-              { label: "Open support tickets", value: brief.counts.openTickets },
-              { label: "Oldest application waiting (days)", value: brief.counts.oldestApplicationWaitingDays },
+              { label: t.pendingApplications, value: brief.counts.pendingApplications },
+              { label: t.pendingProducts, value: brief.counts.pendingProducts },
+              { label: t.openTickets, value: brief.counts.openTickets },
+              { label: t.oldestWaiting, value: brief.counts.oldestApplicationWaitingDays },
             ].map((stat) => (
               <StatCard key={stat.label} title={stat.label} value={stat.value} />
             ))}
@@ -619,19 +611,19 @@ function ModerationBriefCard() {
 
           {brief.applications.length ? (
             <div>
-              <p className="text-sm font-medium">Oldest pending applications</p>
+              <p className="text-sm font-medium">{t.oldestApplications}</p>
               <ul className="mt-2 space-y-2 text-sm">
                 {brief.applications.slice(0, 5).map((a) => (
                   <li key={a.id} className="rounded-xl bg-muted/50 p-3">
                     <p className="font-medium">
-                      {a.applicant} — proposed store “{a.proposedStore}”
+                      {a.applicant} — {a.proposedStore}
                       <span className="ms-2 text-xs font-normal text-muted-foreground">
-                        waiting {a.waitingDays} day{a.waitingDays === 1 ? "" : "s"}
+                        {t.waitingDays(a.waitingDays)}
                       </span>
                     </p>
-                    <p className="mt-1 text-muted-foreground">{a.business}</p>
+                    <p className="mt-1 break-words text-muted-foreground">{a.business}</p>
                     {a.categories.length ? (
-                      <p className="mt-1 text-xs text-muted-foreground">Categories: {a.categories.join(", ")}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">{t.categoriesLabel(a.categories.join(", "))}</p>
                     ) : null}
                   </li>
                 ))}
@@ -641,12 +633,12 @@ function ModerationBriefCard() {
 
           {brief.pendingProducts.length ? (
             <div>
-              <p className="text-sm font-medium">Products awaiting moderation</p>
+              <p className="text-sm font-medium">{t.pendingProducts}</p>
               <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
                 {brief.pendingProducts.slice(0, 5).map((p) => (
-                  <li key={p.id}>
+                  <li key={p.id} className="break-words">
                     {p.name}
-                    {p.store ? ` — ${p.store}` : ""} · waiting {p.waitingDays} day{p.waitingDays === 1 ? "" : "s"}
+                    {p.store ? ` — ${p.store}` : ""} · {t.waitingDays(p.waitingDays)}
                   </li>
                 ))}
               </ul>
@@ -655,11 +647,11 @@ function ModerationBriefCard() {
 
           {brief.openTickets.length ? (
             <div>
-              <p className="text-sm font-medium">Open support requests</p>
+              <p className="text-sm font-medium">{t.openSupport}</p>
               <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
-                {brief.openTickets.slice(0, 5).map((t) => (
-                  <li key={t.id}>
-                    {t.subject || "No subject"} · waiting {t.waitingDays} day{t.waitingDays === 1 ? "" : "s"}
+                {brief.openTickets.slice(0, 5).map((tk) => (
+                  <li key={tk.id} className="break-words">
+                    {tk.subject || t.noSubject} · {t.waitingDays(tk.waitingDays)}
                   </li>
                 ))}
               </ul>

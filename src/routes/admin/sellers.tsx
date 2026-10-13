@@ -134,7 +134,7 @@ function SellersList() {
       >
         <AdminCard
           title={t.title}
-          subtitle={`${total} total`}
+          subtitle={t.totalSellers(total)}
           actions={
             <div className="flex flex-wrap items-center gap-2">
               <div className="relative">
@@ -163,11 +163,11 @@ function SellersList() {
               </Select>
               <Button onClick={() => setWizardOpen(true)}>
                 <UserPlus className="size-4 me-1.5" />
-                Create seller &amp; store
+                {t.createSellerStore}
               </Button>
               <Button onClick={() => setStoreWizardOpen(true)} variant="secondary">
                 <UserPlus className="size-4 me-1.5" />
-                New: Create Store (quick)
+                {t.createStoreQuick}
               </Button>
             </div>
           }
@@ -185,7 +185,7 @@ function SellersList() {
                 description={t.listLoadErrorText}
                 action={
                   <Button variant="outline" size="sm" onClick={() => refetch()}>
-                    Retry
+                    {t.retry}
                   </Button>
                 }
               />

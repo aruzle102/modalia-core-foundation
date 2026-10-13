@@ -101,7 +101,7 @@ function CommissionsPage() {
       >
         <AdminCard
           title={t.title}
-          subtitle={`${total} total`}
+          subtitle={t.totalSellers(total)}
           actions={
             <div className="relative">
               <Search className="pointer-events-none absolute start-2.5 top-1/2 size-4 -translate-y-1/2 opacity-50" />
@@ -127,7 +127,7 @@ function CommissionsPage() {
                 description={errMsg(query.error)}
                 action={
                   <Button variant="outline" size="sm" onClick={() => query.refetch()}>
-                    Retry
+                    {t.retry}
                   </Button>
                 }
               />

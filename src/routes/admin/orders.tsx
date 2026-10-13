@@ -30,7 +30,7 @@ import {
 } from "@/components/admin/ui";
 import { DataTable, EmptyState, StatCard } from "@/components/dashboard";
 import { listAdminSellersLite } from "@/lib/admin-catalog.functions";
-import { listAdminOrders } from "@/lib/admin-orders.functions";
+import { getStoreOrderStats, listAdminOrders } from "@/lib/admin-orders.functions";
 import { getLocale, getTranslations, type SupportedLocale } from "@/lib/i18n";
 
 export const Route = createFileRoute("/admin/orders")({
@@ -165,6 +165,12 @@ function OrdersList() {
   const safePage = Math.min(page, totalPages);
   const pageRevenue = orders.reduce((sum, order) => sum + order.grandTotal, 0);
   const sellers = sellersQuery.data ?? [];
+  const selectedSeller = sellers.find((s) => s.id === sellerId);
+  const storeStatsQuery = useQuery({
+    queryKey: ["admin-store-order-stats", sellerId],
+    queryFn: () => getStoreOrderStats({ data: { sellerId } }),
+    enabled: sellerId !== "",
+  });
 
   const hasActiveFilters =
     q.trim() !== "" ||
@@ -206,6 +212,41 @@ function OrdersList() {
             value={ordersQuery.isLoading ? "…" : fmtMoney(pageRevenue, "DZD", locale)}
           />
         </div>
+
+        {sellerId !== "" && selectedSeller ? (
+          <AdminCard
+            title={`Store: ${selectedSeller.legal_name}`}
+            actions={
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setFilter({ sellerId: "" })}
+              >
+                <X className="size-4" />
+                Clear store
+              </Button>
+            }
+          >
+            {storeStatsQuery.isLoading ? (
+              <TableSkeleton rows={2} />
+            ) : storeStatsQuery.isError ? (
+              <p className="text-sm text-destructive">Store statistics could not be loaded.</p>
+            ) : storeStatsQuery.data ? (
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+                <StatCard title="Total orders" value={String(storeStatsQuery.data.totalOrders)} />
+                <StatCard title="Delivered" value={String(storeStatsQuery.data.delivered)} />
+                <StatCard title="Pending" value={String(storeStatsQuery.data.pending)} />
+                <StatCard title="Cancelled" value={String(storeStatsQuery.data.cancelled)} />
+                <StatCard title="Returns" value={String(storeStatsQuery.data.returns)} />
+                <StatCard
+                  title="Sales total"
+                  value={fmtMoney(storeStatsQuery.data.salesTotal, "DZD", locale)}
+                />
+              </div>
+            ) : null}
+          </AdminCard>
+        ) : null}
 
         <AdminCard
           title="Filters"

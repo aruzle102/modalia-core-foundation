@@ -741,3 +741,79 @@ export const processReturn = createServerFn({ method: "POST" })
 
     return { id: data.returnId, status: newStatus, processedAt: now };
   });
+
+const getStoreOrderStatsSchema = z.object({
+  sellerId: z.string().uuid(),
+});
+
+/**
+ * Per-store order statistics for the admin orders page.
+ * Returns real counts from seller_orders + order_returns.
+ */
+export const getStoreOrderStats = createServerFn({ method: "GET" })
+  .middleware(adminOnly)
+  .validator((data) => getStoreOrderStatsSchema.parse(data))
+  .handler(async ({ data, context }) => {
+    await assertAdminPermission(context, "orders.view");
+
+    // All seller_orders for this seller with their order status
+    const soResult = await context.supabase
+      .from("seller_orders")
+      .select("id, order_id, status, subtotal, orders!inner(id, status, created_at)")
+      .eq("seller_id", data.sellerId);
+    if (soResult.error) throw new Error("Store statistics could not be loaded.");
+    const rows = (soResult.data ?? []) as Array<{
+      id: string;
+      order_id: string;
+      status: string;
+      subtotal: number;
+      orders: { id: string; status: string; created_at: string };
+    }>;
+
+    const uniqueOrders = new Map<string, { status: string; subtotal: number }>();
+    for (const r of rows) {
+      const existing = uniqueOrders.get(r.order_id);
+      if (!existing) {
+        uniqueOrders.set(r.order_id, { status: r.orders.status, subtotal: Number(r.subtotal) || 0 });
+      } else {
+        existing.subtotal += Number(r.subtotal) || 0;
+      }
+    }
+
+    let totalOrders = 0;
+    let delivered = 0;
+    let pending = 0;
+    let cancelled = 0;
+    let salesTotal = 0;
+    for (const o of uniqueOrders.values()) {
+      totalOrders += 1;
+      if (o.status === "delivered") {
+        delivered += 1;
+        salesTotal += o.subtotal;
+      } else if (o.status === "cancelled") {
+        cancelled += 1;
+      } else {
+        pending += 1;
+      }
+    }
+
+    // Returns for this seller (via seller_orders)
+    const sellerOrderIds = rows.map((r) => r.id);
+    let returnsTotal = 0;
+    if (sellerOrderIds.length > 0) {
+      const retResult = await context.supabase
+        .from("order_returns")
+        .select("id", { count: "exact", head: true })
+        .in("seller_order_id", sellerOrderIds);
+      if (!retResult.error) returnsTotal = retResult.count ?? 0;
+    }
+
+    return {
+      totalOrders,
+      delivered,
+      pending,
+      cancelled,
+      returns: returnsTotal,
+      salesTotal,
+    };
+  });

@@ -143,92 +143,58 @@ function CategoriesManager() {
         </div>
       </div>
 
-      <AdminCard title="Category tree">
-        {categoriesQuery.isPending ? (
-          <DataTable>
-            <div className="p-4">
-              <TableSkeleton />
-            </div>
-          </DataTable>
-        ) : categoriesQuery.isError ? (
-          <DataTable>
-            <ErrorState title="Could not load categories" description={errMsg(categoriesQuery.error)} />
-          </DataTable>
-        ) : tree.length === 0 ? (
-          <DataTable>
-            <EmptyState
-              title="No categories"
-              description="Create the first category to organize the catalog."
-            />
-          </DataTable>
-        ) : (
-          <DataTable>
-            <table className="w-full min-w-[640px] text-sm">
-              <thead>
-                <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
-                  <th className="px-3 py-3 text-start">Category</th>
-                  <th className="px-3 py-3 text-start">Slug</th>
-                  <th className="px-3 py-3 text-start">Products</th>
-                  <th className="px-3 py-3 text-start">Sort order</th>
-                  <th className="px-3 py-3 text-start">Status</th>
-                  <th className="px-3 py-3 text-end">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
-                {flattenTree(tree).map(({ node, depth }) => (
-                  <tr key={node.id} className="hover:bg-muted/40">
-                    <td className="px-3 py-3" style={{ paddingInlineStart: `${0.75 + depth * 1.5}rem` }}>
-                      <p className="font-medium">{pickName(node.name) || node.slug}</p>
-                      <p className="text-caption text-muted-foreground">
-                        {pickNameFrEnAr(node.name)}
-                      </p>
-                    </td>
-                    <td className="px-3 py-3 font-mono text-xs">{node.slug}</td>
-                    <td className="px-3 py-3">
-                      <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-neutral-100 px-2 text-xs font-bold dark:bg-neutral-800">
-                        {(node as { productCount?: number }).productCount ?? 0}
-                      </span>
-                    </td>
-                    <td className="px-3 py-3">
-                      <Input
-                        type="number"
-                        min={0}
-                        className="w-20"
-                        value={orders[node.id] ?? Number(node.sort_order)}
-                        onChange={(e) =>
-                          setOrders((prev) => ({ ...prev, [node.id]: Number(e.target.value) || 0 }))
-                        }
-                      />
-                    </td>
-                    <td className="px-3 py-3"><StatusPill status={node.status} /></td>
-                    <td className="px-3 py-3">
-                      <div className="flex justify-end gap-1.5">
-                        <Button size="sm" variant="ghost" onClick={() => setEditing(node)}>
-                          <Pencil className="size-3.5" /> Edit
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="text-destructive hover:text-destructive"
-                          onClick={() => {
-                            setDeleteError(null);
-                            setDeleting(node);
-                          }}
-                        >
-                          <Trash2 className="size-3.5" /> Delete
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </DataTable>
-        )}
-        <p className="mt-3 text-caption text-muted-foreground">
-          Adjust the sort order numbers, then press “Save display order”. Parents and children are ordered by sort_order.
-        </p>
-      </AdminCard>
+      {categoriesQuery.isPending ? (
+        <TableSkeleton rows={6} />
+      ) : categoriesQuery.isError ? (
+        <ErrorState title="Could not load categories" description={errMsg(categoriesQuery.error)} />
+      ) : tree.length === 0 ? (
+        <EmptyState
+          title="No categories"
+          description="Create the first category to organize the catalog."
+        />
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {flattenTree(tree).map(({ node, depth }) => (
+            <AdminCard key={node.id} title={pickName(node.name) || node.slug}>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-sm font-bold text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+                    {(node as { productCount?: number }).productCount ?? 0} products
+                  </span>
+                  <StatusPill status={node.status} />
+                </div>
+                <p className="font-mono text-xs text-muted-foreground">/{node.slug}</p>
+                {depth > 0 ? (
+                  <p className="text-xs text-muted-foreground">Subcategory (level {depth})</p>
+                ) : null}
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Order:</span>
+                  <Input
+                    type="number"
+                    min={0}
+                    className="w-20"
+                    value={orders[node.id] ?? Number(node.sort_order)}
+                    onChange={(e) =>
+                      setOrders((prev) => ({ ...prev, [node.id]: Number(e.target.value) || 0 }))
+                    }
+                  />
+                </div>
+                <div className="flex gap-2 border-t pt-3">
+                  <Button size="sm" variant="outline" onClick={() => setEditing(node)} className="flex-1">
+                    <Pencil className="size-4 me-1" /> Edit
+                  </Button>
+                  <Button
+                    size="sm" variant="destructive"
+                    onClick={() => { setDeleting(node); setDeleteError(null); }}
+                  >
+                    <Trash2 className="size-4" />
+                  </Button>
+                </div>
+              </div>
+            </AdminCard>
+          ))}
+        </div>
+      )}
 
       {editing !== null ? (
         <CategoryDialog

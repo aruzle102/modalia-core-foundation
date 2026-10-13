@@ -1934,13 +1934,30 @@ export const listProductRequests = createServerFn({ method: "GET" })
     const { data, error } = await supabaseAdmin
       .from("products")
       .select(
-        "id, slug, name, description, base_price, compare_at_price, weight_grams, moderation_reason, created_at, seller_id, category_id, sellers!inner(id, legal_name, commission_rate), product_images(storage_path, is_primary), product_variants(id, sku, price, compare_at_price, stock_quantity, attributes)",
+        "id, slug, name, description, base_price, compare_at_price, weight_grams, moderation_reason, created_at, seller_id, category_id",
       )
       .eq("moderation_status", "pending")
       .order("created_at", { ascending: false })
       .limit(50);
     if (error) throw new Error(error.message);
-    return { requests: data ?? [] };
+    const products = (data ?? []) as Array<{ id: string; seller_id: string }>;
+    // Enrich with seller, images, variants (separate queries for reliability)
+    const enriched = await Promise.all(
+      products.map(async (p) => {
+        const [sellerRes, imgRes, varRes] = await Promise.all([
+          supabaseAdmin.from("sellers").select("legal_name, commission_rate").eq("id", p.seller_id).single(),
+          supabaseAdmin.from("product_images").select("storage_path, is_primary").eq("product_id", p.id),
+          supabaseAdmin.from("product_variants").select("id, sku, price, attributes").eq("product_id", p.id),
+        ]);
+        return {
+          ...p,
+          sellers: sellerRes.data ?? { legal_name: "Unknown", commission_rate: 10 },
+          product_images: imgRes.data ?? [],
+          product_variants: varRes.data ?? [],
+        };
+      }),
+    );
+    return { requests: enriched };
   });
 
 // ---------------------------------------------------------------------------

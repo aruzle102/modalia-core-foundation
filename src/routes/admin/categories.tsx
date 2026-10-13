@@ -168,6 +168,7 @@ function CategoriesManager() {
                 <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
                   <th className="px-3 py-3 text-start">Category</th>
                   <th className="px-3 py-3 text-start">Slug</th>
+                  <th className="px-3 py-3 text-start">Products</th>
                   <th className="px-3 py-3 text-start">Sort order</th>
                   <th className="px-3 py-3 text-start">Status</th>
                   <th className="px-3 py-3 text-end">Actions</th>
@@ -183,6 +184,11 @@ function CategoriesManager() {
                       </p>
                     </td>
                     <td className="px-3 py-3 font-mono text-xs">{node.slug}</td>
+                    <td className="px-3 py-3">
+                      <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-neutral-100 px-2 text-xs font-bold dark:bg-neutral-800">
+                        {(node as { productCount?: number }).productCount ?? 0}
+                      </span>
+                    </td>
                     <td className="px-3 py-3">
                       <Input
                         type="number"

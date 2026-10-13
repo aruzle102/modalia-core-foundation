@@ -491,7 +491,20 @@ export const listAdminCategories = createServerFn({ method: "GET" })
     }
     const build = (parentId: string | null): CategoryNode[] =>
       (byParent.get(parentId) ?? []).map((row) => ({ ...row, children: build(row.id) }));
-    return { tree: build(null), flat: rows };
+    // Product counts per category (published products only)
+    const supabaseAdmin = await adminClient();
+    const counts = new Map<string, number>();
+    const { data: countRows } = await supabaseAdmin
+      .from("products")
+      .select("category_id")
+      .eq("moderation_status", "approved")
+      .eq("status", "active");
+    for (const r of (countRows ?? []) as Array<{ category_id: string | null }>) {
+      if (!r.category_id) continue;
+      counts.set(r.category_id, (counts.get(r.category_id) ?? 0) + 1);
+    }
+    const flatWithCounts = rows.map((r) => ({ ...r, productCount: counts.get(r.id) ?? 0 }));
+    return { tree: build(null), flat: flatWithCounts };
   });
 
 export const upsertCategory = createServerFn({ method: "POST" })

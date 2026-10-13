@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { AdminCard, StatusPill, TableSkeleton, fmtMoney } from "@/components/admin/ui";
 import { EmptyState } from "@/components/dashboard";
@@ -9,6 +9,7 @@ import { pickName } from "@/routes/admin/_shared";
 
 type StoreProduct = {
   id: string;
+  slug: string;
   name: unknown;
   description: unknown;
   base_price: number;
@@ -29,6 +30,7 @@ type StoreProduct = {
  */
 export function StoreProductsView({ sellerId, onBack }: { sellerId: string; onBack: () => void }) {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const productsQuery = useQuery({
     queryKey: ["admin-store-products", sellerId],
     queryFn: () => listStoreProducts({ data: { sellerId } }),
@@ -84,10 +86,15 @@ export function StoreProductsView({ sellerId, onBack }: { sellerId: string; onBa
                       <StatusPill status={p.status} />
                     </div>
                     {desc ? <p className="line-clamp-2 text-sm text-muted-foreground">{desc}</p> : null}
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                       <div>
                         <p className="text-xs text-muted-foreground">Price</p>
                         <p className="font-bold">{fmtMoney(p.base_price, "DZD", "en")}</p>
+                        {p.compare_at_price ? (
+                          <p className="text-xs text-muted-foreground line-through">
+                            {fmtMoney(p.compare_at_price, "DZD", "en")}
+                          </p>
+                        ) : null}
                       </div>
                       <div>
                         <p className="text-xs text-muted-foreground">Profit ({commissionRate}%)</p>
@@ -96,6 +103,20 @@ export function StoreProductsView({ sellerId, onBack }: { sellerId: string; onBa
                       <div>
                         <p className="text-xs text-muted-foreground">Variants</p>
                         <p className="font-bold">{variants.length}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Weight</p>
+                        <p className="font-bold">{p.weight_grams ? `${p.weight_grams}g` : "—"}</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 text-xs">
+                      <div>
+                        <span className="text-muted-foreground">Slug: </span>
+                        <code className="rounded bg-neutral-100 px-1 dark:bg-neutral-800">{p.slug}</code>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Created: </span>
+                        {new Date(p.created_at).toLocaleDateString()}
                       </div>
                     </div>
                     {variants.length > 0 ? (
@@ -126,10 +147,25 @@ export function StoreProductsView({ sellerId, onBack }: { sellerId: string; onBa
                       >
                         {p.status === "active" ? "Pause" : "Activate"}
                       </Button>
-                      <Button type="button" size="sm" variant="outline" asChild>
-                        <Link to="/admin/products/$productId" params={{ productId: p.id }} search={{ back: "" }}>
-                          Edit
-                        </Link>
+                      <Button
+                        type="button" size="sm" variant="outline"
+                        onClick={() => {
+                          void navigate({
+                            to: "/admin/products/$productId",
+                            params: { productId: p.id },
+                            search: { back: `/admin/products?tab=stores&storeId=${sellerId}` },
+                          });
+                        }}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        type="button" size="sm" variant="outline"
+                        onClick={() => {
+                          window.open(`/product/${p.slug}`, "_blank", "noopener,noreferrer");
+                        }}
+                      >
+                        View on site
                       </Button>
                       <Button
                         type="button" size="sm" variant="destructive"

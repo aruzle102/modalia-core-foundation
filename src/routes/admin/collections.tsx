@@ -43,14 +43,6 @@ function CollectionsPage() {
         title={t.title}
         subtitle={t.subtitle}
         breadcrumbs={[{ label: t.title }]}
-        actions={
-          <Button size="sm" asChild>
-            <Link to="/admin/official-store" search={{ locale, tab: "collections" }}>
-              <Plus className="size-4 me-1.5" />
-              {t.newCollection}
-            </Link>
-          </Button>
-        }
       >
         <BackLink back={back} fallbackTo="/admin" fallbackSearch={{ locale }}>
           <ArrowLeft className="size-4 me-1.5 rtl:rotate-180" />

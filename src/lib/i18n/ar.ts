@@ -49,7 +49,7 @@ export const ar = {
         orders: "الطلبات",
         products: "المنتجات",
         categories: "التصنيفات",
-        officialStore: "المتجر الرسمي",
+        officialStore: "توثيق المتاجر",
         reviews: "التقييمات",
         sellerApplications: "طلبات البائعين",
         sellers: "البائعون",

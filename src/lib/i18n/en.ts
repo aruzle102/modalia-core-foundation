@@ -49,7 +49,7 @@ export const en = {
         orders: "Orders",
         products: "Products",
         categories: "Categories",
-        officialStore: "Official Store",
+        officialStore: "Store Verification",
         reviews: "Reviews",
         sellerApplications: "Seller Applications",
         sellers: "Sellers",

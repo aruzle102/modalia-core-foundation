@@ -49,7 +49,7 @@ export const fr = {
         orders: "Commandes",
         products: "Produits",
         categories: "Catégories",
-        officialStore: "Boutique officielle",
+        officialStore: "Vérification des boutiques",
         reviews: "Avis",
         sellerApplications: "Candidatures vendeurs",
         sellers: "Vendeurs",

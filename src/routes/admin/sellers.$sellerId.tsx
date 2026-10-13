@@ -34,7 +34,7 @@ import {
   fmtDateTime,
   timeAgo,
 } from "@/components/admin/ui";
-import { DataTable, EmptyState, FormSection, StatCard } from "@/components/dashboard";
+import { DataTable, EmptyState, ErrorState, FormSection, StatCard } from "@/components/dashboard";
 import {
   getSellerProfile,
   getSellerMonthlyProfit,
@@ -55,6 +55,7 @@ import {
 import { listAdminProducts } from "@/lib/admin-catalog.functions";
 import { listAdminOrders } from "@/lib/admin-orders.functions";
 import { createSupportSession } from "@/lib/admin-support.functions";
+import { listSellerNotificationsForAdmin } from "@/lib/notifications.functions";
 import { EditSellerDialog } from "@/components/admin/EditSellerDialog";
 import { StaffPermissionsDialog, type StaffPermissionsInitial } from "@/components/admin/StaffPermissionsDialog";
 import { useAdminT } from "@/components/admin/use-admin-t";
@@ -75,6 +76,7 @@ const TABS = [
   "staff",
   "reviews",
   "verification",
+  "notifications",
   "activity",
   "security",
 ] as const;
@@ -526,6 +528,7 @@ function SellerWorkspacePage() {
                 }
               />
             )}
+            {tab === "notifications" && <SellerNotificationsTab sellerId={sellerId} locale={locale} />}
             {tab === "activity" && <ActivityTab profile={profile} locale={locale} />}
             {tab === "security" && (
               <SecurityTab
@@ -1480,6 +1483,105 @@ function VerificationTab({
       </div>
     </AdminCard>
     </div>
+  );
+}
+
+function SellerNotificationsTab({
+  sellerId,
+  locale,
+}: {
+  sellerId: string;
+  locale: SupportedLocale;
+}) {
+  const { p, common } = useWorkspaceT(locale);
+  const [page, setPage] = useState(1);
+
+  const notifQuery = useQuery({
+    queryKey: ["admin-seller-notifications", sellerId, page],
+    queryFn: () => listSellerNotificationsForAdmin({ data: { sellerId, page } }),
+    retry: false,
+  });
+
+  const notifications = notifQuery.data?.notifications ?? [];
+  const total = notifQuery.data?.total ?? 0;
+  const pageSize = notifQuery.data?.pageSize ?? 15;
+
+  return (
+    <AdminCard title={p.notificationsTitle} subtitle={p.notificationsSubtitle}>
+      {notifQuery.isPending ? (
+        <TableSkeleton rows={5} />
+      ) : notifQuery.isError ? (
+        <ErrorState
+          title={common.loadError}
+          description={notifQuery.error instanceof Error ? notifQuery.error.message : ""}
+        />
+      ) : notifications.length === 0 ? (
+        <EmptyState title={p.notificationsEmpty} description={p.notificationsEmptyText} />
+      ) : (
+        <>
+          <ul className="space-y-3">
+            {notifications.map((n) => (
+              <li
+                key={n.id}
+                className="rounded-lg border border-border p-4"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-medium">{n.title[locale] ?? n.title.en}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {n.body[locale] ?? n.body.en}
+                    </p>
+                    <p className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                      <span className="rounded-full bg-muted px-2 py-0.5 font-mono" dir="ltr">
+                        {n.type}
+                      </span>
+                      <span
+                        className={`rounded-full px-2 py-0.5 font-medium ${
+                          n.readAt
+                            ? "bg-muted text-muted-foreground"
+                            : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                        }`}
+                      >
+                        {n.readAt ? p.notificationRead : p.notificationUnread}
+                      </span>
+                    </p>
+                  </div>
+                  <span
+                    className="shrink-0 text-xs text-muted-foreground"
+                    title={n.createdAt}
+                  >
+                    {timeAgo(n.createdAt, locale)}
+                  </span>
+                </div>
+              </li>
+            ))}
+          </ul>
+          {total > pageSize ? (
+            <div className="mt-4 flex items-center justify-between">
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={page <= 1}
+                onClick={() => setPage((cur) => cur - 1)}
+              >
+                ←
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                {page} / {Math.ceil(total / pageSize)}
+              </span>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={page >= Math.ceil(total / pageSize)}
+                onClick={() => setPage((cur) => cur + 1)}
+              >
+                →
+              </Button>
+            </div>
+          ) : null}
+        </>
+      )}
+    </AdminCard>
   );
 }
 

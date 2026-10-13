@@ -619,3 +619,44 @@ export async function emitAdminNotification(input: EmitInput & { type: AdminNoti
     return false;
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* Admin: view a seller's notification history                          */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Admin: list notifications sent to a specific seller (read-only history).
+ * Used in the admin seller detail page so the admin can verify that
+ * notifications (e.g. verification congratulations) were delivered.
+ */
+export const listSellerNotificationsForAdmin = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((data) =>
+    z
+      .object({
+        sellerId: z.string().uuid(),
+        page: z.number().int().positive().default(1),
+        pageSize: z.number().int().min(1).max(30).default(15),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { assertAdminPermission } = await import("@/lib/admin-permissions");
+    await assertAdminPermission(context as any, "sellers.view" as AdminPermission);
+    const sb = await adminClient();
+    const from = (data.page - 1) * data.pageSize;
+    const result = await sb
+      .from("notifications")
+      .select("id,type,title,body,payload,link,read_at,created_at", { count: "exact" })
+      .eq("seller_id", data.sellerId)
+      .order("created_at", { ascending: false })
+      .range(from, from + data.pageSize - 1);
+    if (result.error) throw new Error("Seller notifications could not be loaded.");
+    const records = (result.data ?? []) as Parameters<typeof toItem>[0][];
+    return {
+      notifications: records.map(toItem),
+      total: result.count ?? 0,
+      page: data.page,
+      pageSize: data.pageSize,
+    };
+  });

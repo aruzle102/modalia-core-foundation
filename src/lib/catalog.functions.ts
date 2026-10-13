@@ -38,6 +38,18 @@ export type CatalogCategory = {
   seoDescription: string | null;
 };
 
+/** Admin-granted badge tone from stores.settings.verification_badge. */
+export function storeBadgeTone(settings: unknown): "blue" | "green" {
+  return (settings as { verification_badge?: string } | null)?.verification_badge === "green"
+    ? "green"
+    : "blue";
+}
+
+/** A store shows the verified badge when its status was earned or manually granted. */
+export function isStoreVerified(status: string | null | undefined): boolean {
+  return status === "verified" || status === "manual";
+}
+
 export type CatalogStore = {
   id: string;
   slug: string;
@@ -47,6 +59,7 @@ export type CatalogStore = {
   bannerPath: string | null;
   productCount: number;
   verified: boolean;
+  verificationBadge: "blue" | "green";
 };
 
 export type HomepageSection = {
@@ -262,14 +275,14 @@ async function hydrateCards(
       rows.map((row) => row.store_id).filter((value): value is string => value !== null),
     ),
   ];
-  type StoreNameRow = { id: string; name: string; verification_status: string };
+  type StoreNameRow = { id: string; name: string; verification_status: string; settings: unknown };
   const [detailResult, storeResult] = await Promise.all([
     client
       .from("products")
       .select("id,slug,name,base_price,compare_at_price,created_at,store_id,category:categories(slug),seller:sellers(stores(name)),images:product_images(storage_path,alt_text,sort_order)")
       .in("id", ids),
     storeIds.length
-      ? client.from("stores").select("id,name,verification_status").in("id", storeIds)
+      ? client.from("stores").select("id,name,verification_status,settings").in("id", storeIds)
       : Promise.resolve({ data: [] as StoreNameRow[], error: null }),
   ]);
   if (detailResult.error) throw new Error("The catalogue could not be loaded.");
@@ -337,7 +350,7 @@ async function fetchDiscoveryData(locale: string): Promise<DiscoveryData> {
       supabase.from("homepage_sections").select("section_key,kind,title,subtitle,content").eq("enabled", true).order("sort_order"),
       supabase.from("categories").select("id,slug,name,image_url,gender,featured,seo_title,seo_description").eq("status", "active").is("parent_id", null).order("sort_order"),
       supabase.from("products").select("id,slug,name,base_price,compare_at_price,created_at,category:categories(slug),seller:sellers(stores(name)),images:product_images(storage_path,alt_text,sort_order)").eq("status", "active").eq("publication_status", "published").eq("moderation_status", "approved").eq("visibility", "public").order("created_at", { ascending: false }).limit(24),
-      supabase.from("stores").select("id,slug,name,description,logo_path,banner_path,seller_id,verification_status").eq("status", "active").order("created_at", { ascending: false }).limit(12),
+      supabase.from("stores").select("id,slug,name,description,logo_path,banner_path,seller_id,verification_status,settings").eq("status", "active").order("created_at", { ascending: false }).limit(12),
     ]);
     if (sectionResult.error || categoryResult.error || productResult.error || storeResult.error) {
       console.error("Catalog query failed", { sections: sectionResult.error?.message, categories: categoryResult.error?.message, products: productResult.error?.message, stores: storeResult.error?.message });
@@ -408,7 +421,7 @@ async function fetchDiscoveryData(locale: string): Promise<DiscoveryData> {
         };
       }),
       products,
-      stores: (storeResult.data ?? []).map((store) => ({ id: store.id, slug: store.slug, name: store.name, description: store.description, logoPath: publicUrl(store.logo_path), bannerPath: publicUrl(store.banner_path), productCount: storeCounts.get(store.name) ?? 0, verified: store.verification_status === "verified" })),
+      stores: (storeResult.data ?? []).map((store) => ({ id: store.id, slug: store.slug, name: store.name, description: store.description, logoPath: publicUrl(store.logo_path), bannerPath: publicUrl(store.banner_path), productCount: storeCounts.get(store.name) ?? 0, verified: isStoreVerified(store.verification_status), verificationBadge: storeBadgeTone(store.settings) })),
     };
 }
 
@@ -670,7 +683,7 @@ export const browseCatalog = createServerFn({ method: "GET" })
         if (!storeIds.length) return [];
         const storeResult = await client
           .from("stores")
-          .select("id,slug,name,verification_status")
+          .select("id,slug,name,verification_status,settings")
           .in("id", storeIds)
           .eq("status", "active");
         const counts = new Map<string, number>();
@@ -686,7 +699,8 @@ export const browseCatalog = createServerFn({ method: "GET" })
             logoPath: null,
             bannerPath: null,
             productCount: counts.get(store.id) ?? 0,
-            verified: store.verification_status === "verified",
+            verified: isStoreVerified(store.verification_status),
+            verificationBadge: storeBadgeTone(store.settings),
           }))
           .sort((a, b) => b.productCount - a.productCount || a.name.localeCompare(b.name));
       })(),
@@ -796,6 +810,7 @@ type FtsFacetStore = {
   slug: string;
   name: string;
   verified: boolean;
+  verificationBadge: "blue" | "green";
   count: number;
 };
 type FtsFacetColor = {
@@ -937,6 +952,7 @@ async function runFtsSearch(
       bannerPath: null,
       productCount: store.count,
       verified: store.verified,
+      verificationBadge: store.verificationBadge,
     })),
     colors: (facets?.colors ?? []).map((color) => ({
       id: color.id,
@@ -991,7 +1007,7 @@ export const getStoreDirectory = createServerFn({ method: "GET" })
     for (const row of countResult.data ?? []) {
       if (row.store_id) counts.set(row.store_id, (counts.get(row.store_id) ?? 0) + 1);
     }
-    return ((storeResult.data ?? []) as { id: string; slug: string; name: string; description: string | null; logo_path: string | null; banner_path: string | null; verification_status: string }[]).map((store) => ({
+    return ((storeResult.data ?? []) as { id: string; slug: string; name: string; description: string | null; logo_path: string | null; banner_path: string | null; verification_status: string; settings: unknown }[]).map((store) => ({
       id: store.id,
       slug: store.slug,
       name: store.name,
@@ -999,6 +1015,7 @@ export const getStoreDirectory = createServerFn({ method: "GET" })
       logoPath: publicUrl(store.logo_path),
       bannerPath: publicUrl(store.banner_path),
       productCount: counts.get(store.id) ?? 0,
-      verified: store.verification_status === "verified",
+      verified: isStoreVerified(store.verification_status),
+      verificationBadge: storeBadgeTone(store.settings),
     }));
   });

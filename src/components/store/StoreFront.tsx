@@ -91,7 +91,7 @@ export function StoreFront({
                   <h1 className="font-display text-4xl font-semibold tracking-tight text-white sm:text-5xl">
                     {store.name}
                   </h1>
-                  <VerifiedSellerBadge verified={store.verified} label={t.store.verifiedStore} />
+                  <VerifiedSellerBadge verified={store.verified} tone={store.verificationBadge} label={t.store.verifiedStore} />
                 </div>
                 <p className="mt-2 text-small text-white/70">
                   {store.categoryName ? `${store.categoryName} · ` : ""}

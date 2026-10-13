@@ -31,6 +31,7 @@ export type SellerNotificationType =
   | "settlement_updated"
   | "store_status_changed"
   | "store_verification_changed"
+  | "store_verification_granted"
   | "low_stock";
 export type AdminNotificationType = "seller_application" | "operational_alert";
 
@@ -64,6 +65,7 @@ const TYPE_PREFERENCE_KEY: Record<string, { scope: "customer" | "seller"; key: s
   settlement_updated: { scope: "seller", key: "settlements" },
   store_status_changed: { scope: "seller", key: "store_status" },
   store_verification_changed: { scope: "seller", key: "store_status" },
+  store_verification_granted: { scope: "seller", key: "store_status" },
   low_stock: { scope: "seller", key: "low_stock" },
 };
 
@@ -325,6 +327,7 @@ export interface NotificationParams {
   applicantName?: string | undefined;
   reason?: string | undefined;
   sellerName?: string | undefined;
+  badge?: "blue" | "green" | undefined;
 }
 
 const ORDER_STATUS_LABELS: Record<string, Localized> = {
@@ -461,6 +464,15 @@ function buildContent(type: NotificationType, p: NotificationParams): { title: L
           ar: `حالة توثيق متجرك أصبحت: ${p.status ?? ""}.`,
           fr: `Le statut de vérification de votre boutique est maintenant : ${p.status ?? ""}.`,
           en: `Your store verification status is now: ${p.status ?? ""}.`,
+        },
+      };
+    case "store_verification_granted":
+      return {
+        title: { ar: "🎉 تم توثيق متجرك!", fr: "🎉 Votre boutique est vérifiée !", en: "🎉 Your store is verified!" },
+        body: {
+          ar: `مبروك! تم توثيق متجر «${p.storeName ?? ""}» ${p.badge === "green" ? "بالشارة الخضراء — ضمان الجودة" : "بالشارة الزرقاء — متجر معتمد من المنصة"}.`,
+          fr: `Félicitations ! Votre boutique « ${p.storeName ?? ""} » est désormais vérifiée ${p.badge === "green" ? "avec le badge vert — garantie qualité" : "avec le badge bleu — boutique agréée par la plateforme"}.`,
+          en: `Congratulations! Your store "${p.storeName ?? ""}" is now verified ${p.badge === "green" ? "with the green badge — quality guarantee" : "with the blue badge — platform-approved store"}.`,
         },
       };
     case "low_stock":

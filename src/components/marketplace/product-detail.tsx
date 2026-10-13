@@ -408,7 +408,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
                 {product.store.slug === "modalia" ? (
                 <OfficialStoreBadge label={officialLabel} />
               ) : (
-                <VerifiedSellerBadge verified={product.store.verified} label={verifiedLabel} />
+                <VerifiedSellerBadge verified={product.store.verified} tone={product.store.verificationBadge} label={verifiedLabel} />
               )}
               </span>
             </Link>

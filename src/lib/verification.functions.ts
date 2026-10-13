@@ -448,3 +448,250 @@ export const suspendSellerVerification = createServerFn({ method: "POST" })
 
     return { ok: true };
   });
+
+/* ------------------------------------------------------------------ */
+/* Store badge verification (blue / green) — admin grants per store     */
+/* ------------------------------------------------------------------ */
+
+/** Badge tone the admin can grant: blue = platform-affiliated, green = quality guarantee. */
+export type VerificationBadge = "blue" | "green";
+
+export type StoreVerificationRow = {
+  id: string;
+  name: string;
+  slug: string;
+  logo_path: string | null;
+  logo_url: string | null;
+  status: string;
+  verification_status: string;
+  verification_badge: VerificationBadge | null;
+  verified_at: string | null;
+  created_at: string;
+  seller_id: string | null;
+  seller_legal_name: string | null;
+  product_count: number;
+};
+
+/** Admin: list all stores with their verification/badge state for the verification UI. */
+export const listStoresForVerification = createServerFn({ method: "GET" })
+  .middleware(adminOnly)
+  .validator((d) =>
+    z
+      .object({
+        q: z.string().trim().max(120).optional(),
+        verification: z.enum(["all", "unverified", "verified", "manual", "suspended"]).default("all"),
+        page: z.number().int().positive().default(1),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }): Promise<{ stores: StoreVerificationRow[]; total: number; pageSize: number }> => {
+    await assertAdmin(context as any);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const pageSize = 20;
+    const from = (data.page - 1) * pageSize;
+
+    let query = supabaseAdmin
+      .from("stores")
+      .select(
+        "id,name,slug,logo_path,status,verification_status,verified_at,created_at,seller_id,settings,sellers(legal_name)",
+        { count: "exact" },
+      )
+      .order("created_at", { ascending: false })
+      .range(from, from + pageSize - 1);
+
+    if (data.q) {
+      const like = `%${data.q.replace(/[%_]/g, "")}%`;
+      query = query.or(`name.ilike.${like},slug.ilike.${like}`);
+    }
+    if (data.verification !== "all") {
+      query = query.eq("verification_status", data.verification);
+    }
+
+    const { data: rows, error, count } = await query;
+    if (error) throw new Error(error.message);
+
+    const sellerIds = [...new Set((rows ?? []).map((r: any) => r.seller_id).filter(Boolean))] as string[];
+    let productCounts = new Map<string, number>();
+    if (sellerIds.length > 0) {
+      const { data: products } = await supabaseAdmin
+        .from("products")
+        .select("seller_id")
+        .in("seller_id", sellerIds);
+      for (const p of products ?? []) {
+        const sid = (p as any).seller_id as string;
+        productCounts.set(sid, (productCounts.get(sid) ?? 0) + 1);
+      }
+    }
+
+    const { storagePublicUrl } = await import("@/lib/store.functions");
+    const stores: StoreVerificationRow[] = (rows ?? []).map((r: any) => ({
+      id: r.id,
+      name: r.name,
+      slug: r.slug,
+      logo_path: r.logo_path ?? null,
+      logo_url: r.logo_path ? storagePublicUrl(r.logo_path) : null,
+      status: r.status,
+      verification_status: r.verification_status ?? "unverified",
+      verification_badge: (r.settings as any)?.verification_badge === "green" ? "green" : (r.verification_status === "manual" || r.verification_status === "verified" ? "blue" : null),
+      verified_at: r.verified_at ?? null,
+      created_at: r.created_at,
+      seller_id: r.seller_id ?? null,
+      seller_legal_name: r.sellers?.legal_name ?? null,
+      product_count: productCounts.get(r.seller_id) ?? 0,
+    }));
+
+    return { stores, total: count ?? 0, pageSize };
+  });
+
+/**
+ * Admin: grant a verification badge (blue = platform-affiliated, green = quality
+ * guarantee) to a specific store. Manual grant — works before the store meets the
+ * automatic conditions. Notifies THAT seller only with a congratulations message.
+ */
+export const grantStoreVerificationBadge = createServerFn({ method: "POST" })
+  .middleware(adminOnly)
+  .validator((d) =>
+    z
+      .object({
+        storeId: z.string().uuid(),
+        badge: z.enum(["blue", "green"]),
+        note: z.string().trim().max(500).optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }): Promise<{ ok: boolean }> => {
+    await assertAdmin(context as any);
+    const userId = (context as any)?.userId as string;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: store, error: storeError } = await supabaseAdmin
+      .from("stores")
+      .select("id,name,slug,seller_id,verification_status,settings")
+      .eq("id", data.storeId)
+      .single();
+    if (storeError || !store) throw new Error("Store not found.");
+
+    const now = new Date().toISOString();
+    const note = data.note?.trim() || null;
+    const prevStatus = store.verification_status ?? "unverified";
+    const prevSettings = (store.settings as Record<string, unknown> | null) ?? {};
+
+    const { error: updError } = await supabaseAdmin
+      .from("stores")
+      .update({
+        verification_status: "manual",
+        settings: { ...prevSettings, verification_badge: data.badge } as unknown as import("@/integrations/supabase/types").Json,
+        verified_by: userId,
+        verified_at: now,
+        verification_note: note,
+      })
+      .eq("id", data.storeId);
+    if (updError) throw new Error(updError.message);
+
+    // Keep the seller-level state in sync.
+    if (store.seller_id) {
+      await supabaseAdmin
+        .from("sellers")
+        .update({
+          verification_state: "manual",
+          verified_by: userId,
+          verified_at: now,
+          verification_note: note,
+        })
+        .eq("id", store.seller_id);
+    }
+
+    await auditSellerVerification(supabaseAdmin, userId, store.seller_id ?? data.storeId, "store_badge_granted", {
+      storeId: data.storeId,
+      from: prevStatus,
+      to: "manual",
+      badge: data.badge,
+      manualOverride: true,
+      note,
+    });
+
+    // Congratulations notification — THAT seller only, never a broadcast.
+    if (store.seller_id) {
+      try {
+        const { emitSellerNotification } = await import("@/lib/notifications.functions");
+        await emitSellerNotification(store.seller_id, {
+          type: "store_verification_granted",
+          params: { storeName: store.name, badge: data.badge },
+          link: "/seller/store-profile",
+          payload: { seller_id: store.seller_id, store_id: data.storeId, badge: data.badge },
+        });
+      } catch {
+        /* notifications are best-effort */
+      }
+    }
+
+    return { ok: true };
+  });
+
+/** Admin: remove a store's verification badge (back to unverified). */
+export const removeStoreVerification = createServerFn({ method: "POST" })
+  .middleware(adminOnly)
+  .validator((d) => z.object({ storeId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }): Promise<{ ok: boolean }> => {
+    await assertAdmin(context as any);
+    const userId = (context as any)?.userId as string;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: store, error: storeError } = await supabaseAdmin
+      .from("stores")
+      .select("id,name,seller_id,verification_status,settings")
+      .eq("id", data.storeId)
+      .single();
+    if (storeError || !store) throw new Error("Store not found.");
+
+    const prevStatus = store.verification_status ?? "unverified";
+    const prevSettings = (store.settings as Record<string, unknown> | null) ?? {};
+    const nextSettings = { ...prevSettings };
+    delete nextSettings["verification_badge"];
+
+    const { error: updError } = await supabaseAdmin
+      .from("stores")
+      .update({
+        verification_status: "unverified",
+        settings: nextSettings as unknown as import("@/integrations/supabase/types").Json,
+        verified_by: null,
+        verified_at: null,
+        verification_note: null,
+      })
+      .eq("id", data.storeId);
+    if (updError) throw new Error(updError.message);
+
+    if (store.seller_id) {
+      await supabaseAdmin
+        .from("sellers")
+        .update({
+          verification_state: "unverified",
+          verified_by: null,
+          verified_at: null,
+          verification_note: null,
+        })
+        .eq("id", store.seller_id);
+    }
+
+    await auditSellerVerification(supabaseAdmin, userId, store.seller_id ?? data.storeId, "store_badge_removed", {
+      storeId: data.storeId,
+      from: prevStatus,
+      to: "unverified",
+    });
+
+    if (store.seller_id) {
+      try {
+        const { emitSellerNotification } = await import("@/lib/notifications.functions");
+        await emitSellerNotification(store.seller_id, {
+          type: "store_verification_changed",
+          params: { status: "unverified" },
+          link: "/seller/store-profile",
+          payload: { seller_id: store.seller_id, store_id: data.storeId, to: "unverified" },
+        });
+      } catch {
+        /* notifications are best-effort */
+      }
+    }
+
+    return { ok: true };
+  });

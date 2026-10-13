@@ -54,7 +54,7 @@ function StoreCard({ store, locale }: { store: CatalogStore; locale: SupportedLo
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <h2 className="truncate text-base font-semibold">{store.name}</h2>
-          <VerifiedSellerBadge verified={store.verified} label={t.store.verifiedStore} />
+          <VerifiedSellerBadge verified={store.verified} tone={store.verificationBadge} label={t.store.verifiedStore} />
         </div>
         {store.description ? (
           <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">{store.description}</p>

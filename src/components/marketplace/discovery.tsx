@@ -349,7 +349,7 @@ export function StoreRail({ stores, locale }: { stores: CatalogStore[]; locale: 
               {store.slug === "modalia" ? (
                 <OfficialStoreBadge label={storeT.officialStore} />
               ) : (
-                <VerifiedSellerBadge verified={store.verified} label={storeT.verifiedStore} />
+                <VerifiedSellerBadge verified={store.verified} tone={store.verificationBadge} label={storeT.verifiedStore} />
               )}
             </h3>
             <p className="mt-1 text-sm text-muted-foreground">

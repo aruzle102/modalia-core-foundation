@@ -100,6 +100,8 @@ export type StoreDetail = {
   logoUrl: string | null;
   bannerUrl: string | null;
   verified: boolean;
+  /** Admin-granted badge tone: "blue" = platform-affiliated, "green" = quality guarantee. */
+  verificationBadge: "blue" | "green";
   /** stores.settings.official === true — the platform-owned Modalia store. */
   official: boolean;
   products: CatalogProduct[];
@@ -309,7 +311,11 @@ export const getStoreDetail = createServerFn({ method: "GET" })
       description: localizeText(settings.description, data.locale) || store.description,
       logoUrl: publicUrl(store.logo_path),
       bannerUrl: publicUrl(store.banner_path),
-      verified: store.verification_status === "verified",
+      verified: store.verification_status === "verified" || store.verification_status === "manual",
+      verificationBadge:
+        (store.settings as { verification_badge?: string } | null)?.verification_badge === "green"
+          ? "green"
+          : "blue",
       official,
       products,
       categories: [...new Set(products.map((product) => product.categorySlug).filter((category): category is string => Boolean(category)))],

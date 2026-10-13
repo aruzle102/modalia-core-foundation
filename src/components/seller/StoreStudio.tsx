@@ -481,7 +481,11 @@ export function StoreStudio({
       description: localizeText(descriptionI18n, locale) || data.store.description || null,
       logoUrl: storagePreviewUrl(profile.logoPath.trim()),
       bannerUrl: storagePreviewUrl(profile.bannerPath.trim()),
-      verified: data.store.verification_status === "verified",
+      verified: data.store.verification_status === "verified" || data.store.verification_status === "manual",
+      verificationBadge:
+        (data.store.settings as { verification_badge?: string } | null)?.verification_badge === "green"
+          ? "green"
+          : "blue",
       official: (data.store.settings as Record<string, unknown> | null)?.["official"] === true,
       products,
       categories: [

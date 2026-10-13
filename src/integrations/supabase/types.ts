@@ -1930,6 +1930,60 @@ export type Database = {
           },
         ]
       }
+      product_appeals: {
+        Row: {
+          admin_note: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          product_id: string
+          reason: string
+          resolved_at: string | null
+          resolved_by: string | null
+          seller_id: string
+          status: string
+        }
+        Insert: {
+          admin_note?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          product_id: string
+          reason: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          seller_id: string
+          status?: string
+        }
+        Update: {
+          admin_note?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          product_id?: string
+          reason?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          seller_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_appeals_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_appeals_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string

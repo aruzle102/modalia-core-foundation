@@ -33,6 +33,8 @@ import {
   bulkModerateAdminProducts,
   bulkSetProductStatus,
   listAdminSellersLite,
+  listProductAppeals,
+  resolveProductAppeal,
 } from "@/lib/admin-catalog.functions";
 import type { ModerationFlag } from "@/lib/moderation-rules";
 import { errMsg, pickName, Pager } from "./_shared";
@@ -504,17 +506,32 @@ function ProductsManager() {
                           </Button>
                         ) : null}
                         {p.moderation_status === "pending" ? (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() =>
-                              mutate("reject-product", () => moderateAdminProduct({ data: { id: p.id, decision: "reject", reason: t.rejectReason } }), {
-                                confirm: { title: t.rejectTitle, description: t.rejectDesc },
-                              })
-                            }
-                          >
-                            {t.reject}
-                          </Button>
+                          <>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                mutate("reject-product", () => moderateAdminProduct({ data: { id: p.id, decision: "reject", reason: t.rejectReason } }), {
+                                  confirm: { title: t.rejectTitle, description: t.rejectDesc },
+                                })
+                              }
+                            >
+                              {t.reject}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              onClick={() => {
+                                const note = prompt("What needs to be fixed? (seller will see this note)");
+                                if (!note || !note.trim()) return;
+                                mutate("request-fix", () =>
+                                  moderateAdminProduct({ data: { id: p.id, decision: "request_changes", reason: note.trim() } }),
+                                );
+                              }}
+                            >
+                              Request Fix
+                            </Button>
+                          </>
                         ) : null}
                         {p.status !== "active" ? (
                           <Button size="sm" variant="ghost" onClick={() => setStatusMut.mutate({ id: p.id, status: "active" })} disabled={setStatusMut.isPending}>
@@ -625,7 +642,14 @@ function StoreProductsView({ sellerId, onBack }: { sellerId: string; onBack: () 
     queryFn: () => listAdminProducts({ data: { sellerId, page: 1 } }),
     retry: false,
   });
-  const products = productsQuery.data?.products ?? [];
+  const products = (productsQuery.data?.products ?? []) as Array<{
+    id: string;
+    name: unknown;
+    description: unknown;
+    base_price: number;
+    status: string;
+    moderation_status: string;
+  }>;
 
   const notifyAndRefresh = () => {
     void queryClient.invalidateQueries({ queryKey: ["admin-products"] });
@@ -652,6 +676,12 @@ function StoreProductsView({ sellerId, onBack }: { sellerId: string; onBack: () 
                   <StatusPill status={p.moderation_status} />
                   <StatusPill status={p.status} />
                 </div>
+                {typeof p.description === "object" && p.description ? (
+                  <p className="line-clamp-2 text-sm text-muted-foreground">
+                    {pickName(p.description as Record<string, string>)}
+                  </p>
+                ) : null}
+                <p className="text-base font-bold">{fmtMoney(p.base_price, "DZD", "en")}</p>
                 <div className="flex flex-wrap gap-2">
                   <Button
                     type="button"
@@ -682,6 +712,27 @@ function StoreProductsView({ sellerId, onBack }: { sellerId: string; onBack: () 
                       Edit
                     </Link>
                   </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => {
+                      if (!confirm(`Delete "${pickName(p.name)}" permanently? This cannot be undone.`)) return;
+                      toast.promise(
+                        updateAdminProduct({ data: { id: p.id, status: "archived" } }),
+                        {
+                          loading: "Deleting...",
+                          success: () => {
+                            notifyAndRefresh();
+                            return "Product deleted. Seller notified.";
+                          },
+                          error: "Delete failed.",
+                        },
+                      );
+                    }}
+                  >
+                    Delete
+                  </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Actions notify this seller only.
@@ -696,17 +747,95 @@ function StoreProductsView({ sellerId, onBack }: { sellerId: string; onBack: () 
 }
 
 /**
- * Appeals tab: seller appeals against moderation decisions.
- * Requires the product_appeals table (migration pending approval).
+ * Appeals tab: real seller appeals from the product_appeals table.
  */
 function AppealsTab() {
+  const queryClient = useQueryClient();
+  const appealsQuery = useQuery({
+    queryKey: ["admin-product-appeals"],
+    queryFn: () => listProductAppeals(),
+    retry: false,
+  });
+  const appeals = (appealsQuery.data?.appeals ?? []) as Array<{
+    id: string;
+    reason: string;
+    notes: string | null;
+    status: string;
+    admin_note: string | null;
+    created_at: string;
+    sellers: { legal_name: string };
+  }>;
+  const [resolving, setResolving] = useState<string | null>(null);
+  const [adminNote, setAdminNote] = useState("");
+
+  const resolve = (appealId: string, decision: "approved" | "rejected") => {
+    setResolving(appealId);
+    toast.promise(
+      resolveProductAppeal({ data: { appealId, decision, adminNote: adminNote || undefined } }),
+      {
+        loading: "Resolving...",
+        success: () => {
+          setResolving(null);
+          setAdminNote("");
+          void queryClient.invalidateQueries({ queryKey: ["admin-product-appeals"] });
+          return `Appeal ${decision}. Seller notified.`;
+        },
+        error: (e) => {
+          setResolving(null);
+          return e instanceof Error ? e.message : "Failed.";
+        },
+      },
+    );
+  };
+
+  if (appealsQuery.isLoading) return <TableSkeleton rows={4} />;
+  if (appealsQuery.isError) {
+    return <EmptyState title="Could not load appeals" description="Please try again." />;
+  }
+  if (appeals.length === 0) {
+    return <EmptyState title="No appeals" description="No seller appeals submitted yet." />;
+  }
   return (
-    <AdminCard title="Appeals">
-      <EmptyState
-        title="Appeals system pending"
-        description="Seller appeals require a new database table (product_appeals). The migration SQL is prepared and awaiting approval — no appeals can be listed until it is applied."
-      />
-    </AdminCard>
+    <div className="space-y-4">
+      {appeals.map((a) => (
+        <AdminCard key={a.id} title={`${a.sellers.legal_name} — ${a.status}`}>
+          <div className="space-y-3">
+            <p className="text-sm"><strong>Reason:</strong> {a.reason}</p>
+            {a.notes ? <p className="text-sm text-muted-foreground">{a.notes}</p> : null}
+            {a.admin_note ? (
+              <p className="text-sm"><strong>Admin note:</strong> {a.admin_note}</p>
+            ) : null}
+            <p className="text-xs text-muted-foreground">{fmtDateTime(a.created_at)}</p>
+            {a.status === "pending" ? (
+              <div className="space-y-2">
+                <Input
+                  placeholder="Note to seller (optional)"
+                  value={adminNote}
+                  onChange={(e) => setAdminNote(e.target.value)}
+                />
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => resolve(a.id, "approved")}
+                    disabled={resolving === a.id}
+                  >
+                    Approve appeal
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => resolve(a.id, "rejected")}
+                    disabled={resolving === a.id}
+                  >
+                    Reject appeal
+                  </Button>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </AdminCard>
+      ))}
+    </div>
   );
 }
 

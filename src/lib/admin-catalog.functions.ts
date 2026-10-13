@@ -85,7 +85,7 @@ export const listAdminSellersLite = createServerFn({ method: "GET" })
 // Products
 // ---------------------------------------------------------------------------
 
-export type AdminProductModerationDecision = "approve" | "reject" | "hide";
+export type AdminProductModerationDecision = "approve" | "reject" | "hide" | "request_changes";
 export type AdminProductStatus = "draft" | "active" | "archived";
 
 export const listAdminProducts = createServerFn({ method: "GET" })
@@ -169,7 +169,7 @@ export const moderateAdminProduct = createServerFn({ method: "POST" })
     z
       .object({
         id: z.string().uuid(),
-        decision: z.enum(["approve", "reject", "hide"]),
+        decision: z.enum(["approve", "reject", "hide", "request_changes"]),
         reason: z.string().max(500).optional(),
       })
       .parse(data),
@@ -194,17 +194,23 @@ export const moderateAdminProduct = createServerFn({ method: "POST" })
           }
         : data.decision === "hide"
           ? { ...base, visibility: "hidden", publication_status: "hidden" }
-          : {
-              ...base,
-              moderation_status: "rejected",
-              publication_status: "rejected",
-              visibility: "hidden",
-              status: "draft" as const,
-            };
+          : data.decision === "request_changes"
+            ? {
+                ...base,
+                moderation_status: "pending",
+                // stays pending; seller sees the admin note
+              }
+            : {
+                ...base,
+                moderation_status: "rejected",
+                publication_status: "rejected",
+                visibility: "hidden",
+                status: "draft" as const,
+              };
     const supabaseAdmin = await adminClient();
     const { error } = await supabaseAdmin.from("products").update(update).eq("id", data.id);
     if (error) throw new Error(error.message);
-    await auditLog(context.userId ?? null, `product_${data.decision}d`, "product", data.id, {
+    await auditLog(context.userId ?? null, `product_${data.decision}`, "product", data.id, {
       decision: data.decision,
       reason: data.reason ?? null,
     });
@@ -730,7 +736,7 @@ export const moderateReview = createServerFn({ method: "POST" })
     z
       .object({
         id: z.string().uuid(),
-        decision: z.enum(["approve", "reject", "hide"]),
+        decision: z.enum(["approve", "reject", "hide", "request_changes"]),
         reason: z.string().max(500).optional(),
       })
       .parse(data),
@@ -1522,12 +1528,12 @@ export const bulkModerateAdminProducts = createServerFn({ method: "POST" })
         : data.decision === "hide"
           ? { ...base, visibility: "hidden", publication_status: "hidden" }
           : {
-              ...base,
-              moderation_status: "rejected",
-              publication_status: "rejected",
-              visibility: "hidden",
-              status: "draft" as const,
-            };
+                ...base,
+                moderation_status: "rejected",
+                publication_status: "rejected",
+                visibility: "hidden",
+                status: "draft" as const,
+              };
     const { data: rows, error } = await supabaseAdmin
       .from("products")
       .update(update)
@@ -1848,4 +1854,66 @@ export const issueSellerWarning = createServerFn({ method: "POST" })
       /* best-effort */
     }
     return { ok: true };
+  });
+
+// ---------------------------------------------------------------------------
+// Product Appeals
+// ---------------------------------------------------------------------------
+
+export const listProductAppeals = createServerFn({ method: "GET" })
+  .middleware(adminOnly)
+  .handler(async ({ context }) => {
+    await assertAdminPermission(context, "products.manage");
+    const supabaseAdmin = await adminClient();
+    const { data, error } = await supabaseAdmin
+      .from("product_appeals")
+      .select("id, product_id, seller_id, reason, notes, status, admin_note, created_at, resolved_at, products!inner(id, slug), sellers!inner(id, legal_name)")
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return { appeals: data ?? [] };
+  });
+
+const resolveAppealSchema = z.object({
+  appealId: z.string().uuid(),
+  decision: z.enum(["approved", "rejected"]),
+  adminNote: z.string().max(1000).optional(),
+});
+
+export const resolveProductAppeal = createServerFn({ method: "POST" })
+  .middleware(adminOnly)
+  .validator((data) => resolveAppealSchema.parse(data))
+  .handler(async ({ data, context }) => {
+    await assertAdminPermission(context, "products.manage");
+    const supabaseAdmin = await adminClient();
+    
+    const { data: appeal, error: fetchError } = await supabaseAdmin
+      .from("product_appeals")
+      .select("id, seller_id, product_id, status")
+      .eq("id", data.appealId)
+      .single();
+    if (fetchError || !appeal) throw new Error("Appeal not found.");
+    if (appeal.status !== "pending") throw new Error("Appeal already resolved.");
+
+    const { error } = await supabaseAdmin
+      .from("product_appeals")
+      .update({
+        status: data.decision,
+        admin_note: data.adminNote ?? null,
+        resolved_at: new Date().toISOString(),
+        resolved_by: context.userId,
+      })
+      .eq("id", data.appealId);
+    if (error) throw new Error(error.message);
+
+    // Notify THAT seller only
+    try {
+      await emitSellerNotification((appeal as { seller_id: string }).seller_id, {
+        type: data.decision === "approved" ? "product_approved" : "product_rejected",
+        params: {},
+        payload: { appealId: data.appealId, productId: (appeal as { product_id: string }).product_id, adminNote: data.adminNote },
+      });
+    } catch {
+      /* best-effort */
+    }
+    return { ok: true as const };
   });

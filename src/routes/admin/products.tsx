@@ -2,7 +2,7 @@ import { createFileRoute, Link, Outlet, useMatch, useNavigate } from "@tanstack/
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Flag, Pencil, Star, StarOff } from "lucide-react";
+import { ChevronRight, Flag, Pencil, Star, StarOff } from "lucide-react";
 import { AdminGate } from "@/components/admin/AdminGate";
 import { AdminShell } from "@/components/admin/AdminShell";
 import {
@@ -42,11 +42,22 @@ import { getTranslations } from "@/lib/i18n";
 import { Checkbox } from "@/components/ui/checkbox";
 
 export const Route = createFileRoute("/admin/products")({
-  validateSearch: (search: Record<string, unknown>) => ({
+  validateSearch: (search: Record<string, unknown>): {
+    tab?: string;
+    q?: string;
+    moderation?: string;
+    status?: string;
+    sellerId?: string;
+    storeId?: string;
+    page?: number;
+    create?: string;
+  } => ({
+    tab: strParam(search["tab"]),
     q: strParam(search["q"]),
     moderation: strParam(search["moderation"], "all"),
     status: strParam(search["status"], "all"),
     sellerId: strParam(search["sellerId"], "all"),
+    storeId: strParam(search["storeId"]),
     page: numParam(search["page"], 1),
     create: strParam(search["create"]),
   }),
@@ -83,8 +94,10 @@ function ProductsManager() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const backParam = useBackParam();
-  const url = useUrlState({ moderation: "all", status: "all", sellerId: "all", page: 1 });
+  const url = useUrlState({ tab: "stores", moderation: "all", status: "all", sellerId: "all", page: 1 });
   const page = numParam(url.search["page"], 1);
+  const tab = strParam(url.search["tab"], "stores");
+  const storeId = strParam(url.search["storeId"], "");
   const q = strParam(url.search["q"]);
   const moderation = strParam(url.search["moderation"], "all");
   const status = strParam(url.search["status"], "all");
@@ -207,8 +220,44 @@ function ProductsManager() {
     });
   };
 
+  const setTab = (next: string) => url.set({ tab: next, page: 1, storeId: "" });
+
   return (
     <div className="space-y-6">
+      {/* Three tabs: Stores | Product Requests | Appeals */}
+      <div className="flex gap-1 rounded-xl border border-neutral-200 bg-white p-1 dark:border-neutral-800 dark:bg-neutral-950">
+        {[
+          { id: "stores", label: "Stores" },
+          { id: "requests", label: "Product Requests" },
+          { id: "appeals", label: "Appeals" },
+        ].map((tb) => (
+          <button
+            key={tb.id}
+            type="button"
+            onClick={() => setTab(tb.id)}
+            className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors ${
+              tab === tb.id
+                ? "bg-neutral-900 text-white shadow-sm dark:bg-white dark:text-neutral-900"
+                : "text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800"
+            }`}
+          >
+            {tb.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "stores" ? (
+        <StoresTab
+          sellers={sellersQuery.data?.sellers ?? []}
+          isLoading={sellersQuery.isLoading}
+          storeId={storeId}
+          onSelectStore={(id) => url.set({ storeId: id, page: 1 })}
+          onBack={() => url.set({ storeId: "" })}
+        />
+      ) : tab === "appeals" ? (
+        <AppealsTab />
+      ) : (
+      <>
       <AdminCard title={t.filtersTitle}>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-1.5">
@@ -510,7 +559,154 @@ function ProductsManager() {
           setConfirm(null);
         }}
       />
+      </>
+      )}
     </div>
+  );
+}
+
+/**
+ * Stores tab: grid of stores with logo/initial + name.
+ * Clicking a store shows all their products with edit/delete/pause actions.
+ */
+function StoresTab({
+  sellers,
+  isLoading,
+  storeId,
+  onSelectStore,
+  onBack,
+}: {
+  sellers: Array<{ id: string; legal_name: string; account_status: string }>;
+  isLoading: boolean;
+  storeId: string;
+  onSelectStore: (id: string) => void;
+  onBack: () => void;
+}) {
+  if (storeId) {
+    return <StoreProductsView sellerId={storeId} onBack={onBack} />;
+  }
+  if (isLoading) return <TableSkeleton rows={6} />;
+  if (sellers.length === 0) {
+    return <EmptyState title="No stores" description="No seller stores found." />;
+  }
+  return (
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {sellers.map((seller) => (
+        <button
+          key={seller.id}
+          type="button"
+          onClick={() => onSelectStore(seller.id)}
+          className="flex items-center gap-4 rounded-xl border border-neutral-200 bg-white p-5 text-start transition-all hover:border-neutral-300 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-950 dark:hover:border-neutral-700"
+        >
+          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-neutral-900 text-xl font-bold text-white dark:bg-white dark:text-neutral-900">
+            {seller.legal_name.charAt(0).toUpperCase()}
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-base font-semibold">{seller.legal_name}</span>
+            <span className="mt-1 block">
+              <StatusPill status={seller.account_status} />
+            </span>
+          </span>
+          <ChevronRight className="h-5 w-5 shrink-0 text-neutral-400" aria-hidden="true" />
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * Store products view: all products of a specific store with
+ * edit / delete / pause actions. Each action notifies THAT seller only.
+ */
+function StoreProductsView({ sellerId, onBack }: { sellerId: string; onBack: () => void }) {
+  const queryClient = useQueryClient();
+  const productsQuery = useQuery({
+    queryKey: ["admin-products", "store", sellerId],
+    queryFn: () => listAdminProducts({ data: { sellerId, page: 1 } }),
+    retry: false,
+  });
+  const products = productsQuery.data?.products ?? [];
+
+  const notifyAndRefresh = () => {
+    void queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+  };
+
+  if (productsQuery.isLoading) return <TableSkeleton rows={6} />;
+  if (productsQuery.isError) {
+    return <EmptyState title="Could not load products" description="Please try again." />;
+  }
+
+  return (
+    <div className="space-y-4">
+      <Button type="button" variant="outline" size="sm" onClick={onBack}>
+        ← Back to stores
+      </Button>
+      {products.length === 0 ? (
+        <EmptyState title="No products" description="This store has no products yet." />
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {products.map((p) => (
+            <AdminCard key={p.id} title={pickName(p.name)}>
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <StatusPill status={p.moderation_status} />
+                  <StatusPill status={p.status} />
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      toast.promise(
+                        setProductStatus({ data: { id: p.id, status: p.status === "active" ? "archived" : "active" } }),
+                        {
+                          loading: "Updating...",
+                          success: () => {
+                            notifyAndRefresh();
+                            return "Product updated. Seller notified.";
+                          },
+                          error: "Update failed.",
+                        },
+                      );
+                    }}
+                  >
+                    {p.status === "active" ? "Pause" : "Activate"}
+                  </Button>
+                  <Button type="button" size="sm" variant="outline" asChild>
+                    <Link
+                      to="/admin/products/$productId"
+                      params={{ productId: p.id }}
+                      search={{ back: "" }}
+                    >
+                      Edit
+                    </Link>
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Actions notify this seller only.
+                </p>
+              </div>
+            </AdminCard>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Appeals tab: seller appeals against moderation decisions.
+ * Requires the product_appeals table (migration pending approval).
+ */
+function AppealsTab() {
+  return (
+    <AdminCard title="Appeals">
+      <EmptyState
+        title="Appeals system pending"
+        description="Seller appeals require a new database table (product_appeals). The migration SQL is prepared and awaiting approval — no appeals can be listed until it is applied."
+      />
+    </AdminCard>
   );
 }
 

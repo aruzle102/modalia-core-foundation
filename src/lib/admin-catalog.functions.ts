@@ -330,6 +330,20 @@ export const setProductStatus = createServerFn({ method: "POST" })
     await auditLog(context.userId ?? null, `product_${data.status}`, "product", data.id, {
       status: data.status,
     });
+    // Notify THAT seller only (never broadcast)
+    try {
+      const prodResult = await supabaseAdmin.from("products").select("seller_id").eq("id", data.id).single();
+      const sellerId = (prodResult.data as { seller_id?: string } | null)?.seller_id;
+      if (sellerId) {
+        await emitSellerNotification(sellerId, {
+          type: data.status === "active" ? "product_approved" : "product_hidden",
+          params: {},
+          payload: { productId: data.id, status: data.status },
+        });
+      }
+    } catch {
+      /* notifications are best-effort */
+    }
     return { ok: true as const };
   });
 

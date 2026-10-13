@@ -2002,3 +2002,41 @@ export const submitProductAppeal = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true as const };
   });
+
+/**
+ * Rich product list for a specific store (admin view).
+ * Includes images, variants, seller info — same richness as requests.
+ */
+export const listStoreProducts = createServerFn({ method: "GET" })
+  .middleware(adminOnly)
+  .validator((data) => z.object({ sellerId: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    await assertAdminPermission(context, "products.view");
+    const supabaseAdmin = await adminClient();
+    const { data: products, error } = await supabaseAdmin
+      .from("products")
+      .select(
+        "id, slug, name, description, base_price, compare_at_price, weight_grams, status, moderation_status, moderation_reason, created_at, seller_id",
+      )
+      .eq("seller_id", data.sellerId)
+      .order("created_at", { ascending: false })
+      .limit(100);
+    if (error) throw new Error(error.message);
+    const rows = (products ?? []) as Array<{ id: string; seller_id: string }>;
+    const enriched = await Promise.all(
+      rows.map(async (p) => {
+        const [sellerRes, imgRes, varRes] = await Promise.all([
+          supabaseAdmin.from("sellers").select("legal_name, commission_rate").eq("id", p.seller_id).single(),
+          supabaseAdmin.from("product_images").select("storage_path, is_primary").eq("product_id", p.id),
+          supabaseAdmin.from("product_variants").select("id, sku, price, attributes").eq("product_id", p.id),
+        ]);
+        return {
+          ...p,
+          sellers: sellerRes.data ?? { legal_name: "Unknown", commission_rate: 10 },
+          product_images: imgRes.data ?? [],
+          product_variants: varRes.data ?? [],
+        };
+      }),
+    );
+    return { products: enriched };
+  });

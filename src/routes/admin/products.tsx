@@ -37,6 +37,7 @@ import {
   resolveProductAppeal,
 } from "@/lib/admin-catalog.functions";
 import { ProductRequestsTab } from "@/components/admin/ProductRequestsTab";
+import { StoreProductsView as RichStoreProductsView } from "@/components/admin/StoreProductsView";
 import type { ModerationFlag } from "@/lib/moderation-rules";
 import { errMsg, pickName, Pager } from "./_shared";
 import { numParam, strParam, useBackParam, useDebouncedUrlParam, useUrlState } from "@/hooks/use-url-state";
@@ -284,7 +285,7 @@ function StoresTab({
   onBack: () => void;
 }) {
   if (storeId) {
-    return <StoreProductsView sellerId={storeId} onBack={onBack} />;
+    return <RichStoreProductsView sellerId={storeId} onBack={onBack} />;
   }
   if (isLoading) return <TableSkeleton rows={6} />;
   if (sellers.length === 0) {

@@ -236,7 +236,7 @@ function SellerNavLink({ item, compact, onNavigate, onDark, collapsed }: { item:
       activeProps={{
         className: onDark
           ? "bg-white text-neutral-950 font-semibold shadow-md [&_svg]:text-neutral-950"
-          : "bg-neutral-900 text-white font-medium shadow-sm dark:bg-white dark:text-neutral-900 [&_svg]:text-current",
+          : "bg-blue-50 text-blue-700 font-semibold dark:bg-blue-950/50 dark:text-blue-300 [&_svg]:text-blue-600 dark:[&_svg]:text-blue-400",
       }}
       className={className}
       title={collapsed ? item.label : undefined}
@@ -699,17 +699,17 @@ export function SellerShell({
         <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
           <SheetContent
             side={dir === "rtl" ? "right" : "left"}
-            className="w-72 overflow-y-auto bg-neutral-950 p-0 text-neutral-200 dark:bg-black"
+            className="w-72 overflow-y-auto border-e border-neutral-200 bg-white p-0 text-neutral-700 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300"
           >
-            <SheetHeader className="border-b border-white/10 p-4">
-              <SheetTitle className="flex items-center gap-2 text-start text-white">
-                <span className="flex h-7 w-7 items-center justify-center rounded-md bg-white text-xs font-bold text-neutral-950">
+            <SheetHeader className="border-b border-neutral-200 p-4 dark:border-neutral-800">
+              <SheetTitle className="flex items-center gap-2 text-start text-neutral-900 dark:text-white">
+                <span className="flex h-7 w-7 items-center justify-center rounded-md bg-neutral-950 text-xs font-bold text-white dark:bg-white dark:text-neutral-950">
                   M
                 </span>
                 <span className="text-sm font-semibold tracking-tight">Seller OS</span>
               </SheetTitle>
             </SheetHeader>
-            <SellerSidebarNav groups={navGroups} onNavigate={() => setMobileNavOpen(false)} dark />
+            <SellerSidebarNav groups={navGroups} onNavigate={() => setMobileNavOpen(false)} />
           </SheetContent>
         </Sheet>
       </header>
@@ -717,7 +717,7 @@ export function SellerShell({
       <div className="flex">
         <aside
           className={cn(
-            "sticky top-14 hidden h-[calc(100vh-3.5rem)] shrink-0 self-start overflow-y-auto overflow-x-hidden bg-neutral-950 text-neutral-200 transition-[width] duration-300 lg:block dark:bg-black",
+            "sticky top-14 hidden h-[calc(100vh-3.5rem)] shrink-0 self-start overflow-y-auto overflow-x-hidden border-e border-neutral-200 bg-white text-neutral-700 transition-[width] duration-300 lg:block dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300",
             sidebarCollapsed ? "w-16" : "w-68",
           )}
         >
@@ -733,7 +733,7 @@ export function SellerShell({
               aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
               aria-expanded={!sidebarCollapsed}
               title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-neutral-400 transition-colors hover:bg-white/10 hover:text-white"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-white"
             >
               {sidebarCollapsed ? (
                 <ChevronsRight className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />
@@ -742,7 +742,7 @@ export function SellerShell({
               )}
             </button>
           </div>
-          <SellerSidebarNav groups={navGroups} dark collapsed={sidebarCollapsed} />
+          <SellerSidebarNav groups={navGroups} collapsed={sidebarCollapsed} />
         </aside>
 
         <main id="main-content" tabIndex={-1} className={cn("min-w-0 flex-1", mainClassName)}>

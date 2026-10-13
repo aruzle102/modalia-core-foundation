@@ -42,11 +42,14 @@ import {
   UserRound,
   Users,
   Wallet,
+  Menu,
 } from "lucide-react";
 import { CommandBar } from "./CommandBar";
 import { QuickCreate } from "./QuickCreate";
 import { useAdminLocale } from "./useAdminLocale";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { getTranslations, type Translation } from "@/lib/i18n";
 import {
@@ -208,10 +211,11 @@ function itemMatches(item: NavItem, pathname: string): boolean {
   return pathname === to || pathname.startsWith(`${to}/`);
 }
 
-function NavLink({ item, compact, onDark }: { item: NavItem; compact?: boolean; onDark?: boolean | undefined }) {
+function NavLink({ item, compact, onDark, onNavigate }: { item: NavItem; compact?: boolean | undefined; onDark?: boolean | undefined; onNavigate?: (() => void) | undefined }) {
   return (
     <Link
       to={item.to}
+      onClick={onNavigate}
       {...(item.exact ? { activeOptions: { exact: true } } : {})}
       activeProps={{
         className: onDark
@@ -236,7 +240,7 @@ function NavLink({ item, compact, onDark }: { item: NavItem; compact?: boolean; 
  * Collapsible sidebar group. Expanded groups + the active section persist in
  * localStorage so the sidebar looks the same after reload.
  */
-function SidebarNav({ groups, dark }: { groups: NavGroup[]; dark?: boolean }) {
+function SidebarNav({ groups, dark, onNavigate }: { groups: NavGroup[]; dark?: boolean | undefined; onNavigate?: (() => void) | undefined }) {
   const { pathname } = useLocation();
   const allItems = useMemo(() => groups.flatMap((g) => g.items), [groups]);
   const [expanded, setExpanded] = useState<string[]>(() => {
@@ -306,7 +310,7 @@ function SidebarNav({ groups, dark }: { groups: NavGroup[]; dark?: boolean }) {
             {open ? (
               <div className="mt-0.5 space-y-0.5">
                 {group.items.map((item) => (
-                  <NavLink key={String(item.to)} item={item} onDark={dark} />
+                  <NavLink key={String(item.to)} item={item} onDark={dark} onNavigate={onNavigate} />
                 ))}
               </div>
             ) : null}
@@ -371,12 +375,21 @@ export function AdminShell({
       }))
       .filter((group) => group.items.length > 0);
   }, [t, identityQuery.data]);
-  const allItems = useMemo(() => groups.flatMap((g) => g.items), [groups]);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="sticky top-0 z-40 border-b bg-white dark:bg-[#1a2035]">
         <div className="flex h-14 items-center gap-3 px-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="lg:hidden"
+            onClick={() => setMobileNavOpen(true)}
+            aria-label="Open navigation"
+          >
+            <Menu className="h-5 w-5" aria-hidden="true" />
+          </Button>
           <Link to="/admin" search={{ locale }} className="flex items-center gap-2">
             <span className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-xs font-bold text-primary-foreground">
               M
@@ -412,14 +425,28 @@ export function AdminShell({
             <span className="hidden sm:inline">{t.signOut}</span>
           </button>
         </div>
-        {/* Mobile nav: compact horizontally-scrollable under the topbar (dark, matching the desktop sidebar) */}
-        <nav className="border-t border-white/10 bg-[#1a2035] lg:hidden dark:bg-[#1a2035]" aria-label="Admin">
-          <div className="flex gap-1 overflow-x-auto px-3 py-2">
-            {allItems.map((item) => (
-              <NavLink key={String(item.to)} item={item} compact onDark />
-            ))}
-          </div>
-        </nav>
+        {/* Mobile nav: Kaiadmin navy drawer with grouped navigation */}
+        <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
+          <SheetContent
+            side="left"
+            className="w-72 overflow-y-auto border-e border-white/10 bg-[#1a2035] p-0 text-[#b9babf]"
+          >
+            <SheetHeader className="border-b border-white/10 p-4">
+              <SheetTitle className="flex items-center gap-2.5 text-start">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-sm font-extrabold text-[#1a2035]">
+                  M
+                </span>
+                <span className="flex min-w-0 flex-col leading-none">
+                  <span className="truncate text-sm font-bold tracking-tight text-white">MODALIA</span>
+                  <span className="mt-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#b9babf]/70">
+                    Control Center
+                  </span>
+                </span>
+              </SheetTitle>
+            </SheetHeader>
+            <SidebarNav groups={groups} dark onNavigate={() => setMobileNavOpen(false)} />
+          </SheetContent>
+        </Sheet>
       </header>
 
       <div className="flex">

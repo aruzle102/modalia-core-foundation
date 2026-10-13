@@ -1917,3 +1917,71 @@ export const resolveProductAppeal = createServerFn({ method: "POST" })
     }
     return { ok: true as const };
   });
+
+// ---------------------------------------------------------------------------
+// Product Requests (rich detail for moderation)
+// ---------------------------------------------------------------------------
+
+/**
+ * Pending product requests with full detail: images, variants, seller,
+ * commission rate (for profit calc). Used by the Requests tab.
+ */
+export const listProductRequests = createServerFn({ method: "GET" })
+  .middleware(adminOnly)
+  .handler(async ({ context }) => {
+    await assertAdminPermission(context, "products.view");
+    const supabaseAdmin = await adminClient();
+    const { data, error } = await supabaseAdmin
+      .from("products")
+      .select(
+        "id, slug, name, description, base_price, compare_at_price, weight_grams, moderation_reason, created_at, seller_id, category_id, sellers!inner(id, legal_name, commission_rate), product_images(storage_path, is_primary), product_variants(id, sku, price, compare_at_price, stock_quantity, attributes)",
+      )
+      .eq("moderation_status", "pending")
+      .order("created_at", { ascending: false })
+      .limit(50);
+    if (error) throw new Error(error.message);
+    return { requests: data ?? [] };
+  });
+
+// ---------------------------------------------------------------------------
+// Seller Appeals (submission by sellers)
+// ---------------------------------------------------------------------------
+
+const submitAppealSchema = z.object({
+  productId: z.string().uuid(),
+  reason: z.string().min(10).max(1000),
+  notes: z.string().max(2000).optional(),
+});
+
+/**
+ * Seller submits an appeal against a moderation decision.
+ * The seller_id is resolved server-side — never from client input.
+ */
+export const submitProductAppeal = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((data) => submitAppealSchema.parse(data))
+  .handler(async ({ data, context }) => {
+    const { requireSeller } = await import("@/lib/seller-auth");
+    const seller = await requireSeller(context);
+    
+    const supabaseAdmin = await adminClient();
+    // Verify the product belongs to this seller
+    const { data: product } = await supabaseAdmin
+      .from("products")
+      .select("id, seller_id")
+      .eq("id", data.productId)
+      .single();
+    if (!product || (product as { seller_id: string }).seller_id !== seller.sellerId) {
+      throw new Error("Product not found.");
+    }
+    
+    const { error } = await supabaseAdmin.from("product_appeals").insert({
+      product_id: data.productId,
+      seller_id: seller.sellerId,
+      reason: data.reason.trim(),
+      notes: data.notes?.trim() || null,
+      status: "pending",
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });

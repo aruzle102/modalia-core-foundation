@@ -188,7 +188,7 @@ export function StoreProductsView({ sellerId, onBack }: { sellerId: string; onBa
           })}
         </div>
       )}
-      <Dialog open={editingId !== null} onOpenChange={(open) => { if (!open) setEditingId(null); }}>
+      <Dialog open={editingId !== null} onOpenChange={(open) => { if (!open) { setEditingId(null); refresh(); } }}>
         <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Product</DialogTitle>
@@ -198,11 +198,6 @@ export function StoreProductsView({ sellerId, onBack }: { sellerId: string; onBa
               mode="edit"
               productId={editingId}
               adminMode
-              onSaved={() => {
-                setEditingId(null);
-                refresh();
-                toast.success("Product saved. Seller notified.");
-              }}
             />
           ) : null}
         </DialogContent>

@@ -2095,3 +2095,147 @@ export const getCommissionSummary = createServerFn({ method: "GET" })
       avgRate,
     };
   });
+
+/* ── Store commission earnings (settlement drill-down) ─────────────── */
+
+/** Admin: list all stores with their total commission earnings. */
+export const listStoreCommissionEarnings = createServerFn({ method: "GET" })
+  .middleware(adminOnly)
+  .validator((d) =>
+    z
+      .object({
+        q: z.string().max(100).optional(),
+        page: z.number().int().positive().default(1),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const sb = await adminClient();
+    const from = (data.page - 1) * PAGE_SIZE;
+    const q = (data.q ?? "").replace(/[,()]/g, "").trim().slice(0, 100);
+
+    let query = sb
+      .from("stores")
+      .select("id, name, slug, logo_path, seller_id", { count: "exact" });
+    if (q) query = query.ilike("name", `%${q}%`);
+    const { data: stores, error, count } = await query
+      .order("name")
+      .range(from, from + PAGE_SIZE - 1);
+    if (error) throw new Error(error.message);
+
+    const sellerIds = [...new Set((stores ?? []).map((s) => s.seller_id).filter(Boolean))];
+
+    // Aggregate commission per seller from delivered/fulfilled orders
+    const earningsBySeller = new Map<string, { commission: number; orders: number; gross: number }>();
+    if (sellerIds.length) {
+      const { data: orders, error: oErr } = await sb
+        .from("seller_orders")
+        .select("seller_id, subtotal, commission_total")
+        .in("seller_id", sellerIds)
+        .in("status", ["delivered", "fulfilled"]);
+      if (oErr) throw new Error(oErr.message);
+      for (const o of orders ?? []) {
+        const agg = earningsBySeller.get(o.seller_id) ?? { commission: 0, orders: 0, gross: 0 };
+        agg.commission += Number(o.commission_total ?? 0);
+        agg.gross += Number(o.subtotal ?? 0);
+        agg.orders += 1;
+        earningsBySeller.set(o.seller_id, agg);
+      }
+    }
+
+    const rows = (stores ?? []).map((s) => {
+      const agg = s.seller_id ? earningsBySeller.get(s.seller_id) : undefined;
+      return {
+        storeId: s.id,
+        sellerId: s.seller_id,
+        name: s.name,
+        slug: s.slug,
+        logoUrl: s.logo_path,
+        commission: agg?.commission ?? 0,
+        orderCount: agg?.orders ?? 0,
+        gross: agg?.gross ?? 0,
+      };
+    });
+
+    // Sort by commission descending for the earnings view
+    rows.sort((a, b) => b.commission - a.commission);
+
+    return { rows, total: count ?? 0, page: data.page, pageSize: PAGE_SIZE };
+  });
+
+/** Admin: per-store commission detail — totals + per-product breakdown. */
+export const getStoreCommissionDetail = createServerFn({ method: "GET" })
+  .middleware(adminOnly)
+  .validator((d) => z.object({ storeId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const sb = await adminClient();
+
+    const { data: store, error: sErr } = await sb
+      .from("stores")
+      .select("id, name, slug, logo_path, seller_id")
+      .eq("id", data.storeId)
+      .single();
+    if (sErr || !store) throw new Error("Store not found.");
+
+    // All delivered/fulfilled seller orders for this seller
+    const { data: orders, error: oErr } = await sb
+      .from("seller_orders")
+      .select("id, subtotal, commission_total, status, created_at")
+      .eq("seller_id", store.seller_id)
+      .in("status", ["delivered", "fulfilled"])
+      .order("created_at", { ascending: false });
+    if (oErr) throw new Error(oErr.message);
+
+    const orderIds = (orders ?? []).map((o) => o.id);
+
+    // Per-product breakdown from order items
+    const byProduct = new Map<string, { title: string; units: number; gross: number; commission: number }>();
+    if (orderIds.length) {
+      const { data: items, error: iErr } = await sb
+        .from("order_items")
+        .select("product_id, title, quantity, total, seller_order_id")
+        .in("seller_order_id", orderIds);
+      if (iErr) throw new Error(iErr.message);
+
+      // Map order -> commission share for proportional attribution
+      const orderCommission = new Map((orders ?? []).map((o) => [o.id, Number(o.commission_total ?? 0)]));
+      const orderGross = new Map((orders ?? []).map((o) => [o.id, Number(o.subtotal ?? 0)]));
+
+      for (const it of items ?? []) {
+        const title = typeof it.title === "object" ? JSON.stringify(it.title) : String(it.title ?? "—");
+        const key = it.product_id ?? title;
+        const agg = byProduct.get(key) ?? { title, units: 0, gross: 0, commission: 0 };
+        const qty = Number(it.quantity ?? 0);
+        const lineTotal = Number(it.total ?? 0);
+        agg.units += qty;
+        agg.gross += lineTotal;
+        // Attribute commission proportionally to line total vs order subtotal
+        const oGross = orderGross.get(it.seller_order_id) ?? 0;
+        const oComm = orderCommission.get(it.seller_order_id) ?? 0;
+        if (oGross > 0) agg.commission += (lineTotal / oGross) * oComm;
+        else agg.commission += 0;
+        byProduct.set(key, agg);
+      }
+    }
+
+    const products = [...byProduct.values()].sort((a, b) => b.commission - a.commission);
+    const totalCommission = (orders ?? []).reduce((s, o) => s + Number(o.commission_total ?? 0), 0);
+    const totalGross = (orders ?? []).reduce((s, o) => s + Number(o.subtotal ?? 0), 0);
+
+    return {
+      store: { id: store.id, name: store.name, slug: store.slug, logoUrl: store.logo_path, sellerId: store.seller_id },
+      totals: {
+        commission: Math.round(totalCommission * 100) / 100,
+        gross: Math.round(totalGross * 100) / 100,
+        net: Math.round((totalGross - totalCommission) * 100) / 100,
+        orderCount: (orders ?? []).length,
+      },
+      products: products.map((p) => ({
+        ...p,
+        gross: Math.round(p.gross * 100) / 100,
+        commission: Math.round(p.commission * 100) / 100,
+      })),
+    };
+  });

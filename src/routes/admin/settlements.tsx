@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Plus } from "lucide-react";
 import { AdminGate } from "@/components/admin/AdminGate";
@@ -17,6 +17,8 @@ import { DataTable, EmptyState, ErrorState, StatCard } from "@/components/dashbo
 import { useAdminLocale } from "@/components/admin/useAdminLocale";
 import { getTranslations } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Search, ArrowLeft, Store as StoreIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -41,6 +43,8 @@ import {
   updateSettlementStatus,
   getSettlementProofUrl,
   listAdminSellersLite,
+  listStoreCommissionEarnings,
+  getStoreCommissionDetail,
   type AdminSettlementListItem,
 } from "@/lib/admin-catalog.functions";
 import { supabase } from "@/integrations/supabase/client";
@@ -65,6 +69,8 @@ const STATUS_FILTERS = ["pending", "approved", "paid", "rejected", "cancelled"] 
 function AdminSettlementsPage() {
   const locale = useAdminLocale();
   const nav = getTranslations(locale).adminNav.items;
+  const t = useAdminT().settlements;
+  const [tab, setTab] = useState<"payouts" | "earnings">("payouts");
   return (
     <AdminGate>
       <AdminShell
@@ -72,7 +78,13 @@ function AdminSettlementsPage() {
         subtitle="Track and pay out seller earnings."
         breadcrumbs={[{ label: nav.settlements }]}
       >
-        <SettlementsManager />
+        <Tabs value={tab} onValueChange={(v) => setTab(v as "payouts" | "earnings")}>
+          <TabsList className="mb-6">
+            <TabsTrigger value="payouts">{t.tabPayouts}</TabsTrigger>
+            <TabsTrigger value="earnings">{t.tabEarnings}</TabsTrigger>
+          </TabsList>
+        </Tabs>
+        {tab === "payouts" ? <SettlementsManager /> : <StoreEarningsView />}
       </AdminShell>
     </AdminGate>
   );
@@ -530,5 +542,206 @@ function ManageSettlementDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Store earnings — commission drill-down per store                      */
+/* ------------------------------------------------------------------ */
+
+function StoreEarningsView() {
+  const locale = useAdminLocale();
+  const t = useAdminT().settlements;
+  const [q, setQ] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const [page, setPage] = useState(1);
+  const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      setQ(searchInput.trim());
+      setPage(1);
+    }, 350);
+    return () => window.clearTimeout(id);
+  }, [searchInput]);
+
+  const listQuery = useQuery({
+    queryKey: ["admin-store-earnings", q, page],
+    queryFn: () => listStoreCommissionEarnings({ data: { q: q || undefined, page } }),
+    retry: false,
+  });
+
+  const rows = listQuery.data?.rows ?? [];
+  const total = listQuery.data?.total ?? 0;
+
+  if (selectedStoreId) {
+    return <StoreEarningsDetail storeId={selectedStoreId} onBack={() => setSelectedStoreId(null)} />;
+  }
+
+  return (
+    <div className="space-y-6">
+      <AdminCard
+        title={t.earningsTitle}
+        subtitle={t.earningsSubtitle}
+        actions={
+          <div className="relative">
+            <Search className="pointer-events-none absolute start-2.5 top-1/2 size-4 -translate-y-1/2 opacity-50" />
+            <Input
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder={t.searchStorePh}
+              className="w-64 ps-8"
+            />
+          </div>
+        }
+      >
+        {listQuery.isPending ? (
+          <TableSkeleton rows={8} />
+        ) : listQuery.isError ? (
+          <ErrorState title={t.loadError} description={errMsg(listQuery.error)} />
+        ) : rows.length === 0 ? (
+          <EmptyState title={t.noStores} />
+        ) : (
+          <DataTable>
+            <table className="w-full min-w-[720px] text-sm">
+              <thead>
+                <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                  <th className="px-3 py-3 text-start">{t.colStore}</th>
+                  <th className="px-3 py-3 text-end">{t.colCommissionEarned}</th>
+                  <th className="px-3 py-3 text-end">{t.colOrders}</th>
+                  <th className="px-3 py-3 text-end">{t.colGross}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
+                {rows.map((r) => (
+                  <tr
+                    key={r.storeId}
+                    onClick={() => setSelectedStoreId(r.storeId)}
+                    className="cursor-pointer transition-colors hover:bg-muted/40"
+                  >
+                    <td className="px-3 py-3">
+                      <span className="flex items-center gap-3">
+                        {r.logoUrl ? (
+                          <img src={r.logoUrl} alt="" className="size-10 rounded-lg object-cover" />
+                        ) : (
+                          <span className="flex size-10 items-center justify-center rounded-lg bg-muted">
+                            <StoreIcon className="size-5 text-muted-foreground" />
+                          </span>
+                        )}
+                        <span>
+                          <span className="block font-medium">{r.name}</span>
+                          <span className="block text-xs text-muted-foreground" dir="ltr">/{r.slug}</span>
+                        </span>
+                      </span>
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-3 text-end font-medium tabular-nums text-brand">
+                      {fmtMoney(r.commission, "DZD", locale)}
+                    </td>
+                    <td className="px-3 py-3 text-end tabular-nums">{r.orderCount}</td>
+                    <td className="whitespace-nowrap px-3 py-3 text-end tabular-nums text-muted-foreground">
+                      {fmtMoney(r.gross, "DZD", locale)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </DataTable>
+        )}
+        {total > 0 && (
+          <div className="mt-4">
+            <Pager
+              page={page}
+              total={total}
+              pageSize={listQuery.data?.pageSize ?? 25}
+              onPage={setPage}
+            />
+          </div>
+        )}
+      </AdminCard>
+    </div>
+  );
+}
+
+function StoreEarningsDetail({ storeId, onBack }: { storeId: string; onBack: () => void }) {
+  const locale = useAdminLocale();
+  const t = useAdminT().settlements;
+
+  const detailQuery = useQuery({
+    queryKey: ["admin-store-earnings-detail", storeId],
+    queryFn: () => getStoreCommissionDetail({ data: { storeId } }),
+    retry: false,
+  });
+
+  const detail = detailQuery.data;
+
+  return (
+    <div className="space-y-6">
+      <Button variant="ghost" size="sm" onClick={onBack} className="mb-2">
+        <ArrowLeft className="size-4 me-1.5 rtl:rotate-180" />
+        {t.backToStores}
+      </Button>
+
+      {detailQuery.isPending ? (
+        <TableSkeleton rows={6} />
+      ) : detailQuery.isError || !detail ? (
+        <ErrorState title={t.loadError} description={errMsg(detailQuery.error)} />
+      ) : (
+        <>
+          {/* Store header + totals */}
+          <AdminCard
+            title={detail.store.name}
+            subtitle={t.earningsSubtitle}
+            actions={
+              <Button variant="outline" size="sm" asChild>
+                <a href={`/store/${detail.store.slug}`} target="_blank" rel="noreferrer">
+                  {t.viewStorefront}
+                </a>
+              </Button>
+            }
+          >
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+              <StatCard title={t.totalCommission} value={fmtMoney(detail.totals.commission, "DZD", locale)} featured />
+              <StatCard title={t.totalGross} value={fmtMoney(detail.totals.gross, "DZD", locale)} />
+              <StatCard title={t.totalNet} value={fmtMoney(detail.totals.net, "DZD", locale)} />
+              <StatCard title={t.colOrders} value={String(detail.totals.orderCount)} />
+            </div>
+          </AdminCard>
+
+          {/* Per-product breakdown */}
+          <AdminCard title={t.perProductTitle}>
+            {detail.products.length === 0 ? (
+              <EmptyState title={t.noProducts} />
+            ) : (
+              <DataTable>
+                <table className="w-full min-w-[640px] text-sm">
+                  <thead>
+                    <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                      <th className="px-3 py-3 text-start">{t.colProduct}</th>
+                      <th className="px-3 py-3 text-end">{t.colUnits}</th>
+                      <th className="px-3 py-3 text-end">{t.colProductGross}</th>
+                      <th className="px-3 py-3 text-end">{t.colProductCommission}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
+                    {detail.products.map((p, i) => (
+                      <tr key={`${p.title}-${i}`} className="hover:bg-muted/40">
+                        <td className="max-w-64 truncate px-3 py-3 font-medium">{p.title}</td>
+                        <td className="px-3 py-3 text-end tabular-nums">{p.units}</td>
+                        <td className="whitespace-nowrap px-3 py-3 text-end tabular-nums text-muted-foreground">
+                          {fmtMoney(p.gross, "DZD", locale)}
+                        </td>
+                        <td className="whitespace-nowrap px-3 py-3 text-end font-medium tabular-nums text-brand">
+                          {fmtMoney(p.commission, "DZD", locale)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </DataTable>
+            )}
+          </AdminCard>
+        </>
+      )}
+    </div>
   );
 }

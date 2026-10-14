@@ -1813,6 +1813,7 @@ export type Database = {
           category_id: string | null
           compare_at_price: number | null
           cost_price: number | null
+          profit_per_unit: number | null
           created_at: string
           currency: string
           description: Json | null
@@ -1844,6 +1845,7 @@ export type Database = {
           category_id?: string | null
           compare_at_price?: number | null
           cost_price?: number | null
+          profit_per_unit?: number | null
           created_at?: string
           currency?: string
           description?: Json | null
@@ -1875,6 +1877,7 @@ export type Database = {
           category_id?: string | null
           compare_at_price?: number | null
           cost_price?: number | null
+          profit_per_unit?: number | null
           created_at?: string
           currency?: string
           description?: Json | null

@@ -146,6 +146,7 @@ interface EditorSnapshot {
   basePrice: string;
   compareAtPrice: string;
   costPrice: string;
+  profitPerUnit: string;
   tags: string[];
   seoTitle: string;
   seoDescription: string;
@@ -226,6 +227,7 @@ function emptySnapshot(): EditorSnapshot {
     basePrice: "",
     compareAtPrice: "",
     costPrice: "",
+    profitPerUnit: "",
     tags: [],
     seoTitle: "",
     seoDescription: "",
@@ -410,6 +412,7 @@ export function ProductEditor({
       basePrice: p.base_price != null ? String(p.base_price) : "",
       compareAtPrice: p.compare_at_price != null ? String(p.compare_at_price) : "",
       costPrice: (p as { cost_price?: number | null }).cost_price != null ? String((p as { cost_price?: number | null }).cost_price) : "",
+      profitPerUnit: (p as { profit_per_unit?: number | null }).profit_per_unit != null ? String((p as { profit_per_unit?: number | null }).profit_per_unit) : "",
       tags: (p.product_tag_assignments ?? [])
         .map((a: any) => a.product_tags)
         .filter(Boolean)
@@ -939,6 +942,28 @@ export function ProductEditor({
                 <p className="mt-1 text-xs text-muted-foreground">
                   Your acquisition cost — mandatory. Visible only to you and the Modalia admin, never to customers.
                 </p>
+              </div>
+              <div>
+                <Label htmlFor="profit-per-unit">Profit per unit (DZD) *</Label>
+                <Input
+                  id="profit-per-unit"
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  required
+                  className="mt-1.5"
+                  value={snap.profitPerUnit}
+                  onChange={(e) => patch((s) => ({ ...s, profitPerUnit: e.target.value }))}
+                />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Your declared profit per piece — the platform commission is calculated on this. Visible only to you and the Modalia admin, never to customers.
+                </p>
+                <div className="mt-2 rounded-lg border border-destructive/40 bg-destructive/5 p-3">
+                  <p className="text-xs font-semibold text-destructive">⚠️ Warning</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Manipulating declared profits to reduce commission — or inflating the product price while understating profit to evade commission — will result in the permanent closure of your store. All figures are audited.
+                  </p>
+                </div>
               </div>
             </div>
           </AdminCard>
@@ -1490,6 +1515,9 @@ function buildPayload(snap: EditorSnapshot, id?: string) {
   const costPrice = Number(snap.costPrice);
   if (snap.costPrice.trim() === "" || !Number.isFinite(costPrice) || costPrice < 0)
     throw new Error("Cost price is mandatory — enter your acquisition cost (0 or more).");
+  const profitPerUnit = Number(snap.profitPerUnit);
+  if (snap.profitPerUnit.trim() === "" || !Number.isFinite(profitPerUnit) || profitPerUnit < 0)
+    throw new Error("Profit per unit is mandatory — enter your profit per piece (0 or more).");
 
   const variants =
     snap.variants.length > 0
@@ -1520,6 +1548,7 @@ function buildPayload(snap: EditorSnapshot, id?: string) {
     weightGrams: snap.weightGrams === "" ? undefined : Number(snap.weightGrams),
     basePrice,
     costPrice,
+    profitPerUnit,
     compareAtPrice:
       snap.compareAtPrice === "" ? undefined : Number(snap.compareAtPrice),
     tags: snap.tags,

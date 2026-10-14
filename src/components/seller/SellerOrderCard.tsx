@@ -71,7 +71,7 @@ export function SellerOrderCard({
     },
   });
 
-  const actions = STATUS_FLOW[order.status] ?? [];
+  const actions = STATUS_FLOW[order.status ?? ""] ?? [];
   const buyerName = [order.firstName, order.lastName].filter(Boolean).join(" ") || "—";
 
   return (
@@ -114,7 +114,7 @@ export function SellerOrderCard({
 
       {/* Products */}
       <div className="space-y-3 border-t pt-4">
-        {order.items.map((item) => (
+        {(order.items ?? []).map((item) => (
           <div key={item.id} className="flex items-center gap-3">
             <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg border bg-neutral-100 dark:bg-neutral-900">
               {item.imagePath ? (

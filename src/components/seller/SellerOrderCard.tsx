@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Phone, Package, Truck, CheckCircle, Clock } from "lucide-react";
@@ -55,6 +55,7 @@ export function SellerOrderCard({
   page: number;
 }) {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [acting, setActing] = useState(false);
 
   const updateMutation = useMutation({
@@ -82,14 +83,19 @@ export function SellerOrderCard({
           <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
             Tracking Code
           </p>
-          <Link
-            to="/seller/orders/$orderId"
-            params={{ orderId: order.id }}
-            search={{ locale, back, q, status, page }}
-            className="mt-1 block font-mono text-lg font-bold text-primary hover:underline"
+          <button
+            type="button"
+            onClick={() => {
+              void navigate({
+                to: "/seller/orders/$orderId",
+                params: { orderId: order.id },
+                search: { locale, back, q, status, page },
+              });
+            }}
+            className="mt-1 block font-mono text-lg font-bold text-primary hover:underline cursor-pointer"
           >
             {order.orderNumber}
-          </Link>
+          </button>
           <p className="mt-1 text-xs text-muted-foreground">{fmtDateTime(order.createdAt, locale)}</p>
         </div>
         <StatusPill status={STATUS_LABELS[order.status] ?? order.status} />

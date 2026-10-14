@@ -168,20 +168,28 @@ export const listNotifications = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((data) => scopeInput.merge(pageInput).parse(data))
   .handler(async ({ data, context }) => {
-    const recipient = await resolveRecipient(context, data.scope, "notifications.view");
-    const sb = await adminClient();
-    const from = (data.page - 1) * data.pageSize;
-    const result = await scopedQuery(sb, recipient)
-      .select("id,type,title,body,payload,link,read_at,created_at")
-      .order("created_at", { ascending: false })
-      .range(from, from + data.pageSize);
-    if (result.error) throw new Error("Notifications could not be loaded.");
-    const records = (result.data ?? []) as Parameters<typeof toItem>[0][];
-    return {
-      notifications: records.slice(0, data.pageSize).map(toItem),
-      page: data.page,
-      hasMore: records.length > data.pageSize,
-    };
+    try {
+      const recipient = await resolveRecipient(context, data.scope, "notifications.view");
+      const sb = await adminClient();
+      const from = (data.page - 1) * data.pageSize;
+      const result = await scopedQuery(sb, recipient)
+        .select("id,type,title,body,payload,link,read_at,created_at")
+        .order("created_at", { ascending: false })
+        .range(from, from + data.pageSize);
+      if (result.error) {
+        console.error("[notifications] query failed:", result.error.message);
+        return { notifications: [], page: data.page, hasMore: false };
+      }
+      const records = (result.data ?? []) as Parameters<typeof toItem>[0][];
+      return {
+        notifications: records.slice(0, data.pageSize).map(toItem),
+        page: data.page,
+        hasMore: records.length > data.pageSize,
+      };
+    } catch (e) {
+      console.error("[notifications] list failed:", e instanceof Error ? e.message : e);
+      return { notifications: [], page: data.page, hasMore: false };
+    }
   });
 
 export const unreadCount = createServerFn({ method: "GET" })

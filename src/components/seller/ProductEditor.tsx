@@ -854,15 +854,23 @@ export function ProductEditor({
                 />
               </div>
               <div>
-                <Label htmlFor="weight">Weight (grams)</Label>
+                <Label htmlFor="weight">Weight (kg) *</Label>
                 <Input
                   id="weight"
                   type="number"
                   min={0}
+                  step="0.01"
+                  required
                   className="mt-1.5"
-                  value={snap.weightGrams}
-                  onChange={(e) => patch((s) => ({ ...s, weightGrams: e.target.value }))}
+                  value={snap.weightGrams ? String(Number(snap.weightGrams) / 1000) : ""}
+                  onChange={(e) => {
+                    const kg = Number(e.target.value);
+                    patch((s) => ({ ...s, weightGrams: e.target.value === "" ? "" : String(Math.round(kg * 1000)) }));
+                  }}
                 />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Product weight in kilograms — mandatory. Shipping price switches automatically at 5 kg: under 5 kg uses your "0–5 kg" rate, 5 kg and above uses your "5 kg+" rate (set in Shipping settings).
+                </p>
               </div>
               <div>
                 <Label>Tags</Label>
@@ -1518,6 +1526,9 @@ function buildPayload(snap: EditorSnapshot, id?: string) {
   const profitPerUnit = Number(snap.profitPerUnit);
   if (snap.profitPerUnit.trim() === "" || !Number.isFinite(profitPerUnit) || profitPerUnit < 0)
     throw new Error("Profit per unit is mandatory — enter your profit per piece (0 or more).");
+  const weightGrams = Number(snap.weightGrams);
+  if (snap.weightGrams.trim() === "" || !Number.isFinite(weightGrams) || weightGrams <= 0)
+    throw new Error("Weight is mandatory — enter the product weight in kg (more than 0).");
 
   const variants =
     snap.variants.length > 0

@@ -121,7 +121,16 @@ export type SellerOrderListItem = {
   firstName: string | null;
   lastName: string | null;
   phone: string | null;
+  email: string | null;
   itemCount: number;
+  items: Array<{
+    id: string;
+    quantity: number;
+    unitPrice: number;
+    productName: string;
+    productId: string;
+    imagePath: string | null;
+  }>;
   subtotal: number;
   shippingTotal: number;
   commissionTotal: number;
@@ -236,11 +245,11 @@ export const listSellerOrders = createServerFn({ method: "GET" })
     let query = context.supabase
       .from("seller_orders")
       .select(
-        "id,status,created_at,subtotal,shipping_total,commission_total,orders(id,order_number,first_name,last_name,guest_phone),order_items(id)",
+        "id,status,created_at,subtotal,shipping_total,commission_total,orders(id,order_number,first_name,last_name,guest_phone,guest_email),order_items(id,quantity,unit_price,title,product_id,image_path)",
         { count: "exact" },
       )
       .eq("seller_id", seller.sellerId)
-      .order("created_at", { ascending: false })
+      .order("created_at", { ascending: true })
       .range(fromIndex, fromIndex + PAGE_SIZE - 1);
 
     if (data.status) query = query.eq("status", data.status);
@@ -261,6 +270,9 @@ export const listSellerOrders = createServerFn({ method: "GET" })
 
     const orders: SellerOrderListItem[] = (result.data ?? []).map((row) => {
       const order = single(row.orders);
+      const items = (row.order_items ?? []) as Array<{
+        id: string; quantity: number; unit_price: number; title: unknown; product_id: string; image_path: string | null;
+      }>;
       return {
         id: row.id,
         orderNumber: order?.order_number ?? "—",
@@ -269,7 +281,18 @@ export const listSellerOrders = createServerFn({ method: "GET" })
         firstName: order?.first_name ?? null,
         lastName: order?.last_name ?? null,
         phone: order?.guest_phone ?? null,
-        itemCount: (row.order_items ?? []).length,
+        email: (order as { guest_email?: string } | null)?.guest_email ?? null,
+        itemCount: items.length,
+        items: items.map((it) => ({
+          id: it.id,
+          quantity: it.quantity,
+          unitPrice: Number(it.unit_price),
+          productName: typeof it.title === "string"
+            ? it.title
+            : JSON.stringify(it.title ?? ""),
+          productId: it.product_id,
+          imagePath: it.image_path,
+        })),
         subtotal: Number(row.subtotal),
         shippingTotal: Number(row.shipping_total),
         commissionTotal: Number(row.commission_total),

@@ -2,7 +2,7 @@ import { createFileRoute, Link, Outlet, useMatch } from "@tanstack/react-router"
 import { useUrlState, useDebouncedUrlParam, useBackParam, numParam, strParam } from "@/hooks/use-url-state";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Search, Ban, Power, Pencil } from "lucide-react";
+import { Search, UserPlus, Ban, Power, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +30,7 @@ import { useAdminLocale } from "@/components/admin/useAdminLocale";
 import { getTranslations } from "@/lib/i18n";
 import { listSellers, updateSellerStatus } from "@/lib/admin-sellers.functions";
 import { SellerOnboardingWizard } from "@/components/admin/SellerOnboardingWizard";
+import { CreateStoreWizard } from "@/components/admin/CreateStoreWizard";
 import { EditSellerDialog } from "@/components/admin/EditSellerDialog";
 import { useAdminT } from "@/components/admin/use-admin-t";
 
@@ -65,6 +66,7 @@ function SellersList() {
   const backParam = useBackParam();
   const queryClient = useQueryClient();
   const [wizardOpen, setWizardOpen] = useState(false);
+  const [storeWizardOpen, setStoreWizardOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   // Deep link: /admin/sellers?create=seller opens the onboarding wizard
   // (the real flow that creates a seller together with their store).
@@ -159,7 +161,14 @@ function SellersList() {
                   ))}
                 </SelectContent>
               </Select>
-
+              <Button onClick={() => setWizardOpen(true)}>
+                <UserPlus className="size-4 me-1.5" />
+                {t.createSellerStore}
+              </Button>
+              <Button onClick={() => setStoreWizardOpen(true)} variant="secondary">
+                <UserPlus className="size-4 me-1.5" />
+                {t.createStoreQuick}
+              </Button>
             </div>
           }
         >
@@ -321,7 +330,13 @@ function SellersList() {
             queryClient.invalidateQueries({ queryKey: ["admin-sellers"] });
           }}
         />
-
+        <CreateStoreWizard
+          open={storeWizardOpen}
+          onOpenChange={setStoreWizardOpen}
+          onCreated={() => {
+            queryClient.invalidateQueries({ queryKey: ["admin-sellers"] });
+          }}
+        />
         {editingSeller ? (
           <EditSellerDialog
             sellerId={editingSeller.id}

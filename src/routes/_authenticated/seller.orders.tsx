@@ -11,7 +11,6 @@ import { listSellerOrders } from "@/lib/seller-orders.functions";
 import { getLocale } from "@/lib/i18n";
 import { numParam, strParam, useBackParam, useDebouncedUrlParam, useUrlState } from "@/hooks/use-url-state";
 import { SellerShell } from "@/components/seller/SellerShell";
-import { SellerOrderCard } from "@/components/seller/SellerOrderCard";
 import { errMsg, Pager } from "../admin/_shared";
 
 export const Route = createFileRoute("/_authenticated/seller/orders")({
@@ -138,20 +137,44 @@ function SellerOrdersPage() {
           </DataTable>
         ) : (
           <div className="space-y-4">
-            <p className="text-xs text-muted-foreground">
-              Oldest orders first — scroll down for newer orders.
-            </p>
-            {orders.map((order) => (
-              <SellerOrderCard
-                key={order.id}
-                order={order}
-                locale={locale}
-                back={backParam}
-                q={search}
-                status={status}
-                page={page}
-              />
-            ))}
+            <DataTable>
+              <table className="w-full min-w-[720px] text-sm">
+                <thead>
+                  <tr className="border-b border-neutral-200 text-start text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                    <th className="px-4 py-3 text-start">Order</th>
+                    <th className="px-4 py-3 text-start">Customer</th>
+                    <th className="px-4 py-3 text-end">Items</th>
+                    <th className="px-4 py-3 text-end">Total</th>
+                    <th className="px-4 py-3 text-start">Status</th>
+                    <th className="px-4 py-3 text-start">Placed</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
+                  {orders.map((order) => (
+                    <tr key={order.id} className="align-top hover:bg-muted/40">
+                      <td className="px-4 py-3">
+                        <Link
+                          to="/seller/orders/$orderId"
+                          params={{ orderId: order.id }}
+                          search={{ locale, back: backParam, q: search, status, page }}
+                          className="font-semibold text-primary underline-offset-4 hover:underline"
+                        >
+                          {order.orderNumber}
+                        </Link>
+                      </td>
+                      <td className="px-4 py-3">
+                        <p className="font-medium">{[order.firstName, order.lastName].filter(Boolean).join(" ") || "—"}</p>
+                        <p className="text-xs text-muted-foreground" dir="ltr">{order.phone ?? "—"}</p>
+                      </td>
+                      <td className="px-4 py-3 text-end tabular-nums">{order.itemCount}</td>
+                      <td className="px-4 py-3 text-end tabular-nums">{fmtMoney(order.subtotal + order.shippingTotal, "DZD", locale)}</td>
+                      <td className="px-4 py-3"><StatusPill status={order.status} /></td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground">{fmtDateTime(order.createdAt, locale)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </DataTable>
             <Pager page={page} total={total} pageSize={pageSize} onPage={(p) => url.set({ page: p }, { push: true })} />
           </div>
         )}

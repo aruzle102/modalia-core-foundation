@@ -252,19 +252,7 @@ function SellerOverviewPage() {
       title={overview.seller.legalName}
       eyebrow="Seller overview"
       mainClassName="bg-[#f8f9fc] dark:bg-neutral-950"
-      actions={
-        <>
-          <Button asChild>
-            <Link to="/seller/products" search={{ locale, q: "", status: "", moderation: "", page: 1 }}>Manage products</Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link to="/seller/orders" search={{ locale, q: "", status: "", page: 1 }}>Orders</Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link to="/seller/analytics" search={{ locale, days: 30 }}>Analytics</Link>
-          </Button>
-        </>
-      }
+
     >
       {/* Onboarding nudge — only until the seller is onboarded */}
       {!overview.onboarded ? (

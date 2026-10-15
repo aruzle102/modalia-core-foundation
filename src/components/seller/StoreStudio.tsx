@@ -36,6 +36,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { AdminCard, ConfirmDialog, EmptyState, Field, StatusPill } from "@/components/admin/ui";
+import { StoreImageUpload } from "@/components/seller/StoreImageUpload";
 import type { SupportedLocale } from "@/config/platform";
 import { getTranslations, localeDirections, type Translation } from "@/lib/i18n";
 import { StoreFront } from "@/components/store/StoreFront";
@@ -619,23 +620,21 @@ export function StoreStudio({
                       />
                     </Field>
                   </div>
-                  <div className="grid gap-5 sm:grid-cols-2">
-                    <Field label={t.profile.logoPath} hint={t.profile.logoPathHint}>
-                      <Input
-                        dir="ltr"
-                        maxLength={500}
-                        value={profile.logoPath}
-                        onChange={(event) => setProfile({ ...profile, logoPath: event.target.value })}
-                      />
-                    </Field>
-                    <Field label={t.profile.bannerPath} hint={t.profile.bannerPathHint}>
-                      <Input
-                        dir="ltr"
-                        maxLength={500}
-                        value={profile.bannerPath}
-                        onChange={(event) => setProfile({ ...profile, bannerPath: event.target.value })}
-                      />
-                    </Field>
+                  <div className="grid gap-6 sm:grid-cols-2">
+                    <StoreImageUpload
+                      label={t.profile.logoPath}
+                      hint={t.profile.logoPathHint}
+                      value={profile.logoPath}
+                      onChange={(path) => setProfile({ ...profile, logoPath: path })}
+                      aspect="square"
+                    />
+                    <StoreImageUpload
+                      label={t.profile.bannerPath}
+                      hint={t.profile.bannerPathHint}
+                      value={profile.bannerPath}
+                      onChange={(path) => setProfile({ ...profile, bannerPath: path })}
+                      aspect="wide"
+                    />
                   </div>
                   <SaveBar t={t} pending={profileSave.pending} savedAt={profileSave.savedAt} error={profileSave.error} />
                 </div>

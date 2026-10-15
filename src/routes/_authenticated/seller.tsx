@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useMatch } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import {
   AlertTriangle,
@@ -230,6 +230,10 @@ export const Route = createFileRoute("/_authenticated/seller")({
 });
 
 function SellerOverviewPage() {
+  // Child routes (orders, products, etc.) render in the Outlet; this route
+  // shows the dashboard homepage only when exactly matched.
+  const child = useMatch({ from: "/_authenticated/seller", strict: true, shouldThrow: false });
+  if (!child) return <Outlet />;
   const { locale } = Route.useSearch();
   const { data: overview } = useSuspenseQuery(overviewQuery);
   const { data: today } = useSuspenseQuery(todayQuery);

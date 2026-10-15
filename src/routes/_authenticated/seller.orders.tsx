@@ -1,4 +1,4 @@
-import { createFileRoute, Link, Outlet, useMatch } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Search, X } from "lucide-react";
@@ -40,9 +40,10 @@ const STATUS_OPTIONS = [
 
 function SellerOrdersPage() {
   // Child routes ($orderId) render in the Outlet; this route shows the list
-  // only when exactly matched.
-  const child = useMatch({ from: "/_authenticated/seller/orders", strict: true, shouldThrow: false });
-  if (!child) return <Outlet />;
+  // only when exactly on /seller/orders.
+  const { pathname } = useLocation();
+  const isExact = pathname === "/seller/orders" || pathname === "/seller/orders/";
+  if (!isExact) return <Outlet />;
   const { locale } = Route.useSearch();
   const backParam = useBackParam();
   const url = useUrlState({ status: "", page: 1 });

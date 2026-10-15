@@ -1,4 +1,4 @@
-import { createFileRoute, Link, Outlet, useMatch } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Copy, Loader2, Pencil, Plus, Search, X } from "lucide-react";
@@ -43,12 +43,9 @@ export const Route = createFileRoute("/_authenticated/seller/products")({
 
 /** Child routes (new / $productId) render in the Outlet; this route shows the table. */
 function ProductsRoute() {
-  const child = useMatch({
-    from: "/_authenticated/seller/products",
-    strict: true,
-    shouldThrow: false,
-  });
-  return child ? <ProductsTable /> : <Outlet />;
+  const { pathname } = useLocation();
+  const isExact = pathname === "/seller/products" || pathname === "/seller/products/";
+  return isExact ? <ProductsTable /> : <Outlet />;
 }
 
 type ProductRow = {

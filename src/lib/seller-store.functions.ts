@@ -475,3 +475,39 @@ export const deleteSellerCollection = createServerFn({ method: "POST" })
     });
     return { ok: true };
   });
+
+/* ------------------------------------------------------------------------- */
+/* Store asset upload (logo / banner)                                        */
+/* ------------------------------------------------------------------------- */
+
+export const requestStoreAssetUpload = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) =>
+    z
+      .object({
+        filename: z.string().min(1).max(200),
+        mimeType: z.string().max(120).optional(),
+        sizeBytes: z.number().int().min(1),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const seller = await requireSeller(context, "store.manage");
+    const { validateMediaMeta } = await import("@/lib/media-validation");
+    const { kind, extension } = validateMediaMeta({
+      filename: data.filename,
+      mimeType: data.mimeType,
+      sizeBytes: data.sizeBytes,
+      expectedKind: "image",
+    });
+    if (kind !== "image") throw new Error("Only images are allowed.");
+    const path = `${seller.sellerId}/store-assets/${crypto.randomUUID()}.${extension}`;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: signed, error } = await supabaseAdmin.storage
+      .from("product-media")
+      .createSignedUploadUrl(path);
+    if (error || !signed?.signedUrl) {
+      throw new Error(error?.message ?? "Could not prepare the upload.");
+    }
+    return { path, signedUrl: signed.signedUrl };
+  });

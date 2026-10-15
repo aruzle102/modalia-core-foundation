@@ -2,16 +2,15 @@ import { useRef, useState } from "react";
 import { ImagePlus, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import {
-  requestSellerMediaUpload,
-  finalizeSellerMediaUpload,
-} from "@/lib/seller-media.functions";
+import { requestStoreAssetUpload } from "@/lib/seller-store.functions";
 
 function storagePreviewUrl(path: string): string {
   if (!path) return "";
-  if (path.startsWith("http")) return path;
-  // Supabase public URL pattern — adjust if bucket differs
-  return path;
+  if (/^https?:\/\//.test(path)) return path;
+  const base = import.meta.env["VITE_SUPABASE_URL"] as string | undefined;
+  const clean = path.replace(/^\/+/, "");
+  if (!base || !clean || clean.includes("..")) return "";
+  return `${base.replace(/\/$/, "")}/storage/v1/object/public/product-media/${clean}`;
 }
 
 /**
@@ -42,21 +41,19 @@ export function StoreImageUpload({
     }
     setUploading(true);
     try {
-      const req = await requestSellerMediaUpload({
+      const req = await requestStoreAssetUpload({
         data: {
           filename: file.name,
           mimeType: file.type,
           sizeBytes: file.size,
-          mediaKind: "image",
         },
       });
       const put = await fetch(req.signedUrl, {
         method: "PUT",
         body: file,
-        headers: { "Content-Type": file.type },
+        headers: { "Content-Type": file.type || "application/octet-stream" },
       });
-      if (!put.ok) throw new Error("Upload failed.");
-      await finalizeSellerMediaUpload({ data: { path: req.path, kind: "image" } });
+      if (!put.ok) throw new Error("Upload failed. Please try again.");
       onChange(req.path);
       toast.success("Image uploaded.");
     } catch (e) {

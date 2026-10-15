@@ -196,13 +196,21 @@ export const unreadCount = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((data) => scopeInput.parse(data))
   .handler(async ({ data, context }) => {
-    const recipient = await resolveRecipient(context, data.scope, "notifications.view");
-    const sb = await adminClient();
-    const result = await scopedQuery(sb, recipient)
-      .select("id", { count: "exact", head: true })
-      .is("read_at", null);
-    if (result.error) throw new Error("Notification count could not be loaded.");
-    return { count: result.count ?? 0 };
+    try {
+      const recipient = await resolveRecipient(context, data.scope, "notifications.view");
+      const sb = await adminClient();
+      const result = await scopedQuery(sb, recipient)
+        .select("id", { count: "exact", head: true })
+        .is("read_at", null);
+      if (result.error) {
+        console.error("[notifications] count failed:", result.error.message);
+        return { count: 0 };
+      }
+      return { count: result.count ?? 0 };
+    } catch (e) {
+      console.error("[notifications] count failed:", e instanceof Error ? e.message : e);
+      return { count: 0 };
+    }
   });
 
 export const markRead = createServerFn({ method: "POST" })

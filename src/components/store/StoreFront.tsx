@@ -71,11 +71,11 @@ export function StoreFront({
       <main id="main-content" tabIndex={-1}>
         {/* ——— Banner: full-width block, aspect ratio preserves content ——— */}
         {store.bannerUrl ? (
-          <div className="w-full overflow-hidden bg-muted">
+          <div className="flex w-full justify-center overflow-hidden bg-muted">
             <img
               src={store.bannerUrl}
               alt=""
-              className="aspect-[16/9] w-full object-cover sm:aspect-[3/1]"
+              className="max-h-44 w-full object-contain sm:max-h-72"
             />
           </div>
         ) : null}

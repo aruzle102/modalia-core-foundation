@@ -74,8 +74,8 @@ DROP FUNCTION IF EXISTS public.checkout_cart(uuid,text,text,text,text,uuid,uuid,
 
 CREATE FUNCTION public.checkout_cart(
   p_cart_id uuid, p_session_token text, p_first_name text, p_last_name text, p_phone text,
-  p_wilaya_id uuid, p_commune_id uuid DEFAULT NULL, p_address_line text,
-  p_delivery_method text, p_customer_note text DEFAULT NULL, p_customer_id uuid DEFAULT NULL,
+  p_wilaya_id uuid, p_commune_id uuid DEFAULT NULL, p_address_line text DEFAULT NULL,
+  p_delivery_method text DEFAULT NULL, p_customer_note text DEFAULT NULL, p_customer_id uuid DEFAULT NULL,
   p_idempotency_key text DEFAULT NULL,
   p_coupon_code text DEFAULT NULL, p_seller_methods jsonb DEFAULT NULL,
   p_office_ids jsonb DEFAULT NULL, p_commune_name text DEFAULT NULL

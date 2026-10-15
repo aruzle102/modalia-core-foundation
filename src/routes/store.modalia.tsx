@@ -245,35 +245,31 @@ function OfficialStorePage() {
         </div>
       ) : null}
       <main>
-        {/* Banner — full rectangle on top, no overlap */}
-        {store.bannerUrl ? (
-          <div className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8">
-            <div className="overflow-hidden rounded-2xl border border-border">
-              <img
-                src={store.bannerUrl}
-                alt=""
-                className="aspect-[3/1] w-full object-cover"
-              />
-            </div>
+        {/* Hero — banner as background */}
+        <section className="relative overflow-hidden border-b border-border">
+          <div className="absolute inset-0">
+            {store.bannerUrl ? (
+              <img src={store.bannerUrl} alt="" className="size-full object-cover" />
+            ) : (
+              <div className="absolute inset-0 store-sheen" />
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-background/40" />
           </div>
-        ) : null}
-        {/* Hero */}
-        <section className="border-b border-border">
-          <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-            <div className="flex items-center gap-4">
-              <div className="grid size-20 shrink-0 place-items-center overflow-hidden rounded-2xl border border-border bg-card text-2xl font-semibold shadow-lg sm:size-24">
+          <div className="relative mx-auto max-w-7xl px-4 pb-12 pt-24 sm:px-6 sm:pt-32 lg:px-8">
+            <div className="flex items-start gap-4 sm:items-center">
+              <div className="grid size-16 shrink-0 place-items-center overflow-hidden rounded-2xl border border-border bg-card text-xl font-semibold shadow-lg sm:size-24 sm:text-2xl">
                 {store.logoUrl ? (
                   <img src={store.logoUrl} alt="" className="size-full object-cover" />
                 ) : (
                   store.name.slice(0, 1)
                 )}
               </div>
-              <div className="min-w-0">
+              <div className="min-w-0 pt-1 sm:pt-0">
                 <p className="flex flex-wrap items-center gap-2 text-eyebrow text-muted-foreground">
                   {official.heroEyebrow}
                   <OfficialStoreBadge label={t.store.officialStore} />
                 </p>
-                <h1 className="mt-2 text-display">{store.name}</h1>
+                <h1 className="mt-2 text-3xl sm:text-display">{store.name}</h1>
               </div>
             </div>
             <p className="mt-6 max-w-2xl text-h3 font-normal text-muted-foreground">

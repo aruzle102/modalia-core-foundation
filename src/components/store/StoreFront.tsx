@@ -69,33 +69,31 @@ export function StoreFront({
         </div>
       ) : null}
       <main id="main-content" tabIndex={-1}>
-        {/* ——— Banner: full rectangle on top ——— */}
-        {store.bannerUrl ? (
-          <div className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8">
-            <div className="overflow-hidden rounded-2xl border border-border">
-              <img src={store.bannerUrl} alt="" className="aspect-[3/1] w-full object-cover" />
-            </div>
-          </div>
-        ) : null}
-        {/* ——— Brand hero ——— */}
-        <section className="bg-background">
-          <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-            <div className="flex items-center gap-5">
-              <div className="grid size-24 shrink-0 place-items-center overflow-hidden rounded-3xl border border-border bg-card text-3xl font-semibold text-foreground shadow-xl sm:size-28">
+        {/* ——— Brand hero: banner as background ——— */}
+        <section className="relative overflow-hidden bg-secondary">
+          {store.bannerUrl ? (
+            <img src={store.bannerUrl} alt="" className="absolute inset-0 size-full object-cover" />
+          ) : (
+            <div className="absolute inset-0 store-sheen" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/25 to-black/10" aria-hidden />
+          <div className="relative mx-auto flex max-w-7xl flex-col justify-end px-4 pb-10 pt-40 sm:px-6 sm:pt-52 lg:px-8">
+            <div className="flex items-start gap-4 sm:items-center sm:gap-5">
+              <div className="grid size-16 shrink-0 place-items-center overflow-hidden rounded-2xl border-4 border-white/70 bg-card text-2xl font-semibold text-foreground shadow-xl sm:size-28 sm:rounded-3xl sm:text-3xl">
                 {store.logoUrl ? (
                   <img src={store.logoUrl} alt="" className="size-full object-cover" />
                 ) : (
                   store.name.slice(0, 1)
                 )}
               </div>
-              <div className="min-w-0">
+              <div className="min-w-0 pt-1 sm:pt-0">
                 <div className="flex flex-wrap items-center gap-2.5">
-                  <h1 className="font-display text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
+                  <h1 className="font-display text-3xl font-semibold tracking-tight text-white sm:text-5xl">
                     {store.name}
                   </h1>
                   <VerifiedSellerBadge verified={store.verified} tone={store.verificationBadge} label={t.store.verifiedStore} />
                 </div>
-                <p className="mt-2 text-small text-muted-foreground">
+                <p className="mt-2 text-small text-white/70">
                   {store.categoryName ? `${store.categoryName} · ` : ""}
                   {store.official ? t.store.officialTagline : t.store.independent}
                 </p>
@@ -105,8 +103,8 @@ export function StoreFront({
               <dl className="mt-8 flex flex-wrap gap-x-10 gap-y-4">
                 {stats.map((stat) => (
                   <div key={stat.label} className="flex flex-col">
-                    <dt className="order-2 mt-1 text-caption text-muted-foreground">{stat.label}</dt>
-                    <dd className="order-1 font-display text-2xl font-semibold text-foreground">{stat.value}</dd>
+                    <dt className="order-2 mt-1 text-caption text-white/60">{stat.label}</dt>
+                    <dd className="order-1 font-display text-2xl font-semibold text-white">{stat.value}</dd>
                   </div>
                 ))}
               </dl>

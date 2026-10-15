@@ -227,32 +227,24 @@ function SellerNavLink({ item, compact, onNavigate, onDark, collapsed }: { item:
       </a>
     );
   }
-  // Use plain anchor with href for foolproof navigation (no router dependency).
-  // The active state is determined by matching the current pathname.
-  const isActive = typeof window !== "undefined" && (
-    item.exact
-      ? window.location.pathname === item.to
-      : window.location.pathname === item.to || window.location.pathname.startsWith(item.to + "/")
-  );
-  const activeClass = isActive
-    ? onDark
-      ? "bg-white text-neutral-950 font-semibold shadow-md [&_svg]:text-neutral-950"
-      : "bg-blue-50 text-blue-700 font-semibold dark:bg-blue-950/50 dark:text-blue-300 [&_svg]:text-blue-600 dark:[&_svg]:text-blue-400"
-    : "";
   return (
-    <button
-      type="button"
-      onClick={() => {
-        onNavigate?.();
-        window.location.assign(item.to);
+    <Link
+      to={item.to}
+      preload="intent"
+      onClick={onNavigate}
+      {...(item.exact ? { activeOptions: { exact: true } } : {})}
+      activeProps={{
+        className: onDark
+          ? "bg-white text-neutral-950 font-semibold shadow-md [&_svg]:text-neutral-950"
+          : "bg-blue-50 text-blue-700 font-semibold dark:bg-blue-950/50 dark:text-blue-300 [&_svg]:text-blue-600 dark:[&_svg]:text-blue-400",
       }}
-      className={`${className} ${activeClass} w-full text-start cursor-pointer`}
+      className={className}
       title={collapsed ? item.label : undefined}
       aria-label={collapsed ? item.label : undefined}
     >
       {item.icon}
       {collapsed ? null : item.label}
-    </button>
+    </Link>
   );
 }
 

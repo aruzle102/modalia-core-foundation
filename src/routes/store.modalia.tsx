@@ -245,37 +245,44 @@ function OfficialStorePage() {
         </div>
       ) : null}
       <main>
-        {/* Hero — banner as background */}
-        <section className="relative overflow-hidden border-b border-border">
-          <div className="absolute inset-0">
-            {store.bannerUrl ? (
-              <img src={store.bannerUrl} alt="" className="size-full object-cover" />
-            ) : (
-              <div className="absolute inset-0 store-sheen" />
-            )}
-            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-background/40" />
+        {/* Banner — full-width block, aspect ratio preserves content */}
+        {store.bannerUrl ? (
+          <div className="w-full overflow-hidden bg-muted">
+            <img
+              src={store.bannerUrl}
+              alt=""
+              className="aspect-[16/9] w-full object-cover sm:aspect-[3/1]"
+            />
           </div>
-          <div className="relative mx-auto max-w-7xl px-4 pb-8 pt-14 sm:px-6 sm:pt-20 lg:px-8">
-            <div className="flex items-start gap-4 sm:items-center">
-              <div className="grid size-16 shrink-0 place-items-center overflow-hidden rounded-2xl border border-border bg-card text-xl font-semibold shadow-lg sm:size-24 sm:text-2xl">
+        ) : null}
+        {/* Store identity — normal flow, logo overlaps banner edge (solid bg = readable) */}
+        <section className="border-b border-border">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col gap-5 py-8 sm:flex-row sm:items-end sm:gap-6">
+              <div
+                className={
+                  "grid size-20 shrink-0 place-items-center overflow-hidden rounded-2xl border-4 border-background bg-card text-2xl font-semibold shadow-xl sm:size-28 " +
+                  (store.bannerUrl ? "-mt-14 sm:-mt-20" : "")
+                }
+              >
                 {store.logoUrl ? (
                   <img src={store.logoUrl} alt="" className="size-full object-cover" />
                 ) : (
                   store.name.slice(0, 1)
                 )}
               </div>
-              <div className="min-w-0 pt-1 sm:pt-0">
+              <div className="min-w-0 flex-1 pb-1">
                 <p className="flex flex-wrap items-center gap-2 text-eyebrow text-muted-foreground">
                   {official.heroEyebrow}
                   <OfficialStoreBadge label={t.store.officialStore} />
                 </p>
-                <h1 className="mt-2 text-3xl sm:text-display">{store.name}</h1>
+                <h1 className="mt-2 break-words text-3xl sm:text-display">{store.name}</h1>
               </div>
             </div>
-            <p className="mt-6 max-w-2xl text-h3 font-normal text-muted-foreground">
+            <p className="max-w-2xl pb-2 text-h3 font-normal text-muted-foreground">
               {t.store.officialTagline}
             </p>
-            <dl className="mt-8 flex flex-wrap gap-x-10 gap-y-4">
+            <dl className="flex flex-wrap gap-x-10 gap-y-4 py-6">
               <div>
                 <dt className="text-caption text-muted-foreground">{official.statsProducts}</dt>
                 <dd className="mt-1 text-h3">{store.products.length}</dd>

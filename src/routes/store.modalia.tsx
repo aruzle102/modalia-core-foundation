@@ -251,7 +251,7 @@ function OfficialStorePage() {
             <img
               src={store.bannerUrl}
               alt=""
-              className="max-h-44 w-full object-contain sm:max-h-72"
+              className="max-h-36 w-full object-contain sm:max-h-60"
             />
           </div>
         ) : null}

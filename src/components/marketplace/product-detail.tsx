@@ -568,7 +568,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
               type="button"
               disabled={!canPurchase}
               onClick={handleBuyNow}
-              className="h-12 bg-foreground font-semibold text-background hover:bg-foreground/90"
+              className="h-12 bg-foreground font-semibold text-background hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-40"
             >
               {sf.sfBuyNow}
             </Button>
@@ -577,7 +577,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
               variant="outline"
               disabled={!canPurchase}
               onClick={() => addToCart()}
-              className="h-12"
+              className="h-12 disabled:cursor-not-allowed disabled:opacity-40"
             >
               <ShoppingBag className="size-4" />
               {sf.sfAddToCart}

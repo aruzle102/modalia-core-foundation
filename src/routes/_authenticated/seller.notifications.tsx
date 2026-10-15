@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useMatch } from "@tanstack/react-router";
 import { SellerShell } from "@/components/seller/SellerShell";
 import { NotificationList } from "@/components/notifications/notification-center";
 import { getLocale, getTranslations, localeDirections } from "@/lib/i18n";
@@ -16,6 +16,9 @@ export const Route = createFileRoute("/_authenticated/seller/notifications")({
 });
 
 function SellerNotificationsPage() {
+  // Child routes (preferences) render in the Outlet.
+  const child = useMatch({ from: "/_authenticated/seller/notifications", strict: true, shouldThrow: false });
+  if (!child) return <Outlet />;
   const { locale } = Route.useSearch();
   const t = getTranslations(locale);
   return (

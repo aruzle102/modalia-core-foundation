@@ -255,9 +255,9 @@ function OfficialStorePage() {
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-background/30" />
           </div>
-          <div className="relative mx-auto max-w-7xl px-4 pb-14 pt-20 sm:px-6 sm:pt-28 lg:px-8">
-            <div className="flex items-center gap-4">
-              <div className="grid size-20 shrink-0 place-items-center overflow-hidden rounded-2xl border border-border bg-card text-2xl font-semibold sm:size-24">
+          <div className="relative mx-auto max-w-7xl px-4 pb-14 pt-24 sm:px-6 sm:pt-32 lg:px-8">
+            <div className="flex flex-col gap-5">
+              <div className="grid size-20 shrink-0 place-items-center overflow-hidden rounded-2xl border border-border bg-card text-2xl font-semibold shadow-lg sm:size-24">
                 {store.logoUrl ? (
                   <img src={store.logoUrl} alt="" className="size-full object-cover" />
                 ) : (
@@ -265,11 +265,11 @@ function OfficialStorePage() {
                 )}
               </div>
               <div>
-                <p className="flex items-center gap-2 text-eyebrow text-muted-foreground">
+                <p className="flex flex-wrap items-center gap-2 text-eyebrow text-muted-foreground">
                   {official.heroEyebrow}
                   <OfficialStoreBadge label={t.store.officialStore} />
                 </p>
-                <h1 className="mt-2 text-display">{store.name}</h1>
+                <h1 className="mt-3 text-display">{store.name}</h1>
               </div>
             </div>
             <p className="mt-6 max-w-2xl text-h3 font-normal text-muted-foreground">

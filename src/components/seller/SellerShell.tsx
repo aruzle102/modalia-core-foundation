@@ -240,16 +240,19 @@ function SellerNavLink({ item, compact, onNavigate, onDark, collapsed }: { item:
       : "bg-blue-50 text-blue-700 font-semibold dark:bg-blue-950/50 dark:text-blue-300 [&_svg]:text-blue-600 dark:[&_svg]:text-blue-400"
     : "";
   return (
-    <a
-      href={item.to}
-      onClick={onNavigate}
-      className={`${className} ${activeClass}`}
+    <button
+      type="button"
+      onClick={() => {
+        onNavigate?.();
+        window.location.assign(item.to);
+      }}
+      className={`${className} ${activeClass} w-full text-start cursor-pointer`}
       title={collapsed ? item.label : undefined}
       aria-label={collapsed ? item.label : undefined}
     >
       {item.icon}
       {collapsed ? null : item.label}
-    </a>
+    </button>
   );
 }
 

@@ -60,6 +60,7 @@ import { Route as AdminProductsRouteImport } from './routes/admin/products'
 import { Route as AdminReportsRouteImport } from './routes/admin/reports'
 import { Route as AdminReviewsRouteImport } from './routes/admin/reviews'
 import { Route as AdminSecurityRouteImport } from './routes/admin/security'
+import { Route as AdminSellerIdentitiesRouteImport } from './routes/admin/seller-identities'
 import { Route as AdminSellersRouteImport } from './routes/admin/sellers'
 import { Route as AdminSeoRouteImport } from './routes/admin/seo'
 import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
@@ -367,6 +368,11 @@ const AdminReviewsRoute = AdminReviewsRouteImport.update({
 const AdminSecurityRoute = AdminSecurityRouteImport.update({
   id: '/admin/security',
   path: '/admin/security',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminSellerIdentitiesRoute = AdminSellerIdentitiesRouteImport.update({
+  id: '/admin/seller-identities',
+  path: '/admin/seller-identities',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminSellersRoute = AdminSellersRouteImport.update({
@@ -715,6 +721,7 @@ export interface FileRoutesByFullPath {
   '/admin/reports': typeof AdminReportsRoute
   '/admin/reviews': typeof AdminReviewsRoute
   '/admin/security': typeof AdminSecurityRoute
+  '/admin/seller-identities': typeof AdminSellerIdentitiesRoute
   '/admin/sellers': typeof AdminSellersRouteWithChildren
   '/admin/seo': typeof AdminSeoRoute
   '/admin/settings': typeof AdminSettingsRoute
@@ -820,6 +827,7 @@ export interface FileRoutesByTo {
   '/admin/reports': typeof AdminReportsRoute
   '/admin/reviews': typeof AdminReviewsRoute
   '/admin/security': typeof AdminSecurityRoute
+  '/admin/seller-identities': typeof AdminSellerIdentitiesRoute
   '/admin/sellers': typeof AdminSellersRouteWithChildren
   '/admin/seo': typeof AdminSeoRoute
   '/admin/settings': typeof AdminSettingsRoute
@@ -927,6 +935,7 @@ export interface FileRoutesById {
   '/admin/reports': typeof AdminReportsRoute
   '/admin/reviews': typeof AdminReviewsRoute
   '/admin/security': typeof AdminSecurityRoute
+  '/admin/seller-identities': typeof AdminSellerIdentitiesRoute
   '/admin/sellers': typeof AdminSellersRouteWithChildren
   '/admin/seo': typeof AdminSeoRoute
   '/admin/settings': typeof AdminSettingsRoute
@@ -1034,6 +1043,7 @@ export interface FileRouteTypes {
     | '/admin/reports'
     | '/admin/reviews'
     | '/admin/security'
+    | '/admin/seller-identities'
     | '/admin/sellers'
     | '/admin/seo'
     | '/admin/settings'
@@ -1139,6 +1149,7 @@ export interface FileRouteTypes {
     | '/admin/reports'
     | '/admin/reviews'
     | '/admin/security'
+    | '/admin/seller-identities'
     | '/admin/sellers'
     | '/admin/seo'
     | '/admin/settings'
@@ -1245,6 +1256,7 @@ export interface FileRouteTypes {
     | '/admin/reports'
     | '/admin/reviews'
     | '/admin/security'
+    | '/admin/seller-identities'
     | '/admin/sellers'
     | '/admin/seo'
     | '/admin/settings'
@@ -1350,6 +1362,7 @@ export interface RootRouteChildren {
   AdminReportsRoute: typeof AdminReportsRoute
   AdminReviewsRoute: typeof AdminReviewsRoute
   AdminSecurityRoute: typeof AdminSecurityRoute
+  AdminSellerIdentitiesRoute: typeof AdminSellerIdentitiesRoute
   AdminSellersRoute: typeof AdminSellersRouteWithChildren
   AdminSeoRoute: typeof AdminSeoRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
@@ -1726,6 +1739,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/security'
       fullPath: '/admin/security'
       preLoaderRoute: typeof AdminSecurityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/seller-identities': {
+      id: '/admin/seller-identities'
+      path: '/admin/seller-identities'
+      fullPath: '/admin/seller-identities'
+      preLoaderRoute: typeof AdminSellerIdentitiesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/sellers': {
@@ -2364,6 +2384,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminReportsRoute: AdminReportsRoute,
   AdminReviewsRoute: AdminReviewsRoute,
   AdminSecurityRoute: AdminSecurityRoute,
+  AdminSellerIdentitiesRoute: AdminSellerIdentitiesRoute,
   AdminSellersRoute: AdminSellersRouteWithChildren,
   AdminSeoRoute: AdminSeoRoute,
   AdminSettingsRoute: AdminSettingsRoute,

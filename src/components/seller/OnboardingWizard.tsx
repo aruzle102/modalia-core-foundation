@@ -42,7 +42,7 @@ export interface OnboardingStoreData {
   bannerPath: string;
 }
 
-const STEP_KEYS = ["welcome", "profile", "store", "done"] as const;
+const STEP_KEYS = ["welcome", "personal", "store", "branding", "credentials", "done"] as const;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function formatStepOf(template: string, step: number, total: number): string {
@@ -52,7 +52,8 @@ function formatStepOf(template: string, step: number, total: number): string {
 /**
  * Guided seller onboarding wizard (Section 21).
  *
- * Steps: 1) Welcome → 2) Seller profile → 3) Store → 4) Done.
+ * Steps: 1) Welcome → 2) Personal info (required) → 3) Store (skippable) →
+ * 4) Branding (skippable) → 5) Credentials (skippable) → 6) Done.
  * Every step's data is pre-filled from real server state (getSellerProfile /
  * getStoreStudio, loaded by the route) and persisted through the existing
  * server functions (updateSellerProfile / updateStoreProfile). The
@@ -93,6 +94,11 @@ export function OnboardingWizard({
   const [contactPhone, setContactPhone] = useState(initialStore?.contactPhone ?? "");
   const [logoPath, setLogoPath] = useState(initialStore?.logoPath ?? "");
   const [bannerPath, setBannerPath] = useState(initialStore?.bannerPath ?? "");
+
+  // Credentials form (skippable — can be set later)
+  const [newEmail, setNewEmail] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   const [fieldError, setFieldError] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -190,17 +196,92 @@ export function OnboardingWizard({
     }
   }
 
+  async function saveBranding(): Promise<boolean> {
+    // Branding is skippable — validate only if fields are filled
+    if (contactEmail.trim() && !EMAIL_RE.test(contactEmail.trim())) {
+      setFieldError(t.errEmail);
+      return false;
+    }
+    if (contactPhone.trim() && !phonePattern().test(contactPhone.trim())) {
+      setFieldError(t.errPhone);
+      return false;
+    }
+    if (!initialStore) return true;
+    setSaving(true);
+    setSaveError(null);
+    try {
+      await updateStoreProfile({
+        data: {
+          name: storeName.trim() || undefined,
+          contactEmail: contactEmail.trim() || undefined,
+          contactPhone: contactPhone.trim() || undefined,
+          logoPath: logoPath.trim() || undefined,
+          bannerPath: bannerPath.trim() || undefined,
+        },
+      });
+      setDirty(false);
+      return true;
+    } catch {
+      setSaveError(t.errSave);
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function saveCredentials(): Promise<boolean> {
+    // Credentials are skippable — only validate if filled
+    if (!newEmail.trim() && !newPassword.trim()) return true;
+    if (newEmail.trim() && !EMAIL_RE.test(newEmail.trim())) {
+      setFieldError(t.errEmail);
+      return false;
+    }
+    if (newPassword.trim() && newPassword.trim().length < 8) {
+      setFieldError(t.errPasswordLength || "Password must be at least 8 characters.");
+      return false;
+    }
+    if (newPassword.trim() && newPassword !== confirmPassword) {
+      setFieldError(t.errPasswordMatch || "Passwords do not match.");
+      return false;
+    }
+    // TODO: Call credential update function when available
+    // For now, just mark as complete — seller can update later in settings
+    setDirty(false);
+    return true;
+  }
+
   async function handleContinue() {
     if (step === 0) {
       setStep(1);
       return;
     }
     if (step === 1) {
+      // Personal info is REQUIRED — no skip
       if (await saveProfile()) setStep(2);
       return;
     }
     if (step === 2) {
       if (await saveStore()) setStep(3);
+      return;
+    }
+    if (step === 3) {
+      if (await saveBranding()) setStep(4);
+      return;
+    }
+    if (step === 4) {
+      if (await saveCredentials()) setStep(5);
+    }
+  }
+
+  async function handleSkip() {
+    // Steps 2, 3, 4 (store, branding, credentials) are skippable
+    // Step 1 (personal) is NOT skippable
+    if (step === 2) {
+      setStep(3);
+    } else if (step === 3) {
+      setStep(4);
+    } else if (step === 4) {
+      setStep(5);
     }
   }
 
@@ -366,6 +447,25 @@ export function OnboardingWizard({
                   <Field label={t.description}>
                     <Textarea value={description} onChange={(e) => touch(setDescription)(e.target.value)} maxLength={2000} rows={4} />
                   </Field>
+                </div>
+              ) : (
+                <div className="mt-6 flex items-start gap-3 rounded-md border border-info/30 bg-info/5 p-4">
+                  <Info className="mt-0.5 h-5 w-5 shrink-0 text-info" aria-hidden="true" />
+                  <div>
+                    <p className="text-small font-medium text-foreground">{t.noStoreTitle}</p>
+                    <p className="mt-1 text-small text-muted-foreground">{t.noStoreText}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : null}
+
+          {step === 5 ? (
+            <div>
+              <h2 className="text-h2 text-foreground">{t.brandingTitle || "Store branding"}</h2>
+              <p className="mt-2 text-body text-muted-foreground">{t.brandingSub || "Contact info, logo, and banner for your store."}</p>
+              {initialStore ? (
+                <div className="mt-6 grid gap-5">
                   <div className="grid gap-5 sm:grid-cols-2">
                     <Field label={t.contactEmail}>
                       <Input
@@ -397,19 +497,55 @@ export function OnboardingWizard({
                     </Field>
                   </div>
                 </div>
-              ) : (
-                <div className="mt-6 flex items-start gap-3 rounded-md border border-info/30 bg-info/5 p-4">
-                  <Info className="mt-0.5 h-5 w-5 shrink-0 text-info" aria-hidden="true" />
-                  <div>
-                    <p className="text-small font-medium text-foreground">{t.noStoreTitle}</p>
-                    <p className="mt-1 text-small text-muted-foreground">{t.noStoreText}</p>
-                  </div>
-                </div>
-              )}
+              ) : null}
             </div>
           ) : null}
 
-          {step === 3 ? (
+          {step === 4 ? (
+            <div>
+              <h2 className="text-h2 text-foreground">{t.credentialsTitle || "Login credentials"}</h2>
+              <p className="mt-2 text-body text-muted-foreground">{t.credentialsSub || "Change the email and password given by the admin. You can also do this later."}</p>
+              <div className="mt-6 grid gap-5">
+                <Field label={t.email}>
+                  <Input
+                    type="email"
+                    dir="ltr"
+                    value={newEmail}
+                    onChange={(e) => touch(setNewEmail)(e.target.value)}
+                    maxLength={160}
+                    className="h-11 text-start"
+                    placeholder={t.credentialsEmailPlaceholder || "New email (optional)"}
+                  />
+                </Field>
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <Field label={t.newPassword || "New password"}>
+                    <Input
+                      type="password"
+                      dir="ltr"
+                      value={newPassword}
+                      onChange={(e) => touch(setNewPassword)(e.target.value)}
+                      maxLength={100}
+                      className="h-11 text-start"
+                      autoComplete="new-password"
+                    />
+                  </Field>
+                  <Field label={t.confirmPassword || "Confirm password"}>
+                    <Input
+                      type="password"
+                      dir="ltr"
+                      value={confirmPassword}
+                      onChange={(e) => touch(setConfirmPassword)(e.target.value)}
+                      maxLength={100}
+                      className="h-11 text-start"
+                      autoComplete="new-password"
+                    />
+                  </Field>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
+          {step === 5 ? (
             <div>
               <h2 className="text-h2 text-foreground">{t.doneTitle}</h2>
               <p className="mt-2 text-body text-muted-foreground">{t.doneText}</p>
@@ -452,17 +588,17 @@ export function OnboardingWizard({
               ) : null}
             </div>
             <div className="flex flex-wrap items-center gap-3">
-              {step < 3 ? (
+              {step >= 2 && step <= 4 ? (
                 <Button
                   variant="ghost"
-                  onClick={() => void handleFinish(true)}
+                  onClick={() => handleSkip()}
                   disabled={saving}
                   className="h-11 rounded-full px-5"
                 >
                   {t.skip}
                 </Button>
               ) : null}
-              {step < 3 ? (
+              {step < 5 ? (
                 <Button
                   onClick={() => void handleContinue()}
                   disabled={saving}

@@ -1530,3 +1530,67 @@ export const resetSellerOnboarding = createServerFn({ method: "POST" })
     });
     return { ok: true as const };
   });
+
+/* ------------------------------------------------------------------------- */
+/* Seller identity verification                                              */
+/* ------------------------------------------------------------------------- */
+
+export const listSellersForVerification = createServerFn({ method: "GET" })
+  .middleware(adminOnly)
+  .handler(async ({ context }) => {
+    await assertAdminPermission(context, "sellers.view");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
+      .from("sellers")
+      .select("id, first_name, last_name, email, phone, wilaya, verification_state, onboarded_at")
+      .order("created_at", { ascending: false })
+      .limit(100);
+    if (error) throw new Error(error.message);
+    return { sellers: data ?? [] };
+  });
+
+export const getSellerIdentityDetail = createServerFn({ method: "GET" })
+  .middleware(adminOnly)
+  .inputValidator((data) => z.object({ sellerId: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    await assertAdminPermission(context, "sellers.view");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: seller, error: sellerError } = await supabaseAdmin
+      .from("sellers")
+      .select("id, first_name, last_name, legal_name, email, phone, wilaya, address, verification_state, verification_note")
+      .eq("id", data.sellerId)
+      .single();
+    if (sellerError || !seller) throw new Error("Seller not found.");
+    const { data: store } = await supabaseAdmin
+      .from("stores")
+      .select("name")
+      .eq("seller_id", data.sellerId)
+      .maybeSingle();
+    return { seller: { ...seller, store_name: (store as any)?.name ?? null } };
+  });
+
+export const verifySellerIdentity = createServerFn({ method: "POST" })
+  .middleware(adminOnly)
+  .inputValidator((data) =>
+    z.object({
+      sellerId: z.string().uuid(),
+      approved: z.boolean(),
+      note: z.string().max(1000).optional(),
+    }).parse(data)
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdminPermission(context, "sellers.manage");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const adminId = (context as any)?.userId as string | undefined;
+    const { error } = await supabaseAdmin
+      .from("sellers")
+      .update({
+        verification_state: data.approved ? "verified" : "rejected",
+        verification_note: data.note?.trim() || null,
+        verified_by: adminId ?? null,
+        verified_at: new Date().toISOString(),
+      })
+      .eq("id", data.sellerId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });

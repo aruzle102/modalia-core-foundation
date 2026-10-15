@@ -77,7 +77,7 @@ export function StoreFront({
             <div className="absolute inset-0 store-sheen" />
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/25 to-black/10" aria-hidden />
-          <div className="relative mx-auto flex max-w-7xl flex-col justify-end px-4 pb-10 pt-40 sm:px-6 sm:pt-52 lg:px-8">
+          <div className="relative mx-auto flex max-w-7xl flex-col justify-end px-4 pb-8 pt-24 sm:px-6 sm:pt-32 lg:px-8">
             <div className="flex items-start gap-4 sm:items-center sm:gap-5">
               <div className="grid size-16 shrink-0 place-items-center overflow-hidden rounded-2xl border-4 border-white/70 bg-card text-2xl font-semibold text-foreground shadow-xl sm:size-28 sm:rounded-3xl sm:text-3xl">
                 {store.logoUrl ? (

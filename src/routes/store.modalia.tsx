@@ -255,7 +255,7 @@ function OfficialStorePage() {
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-background/40" />
           </div>
-          <div className="relative mx-auto max-w-7xl px-4 pb-12 pt-24 sm:px-6 sm:pt-32 lg:px-8">
+          <div className="relative mx-auto max-w-7xl px-4 pb-8 pt-14 sm:px-6 sm:pt-20 lg:px-8">
             <div className="flex items-start gap-4 sm:items-center">
               <div className="grid size-16 shrink-0 place-items-center overflow-hidden rounded-2xl border border-border bg-card text-xl font-semibold shadow-lg sm:size-24 sm:text-2xl">
                 {store.logoUrl ? (

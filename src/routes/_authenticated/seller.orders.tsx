@@ -7,7 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AdminCard, StatusPill, TableSkeleton, Field, fmtDateTime, fmtMoney } from "@/components/admin/ui";
 import { DataTable, EmptyState } from "@/components/dashboard";
-import { listSellerOrders } from "@/lib/seller-orders.functions";
+import { listSellerOrders, updateSellerOrderStatus } from "@/lib/seller-orders.functions";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { getLocale } from "@/lib/i18n";
 import { numParam, strParam, useBackParam, useDebouncedUrlParam, useUrlState } from "@/hooks/use-url-state";
 import { SellerShell } from "@/components/seller/SellerShell";
@@ -23,6 +25,13 @@ export const Route = createFileRoute("/_authenticated/seller/orders")({
   head: () => ({ meta: [{ name: "robots", content: "noindex,nofollow" }, { title: "Orders — Seller — Modalia" }, { name: "description", content: "Manage your store's orders." }] }),
   component: SellerOrdersPage,
 });
+
+const SELLER_TRANSITIONS: Record<string, string[]> = {
+  pending: ["accepted", "cancelled"],
+  accepted: ["processing", "cancelled"],
+  processing: ["ready_for_shipping"],
+  ready_for_shipping: ["handed_to_courier"],
+};
 
 const STATUS_OPTIONS = [
   "pending",
@@ -72,6 +81,17 @@ function SellerOrdersPage() {
   const orders = ordersQuery.data?.orders ?? [];
   const total = ordersQuery.data?.total ?? 0;
   const pageSize = ordersQuery.data?.pageSize ?? 20;
+
+  const queryClient = useQueryClient();
+  const statusMutation = useMutation({
+    mutationFn: (payload: { sellerOrderId: string; status: string }) =>
+      updateSellerOrderStatus({ data: payload }),
+    onSuccess: () => {
+      toast.success("Order status updated.");
+      queryClient.invalidateQueries({ queryKey: ["seller-orders"] });
+    },
+    onError: (e) => toast.error(errMsg(e)),
+  });
 
   const resetFilters = () => url.set({ q: "", status: "", page: 1 });
   const hasFilters = search.trim() !== "" || status !== "";
@@ -151,6 +171,7 @@ function SellerOrdersPage() {
                     <th className="px-4 py-3 text-end">Items</th>
                     <th className="px-4 py-3 text-end">Total</th>
                     <th className="px-4 py-3 text-start">Status</th>
+                    <th className="px-4 py-3 text-start">Change Status</th>
                     <th className="px-4 py-3 text-start">Placed</th>
                   </tr>
                 </thead>
@@ -174,6 +195,31 @@ function SellerOrdersPage() {
                       <td className="px-4 py-3 text-end tabular-nums">{order.itemCount}</td>
                       <td className="px-4 py-3 text-end tabular-nums">{fmtMoney(order.subtotal + order.shippingTotal, "DZD", locale)}</td>
                       <td className="px-4 py-3"><StatusPill status={order.status} /></td>
+                      <td className="px-4 py-3">
+                        {(SELLER_TRANSITIONS[order.status] ?? []).length > 0 ? (
+                          <Select
+                            value=""
+                            onValueChange={(v) => {
+                              if (v && confirm(`Move order ${order.orderNumber} to ${v.replace(/_/g, " ")}?`)) {
+                                statusMutation.mutate({ sellerOrderId: order.id, status: v });
+                              }
+                            }}
+                          >
+                            <SelectTrigger className="h-8 w-32 text-xs">
+                              <SelectValue placeholder="Change…" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {(SELLER_TRANSITIONS[order.status] ?? []).map((s) => (
+                                <SelectItem key={s} value={s} className="text-xs">
+                                  {s.replace(/_/g, " ")}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </td>
                       <td className="px-4 py-3 text-xs text-muted-foreground">{fmtDateTime(order.createdAt, locale)}</td>
                     </tr>
                   ))}

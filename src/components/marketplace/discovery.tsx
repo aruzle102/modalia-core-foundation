@@ -96,7 +96,7 @@ export function ProductCard({
           className="block"
           aria-label={product.name}
         >
-          <div className={`relative aspect-square overflow-hidden bg-muted ${soldOut ? "saturate-50" : ""}`}>
+          <div className={`relative aspect-[4/3] overflow-hidden bg-muted ${soldOut ? "saturate-50" : ""}`}>
             {images.length > 0 ? (
               <img
                 key={imgIndex}
@@ -182,12 +182,12 @@ export function ProductCard({
           <h3 className="line-clamp-2 min-h-[2.6em] text-[15px] font-bold leading-snug text-foreground">
             {product.name}
           </h3>
-          <p className="mt-1.5 flex items-baseline gap-2">
+          <p className="mt-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
             <span className="text-lg font-extrabold tabular-nums tracking-tight text-foreground">
               {formatPrice(product.price, locale)}
             </span>
             {sale != null && product.compareAtPrice ? (
-              <span className="text-sm tabular-nums text-muted-foreground line-through">
+              <span className="shrink-0 text-sm tabular-nums text-muted-foreground line-through">
                 {formatPrice(product.compareAtPrice, locale)}
               </span>
             ) : null}

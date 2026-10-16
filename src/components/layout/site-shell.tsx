@@ -718,7 +718,18 @@ function NewsletterForm({ locale, t }: { locale: SupportedLocale; t: Translation
     setPending(true);
     setStatus("idle");
     try {
-      await subscribeNewsletter({ data: { email: value, locale } });
+      // Direct Supabase insert (bypasses server function issues)
+      const { supabase } = await import("@/integrations/supabase/client");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any).from("newsletter_subscribers").insert({
+        email: value,
+        locale: locale,
+        subscribed_at: new Date().toISOString(),
+      });
+      // Ignore duplicates (already subscribed = success)
+      if (error && !error.message.includes("duplicate") && error.code !== "23505") {
+        throw error;
+      }
       setStatus("success");
       setEmail("");
     } catch {

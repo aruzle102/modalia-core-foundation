@@ -42,6 +42,15 @@ import {
 import { errMsg, Pager } from "./_shared";
 import { numParam, strParam, useUrlState } from "@/hooks/use-url-state";
 
+type EmailTemplate = {
+  id: string;
+  slug: string;
+  name: string;
+  category: string;
+  locale: string;
+  variables: string[] | null;
+};
+
 export const Route = createFileRoute("/admin/email-center")({
   validateSearch: (search: Record<string, unknown>) => ({
     tab: strParam(search["tab"]) || "compose",
@@ -161,7 +170,7 @@ function ComposeTab() {
     onError: (e) => toast.error(errMsg(e)),
   });
 
-  const templates = templatesQuery.data?.templates ?? [];
+  const templates: EmailTemplate[] = templatesQuery.data?.templates ?? [];
 
   return (
     <div className="grid gap-6 lg:grid-cols-2">

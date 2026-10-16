@@ -43,7 +43,7 @@ export function PartnerBannerCarousel() {
       alt={banner.title || "Partner"}
       loading="lazy"
       onError={() => setImgError(true)}
-      className="h-[100px] w-full rounded-[14px] object-contain bg-muted md:h-[120px]"
+      className="h-auto max-h-[120px] w-full rounded-[14px] object-contain bg-muted md:max-h-[140px]"
     />
   );
 

@@ -719,15 +719,12 @@ function NewsletterForm({ locale, t }: { locale: SupportedLocale; t: Translation
     setStatus("idle");
     try {
       const result = await subscribeNewsletter({ data: { email: value, locale } });
-      if (result.alreadySubscribed) {
-        setStatus("already");
-      } else if (result.resubscribed) {
-        setStatus("resubscribed");
-      } else {
-        setStatus("success");
-      }
+      setStatus("success");
       setEmail("");
-    } catch {
+    } catch (e) {
+      // DIAGNOSTIC: show actual error
+      const msg = e instanceof Error ? e.message : "Unknown error";
+      alert("DIAGNOSTIC ERROR: " + msg);
       setStatus("error");
     } finally {
       setPending(false);

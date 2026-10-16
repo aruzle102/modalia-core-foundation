@@ -42,40 +42,21 @@ export const subscribeNewsletter = createServerFn({ method: "POST" })
     rateLimitEndpoint("subscribeNewsletter", 10);
     const supabase = publicClient();
 
-    // Check for existing subscription (basic columns only for compatibility)
-    const { data: existing } = await supabase
-      .from("newsletter_subscribers")
-      .select("id")
-      .eq("email", data.email)
-      .maybeSingle();
+    // Use upsert with ignoreDuplicates (anon can only INSERT per RLS, no SELECT)
+    // This handles duplicates gracefully without needing to check first
+    const { error } = await supabase.from("newsletter_subscribers").upsert(
+      {
+        email: data.email,
+        locale: data.locale ?? platformConfig.market.defaultLanguage,
+        subscribed_at: new Date().toISOString(),
+      },
+      { onConflict: "email", ignoreDuplicates: true },
+    );
 
-    if (existing) {
-      return { ok: true, alreadySubscribed: true };
+    if (error) {
+      console.error("[newsletter] subscribe error:", error.message);
+      throw new Error("Your subscription could not be saved. Please try again.");
     }
-
-    // Try full insert with new columns; fall back to basic if migration not applied
-    const now = new Date().toISOString();
-    const baseRecord = {
-      email: data.email,
-      locale: data.locale ?? platformConfig.market.defaultLanguage,
-      subscribed_at: now,
-    };
-
-    // First try with extended columns (if migration applied)
-    let { error } = await supabase.from("newsletter_subscribers").insert({
-      ...baseRecord,
-      consent_at: now,
-      status: "active",
-      source: "footer",
-    });
-
-    // Fallback: basic columns only (pre-migration schema)
-    if (error && error.message?.includes("column")) {
-      const retry = await supabase.from("newsletter_subscribers").insert(baseRecord);
-      error = retry.error;
-    }
-
-    if (error) throw new Error("Your subscription could not be saved. Please try again.");
     return { ok: true };
   });
 

@@ -319,7 +319,7 @@ function TemplatesTab() {
       {templates.length === 0 ? (
         <EmptyState title="No templates" description="No email templates found." />
       ) : (
-        <DataTable
+        <DataTable>
           <table className="w-full text-sm">
             <thead className="border-b bg-muted/40 text-left text-muted-foreground">
               <tr>

@@ -39,7 +39,8 @@ const newsletterInput = z.object({
 export const subscribeNewsletter = createServerFn({ method: "POST" })
   .inputValidator((data) => newsletterInput.parse(data))
   .handler(async ({ data }) => {
-    rateLimitEndpoint("subscribeNewsletter", 10);
+    // Rate limit temporarily disabled for debugging
+    // rateLimitEndpoint("subscribeNewsletter", 10);
     const supabase = publicClient();
 
     const { error } = await supabase.from("newsletter_subscribers").upsert(

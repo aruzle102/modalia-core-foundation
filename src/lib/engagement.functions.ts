@@ -43,16 +43,16 @@ export const subscribeNewsletter = createServerFn({ method: "POST" })
     // rateLimitEndpoint("subscribeNewsletter", 10);
     const supabase = publicClient();
 
-    const { error } = await supabase.from("newsletter_subscribers").upsert(
-      {
-        email: data.email,
-        locale: data.locale ?? platformConfig.market.defaultLanguage,
-        subscribed_at: new Date().toISOString(),
-      },
-      { onConflict: "email", ignoreDuplicates: true },
-    );
+    const { error } = await supabase.from("newsletter_subscribers").insert({
+      email: data.email,
+      locale: data.locale ?? platformConfig.market.defaultLanguage,
+      subscribed_at: new Date().toISOString(),
+    });
 
-    if (error) throw new Error("Your subscription could not be saved. Please try again.");
+    // Ignore duplicate errors (already subscribed = success)
+    if (error && !error.message.includes("duplicate") && error.code !== "23505") {
+      throw new Error("Your subscription could not be saved. Please try again.");
+    }
     return { ok: true };
   });
 

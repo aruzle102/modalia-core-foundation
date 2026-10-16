@@ -67,20 +67,11 @@ export const unsubscribeNewsletter = createServerFn({ method: "POST" })
       auth: { persistSession: false, autoRefreshToken: false },
     });
 
-    // Try token-based lookup (requires migration)
-    const { data: sub, error: lookupError } = await admin
-      .from("newsletter_subscribers")
-      .select("id")
-      .eq("unsubscribe_token", data.token)
-      .maybeSingle();
-
-    if (lookupError || !sub) throw new Error("Invalid unsubscribe link.");
-
-    // Delete the subscription (works pre- and post-migration)
+    // Token is the subscriber ID (basic schema)
     const { error } = await admin
       .from("newsletter_subscribers")
       .delete()
-      .eq("id", sub.id);
+      .eq("id", data.token);
 
     if (error) throw new Error("Could not unsubscribe. Please try again.");
     return { ok: true };

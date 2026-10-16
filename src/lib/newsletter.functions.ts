@@ -212,12 +212,10 @@ export const sendNewsletterCampaign = createServerFn({ method: "POST" })
     if (!campaign) throw new Error("Campaign not found.");
     if (campaign.status !== "draft") throw new Error("Campaign already sent or in progress.");
 
-    // Get eligible subscribers (active + consented only)
+    // Get all subscribers (table has basic schema: id, email, locale, subscribed_at)
     const { data: subscribers, error: subError } = await db
       .from("newsletter_subscribers")
-      .select("id,email,locale,unsubscribe_token")
-      .eq("status", "active")
-      .not("consent_at", "is", null);
+      .select("id,email,locale");
 
     if (subError) throw new Error("Could not load subscribers.");
     if (!subscribers?.length) throw new Error("No eligible subscribers.");
@@ -250,7 +248,7 @@ export const sendNewsletterCampaign = createServerFn({ method: "POST" })
             .maybeSingle();
           if (existing) return;
 
-          const unsubscribeUrl = `${siteUrl}/unsubscribe?token=${sub.unsubscribe_token}`;
+          const unsubscribeUrl = `${siteUrl}/unsubscribe?token=${sub.id}`;
           const html = buildNewsletterHtml({
             title: campaign.name,
             previewText: campaign.preview_text,

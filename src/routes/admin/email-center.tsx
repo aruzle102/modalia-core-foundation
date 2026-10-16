@@ -42,6 +42,15 @@ import {
 import { errMsg, Pager } from "./_shared";
 import { numParam, strParam, useUrlState } from "@/hooks/use-url-state";
 
+type EmailTemplate = {
+  id: string;
+  slug: string;
+  name: string;
+  category: string;
+  locale: string;
+  variables: string[] | null;
+};
+
 export const Route = createFileRoute("/admin/email-center")({
   validateSearch: (search: Record<string, unknown>) => ({
     tab: strParam(search["tab"]) || "compose",
@@ -161,7 +170,7 @@ function ComposeTab() {
     onError: (e) => toast.error(errMsg(e)),
   });
 
-  const templates = templatesQuery.data?.templates ?? [];
+  const templates: EmailTemplate[] = templatesQuery.data?.templates ?? [];
 
   return (
     <div className="grid gap-6 lg:grid-cols-2">
@@ -312,25 +321,38 @@ function TemplatesTab() {
   if (templatesQuery.isError)
     return <p className="text-destructive">{errMsg(templatesQuery.error)}</p>;
 
-  const templates = templatesQuery.data?.templates ?? [];
+  const templates = (templatesQuery.data?.templates ?? []) as EmailTemplate[];
 
   return (
     <AdminCard title={`Templates (${templates.length})`}>
       {templates.length === 0 ? (
         <EmptyState title="No templates" description="No email templates found." />
       ) : (
-        <DataTable
-          columns={["Name", "Category", "Locale", "Variables"]}
-          rows={templates.map((t) => [
-            <div key={t.id}>
-              <p className="font-medium">{t.name}</p>
-              <p className="text-xs text-muted-foreground">{t.slug}</p>
-            </div>,
-            t.category,
-            t.locale.toUpperCase(),
-            (t.variables ?? []).join(", ") || "—",
-          ])}
-        />
+        <DataTable>
+          <table className="w-full text-sm">
+            <thead className="border-b bg-muted/40 text-left text-muted-foreground">
+              <tr>
+                <th className="px-4 py-3 font-medium">Name</th>
+                <th className="px-4 py-3 font-medium">Category</th>
+                <th className="px-4 py-3 font-medium">Locale</th>
+                <th className="px-4 py-3 font-medium">Variables</th>
+              </tr>
+            </thead>
+            <tbody>
+              {templates.map((template) => (
+                <tr key={template.id} className="border-b last:border-0">
+                  <td className="px-4 py-3">
+                    <p className="font-medium">{template.name}</p>
+                    <p className="text-xs text-muted-foreground">{template.slug}</p>
+                  </td>
+                  <td className="px-4 py-3">{template.category}</td>
+                  <td className="px-4 py-3">{template.locale.toUpperCase()}</td>
+                  <td className="px-4 py-3">{(template.variables ?? []).join(", ") || "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </DataTable>
       )}
     </AdminCard>
   );

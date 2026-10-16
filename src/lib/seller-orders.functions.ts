@@ -47,6 +47,7 @@ const SELLER_TRANSITIONS: Record<SellerOrderStatus, SellerOrderStatus[]> = {
   pending: ["accepted", "cancelled"],
   accepted: ["processing", "cancelled"],
   processing: ["ready_for_shipping"],
+  preparing: ["ready_for_shipping"],
   ready_for_shipping: ["handed_to_courier"],
   confirmed: [],
   fulfilled: [],

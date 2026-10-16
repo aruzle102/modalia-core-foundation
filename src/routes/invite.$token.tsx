@@ -41,7 +41,7 @@ function AcceptInvitationPage() {
     mutationFn: () => acceptAdminInvitation({ data: { token, password } }),
     onSuccess: (result) => {
       toast.success("Account created! Please sign in.");
-      navigate({ to: "/admin/login", search: { locale: loc } as never });
+      navigate({ to: "/auth", search: { locale: loc, redirect: "/admin" } });
     },
     onError: (e) =>
       toast.error(e instanceof Error ? e.message : "Could not accept invitation."),

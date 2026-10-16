@@ -47,11 +47,10 @@ export const listNewsletterSubscribers = createServerFn({ method: "GET" })
 
     let query = db
       .from("newsletter_subscribers")
-      .select("id,email,locale,status,subscribed_at,consent_at,unsubscribed_at,source", { count: "exact" })
+      .select("id,email,locale,subscribed_at", { count: "exact" })
       .order("subscribed_at", { ascending: false });
 
     if (data.query) query = query.ilike("email", `%${data.query}%`);
-    if (data.status) query = query.eq("status", data.status);
 
     const from = (data.page - 1) * data.pageSize;
     const { data: subs, error, count } = await query.range(from, from + data.pageSize - 1);

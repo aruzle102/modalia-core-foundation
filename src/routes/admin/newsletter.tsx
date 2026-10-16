@@ -320,8 +320,8 @@ function SubscribersTab() {
                   <tr key={s.id} className="border-b">
                     <td className="px-4 py-3 text-sm" dir="ltr">{s.email}</td>
                     <td className="px-4 py-3">
-                      <span className={`rounded-full px-2 py-0.5 text-xs ${s.status === "active" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"}`}>
-                        {s.status}
+                      <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-800">
+                        active
                       </span>
                     </td>
                     <td className="px-4 py-3 text-sm">{s.locale.toUpperCase()}</td>

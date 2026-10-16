@@ -718,17 +718,29 @@ function NewsletterForm({ locale, t }: { locale: SupportedLocale; t: Translation
     setPending(true);
     setStatus("idle");
     try {
-      // Direct Supabase insert (bypasses server function issues)
-      const { supabase } = await import("@/integrations/supabase/client");
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any).from("newsletter_subscribers").insert({
-        email: value,
-        locale: locale,
-        subscribed_at: new Date().toISOString(),
+      // Direct REST API call (bypasses all client issues)
+      const SUPABASE_URL = import.meta.env["VITE_SUPABASE_URL"];
+      const SUPABASE_KEY = import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"];
+      if (!SUPABASE_URL || !SUPABASE_KEY) throw new Error("Config missing");
+
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/newsletter_subscribers`, {
+        method: "POST",
+        headers: {
+          "apikey": SUPABASE_KEY,
+          "Authorization": `Bearer ${SUPABASE_KEY}`,
+          "Content-Type": "application/json",
+          "Prefer": "return=minimal",
+        },
+        body: JSON.stringify({
+          email: value,
+          locale: locale,
+          subscribed_at: new Date().toISOString(),
+        }),
       });
-      // Ignore duplicates (already subscribed = success)
-      if (error && !error.message.includes("duplicate") && error.code !== "23505") {
-        throw error;
+
+      // 201 = created, 409 = duplicate (already subscribed = success)
+      if (!response.ok && response.status !== 409) {
+        throw new Error(`HTTP ${response.status}`);
       }
       setStatus("success");
       setEmail("");

@@ -835,10 +835,10 @@ export function SiteFooter({ locale, t }: { locale: SupportedLocale; t: Translat
           <Link
             to="/"
             search={{ locale }}
-            className="inline-block rounded-2xl bg-white px-6 py-4"
+            className="inline-block"
             aria-label="Modalia"
           >
-            <ModaliLogo className="h-12 w-auto sm:h-16" />
+            <ModaliLogo variant="light" className="h-12 w-auto sm:h-16" />
           </Link>
           <NewsletterForm locale={locale} t={t} />
         </div>

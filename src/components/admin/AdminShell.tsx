@@ -434,7 +434,7 @@ export function AdminShell({
           >
             <SheetHeader className="border-b border-white/10 p-4">
               <SheetTitle className="flex items-center gap-2.5 text-start">
-                <ModaliLogo circular className="h-9 w-9" />
+                <ModaliLogo circular variant="light" className="h-9 w-9" />
                 <span className="flex min-w-0 flex-col leading-none">
                   <span className="truncate text-sm font-bold tracking-tight text-white">MODALIA</span>
                   <span className="mt-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#b9babf]/70">
@@ -451,7 +451,7 @@ export function AdminShell({
       <div className="flex">
         <aside className="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-68 shrink-0 self-start overflow-y-auto bg-[#1a2035] text-[#b9babf] lg:block dark:bg-[#1a2035]">
           <div className="flex items-center gap-2.5 px-4 pb-3 pt-5">
-            <ModaliLogo circular className="h-9 w-9" />
+            <ModaliLogo circular variant="light" className="h-9 w-9" />
             <span className="flex min-w-0 flex-col leading-none">
               <span className="truncate text-sm font-bold tracking-tight text-white">MODALIA</span>
               <span className="mt-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#b9babf]/70">

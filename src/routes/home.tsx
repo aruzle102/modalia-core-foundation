@@ -1763,7 +1763,7 @@ function BoutiquesGrid({
             <ArrowRight className="size-3.5 transition-transform rtl:rotate-180" />
           </Link>
         </div>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-6">
+        <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {list.map((store) => {
             const preview = products.find((p) => p.storeName === store.name && p.imagePath);
             return (
@@ -1772,7 +1772,7 @@ function BoutiquesGrid({
                 to="/store/$slug"
                 params={{ slug: store.slug }}
                 search={{ locale }}
-                className="group flex flex-col items-center gap-2 rounded-[14px] border border-border bg-card p-4 text-center transition-all duration-200 hover:-translate-y-0.5 hover:border-foreground/25"
+                className="group flex w-36 shrink-0 snap-start flex-col items-center gap-2 rounded-[14px] border border-border bg-card p-4 text-center transition-all duration-200 hover:-translate-y-0.5 hover:border-foreground/25 sm:w-40"
                 aria-label={store.name}
               >
                 <span className="relative block">

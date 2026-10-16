@@ -132,7 +132,7 @@ function ProductCard({ product, locale, t }: { product: AiChatProduct; locale: S
         />
       ) : (
         <div className="grid size-12 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground">
-          <span className="grid size-8 place-items-center rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white"><Sparkles size={16} /></span>
+          <span className="grid size-8 place-items-center rounded-full bg-foreground"><ModaliLogo variant="light" className="h-4 w-auto" /></span>
         </div>
       )}
       <div className="min-w-0 flex-1">
@@ -264,7 +264,7 @@ export function AiAssistantDrawer({
       <SheetContent side={isRtl ? "left" : "right"} className="flex w-full flex-col gap-0 p-0 sm:max-w-md" dir={dir}>
         <SheetHeader className="border-b border-border px-5 py-4 text-start">
           <SheetTitle className="flex items-center gap-2.5 text-lg font-semibold">
-            <span className="grid size-9 place-items-center rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white shadow-sm"><Sparkles size={16} /></span>
+            <span className="grid size-9 place-items-center rounded-full bg-foreground shadow-sm"><ModaliLogo variant="light" className="h-5 w-auto" /></span>
             {t.assistant.title}
           </SheetTitle>
           <SheetDescription>{t.assistant.subtitle}</SheetDescription>
@@ -273,7 +273,7 @@ export function AiAssistantDrawer({
         <div className="flex-1 overflow-y-auto px-5 py-4" role="log" aria-live="polite">
           {messages.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center gap-4 text-center">
-              <span className="grid size-16 place-items-center rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white shadow-lg"><Sparkles size={28} /></span>
+              <span className="grid size-16 place-items-center rounded-full bg-foreground shadow-lg"><ModaliLogo variant="light" className="h-8 w-auto" /></span>
               <p className="max-w-xs text-sm text-muted-foreground">
                 {intel?.welcome_message || t.assistant.empty}
               </p>
@@ -378,8 +378,14 @@ export function AiAssistantButton({
   onOpen: () => void;
 }) {
   return (
-    <Button variant="ghost" size="icon" onClick={onOpen} aria-label={t.assistant.open} title={t.assistant.open}>
-      <Sparkles size={16} className="text-violet-500" />
-    </Button>
+    <button
+      type="button"
+      onClick={onOpen}
+      aria-label={t.assistant.open}
+      title={t.assistant.open}
+      className="grid size-10 place-items-center rounded-full bg-foreground text-background shadow-md transition-transform hover:scale-105 active:scale-95"
+    >
+      <ModaliLogo variant="light" className="h-5 w-auto" />
+    </button>
   );
 }

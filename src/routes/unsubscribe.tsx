@@ -5,7 +5,8 @@ import { CheckCircle, XCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ModaliLogo } from "@/components/brand/ModaliaLogo";
 import { unsubscribeNewsletter } from "@/lib/engagement.functions";
-import { getLocale, localeDirections, strParam } from "@/lib/i18n";
+import { getLocale, localeDirections } from "@/lib/i18n";
+import { strParam } from "@/hooks/use-url-state";
 
 export const Route = createFileRoute("/unsubscribe")({
   validateSearch: (search: Record<string, unknown>) => ({

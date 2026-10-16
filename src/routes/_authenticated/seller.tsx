@@ -229,6 +229,31 @@ export const Route = createFileRoute("/_authenticated/seller")({
   component: SellerOverviewPage,
 });
 
+function getWelcomeMessage(locale: string, name: string): string {
+  const hour = new Date().getHours();
+  const firstName = name?.split(" ")[0] || "";
+  if (locale === "ar") {
+    if (hour < 12) return `صباح الخير${firstName ? `، ${firstName}` : ""} ☀️`;
+    if (hour < 18) return `مساء الخير${firstName ? `، ${firstName}` : ""} 👋`;
+    return `مرحبًا بعودتك${firstName ? `، ${firstName}` : ""} 🌙`;
+  }
+  if (locale === "en") {
+    if (hour < 12) return `Good morning${firstName ? `, ${firstName}` : ""} ☀️`;
+    if (hour < 18) return `Good afternoon${firstName ? `, ${firstName}` : ""} 👋`;
+    return `Welcome back${firstName ? `, ${firstName}` : ""} 🌙`;
+  }
+  // fr
+  if (hour < 12) return `Bonjour${firstName ? ` ${firstName}` : ""} ☀️`;
+  if (hour < 18) return `Bon après-midi${firstName ? ` ${firstName}` : ""} 👋`;
+  return `Bon retour${firstName ? ` ${firstName}` : ""} 🌙`;
+}
+
+function getWelcomeSubtext(locale: string): string {
+  if (locale === "ar") return "إليك نظرة على أداء متجرك اليوم.";
+  if (locale === "en") return "Here's a look at your store performance today.";
+  return "Voici un aperçu des performances de votre boutique aujourd'hui.";
+}
+
 function SellerOverviewPage() {
   // Child routes (orders, products, etc.) render in the Outlet; this route
   // shows the dashboard homepage only when exactly on /seller.
@@ -265,6 +290,16 @@ function SellerOverviewPage() {
           <OnboardingNudge locale={locale} />
         </div>
       ) : null}
+
+      {/* Welcome message */}
+      <div className="mb-6 rounded-2xl border border-border bg-card p-6">
+        <h2 className="text-h2 text-foreground">
+          {getWelcomeMessage(locale, overview.seller.legalName)}
+        </h2>
+        <p className="mt-1 text-body text-muted-foreground">
+          {getWelcomeSubtext(locale)}
+        </p>
+      </div>
 
       {/* KPI grid — every figure computed from real rows, see seller-dashboard.functions.ts */}
       <section aria-label="Key metrics" className="grid grid-cols-2 gap-4 lg:grid-cols-4">

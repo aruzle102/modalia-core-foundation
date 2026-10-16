@@ -55,50 +55,135 @@ function isGreeting(raw: string): boolean {
 
 const T = {
   ar: {
-    greeting: (name: string) =>
-      `أهلاً بك! أنا **${name}** — أساعدك تجد منتجات حقيقية من متاجر موداليا فقط. جرّب مثلاً: «أريد هاتفاً رخيصاً» أو «أحذية رياضية تحت 8000 دج».`,
-    found: (n: number, summary: string | null) =>
-      `وجدت **${n}** منتجاً حقيقياً${summary ? ` (${summary})` : ""}:\n`,
+    greetings: [
+      (name: string) => `أهلاً بك! أنا **${name}** 😊 أساعدك تلقى واش تحوس عليه من متاجر موداليا. قولي واش تحتاج؟`,
+      (name: string) => `مرحباً! **${name}** في الخدمة 🛍️ نحوس لك على منتجات حقيقية بأحسن الأسعار. واش راك تحوس؟`,
+      (name: string) => `أهلاً وسهلاً! أنا **${name}** — دليلك في موداليا. قولي واش تحتاج نلقاه لك؟`,
+    ],
+    foundIntros: [
+      (n: number, summary: string | null) => `لقيت لك **${n}** منتج${summary ? ` (${summary})` : ""} 👇\n`,
+      (n: number, summary: string | null) => `هاذو **${n}** منتجات${summary ? ` (${summary})` : ""} اللي يوالموا طلبك ✨\n`,
+      (n: number, summary: string | null) => `شوف واش لقيت لك — **${n}** منتج${summary ? ` (${summary})` : ""} 🎯\n`,
+    ],
+    notFounds: [
+      (summary: string | null) => `ما لقيتش منتج يوالم${summary ? ` «${summary}»` : ""} 😕 جرب كلمات أخرى أو وسع ميزانيتك شوية.`,
+      (summary: string | null) => `للأسف ما كاش نتيجة${summary ? ` لـ«${summary}»` : ""}. جرب تحوس بكلمات أبسط؟`,
+      (summary: string | null) => `ما لقيت والو${summary ? ` يطابق «${summary}»` : ""} في الكتالوج الحالي. بدل الكلمات وجرب مرة أخرى 🔄`,
+    ],
     item: (p: AiCatalogItem, loc: SupportedParseLocale) =>
       `- ${productLink(p, loc)} — **${formatPrice(p.price, loc)}**${p.compareAtPrice && p.compareAtPrice > p.price ? ` (بدل ${formatPrice(p.compareAtPrice, loc)})` : ""} · ${p.storeName}`,
-    notFound: (summary: string | null) =>
-      `لم أجد أي منتج مطابق${summary ? ` لـ«${summary}»` : ""} في الكتالوج الحالي. جرّب كلمات أبسط أو وسّع نطاق السعر — أنا أعرض فقط منتجات حقيقية موجودة فعلاً.`,
-    noFacts: "لا أملك هذه المعلومة في بيانات المتجر، لذلك لن أخمّن.",
-    unclear: "لم أفهم طلبك تماماً. أخبرني مثلاً: ما المنتج الذي تبحث عنه؟ وما ميزانيتك التقريبية؟",
-    categories: (list: string) => `تصفح التصنيفات المتاحة: ${list}`,
-    disclaimer: "\n\n_الأسعار المعروضة هي أسعار المتاجر الحالية، وقد تتغير._",
+    noFacts: "هذي المعلومة ما عنديش في بيانات المتجر، ما نحبش نخمن 🤷",
+    unclear: "ما فهمتش مليح واش تحوس 😅 قولي مثلاً: واش من منتج؟ وشحال ميزانيتك؟",
+    categories: (list: string) => `تصفح التصنيفات: ${list}`,
   },
   fr: {
-    greeting: (name: string) =>
-      `Bienvenue ! Je suis **${name}** — je ne vous montre que des produits réels des boutiques Modalia. Essayez : « je veux un téléphone pas cher » ou « chaussures de sport moins de 8000 DA ».`,
-    found: (n: number, summary: string | null) =>
-      `J'ai trouvé **${n}** produit(s) réel(s)${summary ? ` (${summary})` : ""} :\n`,
+    greetings: [
+      (name: string) => `Salut ! Je suis **${name}** 😊 Je vous aide à trouver ce que vous cherchez sur Modalia. Dites-moi !`,
+      (name: string) => `Bienvenue ! **${name}** à votre service 🛍️ Je cherche des produits réels aux meilleurs prix. Que cherchez-vous ?`,
+      (name: string) => `Hello ! Moi c'est **${name}** — votre guide sur Modalia. Que puis-je trouver pour vous ?`,
+    ],
+    foundIntros: [
+      (n: number, summary: string | null) => `Voici **${n}** produit(s)${summary ? ` (${summary})` : ""} 👇\n`,
+      (n: number, summary: string | null) => `J'ai déniché **${n}** produit(s)${summary ? ` (${summary})` : ""} pour vous ✨\n`,
+      (n: number, summary: string | null) => `Regardez ce que j'ai trouvé — **${n}** produit(s)${summary ? ` (${summary})` : ""} 🎯\n`,
+    ],
+    notFounds: [
+      (summary: string | null) => `Hmm, rien trouvé${summary ? ` pour « ${summary} »` : ""} 😕 Essayez d'autres mots ou élargissez le budget.`,
+      (summary: string | null) => `Désolé, aucun résultat${summary ? ` pour « ${summary} »` : ""}. Essayez avec des mots plus simples ?`,
+      (summary: string | null) => `Rien ne correspond${summary ? ` à « ${summary} »` : ""} pour le moment. Changez les mots-clés et réessayez 🔄`,
+    ],
     item: (p: AiCatalogItem, loc: SupportedParseLocale) =>
       `- ${productLink(p, loc)} — **${formatPrice(p.price, loc)}**${p.compareAtPrice && p.compareAtPrice > p.price ? ` (au lieu de ${formatPrice(p.compareAtPrice, loc)})` : ""} · ${p.storeName}`,
-    notFound: (summary: string | null) =>
-      `Je n'ai trouvé aucun produit correspondant${summary ? ` à « ${summary} »` : ""} dans le catalogue actuel. Essayez des mots plus simples ou élargissez le budget — je ne montre que des produits réellement disponibles.`,
-    noFacts: "Je n'ai pas cette information dans les données de la boutique, je ne vais donc pas l'inventer.",
-    unclear: "Je n'ai pas bien compris. Dites-moi par exemple : quel produit cherchez-vous, et quel est votre budget approximatif ?",
-    categories: (list: string) => `Parcourez les catégories disponibles : ${list}`,
-    disclaimer: "\n\n_Les prix affichés sont ceux actuels des boutiques et peuvent changer._",
+    noFacts: "Je n'ai pas cette info dans les données, je préfère ne pas inventer 🤷",
+    unclear: "Je n'ai pas bien saisi 😅 Dites-moi : quel produit cherchez-vous ? Quel budget ?",
+    categories: (list: string) => `Parcourez les catégories : ${list}`,
   },
   en: {
-    greeting: (name: string) =>
-      `Welcome! I'm **${name}** — I only show real products from Modalia stores. Try: "I want a cheap phone" or "running shoes under 8000 DZD".`,
-    found: (n: number, summary: string | null) =>
-      `I found **${n}** real product(s)${summary ? ` (${summary})` : ""}:\n`,
+    greetings: [
+      (name: string) => `Hey! I'm **${name}** 😊 I help you find what you need on Modalia. What are you looking for?`,
+      (name: string) => `Welcome! **${name}** at your service 🛍️ I find real products at the best prices. What do you need?`,
+      (name: string) => `Hi there! I'm **${name}** — your guide on Modalia. What can I find for you?`,
+    ],
+    foundIntros: [
+      (n: number, summary: string | null) => `Found **${n}** product(s)${summary ? ` (${summary})` : ""} 👇\n`,
+      (n: number, summary: string | null) => `I dug up **${n}** product(s)${summary ? ` (${summary})` : ""} for you ✨\n`,
+      (n: number, summary: string | null) => `Check what I found — **${n}** product(s)${summary ? ` (${summary})` : ""} 🎯\n`,
+    ],
+    notFounds: [
+      (summary: string | null) => `Hmm, nothing found${summary ? ` for "${summary}"` : ""} 😕 Try different words or widen your budget.`,
+      (summary: string | null) => `Sorry, no results${summary ? ` for "${summary}"` : ""}. Try simpler keywords?`,
+      (summary: string | null) => `Nothing matches${summary ? ` "${summary}"` : ""} right now. Change keywords and retry 🔄`,
+    ],
     item: (p: AiCatalogItem, loc: SupportedParseLocale) =>
       `- ${productLink(p, loc)} — **${formatPrice(p.price, loc)}**${p.compareAtPrice && p.compareAtPrice > p.price ? ` (was ${formatPrice(p.compareAtPrice, loc)})` : ""} · ${p.storeName}`,
-    notFound: (summary: string | null) =>
-      `I couldn't find any matching products${summary ? ` for "${summary}"` : ""} in the current catalog. Try simpler words or widen the price range — I only show products that really exist.`,
-    noFacts: "I don't have that information in the store data, so I won't guess.",
-    unclear: "I didn't quite get that. Tell me for example: what product are you looking for, and what's your approximate budget?",
-    categories: (list: string) => `Browse the available categories: ${list}`,
-    disclaimer: "\n\n_Shown prices are the stores' current prices and may change._",
+    noFacts: "I don't have that info in the store data, I'd rather not guess 🤷",
+    unclear: "Didn't quite catch that 😅 Tell me: what product? What's your budget?",
+    categories: (list: string) => `Browse categories: ${list}`,
   },
 } as const;
 
+
+/** Pick a random template to avoid repetitive responses */
+function pick<U>(arr: readonly U[]): U {
+  return arr[Math.floor(Math.random() * arr.length)] as U;
+}
+
 export type RuleCategory = { slug: string; name: string };
+
+/** Knowledge base: common marketplace questions answered directly */
+const FAQ: { patterns: RegExp; answer: Record<SupportedParseLocale, string> }[] = [
+  {
+    patterns: /توصيل|شحن|livraison|shipping|delivery|توصيل/,
+    answer: {
+      ar: "التوصيل متوفر لـ 58 ولاية 🚚 عند الشراء تختار ولايتك والبلدية، والسعر يظهر لك حسب المتجر. كاين توصيل للدار أو للمكتب.",
+      fr: "La livraison couvre 58 wilayas 🚚 Au checkout, choisissez votre wilaya et commune — le prix s'affiche selon la boutique. Livraison à domicile ou au bureau.",
+      en: "Delivery covers 58 wilayas 🚚 At checkout, pick your wilaya and commune — the price shows per store. Home or office delivery.",
+    },
+  },
+  {
+    patterns: /دفع|خلاص|paiement|payment|pay|cod|عند الاستلام/,
+    answer: {
+      ar: "الدفع عند الاستلام 💵 تخلص كي توصلك السلعة. بسيطة وآمنة!",
+      fr: "Paiement à la livraison 💵 Vous payez quand vous recevez. Simple et sûr !",
+      en: "Cash on delivery 💵 You pay when you receive. Simple and safe!",
+    },
+  },
+  {
+    patterns: /إرجاع|استرجاع|retour|return|refund/,
+    answer: {
+      ar: "إذا المنتج فيه مشكلة أو ما عجبكش، تقدر تطلب إرجاع من صفحة طلباتك 📦 كل متجر عندو سياسة الإرجاع الخاصة بيه.",
+      fr: "Si le produit a un problème, demandez un retour depuis vos commandes 📦 Chaque boutique a sa politique de retour.",
+      en: "If the product has an issue, request a return from your orders 📦 Each store has its own return policy.",
+    },
+  },
+  {
+    patterns: /تتبع|وين وصل|suivi|track|where.*order/,
+    answer: {
+      ar: "تقدر تتبع طلبك من صفحة [تتبع الطلب](/track-order) 📍 دخل رمز الطلب أو رقم هاتفك ويظهر لك وين وصل.",
+      fr: "Suivez votre commande sur [Suivre ma commande](/track-order) 📍 Entrez le code ou votre numéro et voyez où elle en est.",
+      en: "Track your order on [Track Order](/track-order) 📍 Enter the code or your phone number to see where it is.",
+    },
+  },
+  {
+    patterns: /شكون|من هو|qui|who.*modalia|موداليا/,
+    answer: {
+      ar: "موداليا سوق جزائري 🛍️ يجمع متاجر حقيقية في مكان واحد — أزياء، إلكترونيات، أحذية وأكثر. كل المنتجات حقيقية من بائعين موثقين.",
+      fr: "Modalia est un marketplace algérien 🛍️ qui réunit des boutiques réelles — mode, électronique, chaussures et plus. Produits réels de vendeurs vérifiés.",
+      en: "Modalia is an Algerian marketplace 🛍️ bringing real stores together — fashion, electronics, shoes & more. Real products from verified sellers.",
+    },
+  },
+];
+
+/** Check if the message matches a FAQ entry */
+function matchFaq(raw: string, locale: SupportedParseLocale): string | null {
+  const lower = raw.toLowerCase();
+  for (const faq of FAQ) {
+    if (faq.patterns.test(lower)) {
+      return faq.answer[locale];
+    }
+  }
+  return null;
+}
 
 export function answerWithRules(opts: {
   raw: string;
@@ -112,12 +197,18 @@ export function answerWithRules(opts: {
   const t = T[locale];
   const name = RULE_ASSISTANT_NAME[locale];
 
+  // FAQ first: direct answers for common questions (no product search needed)
+  const faqAnswer = matchFaq(raw, locale);
+  if (faqAnswer && !matches.length) {
+    return { text: faqAnswer, products: [] };
+  }
+
   if (isGreeting(raw)) {
     const catLinks = categories
       .slice(0, 6)
       .map((c) => `[${c.name}](/shop?locale=${locale}&category=${c.slug})`)
       .join(" · ");
-    return { text: t.greeting(name) + (catLinks ? `\n\n${t.categories(catLinks)}` : ""), products: [] };
+    return { text: pick(t.greetings)(name) + (catLinks ? `\n\n${t.categories(catLinks)}` : ""), products: [] };
   }
 
   if (!matches.length) {
@@ -127,7 +218,7 @@ export function answerWithRules(opts: {
       .map((c) => `[${c.name}](/shop?locale=${locale}&category=${c.slug})`)
       .join(" · ");
     return {
-      text: t.notFound(summary) + (catLinks ? `\n\n${t.categories(catLinks)}` : ""),
+      text: pick(t.notFounds)(summary) + (catLinks ? `\n\n${t.categories(catLinks)}` : ""),
       products: [],
     };
   }
@@ -135,6 +226,6 @@ export function answerWithRules(opts: {
   const shown = matches.slice(0, 6);
   const summary = intentSummary(intent, locale);
   const lines = shown.map((p) => t.item(p, locale)).join("\n");
-  const text = t.found(matches.length, summary) + lines + t.disclaimer;
+  const text = pick(t.foundIntros)(matches.length, summary) + lines;
   return { text, products: shown };
 }

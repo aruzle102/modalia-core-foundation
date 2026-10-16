@@ -71,20 +71,32 @@ function renderRichText(text: string, locale: SupportedLocale) {
     };
     while ((m = linkRe.exec(segment)) !== null) {
       if (m.index > last) pushStyled(segment.slice(last, m.index), `${keyBase}-t${k++}`);
-      const rawSlug = m[2];
-      if (rawSlug === undefined) continue;
-      const slug = rawSlug.replace("/product/", "");
-      parts.push(
-        <Link
-          key={`${keyBase}-l${k++}`}
-          to="/product/$slug"
-          params={{ slug }}
-          search={{ locale } as never}
-          className="font-medium text-primary underline decoration-primary/40 underline-offset-2 hover:decoration-primary"
-        >
-          {m[1]}
-        </Link>,
-      );
+      const rawPath = m[2];
+      if (rawPath === undefined) continue;
+      if (rawPath.startsWith("/product/")) {
+        const slug = rawPath.replace("/product/", "");
+        parts.push(
+          <Link
+            key={`${keyBase}-l${k++}`}
+            to="/product/$slug"
+            params={{ slug }}
+            search={{ locale } as never}
+            className="font-medium text-primary underline decoration-primary/40 underline-offset-2 hover:decoration-primary"
+          >
+            {m[1]}
+          </Link>,
+        );
+      } else {
+        parts.push(
+          <a
+            key={`${keyBase}-l${k++}`}
+            href={`${rawPath}?locale=${locale}`}
+            className="font-medium text-primary underline decoration-primary/40 underline-offset-2 hover:decoration-primary"
+          >
+            {m[1]}
+          </a>,
+        );
+      }
       last = m.index + m[0].length;
     }
     if (last < segment.length) pushStyled(segment.slice(last), `${keyBase}-t${k++}`);
@@ -383,9 +395,10 @@ export function AiAssistantButton({
       onClick={onOpen}
       aria-label={t.assistant.open}
       title={t.assistant.open}
-      className="grid size-10 place-items-center rounded-full bg-foreground text-background shadow-md transition-transform hover:scale-105 active:scale-95"
+      className="flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground shadow-sm transition-all hover:border-foreground/30 hover:shadow-md active:scale-95"
     >
-      <ModaliLogo variant="light" className="h-5 w-auto" />
+      <ModaliLogo className="h-4 w-auto" />
+      <span className="tracking-wide">AI</span>
     </button>
   );
 }

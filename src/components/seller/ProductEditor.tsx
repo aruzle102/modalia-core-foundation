@@ -6,11 +6,13 @@ import {
   AlertTriangle,
   Copy,
   FileVideo,
+  Footprints,
   Image as ImageIcon,
   Images,
   Loader2,
   Plus,
   Send,
+  Shirt,
   Star,
   Trash2,
   X,
@@ -627,6 +629,44 @@ export function ProductEditor({
     });
   };
 
+  // Size presets: one click adds standard sizes (clothing or shoes).
+  // Finds existing Size option or creates one, then appends missing values.
+  const CLOTHING_SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
+  const SHOE_SIZES = ["36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46"];
+
+  const addSizePreset = (kind: "clothing" | "shoes") => {
+    const sizes = kind === "clothing" ? CLOTHING_SIZES : SHOE_SIZES;
+    const sizeName = kind === "clothing"
+      ? { fr: "Taille", en: "Size", ar: "المقاس" }
+      : { fr: "Pointure", en: "Shoe size", ar: "مقاس الحذاء" };
+    patch((s) => {
+      // Find existing size-like option (by name match)
+      let optIndex = s.options.findIndex((o) => {
+        const n = (o.name.en || o.name.fr || "").toLowerCase();
+        return n.includes("size") || n.includes("taille") || n.includes("pointure") || n.includes("مقاس");
+      });
+      const options: OptionState[] = [...s.options];
+      if (optIndex === -1) {
+        const code = `option-size-${uid()}`;
+        options.push({ key: code, code, name: { ...sizeName }, values: [] });
+        optIndex = options.length - 1;
+      }
+      const opt = options[optIndex];
+      if (!opt) return s;
+      const existing = new Set(opt.values.map((v) => v.value.toUpperCase()));
+      const newValues: OptionValueState[] = sizes
+        .filter((sz) => !existing.has(sz.toUpperCase()))
+        .map((sz) => ({
+          key: `val-${uid()}`,
+          label: { fr: sz, en: sz, ar: sz },
+          value: sz,
+          colorId: null,
+        }));
+      options[optIndex] = { ...opt, values: [...opt.values, ...newValues] };
+      return { ...s, options };
+    });
+  };
+
   const editorProduct: any = editorQuery.data?.product;
   const categories: any[] = adminMode
     ? (adminListsQuery.data?.categories ?? [])
@@ -1119,12 +1159,20 @@ export function ProductEditor({
 
           {/* options */}
           <AdminCard
-            title="Options"
-            subtitle="e.g. Size, Color — variants are generated from combinations"
+            title="Options & Variants"
+            subtitle="Colors, sizes — variants are generated from combinations. Each variant gets its own price, stock & image."
             actions={
-              <Button type="button" variant="outline" size="sm" onClick={addOption}>
-                <Plus className="me-1.5 h-4 w-4" /> Add option
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" variant="outline" size="sm" onClick={() => addSizePreset("clothing")}>
+                  <Shirt className="me-1.5 h-4 w-4" /> Clothing sizes
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => addSizePreset("shoes")}>
+                  <Footprints className="me-1.5 h-4 w-4" /> Shoe sizes
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={addOption}>
+                  <Plus className="me-1.5 h-4 w-4" /> Add option
+                </Button>
+              </div>
             }
           >
             {snap.options.length ? (

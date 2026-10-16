@@ -705,18 +705,27 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
 function NewsletterForm({ locale, t }: { locale: SupportedLocale; t: Translation }) {
   const [email, setEmail] = useState("");
   const [pending, setPending] = useState(false);
-  const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "success" | "already" | "resubscribed" | "error">("idle");
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
     if (pending) return;
-    const value = email.trim();
-    if (!value) return;
+    const value = email.trim().toLowerCase();
+    if (!value || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value)) {
+      setStatus("error");
+      return;
+    }
     setPending(true);
     setStatus("idle");
     try {
-      await subscribeNewsletter({ data: { email: value, locale } });
-      setStatus("success");
+      const result = await subscribeNewsletter({ data: { email: value, locale } });
+      if (result.alreadySubscribed) {
+        setStatus("already");
+      } else if (result.resubscribed) {
+        setStatus("resubscribed");
+      } else {
+        setStatus("success");
+      }
       setEmail("");
     } catch {
       setStatus("error");
@@ -750,6 +759,16 @@ function NewsletterForm({ locale, t }: { locale: SupportedLocale; t: Translation
       {status === "success" ? (
         <p role="status" className="mt-2 text-small text-emerald-400">
           {t.footer.newsletterSuccess}
+        </p>
+      ) : null}
+      {status === "already" ? (
+        <p role="status" className="mt-2 text-small text-amber-400">
+          {t.footer.newsletterAlready ?? "You're already subscribed!"}
+        </p>
+      ) : null}
+      {status === "resubscribed" ? (
+        <p role="status" className="mt-2 text-small text-emerald-400">
+          {t.footer.newsletterResubscribed ?? "Welcome back! You're subscribed again."}
         </p>
       ) : null}
       {status === "error" ? (

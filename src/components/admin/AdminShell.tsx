@@ -166,6 +166,7 @@ function buildNavGroups(t: AdminNavStrings): NavGroup[] {
         { label: items.security, to: "/admin/security", icon: <ShieldCheck className={icon} /> },
         { label: items.auditLogs, to: "/admin/audit", icon: <ScrollText className={icon} /> },
         { label: items.emailCenter ?? "Email Center", to: "/admin/email-center", icon: <Mail className={icon} /> },
+        { label: items.newsletter ?? "Newsletter", to: "/admin/newsletter", icon: <Send className={icon} /> },
         { label: items.maintenance, to: "/admin/maintenance", icon: <Wrench className={icon} /> },
         { label: items.systemHealth, to: "/admin/system-health", icon: <Activity className={icon} /> },
       ],

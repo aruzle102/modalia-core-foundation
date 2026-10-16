@@ -41,15 +41,81 @@ export const subscribeNewsletter = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     rateLimitEndpoint("subscribeNewsletter", 10);
     const supabase = publicClient();
-    const { error } = await supabase.from("newsletter_subscribers").upsert(
-      {
-        email: data.email,
-        locale: data.locale ?? platformConfig.market.defaultLanguage,
-        subscribed_at: new Date().toISOString(),
-      },
-      { onConflict: "email", ignoreDuplicates: true },
-    );
+
+    // Check for existing subscription
+    const { data: existing } = await supabase
+      .from("newsletter_subscribers")
+      .select("id,status")
+      .eq("email", data.email)
+      .maybeSingle();
+
+    if (existing) {
+      if (existing.status === "active") {
+        return { ok: true, alreadySubscribed: true };
+      }
+      // Re-subscribe: reactivate
+      const { error } = await supabase
+        .from("newsletter_subscribers")
+        .update({
+          status: "active",
+          consent_at: new Date().toISOString(),
+          unsubscribed_at: null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", existing.id);
+      if (error) throw new Error("Your subscription could not be saved. Please try again.");
+      return { ok: true, resubscribed: true };
+    }
+
+    // New subscription with consent tracking
+    const { randomBytes } = await import("crypto");
+    const unsubscribeToken = randomBytes(32).toString("hex");
+    const now = new Date().toISOString();
+
+    const { error } = await supabase.from("newsletter_subscribers").insert({
+      email: data.email,
+      locale: data.locale ?? platformConfig.market.defaultLanguage,
+      subscribed_at: now,
+      consent_at: now,
+      status: "active",
+      unsubscribe_token: unsubscribeToken,
+      source: "footer",
+    });
     if (error) throw new Error("Your subscription could not be saved. Please try again.");
+    return { ok: true };
+  });
+
+/** Unsubscribe via token (no login required) */
+export const unsubscribeNewsletter = createServerFn({ method: "POST" })
+  .inputValidator((data) => z.object({ token: z.string().min(1).max(128) }).parse(data))
+  .handler(async ({ data }) => {
+    // Use service role for token-based unsubscribe
+    const url = process.env["SUPABASE_URL"];
+    const serviceKey = process.env["SUPABASE_SERVICE_ROLE_KEY"];
+    if (!url || !serviceKey) throw new Error("Service unavailable.");
+    const admin = createClient(url, serviceKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+
+    const { data: sub } = await admin
+      .from("newsletter_subscribers")
+      .select("id,status")
+      .eq("unsubscribe_token", data.token)
+      .maybeSingle();
+
+    if (!sub) throw new Error("Invalid unsubscribe link.");
+    if (sub.status === "unsubscribed") return { ok: true, alreadyUnsubscribed: true };
+
+    const { error } = await admin
+      .from("newsletter_subscribers")
+      .update({
+        status: "unsubscribed",
+        unsubscribed_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", sub.id);
+
+    if (error) throw new Error("Could not unsubscribe. Please try again.");
     return { ok: true };
   });
 

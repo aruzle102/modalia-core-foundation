@@ -135,7 +135,22 @@ function TrackOrderPage() {
   const tt = t.trackOrder;
   const [orderNumber, setOrderNumber] = useState("");
   const [phone, setPhone] = useState("");
-  const lookup = useMutation({ mutationFn: () => trackGuestOrder({ data: { orderNumber, phone } }) });
+  const [formError, setFormError] = useState("");
+  const lookup = useMutation({
+    mutationFn: () => {
+      const on = orderNumber.trim();
+      const ph = phone.trim();
+      if (!on && !ph) {
+        setFormError(tt.provideOne || "Enter an order code or phone number.");
+        throw new Error("validation");
+      }
+      setFormError("");
+      return trackGuestOrder({ data: {
+        ...(on ? { orderNumber: on } : {}),
+        ...(ph ? { phone: ph } : {}),
+      } });
+    },
+  });
 
   return (
     <div dir={localeDirections[locale]} lang={locale} className="min-h-screen bg-background">
@@ -158,7 +173,6 @@ function TrackOrderPage() {
               value={orderNumber}
               placeholder="ORD-ABC123"
               onChange={(e) => setOrderNumber(e.target.value.toUpperCase())}
-              required
             />
           </label>
           <label className="mt-4 block text-small">
@@ -168,10 +182,15 @@ function TrackOrderPage() {
               value={phone}
               placeholder="+213551234567"
               onChange={(e) => setPhone(e.target.value)}
-              required
               dir="ltr"
             />
+            <p className="mt-1 text-caption text-muted-foreground">
+              {tt.phoneOptional || "Optional — use if you forgot your order code to see all your orders."}
+            </p>
           </label>
+          {formError ? (
+            <p role="alert" className="mt-3 text-small text-destructive">{formError}</p>
+          ) : null}
           <Button className="mt-6 h-11 w-full rounded-[10px]" disabled={lookup.isPending}>
             {lookup.isPending ? tt.checking : t.nav.trackOrder}
           </Button>
@@ -181,26 +200,30 @@ function TrackOrderPage() {
             {lookup.error instanceof Error ? lookup.error.message : tt.lookupFailed}
           </p>
         ) : null}
-        {lookup.isSuccess && !lookup.data ? (
+        {lookup.isSuccess && (!lookup.data || lookup.data.orders.length === 0) ? (
           <p className="mt-5 rounded-xl border border-border bg-card p-4 text-small text-muted-foreground">{tt.noMatch}</p>
         ) : null}
-        {lookup.data ? (
-          <section className="mt-6 rounded-xl border border-border bg-card p-5 sm:p-6">
+        {lookup.data && lookup.data.orders.length > 0 ? (
+          <div className="mt-6 space-y-4">
+            {lookup.data.orders.map((order) => (
+          <section key={order.orderNumber} className="rounded-xl border border-border bg-card p-5 sm:p-6">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <p className="text-caption text-muted-foreground">{lookup.data.orderNumber}</p>
-                <h2 className="mt-1 text-h3 text-foreground">{t.orders.statusLabel(lookup.data.status)}</h2>
+                <p className="text-caption text-muted-foreground">{order.orderNumber}</p>
+                <h2 className="mt-1 text-h3 text-foreground">{t.orders.statusLabel(order.status)}</h2>
               </div>
-              <p className="text-price tabular-nums">{formatPrice(lookup.data.total, locale, lookup.data.currency)}</p>
+              <p className="text-price tabular-nums">{formatPrice(order.total, locale, order.currency)}</p>
             </div>
             <p className="mt-4 text-small text-muted-foreground">
-              {lookup.data.deliveryMethod === "office" ? tt.officeDelivery : tt.homeDelivery} · {tt.placed}{" "}
-              {formatDate(lookup.data.createdAt, locale)}
+              {order.deliveryMethod === "office" ? tt.officeDelivery : tt.homeDelivery} · {tt.placed}{" "}
+              {formatDate(order.createdAt, locale)}
             </p>
 
+            {lookup.data.orders.length === 1 ? (
+              <>
             <h3 className="mt-6 text-nav text-foreground">{tt.timelineTitle}</h3>
             <OrderTimeline
-              status={lookup.data.status}
+              status={order.status}
               steps={tt.steps}
               statusLabel={t.orders.statusLabel}
               timelineCurrent={tt.timelineCurrent}
@@ -235,7 +258,7 @@ function TrackOrderPage() {
             )}
 
             <div className="mt-6 divide-y divide-border">
-              {lookup.data.sellerOrders.map((sellerOrder: { storeName: string; status: string }) => (
+              {order.sellerOrders.map((sellerOrder: { storeName: string; status: string }) => (
                 <div
                   key={`${sellerOrder.storeName}-${sellerOrder.status}`}
                   className="flex justify-between py-3 text-small"
@@ -245,7 +268,11 @@ function TrackOrderPage() {
                 </div>
               ))}
             </div>
+              </>
+            ) : null}
           </section>
+            ))}
+          </div>
         ) : null}
       </main>
       <SiteFooter locale={locale} t={t} />

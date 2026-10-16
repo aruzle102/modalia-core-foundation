@@ -1035,6 +1035,8 @@ export const en = {
       intro: "Enter the order code and the mobile number used at checkout.",
       orderCode: "Order code",
       mobileNumber: "Mobile number",
+      provideOne: "Enter an order code or phone number.",
+      phoneOptional: "Optional — use it if you forgot your order code to see all your orders.",
       checking: "Checking…",
       lookupFailed: "We could not check this order.",
       noMatch: "No matching order was found. Check the code and mobile number.",

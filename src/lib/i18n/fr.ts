@@ -1036,6 +1036,8 @@ export const fr = {
       intro: "Saisissez le code de commande et le numéro de mobile utilisé à la commande.",
       orderCode: "Code de commande",
       mobileNumber: "Numéro de mobile",
+      provideOne: "Entrez un code de commande ou un numéro de téléphone.",
+      phoneOptional: "Optionnel — utilisez-le si vous avez oublié votre code pour voir toutes vos commandes.",
       checking: "Vérification…",
       lookupFailed: "Impossible de vérifier cette commande.",
       noMatch: "Aucune commande correspondante. Vérifiez le code et le numéro.",

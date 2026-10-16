@@ -57,21 +57,50 @@ export const getOrderConfirmation = createServerFn({ method: "GET" })
 export type GuestOrderHistoryEvent = { status: string; previousStatus: string | null; at: string; actor: string; note: string | null };
 
 export const trackGuestOrder = createServerFn({ method: "POST" })
-  .inputValidator((data) => z.object({ orderNumber: z.string().trim().toUpperCase().regex(/^ORD-[A-Z0-9]{6}$/), phone: z.string().trim().regex(/^\+213[5-7][0-9]{8}$/) }).parse(data))
+  .inputValidator((data) => z.object({
+    orderNumber: z.string().trim().toUpperCase().regex(/^ORD-[A-Z0-9]{6}$/).optional(),
+    phone: z.string().trim().regex(/^\+213[5-7][0-9]{8}$/).optional(),
+  }).refine((d) => d.orderNumber || d.phone, { message: "Provide an order number or phone number." }).parse(data))
   .handler(async ({ data }) => {
     rateLimitEndpoint("trackGuestOrder", 30);
-    // NOTE: the anonymous key has no SELECT policy on `orders`, so an anon
-    // client can never read rows. Use the service-role client server-side and
-    // re-scope with the caller-supplied order number + checkout phone (both
-    // validated above) — the same pattern guest checkout uses.
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const result = await supabaseAdmin.from("orders").select("id,order_number,created_at,status,grand_total,currency,delivery_method,seller_orders(status,stores(name))").eq("order_number", data.orderNumber).eq("guest_phone", data.phone).maybeSingle();
-    if (result.error || !result.data) return null;
-    const sellerOrders = (result.data.seller_orders ?? []).map((sellerOrder: any) => ({ status: sellerOrder.status, storeName: Array.isArray(sellerOrder.stores) ? sellerOrder.stores[0]?.name ?? "Store" : sellerOrder.stores?.name ?? "Store" }));
-    // Parent-level status history only (rollup rows written by Worker A's
-    // transition_seller_order_status: order_id = parent, seller_order_id NULL).
-    const historyResult = await supabaseAdmin.from("order_status_history").select("previous_status,new_status,actor_type,note,created_at").eq("order_id", result.data.id).is("seller_order_id", null).order("created_at", { ascending: true });
-    if (historyResult.error) throw new Error("The order was found, but its history could not be loaded.");
-    const history: GuestOrderHistoryEvent[] = (historyResult.data ?? []).map((row) => ({ status: row.new_status, previousStatus: row.previous_status, at: row.created_at, actor: row.actor_type, note: row.note }));
-    return { orderNumber: result.data.order_number, createdAt: result.data.created_at, status: result.data.status, total: Number(result.data.grand_total), currency: result.data.currency, deliveryMethod: result.data.delivery_method, sellerOrders, history };
+
+    // Build query: order number (with optional phone filter) OR phone only (all orders)
+    let query = supabaseAdmin.from("orders").select("id,order_number,created_at,status,grand_total,currency,delivery_method,seller_orders(status,stores(name))");
+    if (data.orderNumber) {
+      query = query.eq("order_number", data.orderNumber);
+      if (data.phone) query = query.eq("guest_phone", data.phone);
+    } else if (data.phone) {
+      query = query.eq("guest_phone", data.phone).order("created_at", { ascending: false }).limit(20);
+    }
+
+    const result = await query;
+    if (result.error) throw new Error("Could not search orders.");
+
+    const orders = (result.data ?? []).map((order: any) => {
+      const sellerOrders = (order.seller_orders ?? []).map((so: any) => ({
+        status: so.status,
+        storeName: Array.isArray(so.stores) ? so.stores[0]?.name ?? "Store" : so.stores?.name ?? "Store",
+      }));
+      return {
+        orderNumber: order.order_number,
+        createdAt: order.created_at,
+        status: order.status,
+        total: Number(order.grand_total),
+        currency: order.currency,
+        deliveryMethod: order.delivery_method,
+        sellerOrders,
+        id: order.id,
+      };
+    });
+
+    // For single order lookup, include history
+    const singleOrder = data.orderNumber && orders.length === 1 ? orders[0] : undefined;
+    if (singleOrder) {
+      const historyResult = await supabaseAdmin.from("order_status_history").select("previous_status,new_status,actor_type,note,created_at").eq("order_id", singleOrder.id).is("seller_order_id", null).order("created_at", { ascending: true });
+      const history: GuestOrderHistoryEvent[] = (historyResult.data ?? []).map((row) => ({ status: row.new_status, previousStatus: row.previous_status, at: row.created_at, actor: row.actor_type, note: row.note }));
+      return { orders, history };
+    }
+
+    return { orders, history: [] };
   });

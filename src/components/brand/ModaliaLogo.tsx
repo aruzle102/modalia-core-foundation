@@ -15,12 +15,12 @@ export function ModaliLogo({
     return (
       <span
         className={cn(
-          "grid shrink-0 place-items-center overflow-hidden rounded-full bg-white p-1.5",
+          "grid shrink-0 place-items-center overflow-hidden rounded-full p-1",
           className
         )}
       >
         <img
-          src="/brand/modalia-logo.jpg"
+          src="/brand/modalia-logo.png"
           alt="MODALIA"
           className="h-full w-full object-contain"
           draggable={false}
@@ -30,7 +30,7 @@ export function ModaliLogo({
   }
   return (
     <img
-      src="/brand/modalia-logo.jpg"
+      src="/brand/modalia-logo.png"
       alt="MODALIA"
       className={cn("object-contain", className)}
       draggable={false}

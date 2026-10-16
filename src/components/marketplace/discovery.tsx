@@ -1,6 +1,6 @@
 import { useState, type MouseEvent } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, ChevronLeft, ChevronRight, Heart, ShoppingBag } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight, Heart, ShoppingBag, Zap } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatPrice } from "@/lib/i18n/format";
 import { getTranslations } from "@/lib/i18n";
@@ -66,6 +66,22 @@ export function ProductCard({
         storeName: product.storeName,
       },
       { mode: "add", quantity: 1 },
+    );
+  };
+
+  const handleBuyNow = (event: MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    event.preventDefault();
+    startBuyNow(
+      locale,
+      {
+        productId: product.id,
+        slug: product.slug,
+        name: product.name,
+        image: product.imagePath,
+        storeName: product.storeName,
+      },
+      { mode: "buy", quantity: 1 },
     );
   };
 
@@ -196,16 +212,27 @@ export function ProductCard({
         {lowStock ? (
           <p className="pt-1 text-xs font-medium text-destructive">{t.onlyLeft(stock as number)}</p>
         ) : null}
-        <div className="mt-auto pt-3">
+        <div className="mt-auto flex gap-2 pt-3">
+          <button
+            type="button"
+            onClick={handleBuyNow}
+            disabled={soldOut}
+            aria-label={soldOut ? t.soldOut : t.buyNow}
+            title={soldOut ? t.soldOut : t.buyNow}
+            className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-neutral-900 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-neutral-700 active:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-50 touch-manipulation dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200 dark:active:bg-neutral-300"
+          >
+            <Zap className="size-4" aria-hidden="true" />
+            {t.buyNow}
+          </button>
           <button
             type="button"
             onClick={handleQuickAdd}
             disabled={soldOut}
             aria-label={soldOut ? t.soldOut : t.quickAdd}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-neutral-900 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-neutral-700 active:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-50 touch-manipulation dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200 dark:active:bg-neutral-300"
+            title={soldOut ? t.soldOut : t.quickAdd}
+            className="grid size-10 shrink-0 place-items-center rounded-lg border border-border bg-card text-foreground transition-colors hover:bg-muted active:bg-muted disabled:cursor-not-allowed disabled:opacity-50 touch-manipulation"
           >
             <ShoppingBag className="size-4" aria-hidden="true" />
-            {soldOut ? t.soldOut : t.quickAdd}
           </button>
         </div>
       </div>

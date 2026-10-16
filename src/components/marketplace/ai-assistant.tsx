@@ -23,7 +23,8 @@ import { aiChat, type AiChatProduct } from "@/lib/ai.functions";
 import { getPublicIntelligenceConfig } from "@/lib/intelligence-settings.functions";
 import { answerSupportQuestion } from "@/lib/support-knowledge";
 import { cn } from "@/lib/utils";
-import { ModaliaIntelligenceIcon } from "@/components/marketplace/ModaliaIntelligenceIcon";
+import { ModaliLogo } from "@/components/brand/ModaliaLogo";
+import { Sparkles } from "lucide-react";
 
 type ChatMessage = {
   id: number;
@@ -131,7 +132,7 @@ function ProductCard({ product, locale, t }: { product: AiChatProduct; locale: S
         />
       ) : (
         <div className="grid size-12 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground">
-          <ModaliaIntelligenceIcon size={20} />
+          <span className="grid size-8 place-items-center rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white"><Sparkles size={16} /></span>
         </div>
       )}
       <div className="min-w-0 flex-1">
@@ -262,27 +263,17 @@ export function AiAssistantDrawer({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side={isRtl ? "left" : "right"} className="flex w-full flex-col gap-0 p-0 sm:max-w-md" dir={dir}>
         <SheetHeader className="border-b border-border px-5 py-4 text-start">
-          <SheetTitle className="flex items-center gap-2 text-lg">
-            <span className="grid size-9 place-items-center rounded-xl bg-primary text-primary-foreground">
-              <ModaliaIntelligenceIcon size={18} />
-            </span>
+          <SheetTitle className="flex items-center gap-2.5 text-lg font-semibold">
+            <span className="grid size-9 place-items-center rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white shadow-sm"><Sparkles size={16} /></span>
             {t.assistant.title}
           </SheetTitle>
           <SheetDescription>{t.assistant.subtitle}</SheetDescription>
         </SheetHeader>
 
-        {/* Honesty banner: Modalia Intelligence is deterministic and database-powered. */}
-        <div className="mx-5 mt-4 flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2.5 text-xs leading-5 text-amber-800 dark:text-amber-300">
-          <Bot className="mt-0.5 size-4 shrink-0" />
-          <p>{t.assistant.rulesBanner}</p>
-        </div>
-
         <div className="flex-1 overflow-y-auto px-5 py-4" role="log" aria-live="polite">
           {messages.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center gap-4 text-center">
-              <span className="grid size-14 place-items-center rounded-2xl bg-muted">
-                <ModaliaIntelligenceIcon size={24} className="text-muted-foreground" />
-              </span>
+              <span className="grid size-16 place-items-center rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white shadow-lg"><Sparkles size={28} /></span>
               <p className="max-w-xs text-sm text-muted-foreground">
                 {intel?.welcome_message || t.assistant.empty}
               </p>
@@ -388,7 +379,7 @@ export function AiAssistantButton({
 }) {
   return (
     <Button variant="ghost" size="icon" onClick={onOpen} aria-label={t.assistant.open} title={t.assistant.open}>
-      <ModaliaIntelligenceIcon size={16} />
+      <Sparkles size={16} className="text-violet-500" />
     </Button>
   );
 }

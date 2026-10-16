@@ -33,9 +33,9 @@ export type RuleAnswer = {
 };
 
 export const RULE_ASSISTANT_NAME: Record<SupportedParseLocale, string> = {
-  ar: "مساعد القواعد",
-  fr: "Assistant de règles",
-  en: "Rule Assistant",
+  ar: "مساعد موداليا",
+  fr: "Assistant Modalia",
+  en: "Modalia Assistant",
 };
 
 function formatPrice(price: number, locale: SupportedParseLocale): string {

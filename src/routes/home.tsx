@@ -1205,8 +1205,8 @@ function BrandStores({
         search={shopSearch}
         viewAll={viewAll}
       />
-      <div className="grid gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
-        {stores.slice(0, 6).map((store) => {
+      <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {stores.slice(0, 10).map((store) => {
           const featured = products.find((p) => p.storeName === store.name && p.imagePath);
           return (
             <Link
@@ -1214,7 +1214,7 @@ function BrandStores({
               to="/store/$slug"
               params={{ slug: store.slug }}
               search={{ locale }}
-              className="group block min-w-0"
+              className="group block w-64 shrink-0 snap-start sm:w-72"
               aria-label={store.name}
             >
               <div className="relative">
@@ -1818,41 +1818,6 @@ function BoutiquesGrid({
   );
 }
 
-/** Final CTA — clean closing section before the footer. */
-function FinalCTA({ locale, copy }: { locale: SupportedLocale; copy: HomeCopy }) {
-  return (
-    <section aria-label={copy.sfFinalTitle} className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-      <Reveal>
-        <div className="flex flex-col items-center gap-5 rounded-[20px] bg-foreground px-6 py-14 text-center text-background sm:py-16">
-          <h2 className="max-w-xl text-2xl font-bold tracking-tight sm:text-3xl">
-            {copy.sfFinalTitle}
-          </h2>
-          <p className="max-w-md text-[15px] leading-relaxed text-background/70">
-            {copy.sfFinalText}
-          </p>
-          <div className="mt-1 flex flex-wrap items-center justify-center gap-3">
-            <Link
-              to="/shop"
-              search={{ locale } as any}
-              className="group inline-flex items-center gap-2 rounded-[10px] bg-background px-7 py-3 text-sm font-semibold text-foreground transition-all hover:bg-background/90 active:scale-[0.98]"
-            >
-              {copy.sfFinalPrimary}
-              <ArrowRight className="size-4 transition-transform group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1" />
-            </Link>
-            <Link
-              to={"/stores" as any}
-              search={{ locale } as any}
-              className="inline-flex items-center gap-2 rounded-[10px] border border-white/40 px-7 py-3 text-sm font-semibold text-white transition-all hover:border-white hover:bg-white/10 active:scale-[0.98]"
-            >
-              {copy.sfFinalSecondary}
-            </Link>
-          </div>
-        </div>
-      </Reveal>
-    </section>
-  );
-}
-
 function HomePage() {
   const { locale } = Route.useSearch();
   const { data } = useSuspenseQuery(homeQuery(locale));
@@ -2000,8 +1965,6 @@ function HomePage() {
           </div>
 
           <BoutiquesGrid stores={data.stores} products={data.products} locale={locale} copy={copy} />
-
-          <FinalCTA locale={locale} copy={copy} />
         </div>
       </main>
       <SiteFooter locale={locale} t={t} />

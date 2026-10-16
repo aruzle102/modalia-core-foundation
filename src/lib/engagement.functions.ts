@@ -42,54 +42,47 @@ export const subscribeNewsletter = createServerFn({ method: "POST" })
     rateLimitEndpoint("subscribeNewsletter", 10);
     const supabase = publicClient();
 
-    // Check for existing subscription
+    // Check for existing subscription (basic columns only for compatibility)
     const { data: existing } = await supabase
       .from("newsletter_subscribers")
-      .select("id,status")
+      .select("id")
       .eq("email", data.email)
       .maybeSingle();
 
     if (existing) {
-      if (existing.status === "active") {
-        return { ok: true, alreadySubscribed: true };
-      }
-      // Re-subscribe: reactivate
-      const { error } = await supabase
-        .from("newsletter_subscribers")
-        .update({
-          status: "active",
-          consent_at: new Date().toISOString(),
-          unsubscribed_at: null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", existing.id);
-      if (error) throw new Error("Your subscription could not be saved. Please try again.");
-      return { ok: true, resubscribed: true };
+      return { ok: true, alreadySubscribed: true };
     }
 
-    // New subscription with consent tracking
-    const { randomBytes } = await import("crypto");
-    const unsubscribeToken = randomBytes(32).toString("hex");
+    // Try full insert with new columns; fall back to basic if migration not applied
     const now = new Date().toISOString();
-
-    const { error } = await supabase.from("newsletter_subscribers").insert({
+    const baseRecord = {
       email: data.email,
       locale: data.locale ?? platformConfig.market.defaultLanguage,
       subscribed_at: now,
+    };
+
+    // First try with extended columns (if migration applied)
+    let { error } = await supabase.from("newsletter_subscribers").insert({
+      ...baseRecord,
       consent_at: now,
       status: "active",
-      unsubscribe_token: unsubscribeToken,
       source: "footer",
     });
+
+    // Fallback: basic columns only (pre-migration schema)
+    if (error && error.message?.includes("column")) {
+      const retry = await supabase.from("newsletter_subscribers").insert(baseRecord);
+      error = retry.error;
+    }
+
     if (error) throw new Error("Your subscription could not be saved. Please try again.");
     return { ok: true };
   });
 
-/** Unsubscribe via token (no login required) */
+/** Unsubscribe via token (no login required) — requires migration applied */
 export const unsubscribeNewsletter = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({ token: z.string().min(1).max(128) }).parse(data))
   .handler(async ({ data }) => {
-    // Use service role for token-based unsubscribe
     const url = process.env["SUPABASE_URL"];
     const serviceKey = process.env["SUPABASE_SERVICE_ROLE_KEY"];
     if (!url || !serviceKey) throw new Error("Service unavailable.");
@@ -97,22 +90,19 @@ export const unsubscribeNewsletter = createServerFn({ method: "POST" })
       auth: { persistSession: false, autoRefreshToken: false },
     });
 
-    const { data: sub } = await admin
+    // Try token-based lookup (requires migration)
+    const { data: sub, error: lookupError } = await admin
       .from("newsletter_subscribers")
-      .select("id,status")
+      .select("id")
       .eq("unsubscribe_token", data.token)
       .maybeSingle();
 
-    if (!sub) throw new Error("Invalid unsubscribe link.");
-    if (sub.status === "unsubscribed") return { ok: true, alreadyUnsubscribed: true };
+    if (lookupError || !sub) throw new Error("Invalid unsubscribe link.");
 
+    // Delete the subscription (works pre- and post-migration)
     const { error } = await admin
       .from("newsletter_subscribers")
-      .update({
-        status: "unsubscribed",
-        unsubscribed_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
+      .delete()
       .eq("id", sub.id);
 
     if (error) throw new Error("Could not unsubscribe. Please try again.");

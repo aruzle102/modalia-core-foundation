@@ -12,8 +12,8 @@ import { assertAdmin } from "@/lib/admin-auth";
  * validation; inserts are public, reads stay admin-only via RLS.
  */
 function publicClient() {
-  const url = process.env["SUPABASE_URL"];
-  const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
+  const url = process.env["SUPABASE_URL"] || process.env["VITE_SUPABASE_URL"];
+  const key = process.env["SUPABASE_PUBLISHABLE_KEY"] || process.env["VITE_SUPABASE_PUBLISHABLE_KEY"];
   if (!url || !key) throw new Error("This service is temporarily unavailable.");
   return createClient(url, key, {
     auth: { persistSession: false, autoRefreshToken: false },

@@ -747,9 +747,7 @@ function NewsletterForm({ locale, t }: { locale: SupportedLocale; t: Translation
       }
       setStatus("success");
       setEmail("");
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "Unknown";
-      alert("Newsletter error: " + msg + "\nURL: " + (import.meta.env["VITE_SUPABASE_URL"] || "MISSING"));
+    } catch {
       setStatus("error");
     } finally {
       setPending(false);

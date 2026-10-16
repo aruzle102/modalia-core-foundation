@@ -74,6 +74,7 @@ const SELLER_TRANSITIONS: Record<SellerOrderStatus, SellerOrderStatus[]> = {
   confirmed: ["accepted", "processing", "cancelled"],
   accepted: ["processing", "cancelled"],
   processing: ["ready_for_shipping", "cancelled"],
+  preparing: ["ready_for_shipping", "cancelled"],
   ready_for_shipping: ["handed_to_courier", "cancelled"],
   handed_to_courier: ["in_transit", "failed_delivery"],
   in_transit: ["delivered", "failed_delivery"],

@@ -435,6 +435,7 @@ function suspendedMessage(
 
 import { Crumbs, type Crumb } from "@/components/routing/crumbs";
 import { ModaliaIntelligenceIcon } from "@/components/marketplace/ModaliaIntelligenceIcon";
+import { ModaliLogo } from "@/components/brand/ModaliaLogo";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 
 export function SellerShell({
@@ -703,9 +704,7 @@ export function SellerShell({
           >
             <SheetHeader className="border-b border-neutral-200 p-4 dark:border-neutral-800">
               <SheetTitle className="flex items-center gap-2 text-start text-neutral-900 dark:text-white">
-                <span className="flex h-7 w-7 items-center justify-center rounded-md bg-neutral-950 text-xs font-bold text-white dark:bg-white dark:text-neutral-950">
-                  M
-                </span>
+                <ModaliLogo circular className="h-7 w-7" />
                 <span className="text-sm font-semibold tracking-tight">Seller OS</span>
               </SheetTitle>
             </SheetHeader>
@@ -722,10 +721,15 @@ export function SellerShell({
           )}
         >
           <div className="flex items-center justify-between px-4 pb-2 pt-5">
-            {!sidebarCollapsed && (
-              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-neutral-500">
-                Seller Workspace
-              </p>
+            {!sidebarCollapsed ? (
+              <div className="flex items-center gap-2">
+                <ModaliLogo circular className="h-8 w-8" />
+                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-neutral-500">
+                  Seller Workspace
+                </p>
+              </div>
+            ) : (
+              <ModaliLogo circular className="mx-auto h-8 w-8" />
             )}
             <button
               type="button"

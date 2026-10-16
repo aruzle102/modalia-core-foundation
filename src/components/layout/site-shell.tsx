@@ -25,6 +25,7 @@ import {
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ModaliLogo } from "@/components/brand/ModaliaLogo";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { platformConfig, type SupportedLocale } from "@/config/platform";
 import { localeLabels, persistLocale, type Translation } from "@/lib/i18n";
@@ -214,10 +215,10 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
           <Link
             to="/"
             search={{ locale }}
-            className="shrink-0 text-wordmark tracking-tight text-foreground"
+            className="shrink-0"
             aria-label={t.nav.homeLabel}
           >
-            Modalia
+            <ModaliLogo className="h-8 w-auto" />
           </Link>
 
           {/* Center — primary nav */}
@@ -410,7 +411,7 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
           />
           <aside className="absolute end-0 top-0 flex h-full w-[86%] max-w-sm flex-col bg-background shadow-[-8px_0_30px_rgba(0,0,0,0.12)] rtl:shadow-[8px_0_30px_rgba(0,0,0,0.12)]">
             <div className="flex h-16 items-center justify-between border-b border-border px-5">
-              <span className="text-wordmark tracking-tight text-foreground">Modalia</span>
+              <ModaliLogo className="h-7 w-auto" />
               <Button
                 variant="ghost"
                 size="icon"
@@ -834,10 +835,10 @@ export function SiteFooter({ locale, t }: { locale: SupportedLocale; t: Translat
           <Link
             to="/"
             search={{ locale }}
-            className="font-display text-[clamp(3rem,8vw,5.5rem)] font-semibold leading-none tracking-tight text-white"
+            className="inline-block rounded-2xl bg-white px-6 py-4"
             aria-label="Modalia"
           >
-            Modalia
+            <ModaliLogo className="h-12 w-auto sm:h-16" />
           </Link>
           <NewsletterForm locale={locale} t={t} />
         </div>

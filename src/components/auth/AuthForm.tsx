@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { ModaliLogo } from "@/components/brand/ModaliaLogo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -80,6 +81,9 @@ export function AuthCard({
         className,
       )}
     >
+      <div className="mb-4 flex justify-center">
+        <ModaliLogo className="h-10 w-auto" />
+      </div>
       <div className="flex items-center gap-3">
         {icon ? (
           <span

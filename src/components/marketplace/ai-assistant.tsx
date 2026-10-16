@@ -53,7 +53,7 @@ function renderRichText(text: string, locale: SupportedLocale) {
   const inline = (segment: string, keyBase: string): ReactNode[] => {
     const parts: ReactNode[] = [];
     // links first, then bold/italic inside plain chunks
-    const linkRe = /\[([^\]]+)\]\((\/product\/[^)\s?]+)(\?locale=[a-z]{2})?\)/g;
+    const linkRe = /\[([^\]]+)\]\((\/[^)\s]+)\)/g;
     let last = 0;
     let m: RegExpExecArray | null;
     let k = 0;
@@ -74,7 +74,7 @@ function renderRichText(text: string, locale: SupportedLocale) {
       const rawPath = m[2];
       if (rawPath === undefined) continue;
       if (rawPath.startsWith("/product/")) {
-        const slug = rawPath.replace("/product/", "");
+        const slug = rawPath.replace("/product/", "").split("?")[0] ?? "";
         parts.push(
           <Link
             key={`${keyBase}-l${k++}`}
@@ -87,10 +87,11 @@ function renderRichText(text: string, locale: SupportedLocale) {
           </Link>,
         );
       } else {
+        // Full path already includes query string (e.g. /shop?locale=fr&category=x)
         parts.push(
           <a
             key={`${keyBase}-l${k++}`}
-            href={`${rawPath}?locale=${locale}`}
+            href={rawPath}
             className="font-medium text-primary underline decoration-primary/40 underline-offset-2 hover:decoration-primary"
           >
             {m[1]}
@@ -395,10 +396,12 @@ export function AiAssistantButton({
       onClick={onOpen}
       aria-label={t.assistant.open}
       title={t.assistant.open}
-      className="flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground shadow-sm transition-all hover:border-foreground/30 hover:shadow-md active:scale-95"
+      className="group flex items-center gap-2 rounded-full bg-foreground py-1.5 pe-3.5 ps-1.5 text-background shadow-md transition-all hover:shadow-lg active:scale-95"
     >
-      <ModaliLogo className="h-4 w-auto" />
-      <span className="tracking-wide">AI</span>
+      <span className="grid size-7 place-items-center rounded-full bg-background">
+        <ModaliLogo className="h-3.5 w-auto" />
+      </span>
+      <span className="text-xs font-bold tracking-widest">AI</span>
     </button>
   );
 }

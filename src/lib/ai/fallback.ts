@@ -50,7 +50,11 @@ function productLink(item: AiCatalogItem, locale: SupportedParseLocale): string 
 }
 
 function isGreeting(raw: string): boolean {
-  return /^(سلام|صباح الخير|مساء الخير|مرحبا|أهلا|اهلا|salut|bonjour|bonsoir|hello|hi|hey)\b/.test(raw.trim().toLowerCase());
+  const t = raw.trim().toLowerCase();
+  // Arabic greetings (\b doesn't work with Arabic script, use explicit boundary)
+  if (/^(سلام|صباح الخير|مساء الخير|مرحبا|أهلا|اهلا|هاي|هلا)(\s|$|[!؟?.,])/.test(t)) return true;
+  // Latin greetings
+  return /^(salut|bonjour|bonsoir|hello|hi|hey)\b/.test(t);
 }
 
 const T = {

@@ -719,9 +719,9 @@ function NewsletterForm({ locale, t }: { locale: SupportedLocale; t: Translation
     setStatus("idle");
     try {
       // Direct REST API call (bypasses all client issues)
-      const SUPABASE_URL = import.meta.env["VITE_SUPABASE_URL"];
-      const SUPABASE_KEY = import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"];
-      if (!SUPABASE_URL || !SUPABASE_KEY) throw new Error("Config missing");
+      const SUPABASE_URL = (typeof process !== "undefined" && process.env["VITE_SUPABASE_URL"]) || (import.meta as any).env?.["VITE_SUPABASE_URL"];
+      const SUPABASE_KEY = (typeof process !== "undefined" && process.env["VITE_SUPABASE_PUBLISHABLE_KEY"]) || (import.meta as any).env?.["VITE_SUPABASE_PUBLISHABLE_KEY"];
+      if (!SUPABASE_URL || !SUPABASE_KEY) throw new Error("Config missing: URL=" + (SUPABASE_URL ? "OK" : "MISSING"));
 
       const response = await fetch(`${SUPABASE_URL}/rest/v1/newsletter_subscribers`, {
         method: "POST",

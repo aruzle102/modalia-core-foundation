@@ -321,7 +321,7 @@ function TemplatesTab() {
   if (templatesQuery.isError)
     return <p className="text-destructive">{errMsg(templatesQuery.error)}</p>;
 
-  const templates = templatesQuery.data?.templates ?? [];
+  const templates = (templatesQuery.data?.templates ?? []) as EmailTemplate[];
 
   return (
     <AdminCard title={`Templates (${templates.length})`}>

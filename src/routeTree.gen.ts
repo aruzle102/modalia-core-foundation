@@ -31,6 +31,7 @@ import { Route as ShopRouteImport } from './routes/shop'
 import { Route as StoresRouteImport } from './routes/stores'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TrackOrderRouteImport } from './routes/track-order'
+import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as WishlistRouteImport } from './routes/wishlist'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedSellerRouteImport } from './routes/_authenticated/seller'
@@ -47,9 +48,12 @@ import { Route as AdminCommissionsRouteImport } from './routes/admin/commissions
 import { Route as AdminCommunesRouteImport } from './routes/admin/communes'
 import { Route as AdminCouponsRouteImport } from './routes/admin/coupons'
 import { Route as AdminCustomersRouteImport } from './routes/admin/customers'
+import { Route as AdminEmailCenterRouteImport } from './routes/admin/email-center'
 import { Route as AdminHomepageRouteImport } from './routes/admin/homepage'
+import { Route as AdminInvitationsRouteImport } from './routes/admin/invitations'
 import { Route as AdminMaintenanceRouteImport } from './routes/admin/maintenance'
 import { Route as AdminMediaRouteImport } from './routes/admin/media'
+import { Route as AdminNewsletterRouteImport } from './routes/admin/newsletter'
 import { Route as AdminNotificationsRouteImport } from './routes/admin/notifications'
 import { Route as AdminOfficialStoreRouteImport } from './routes/admin/official-store'
 import { Route as AdminOrdersRouteImport } from './routes/admin/orders'
@@ -72,6 +76,7 @@ import { Route as AdminTeamRouteImport } from './routes/admin/team'
 import { Route as AdminVerificationsRouteImport } from './routes/admin/verifications'
 import { Route as AdminWilayasRouteImport } from './routes/admin/wilayas'
 import { Route as CategorySlugRouteImport } from './routes/category.$slug'
+import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as ProductSlugRouteImport } from './routes/product.$slug'
 import { Route as SellerLoginRouteImport } from './routes/seller/login'
 import { Route as SellerResetPasswordRouteImport } from './routes/seller/reset-password'
@@ -224,6 +229,11 @@ const TrackOrderRoute = TrackOrderRouteImport.update({
   path: '/track-order',
   getParentRoute: () => rootRouteImport,
 } as any)
+const UnsubscribeRoute = UnsubscribeRouteImport.update({
+  id: '/unsubscribe',
+  path: '/unsubscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WishlistRoute = WishlistRouteImport.update({
   id: '/wishlist',
   path: '/wishlist',
@@ -305,9 +315,19 @@ const AdminCustomersRoute = AdminCustomersRouteImport.update({
   path: '/admin/customers',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminEmailCenterRoute = AdminEmailCenterRouteImport.update({
+  id: '/admin/email-center',
+  path: '/admin/email-center',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminHomepageRoute = AdminHomepageRouteImport.update({
   id: '/admin/homepage',
   path: '/admin/homepage',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminInvitationsRoute = AdminInvitationsRouteImport.update({
+  id: '/admin/invitations',
+  path: '/admin/invitations',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminMaintenanceRoute = AdminMaintenanceRouteImport.update({
@@ -318,6 +338,11 @@ const AdminMaintenanceRoute = AdminMaintenanceRouteImport.update({
 const AdminMediaRoute = AdminMediaRouteImport.update({
   id: '/admin/media',
   path: '/admin/media',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminNewsletterRoute = AdminNewsletterRouteImport.update({
+  id: '/admin/newsletter',
+  path: '/admin/newsletter',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminNotificationsRoute = AdminNotificationsRouteImport.update({
@@ -428,6 +453,11 @@ const AdminWilayasRoute = AdminWilayasRouteImport.update({
 const CategorySlugRoute = CategorySlugRouteImport.update({
   id: '/category/$slug',
   path: '/category/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InviteTokenRoute = InviteTokenRouteImport.update({
+  id: '/invite/$token',
+  path: '/invite/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProductSlugRoute = ProductSlugRouteImport.update({
@@ -693,6 +723,7 @@ export interface FileRoutesByFullPath {
   '/stores': typeof StoresRoute
   '/terms': typeof TermsRoute
   '/track-order': typeof TrackOrderRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/wishlist': typeof WishlistRoute
   '/notifications': typeof AuthenticatedNotificationsRouteWithChildren
   '/seller': typeof AuthenticatedSellerRouteWithChildren
@@ -708,9 +739,12 @@ export interface FileRoutesByFullPath {
   '/admin/communes': typeof AdminCommunesRoute
   '/admin/coupons': typeof AdminCouponsRoute
   '/admin/customers': typeof AdminCustomersRoute
+  '/admin/email-center': typeof AdminEmailCenterRoute
   '/admin/homepage': typeof AdminHomepageRouteWithChildren
+  '/admin/invitations': typeof AdminInvitationsRoute
   '/admin/maintenance': typeof AdminMaintenanceRoute
   '/admin/media': typeof AdminMediaRoute
+  '/admin/newsletter': typeof AdminNewsletterRoute
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/official-store': typeof AdminOfficialStoreRoute
   '/admin/orders': typeof AdminOrdersRouteWithChildren
@@ -733,6 +767,7 @@ export interface FileRoutesByFullPath {
   '/admin/verifications': typeof AdminVerificationsRoute
   '/admin/wilayas': typeof AdminWilayasRoute
   '/category/$slug': typeof CategorySlugRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/product/$slug': typeof ProductSlugRoute
   '/seller/login': typeof SellerLoginRoute
   '/seller/reset-password': typeof SellerResetPasswordRoute
@@ -799,6 +834,7 @@ export interface FileRoutesByTo {
   '/stores': typeof StoresRoute
   '/terms': typeof TermsRoute
   '/track-order': typeof TrackOrderRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/wishlist': typeof WishlistRoute
   '/notifications': typeof AuthenticatedNotificationsRouteWithChildren
   '/seller': typeof AuthenticatedSellerRouteWithChildren
@@ -814,9 +850,12 @@ export interface FileRoutesByTo {
   '/admin/communes': typeof AdminCommunesRoute
   '/admin/coupons': typeof AdminCouponsRoute
   '/admin/customers': typeof AdminCustomersRoute
+  '/admin/email-center': typeof AdminEmailCenterRoute
   '/admin/homepage': typeof AdminHomepageRouteWithChildren
+  '/admin/invitations': typeof AdminInvitationsRoute
   '/admin/maintenance': typeof AdminMaintenanceRoute
   '/admin/media': typeof AdminMediaRoute
+  '/admin/newsletter': typeof AdminNewsletterRoute
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/official-store': typeof AdminOfficialStoreRoute
   '/admin/orders': typeof AdminOrdersRouteWithChildren
@@ -839,6 +878,7 @@ export interface FileRoutesByTo {
   '/admin/verifications': typeof AdminVerificationsRoute
   '/admin/wilayas': typeof AdminWilayasRoute
   '/category/$slug': typeof CategorySlugRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/product/$slug': typeof ProductSlugRoute
   '/seller/login': typeof SellerLoginRoute
   '/seller/reset-password': typeof SellerResetPasswordRoute
@@ -907,6 +947,7 @@ export interface FileRoutesById {
   '/stores': typeof StoresRoute
   '/terms': typeof TermsRoute
   '/track-order': typeof TrackOrderRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/wishlist': typeof WishlistRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRouteWithChildren
   '/_authenticated/seller': typeof AuthenticatedSellerRouteWithChildren
@@ -922,9 +963,12 @@ export interface FileRoutesById {
   '/admin/communes': typeof AdminCommunesRoute
   '/admin/coupons': typeof AdminCouponsRoute
   '/admin/customers': typeof AdminCustomersRoute
+  '/admin/email-center': typeof AdminEmailCenterRoute
   '/admin/homepage': typeof AdminHomepageRouteWithChildren
+  '/admin/invitations': typeof AdminInvitationsRoute
   '/admin/maintenance': typeof AdminMaintenanceRoute
   '/admin/media': typeof AdminMediaRoute
+  '/admin/newsletter': typeof AdminNewsletterRoute
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/official-store': typeof AdminOfficialStoreRoute
   '/admin/orders': typeof AdminOrdersRouteWithChildren
@@ -947,6 +991,7 @@ export interface FileRoutesById {
   '/admin/verifications': typeof AdminVerificationsRoute
   '/admin/wilayas': typeof AdminWilayasRoute
   '/category/$slug': typeof CategorySlugRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/product/$slug': typeof ProductSlugRoute
   '/seller/login': typeof SellerLoginRoute
   '/seller/reset-password': typeof SellerResetPasswordRoute
@@ -1015,6 +1060,7 @@ export interface FileRouteTypes {
     | '/stores'
     | '/terms'
     | '/track-order'
+    | '/unsubscribe'
     | '/wishlist'
     | '/notifications'
     | '/seller'
@@ -1030,9 +1076,12 @@ export interface FileRouteTypes {
     | '/admin/communes'
     | '/admin/coupons'
     | '/admin/customers'
+    | '/admin/email-center'
     | '/admin/homepage'
+    | '/admin/invitations'
     | '/admin/maintenance'
     | '/admin/media'
+    | '/admin/newsletter'
     | '/admin/notifications'
     | '/admin/official-store'
     | '/admin/orders'
@@ -1055,6 +1104,7 @@ export interface FileRouteTypes {
     | '/admin/verifications'
     | '/admin/wilayas'
     | '/category/$slug'
+    | '/invite/$token'
     | '/product/$slug'
     | '/seller/login'
     | '/seller/reset-password'
@@ -1121,6 +1171,7 @@ export interface FileRouteTypes {
     | '/stores'
     | '/terms'
     | '/track-order'
+    | '/unsubscribe'
     | '/wishlist'
     | '/notifications'
     | '/seller'
@@ -1136,9 +1187,12 @@ export interface FileRouteTypes {
     | '/admin/communes'
     | '/admin/coupons'
     | '/admin/customers'
+    | '/admin/email-center'
     | '/admin/homepage'
+    | '/admin/invitations'
     | '/admin/maintenance'
     | '/admin/media'
+    | '/admin/newsletter'
     | '/admin/notifications'
     | '/admin/official-store'
     | '/admin/orders'
@@ -1161,6 +1215,7 @@ export interface FileRouteTypes {
     | '/admin/verifications'
     | '/admin/wilayas'
     | '/category/$slug'
+    | '/invite/$token'
     | '/product/$slug'
     | '/seller/login'
     | '/seller/reset-password'
@@ -1228,6 +1283,7 @@ export interface FileRouteTypes {
     | '/stores'
     | '/terms'
     | '/track-order'
+    | '/unsubscribe'
     | '/wishlist'
     | '/_authenticated/notifications'
     | '/_authenticated/seller'
@@ -1243,9 +1299,12 @@ export interface FileRouteTypes {
     | '/admin/communes'
     | '/admin/coupons'
     | '/admin/customers'
+    | '/admin/email-center'
     | '/admin/homepage'
+    | '/admin/invitations'
     | '/admin/maintenance'
     | '/admin/media'
+    | '/admin/newsletter'
     | '/admin/notifications'
     | '/admin/official-store'
     | '/admin/orders'
@@ -1268,6 +1327,7 @@ export interface FileRouteTypes {
     | '/admin/verifications'
     | '/admin/wilayas'
     | '/category/$slug'
+    | '/invite/$token'
     | '/product/$slug'
     | '/seller/login'
     | '/seller/reset-password'
@@ -1336,6 +1396,7 @@ export interface RootRouteChildren {
   StoresRoute: typeof StoresRoute
   TermsRoute: typeof TermsRoute
   TrackOrderRoute: typeof TrackOrderRoute
+  UnsubscribeRoute: typeof UnsubscribeRoute
   WishlistRoute: typeof WishlistRoute
   AdminAiRoute: typeof AdminAiRoute
   AdminAnalyticsRoute: typeof AdminAnalyticsRoute
@@ -1349,9 +1410,12 @@ export interface RootRouteChildren {
   AdminCommunesRoute: typeof AdminCommunesRoute
   AdminCouponsRoute: typeof AdminCouponsRoute
   AdminCustomersRoute: typeof AdminCustomersRoute
+  AdminEmailCenterRoute: typeof AdminEmailCenterRoute
   AdminHomepageRoute: typeof AdminHomepageRouteWithChildren
+  AdminInvitationsRoute: typeof AdminInvitationsRoute
   AdminMaintenanceRoute: typeof AdminMaintenanceRoute
   AdminMediaRoute: typeof AdminMediaRoute
+  AdminNewsletterRoute: typeof AdminNewsletterRoute
   AdminNotificationsRoute: typeof AdminNotificationsRoute
   AdminOfficialStoreRoute: typeof AdminOfficialStoreRoute
   AdminOrdersRoute: typeof AdminOrdersRouteWithChildren
@@ -1374,6 +1438,7 @@ export interface RootRouteChildren {
   AdminVerificationsRoute: typeof AdminVerificationsRoute
   AdminWilayasRoute: typeof AdminWilayasRoute
   CategorySlugRoute: typeof CategorySlugRoute
+  InviteTokenRoute: typeof InviteTokenRoute
   ProductSlugRoute: typeof ProductSlugRoute
   SellerLoginRoute: typeof SellerLoginRoute
   SellerResetPasswordRoute: typeof SellerResetPasswordRoute
@@ -1538,6 +1603,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TrackOrderRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/unsubscribe': {
+      id: '/unsubscribe'
+      path: '/unsubscribe'
+      fullPath: '/unsubscribe'
+      preLoaderRoute: typeof UnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/wishlist': {
       id: '/wishlist'
       path: '/wishlist'
@@ -1650,11 +1722,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCustomersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/email-center': {
+      id: '/admin/email-center'
+      path: '/admin/email-center'
+      fullPath: '/admin/email-center'
+      preLoaderRoute: typeof AdminEmailCenterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/homepage': {
       id: '/admin/homepage'
       path: '/admin/homepage'
       fullPath: '/admin/homepage'
       preLoaderRoute: typeof AdminHomepageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/invitations': {
+      id: '/admin/invitations'
+      path: '/admin/invitations'
+      fullPath: '/admin/invitations'
+      preLoaderRoute: typeof AdminInvitationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/maintenance': {
@@ -1669,6 +1755,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/media'
       fullPath: '/admin/media'
       preLoaderRoute: typeof AdminMediaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/newsletter': {
+      id: '/admin/newsletter'
+      path: '/admin/newsletter'
+      fullPath: '/admin/newsletter'
+      preLoaderRoute: typeof AdminNewsletterRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/notifications': {
@@ -1823,6 +1916,13 @@ declare module '@tanstack/react-router' {
       path: '/category/$slug'
       fullPath: '/category/$slug'
       preLoaderRoute: typeof CategorySlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/invite/$token': {
+      id: '/invite/$token'
+      path: '/invite/$token'
+      fullPath: '/invite/$token'
+      preLoaderRoute: typeof InviteTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/product/$slug': {
@@ -2358,6 +2458,7 @@ const rootRouteChildren: RootRouteChildren = {
   StoresRoute: StoresRoute,
   TermsRoute: TermsRoute,
   TrackOrderRoute: TrackOrderRoute,
+  UnsubscribeRoute: UnsubscribeRoute,
   WishlistRoute: WishlistRoute,
   AdminAiRoute: AdminAiRoute,
   AdminAnalyticsRoute: AdminAnalyticsRoute,
@@ -2371,9 +2472,12 @@ const rootRouteChildren: RootRouteChildren = {
   AdminCommunesRoute: AdminCommunesRoute,
   AdminCouponsRoute: AdminCouponsRoute,
   AdminCustomersRoute: AdminCustomersRoute,
+  AdminEmailCenterRoute: AdminEmailCenterRoute,
   AdminHomepageRoute: AdminHomepageRouteWithChildren,
+  AdminInvitationsRoute: AdminInvitationsRoute,
   AdminMaintenanceRoute: AdminMaintenanceRoute,
   AdminMediaRoute: AdminMediaRoute,
+  AdminNewsletterRoute: AdminNewsletterRoute,
   AdminNotificationsRoute: AdminNotificationsRoute,
   AdminOfficialStoreRoute: AdminOfficialStoreRoute,
   AdminOrdersRoute: AdminOrdersRouteWithChildren,
@@ -2396,6 +2500,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminVerificationsRoute: AdminVerificationsRoute,
   AdminWilayasRoute: AdminWilayasRoute,
   CategorySlugRoute: CategorySlugRoute,
+  InviteTokenRoute: InviteTokenRoute,
   ProductSlugRoute: ProductSlugRoute,
   SellerLoginRoute: SellerLoginRoute,
   SellerResetPasswordRoute: SellerResetPasswordRoute,

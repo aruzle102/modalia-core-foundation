@@ -392,9 +392,7 @@ export function AdminShell({
             <Menu className="h-5 w-5" aria-hidden="true" />
           </Button>
           <Link to="/admin" search={{ locale }} className="flex items-center gap-2">
-            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-xs font-bold text-primary-foreground">
-              M
-            </span>
+            <ModaliLogo circular className="h-8 w-8" />
             <span className="flex flex-col leading-none">
               <span className="text-sm font-semibold tracking-tight">MODALIA</span>
               <span className="text-caption text-muted-foreground">{t.areaLabel}</span>

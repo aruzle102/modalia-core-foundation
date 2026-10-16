@@ -648,9 +648,7 @@ export function SellerShell({
             <Menu className="h-5 w-5" aria-hidden="true" />
           </Button>
           <Link to="/seller" search={{ locale }} className="flex items-center gap-2">
-            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-zinc-950 text-xs font-bold text-white">
-              M
-            </span>
+            <ModaliLogo circular className="h-8 w-8" />
             <span className="text-sm font-semibold tracking-tight">Seller OS</span>
           </Link>
           {seller ? (

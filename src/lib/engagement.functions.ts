@@ -39,27 +39,19 @@ const newsletterInput = z.object({
 export const subscribeNewsletter = createServerFn({ method: "POST" })
   .inputValidator((data) => newsletterInput.parse(data))
   .handler(async ({ data }) => {
-    // DIAGNOSTIC VERSION - minimal, no rate limit, direct client
-    const url = process.env["SUPABASE_URL"] || process.env["VITE_SUPABASE_URL"] || "";
-    const key = process.env["SUPABASE_PUBLISHABLE_KEY"] || process.env["VITE_SUPABASE_PUBLISHABLE_KEY"] || "";
-    if (!url || !key) {
-      throw new Error("DIAG: Missing env vars. URL=" + (url ? "SET" : "MISSING") + " KEY=" + (key ? "SET" : "MISSING"));
-    }
-    const { createClient } = await import("@supabase/supabase-js");
-    const supabase = createClient(url, key, {
-      auth: { persistSession: false, autoRefreshToken: false },
-    });
+    rateLimitEndpoint("subscribeNewsletter", 10);
+    const supabase = publicClient();
 
-    const { error } = await supabase.from("newsletter_subscribers").insert({
-      email: data.email,
-      locale: data.locale ?? "fr",
-      subscribed_at: new Date().toISOString(),
-    });
+    const { error } = await supabase.from("newsletter_subscribers").upsert(
+      {
+        email: data.email,
+        locale: data.locale ?? platformConfig.market.defaultLanguage,
+        subscribed_at: new Date().toISOString(),
+      },
+      { onConflict: "email", ignoreDuplicates: true },
+    );
 
-    if (error) {
-      // Return the actual error for diagnosis
-      throw new Error("DIAG: " + error.message + " | Code: " + error.code);
-    }
+    if (error) throw new Error("Your subscription could not be saved. Please try again.");
     return { ok: true };
   });
 

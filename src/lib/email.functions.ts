@@ -16,8 +16,8 @@ import { getAdminIdentity, assertAdminPermission } from "./admin-permissions";
 const adminOnly = [requireSupabaseAuth] as const;
 
 async function getUserId(context: unknown): Promise<string> {
-  const ctx = context as { user?: { id?: string } };
-  if (ctx.user?.id) return ctx.user.id;
+  const ctx = context as { userId?: string };
+  if (ctx.userId) return ctx.userId;
   throw new Error("Not authenticated.");
 }
 

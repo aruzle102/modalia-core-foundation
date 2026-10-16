@@ -718,13 +718,10 @@ function NewsletterForm({ locale, t }: { locale: SupportedLocale; t: Translation
     setPending(true);
     setStatus("idle");
     try {
-      const result = await subscribeNewsletter({ data: { email: value, locale } });
+      await subscribeNewsletter({ data: { email: value, locale } });
       setStatus("success");
       setEmail("");
-    } catch (e) {
-      // DIAGNOSTIC: show actual error
-      const msg = e instanceof Error ? e.message : "Unknown error";
-      alert("DIAGNOSTIC ERROR: " + msg);
+    } catch {
       setStatus("error");
     } finally {
       setPending(false);

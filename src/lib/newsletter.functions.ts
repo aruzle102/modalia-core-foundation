@@ -225,10 +225,10 @@ export const sendNewsletterCampaign = createServerFn({ method: "POST" })
 
     const siteUrl = process.env["SITE_URL"] ?? "https://modalia-core-foundation.lovable.app";
     const logoUrl = `${siteUrl}/brand/modalia-logo.png`;
-    const supabaseUrl = process.env["SUPABASE_URL"];
-    const anonKey = process.env["SUPABASE_PUBLISHABLE_KEY"] ?? process.env["VITE_SUPABASE_PUBLISHABLE_KEY"];
+    const resendApiKey = process.env["RESEND_API_KEY"];
+    const emailFrom = process.env["EMAIL_FROM"] ?? "noreply@modaliadz.com";
 
-    if (!supabaseUrl || !anonKey) throw new Error("Email service not configured.");
+    if (!resendApiKey) throw new Error("Email service not configured (RESEND_API_KEY missing).");
 
     let sent = 0;
     let failed = 0;
@@ -260,14 +260,17 @@ export const sendNewsletterCampaign = createServerFn({ method: "POST" })
           });
 
           try {
-            const res = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+            const res = await fetch("https://api.resend.com/emails", {
               method: "POST",
-              headers: { "Content-Type": "application/json", apikey: anonKey },
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${resendApiKey}`,
+              },
               body: JSON.stringify({
+                from: emailFrom,
                 to: sub.email,
                 subject: campaign.subject,
                 html,
-                metadata: { campaign_id: data.id },
               }),
             });
             const result = await res.json().catch(() => ({}));

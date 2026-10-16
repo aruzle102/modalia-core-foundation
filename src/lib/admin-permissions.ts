@@ -44,7 +44,10 @@ export type AdminPermission =
   | "partnerships.view"
   | "partnerships.manage"
   | "reports.view"
-  | "reports.manage";
+  | "reports.manage"
+  | "email.view"
+  | "email.manage"
+  | "invitations.manage";
 
 export const ALL_ADMIN_PERMISSIONS: readonly AdminPermission[] = [
   "dashboard.view",
@@ -74,6 +77,9 @@ export const ALL_ADMIN_PERMISSIONS: readonly AdminPermission[] = [
   "partnerships.manage",
   "reports.view",
   "reports.manage",
+  "email.view",
+  "email.manage",
+  "invitations.manage",
 ];
 
 /** Role presets — the starting permission set when a member is created. */

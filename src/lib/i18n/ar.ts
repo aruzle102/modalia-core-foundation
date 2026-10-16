@@ -74,6 +74,7 @@ export const ar = {
         settings: "الإعدادات",
         security: "الأمان",
         auditLogs: "سجلات التدقيق",
+        emailCenter: "مركز البريد",
         verifications: "التحقق",
         partnerships: "الشراكات",
         partnerBanners: "لافتات الشركاء",

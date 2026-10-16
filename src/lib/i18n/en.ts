@@ -74,6 +74,7 @@ export const en = {
         settings: "Settings",
         security: "Security",
         auditLogs: "Audit Logs",
+        emailCenter: "Email Center",
         verifications: "Verifications",
         partnerships: "Partnerships",
         partnerBanners: "Partner Banners",

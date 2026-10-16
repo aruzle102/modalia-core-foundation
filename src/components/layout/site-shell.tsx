@@ -740,11 +740,14 @@ function NewsletterForm({ locale, t }: { locale: SupportedLocale; t: Translation
 
       // 201 = created, 409 = duplicate (already subscribed = success)
       if (!response.ok && response.status !== 409) {
-        throw new Error(`HTTP ${response.status}`);
+        const body = await response.text();
+        throw new Error(`HTTP ${response.status}: ${body.substring(0, 200)}`);
       }
       setStatus("success");
       setEmail("");
-    } catch {
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Unknown";
+      alert("Newsletter error: " + msg + "\nURL: " + (import.meta.env["VITE_SUPABASE_URL"] || "MISSING"));
       setStatus("error");
     } finally {
       setPending(false);

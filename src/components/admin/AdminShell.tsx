@@ -431,7 +431,7 @@ export function AdminShell({
         {/* Mobile nav: Kaiadmin navy drawer with grouped navigation */}
         <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
           <SheetContent
-            side="left"
+            side={locale === "ar" ? "right" : "left"}
             className="w-72 overflow-y-auto border-e border-white/10 bg-[#1a2035] p-0 text-[#b9babf]"
           >
             <SheetHeader className="border-b border-white/10 p-4">

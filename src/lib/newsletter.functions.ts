@@ -274,6 +274,7 @@ export const sendNewsletterCampaign = createServerFn({ method: "POST" })
               }),
             });
             const result = await res.json().catch(() => ({}));
+            const errMsg = res.ok ? null : `HTTP ${res.status}: ${JSON.stringify(result).substring(0, 300)}`;
 
             await db.from("newsletter_sends").insert({
               campaign_id: data.id,
@@ -281,7 +282,7 @@ export const sendNewsletterCampaign = createServerFn({ method: "POST" })
               email: sub.email,
               resend_id: result?.id ?? null,
               status: res.ok ? "sent" : "failed",
-              error_message: res.ok ? null : result?.error,
+              error_message: errMsg,
               sent_at: res.ok ? new Date().toISOString() : null,
             });
 

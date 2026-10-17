@@ -226,7 +226,7 @@ export const sendNewsletterCampaign = createServerFn({ method: "POST" })
     const siteUrl = process.env["SITE_URL"] ?? "https://modalia-core-foundation.lovable.app";
     const logoUrl = `${siteUrl}/brand/modalia-logo.png`;
     const resendApiKey = process.env["RESEND_API_KEY"];
-    const emailFrom = process.env["EMAIL_FROM"] ?? "noreply@modaliadz.com";
+    const emailFrom = process.env["EMAIL_FROM"] ?? "info@modaliadz.com";
 
     if (!resendApiKey) throw new Error("Email service not configured (RESEND_API_KEY missing).");
 

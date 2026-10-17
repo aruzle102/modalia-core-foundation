@@ -230,7 +230,7 @@ function NavLink({ item, compact, onDark, onNavigate }: { item: NavItem; compact
       className={cn(
         "group relative flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-all duration-200",
         onDark
-          ? "text-[#b9babf] hover:bg-white/10 hover:text-white [&_svg]:text-[#b9babf]/70 hover:[&_svg]:text-white"
+          ? "text-sidebar-foreground hover:bg-white/10 hover:text-white [&_svg]:text-sidebar-foreground/70 hover:[&_svg]:text-white"
           : "text-muted-foreground hover:bg-neutral-100 hover:text-neutral-900 dark:hover:bg-neutral-800/60 dark:hover:text-neutral-100",
         compact && "shrink-0 whitespace-nowrap py-1.5",
       )}
@@ -298,7 +298,7 @@ function SidebarNav({ groups, dark, onNavigate }: { groups: NavGroup[]; dark?: b
               className={cn(
                 "flex w-full items-center justify-between rounded-lg px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] transition-colors duration-200",
                 dark
-                  ? "text-[#b9babf]/70 hover:bg-white/5 hover:text-white"
+                  ? "text-sidebar-foreground/70 hover:bg-white/5 hover:text-white"
                   : "text-neutral-500 hover:bg-neutral-100 hover:text-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-800/60 dark:hover:text-neutral-200",
                 active && (dark ? "text-white" : "text-neutral-900 dark:text-neutral-100"),
               )}
@@ -384,7 +384,7 @@ export function AdminShell({
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="sticky top-0 z-40 border-b bg-white dark:bg-[#1a2035]">
+      <header className="sticky top-0 z-40 border-b bg-white dark:bg-sidebar">
         <div className="flex h-14 items-center gap-3 px-4">
           <Button
             variant="ghost"
@@ -432,14 +432,14 @@ export function AdminShell({
         <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
           <SheetContent
             side={locale === "ar" ? "right" : "left"}
-            className="w-72 overflow-y-auto border-e border-white/10 bg-[#1a2035] p-0 text-[#b9babf]"
+            className="w-72 overflow-y-auto border-e border-white/10 bg-sidebar p-0 text-sidebar-foreground"
           >
             <SheetHeader className="border-b border-white/10 p-4">
               <SheetTitle className="flex items-center gap-2.5 text-start">
                 <ModaliLogo circular variant="light" className="h-9 w-9" />
                 <span className="flex min-w-0 flex-col leading-none">
                   <span className="truncate text-sm font-bold tracking-tight text-white">MODALIA</span>
-                  <span className="mt-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#b9babf]/70">
+                  <span className="mt-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-sidebar-foreground/70">
                     Control Center
                   </span>
                 </span>
@@ -451,12 +451,12 @@ export function AdminShell({
       </header>
 
       <div className="flex">
-        <aside className="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-68 shrink-0 self-start overflow-y-auto bg-[#1a2035] text-[#b9babf] lg:block dark:bg-[#1a2035]">
+        <aside className="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-68 shrink-0 self-start overflow-y-auto bg-sidebar text-sidebar-foreground lg:block dark:bg-sidebar">
           <div className="flex items-center gap-2.5 px-4 pb-3 pt-5">
             <ModaliLogo circular variant="light" className="h-9 w-9" />
             <span className="flex min-w-0 flex-col leading-none">
               <span className="truncate text-sm font-bold tracking-tight text-white">MODALIA</span>
-              <span className="mt-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#b9babf]/70">
+              <span className="mt-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-sidebar-foreground/70">
                 Control Center
               </span>
             </span>

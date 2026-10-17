@@ -136,7 +136,7 @@ export function ProductCard({
               type="button"
               aria-label="Previous image"
               onClick={(e) => { e.stopPropagation(); e.preventDefault(); setImgIndex((i) => (i - 1 + images.length) % images.length); }}
-              className="absolute start-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-neutral-800 opacity-0 shadow-md transition-opacity group-hover:opacity-100 hover:bg-white focus-visible:opacity-100"
+              className="absolute start-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-neutral-800 opacity-0 shadow-md transition-opacity group-hover:opacity-100 hover:bg-white focus-visible:opacity-100 [@media(hover:none)]:opacity-100"
             >
               <ChevronLeft className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />
             </button>
@@ -144,7 +144,7 @@ export function ProductCard({
               type="button"
               aria-label="Next image"
               onClick={(e) => { e.stopPropagation(); e.preventDefault(); setImgIndex((i) => (i + 1) % images.length); }}
-              className="absolute end-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-neutral-800 opacity-0 shadow-md transition-opacity group-hover:opacity-100 hover:bg-white focus-visible:opacity-100"
+              className="absolute end-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-neutral-800 opacity-0 shadow-md transition-opacity group-hover:opacity-100 hover:bg-white focus-visible:opacity-100 [@media(hover:none)]:opacity-100"
             >
               <ChevronRight className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />
             </button>
@@ -162,12 +162,12 @@ export function ProductCard({
         {/* Badges — real data only, stacked pills top-start like the reference */}
         <div className="pointer-events-none absolute start-3 top-3 z-10 flex flex-col items-start gap-1.5">
           {fresh ? (
-            <span className="rounded-full bg-blue-500 px-2.5 py-1 text-[11px] font-bold text-white shadow-sm">
+            <span className="rounded-full bg-official px-2.5 py-1 text-[11px] font-bold text-white shadow-sm">
               {t.new}
             </span>
           ) : null}
           {sale != null ? (
-            <span className="rounded-full bg-rose-500 px-2.5 py-1 text-[11px] font-bold text-white shadow-sm">
+            <span className="rounded-full bg-destructive px-2.5 py-1 text-[11px] font-bold text-white shadow-sm">
               -{sale}%
             </span>
           ) : null}
@@ -177,7 +177,6 @@ export function ProductCard({
         <button
           type="button"
           onClick={handleWishlist}
-          onTouchStart={handleWishlist}
           aria-pressed={wishlisted}
           aria-label={t.wishlist(product.name)}
           className="absolute end-3 top-3 z-10 grid size-9 place-items-center rounded-full bg-white text-neutral-900 shadow-md transition-transform hover:scale-105 active:scale-95 touch-manipulation dark:bg-neutral-900 dark:text-white"

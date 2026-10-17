@@ -485,7 +485,7 @@ function TrustStrip({ copy }: { copy: HomeCopy }) {
   const icons = { cash: Banknote, map: MapPin, store: Store } as const;
   return (
     <div className="border-b border-border bg-background">
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 overflow-x-auto px-4 py-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex max-w-7xl items-center justify-start gap-6 overflow-x-auto px-4 py-4 sm:justify-between sm:px-6 lg:px-8">
         {copy.trust.map((item) => {
           const Icon = icons[item.icon];
           return (

@@ -7,7 +7,6 @@ export { Marquee, type MarqueeProps } from "./Marquee";
 export { Magnetic, type MagneticProps } from "./Magnetic";
 export { TextReveal, type TextRevealProps } from "./TextReveal";
 export { ImageReveal, type ImageRevealProps } from "./ImageReveal";
-export { ProductRail, type ProductRailProps } from "./ProductRail";
 export { Stagger, type StaggerProps } from "./Stagger";
 export { TiltCard, type TiltCardProps } from "./TiltCard";
 export { AsyncButton, type AsyncButtonProps } from "./AsyncButton";

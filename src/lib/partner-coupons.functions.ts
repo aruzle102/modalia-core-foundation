@@ -18,7 +18,12 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertAdmin } from "@/lib/admin-auth";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
+
+async function getDb(): Promise<any> {
+  const mod = await import("@/integrations/supabase/client.server");
+  return mod.supabaseAdmin as any;
+}
+
 
 export type CouponTier = {
   id: string;
@@ -134,7 +139,7 @@ export function validateTiers(tiers: z.infer<typeof tierSchema>[]): string | nul
 
 async function assertUniqueCode(code: string, excludeId?: string): Promise<void> {
   const normalized = code.trim().toUpperCase();
-  let q = supabaseAdmin
+  let q = (await getDb())
     .from("coupons")
     .select("id")
     .eq("code", normalized)
@@ -156,7 +161,7 @@ export const listPartnerCoupons = createServerFn({ method: "GET" })
   )
   .handler(async ({ data, context }): Promise<PartnerCoupon[]> => {
     await assertAdmin(context);
-    let q = supabaseAdmin
+    let q = (await getDb())
       .from("coupons")
       .select("*")
       .eq("coupon_type", "partner")
@@ -167,7 +172,7 @@ export const listPartnerCoupons = createServerFn({ method: "GET" })
     const ids = (rows ?? []).map((r: any) => r.id);
     let tiersByCoupon = new Map<string, any[]>();
     if (ids.length > 0) {
-      const { data: tiers, error: tErr } = await supabaseAdmin
+      const { data: tiers, error: tErr } = await (await getDb())
         .from("coupon_tiers")
         .select("*")
         .in("coupon_id", ids)
@@ -197,7 +202,7 @@ export const createPartnerCoupon = createServerFn({ method: "POST" })
       throw new Error("End date must be after start date.");
     }
 
-    const { data: coupon, error } = await supabaseAdmin
+    const { data: coupon, error } = await (await getDb())
       .from("coupons")
       .insert({
         code: data.code.trim().toUpperCase(),
@@ -219,7 +224,7 @@ export const createPartnerCoupon = createServerFn({ method: "POST" })
       .single();
     if (error || !coupon) throw new Error(error?.message ?? "Failed to create coupon.");
 
-    const { error: tErr } = await supabaseAdmin.from("coupon_tiers").insert(
+    const { error: tErr } = await (await getDb()).from("coupon_tiers").insert(
       sorted.map((t, i) => ({
         coupon_id: coupon.id,
         min_subtotal: t.minSubtotal,
@@ -229,7 +234,7 @@ export const createPartnerCoupon = createServerFn({ method: "POST" })
       }))
     );
     if (tErr) {
-      await supabaseAdmin.from("coupons").delete().eq("id", coupon.id);
+      await (await getDb()).from("coupons").delete().eq("id", coupon.id);
       throw new Error(tErr.message);
     }
     return { ok: true, id: coupon.id };
@@ -250,7 +255,7 @@ export const updatePartnerCoupon = createServerFn({ method: "POST" })
       throw new Error("End date must be after start date.");
     }
 
-    const { error } = await supabaseAdmin
+    const { error } = await (await getDb())
       .from("coupons")
       .update({
         code: data.code.trim().toUpperCase(),
@@ -269,12 +274,12 @@ export const updatePartnerCoupon = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
 
     // Replace tiers
-    const { error: delErr } = await supabaseAdmin
+    const { error: delErr } = await (await getDb())
       .from("coupon_tiers")
       .delete()
       .eq("coupon_id", data.id);
     if (delErr) throw new Error(delErr.message);
-    const { error: insErr } = await supabaseAdmin.from("coupon_tiers").insert(
+    const { error: insErr } = await (await getDb()).from("coupon_tiers").insert(
       sorted.map((t, i) => ({
         coupon_id: data.id,
         min_subtotal: t.minSubtotal,
@@ -293,7 +298,7 @@ export const deletePartnerCoupon = createServerFn({ method: "POST" })
   .validator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }): Promise<{ ok: boolean }> => {
     await assertAdmin(context);
-    const { error } = await supabaseAdmin
+    const { error } = await (await getDb())
       .from("coupons")
       .delete()
       .eq("id", data.id)
@@ -321,7 +326,7 @@ export async function validatePartnerCoupon(
   const normalized = code.trim().toUpperCase();
   const now = new Date().toISOString();
 
-  const { data: coupon, error } = await supabaseAdmin
+  const { data: coupon, error } = await (await getDb())
     .from("coupons")
     .select("id, code, status, starts_at, ends_at, usage_limit, usage_count, funding_model, is_mandatory")
     .eq("code", normalized)
@@ -339,7 +344,7 @@ export async function validatePartnerCoupon(
     return { valid: false, reason: "usage_limit" };
   }
 
-  const { data: tiers, error: tErr } = await supabaseAdmin
+  const { data: tiers, error: tErr } = await (await getDb())
     .from("coupon_tiers")
     .select("min_subtotal, max_subtotal, discount_amount, sort_order")
     .eq("coupon_id", coupon.id)

@@ -174,17 +174,18 @@ export const sendEmail = createServerFn({ method: "POST" })
       ...(data.variables ? { metadata: data.variables } : {}),
     });
 
+    // Log all sends (success and failure) for rate limiting and history
+    await supabaseAdmin.from("email_logs").insert({
+      to_email: data.to,
+      from_email: emailConfig.defaultFrom,
+      subject: data.subject,
+      template_id: data.templateId ?? null,
+      status: result.success ? "sent" : "failed",
+      error_message: result.success ? null : result.error,
+      sent_by: await getUserId(context),
+    });
+
     if (!result.success) {
-      // Log failure
-      await supabaseAdmin.from("email_logs").insert({
-        to_email: data.to,
-        from_email: emailConfig.defaultFrom,
-        subject: data.subject,
-        template_id: data.templateId ?? null,
-        status: "failed",
-        error_message: result.error,
-        sent_by: await getUserId(context),
-      });
       throw new Error(result.error ?? "Email delivery failed.");
     }
 

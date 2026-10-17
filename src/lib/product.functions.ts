@@ -61,7 +61,13 @@ export const getProductDetail = createServerFn({ method: "GET" })
       supabase.from("products").select("id,slug,name,base_price,created_at,category:categories(slug),seller:sellers(stores(name)),images:product_images(storage_path,alt_text,sort_order)").eq("store_id", product.store_id ?? "00000000-0000-0000-0000-000000000000").eq("status", "active").eq("publication_status", "published").eq("moderation_status", "approved").eq("visibility", "public").neq("id", product.id).order("published_at", { ascending: false }).limit(8),
     ]);
     if (mediaResult.error || optionsResult.error || valuesResult.error || variantsResult.error || optionLinksResult.error || reviewsResult.error || relatedResult.error || similarResult.error || storeResult.error) throw new Error("The product details could not be loaded.");
-    const inventories = await Promise.all((variantsResult.data ?? []).map((variant) => supabase.from("inventory").select("quantity,reserved_quantity,low_stock_threshold,max_purchase_quantity").eq("variant_id", variant.id).maybeSingle()));
+    const variantIds = (variantsResult.data ?? []).map((v) => v.id);
+    const inventoryResult = variantIds.length > 0
+      ? await supabase.from("inventory").select("variant_id,quantity,reserved_quantity,low_stock_threshold,max_purchase_quantity").in("variant_id", variantIds)
+      : { data: [], error: null };
+    if (inventoryResult.error) throw new Error("The product details could not be loaded.");
+    const inventoryByVariant = new Map((inventoryResult.data ?? []).map((inv) => [inv.variant_id, inv]));
+    const inventories = (variantsResult.data ?? []).map((variant) => ({ data: inventoryByVariant.get(variant.id) ?? null }));
     const optionIds = new Set((optionsResult.data ?? []).map((option) => option.id));
     const values = (valuesResult.data ?? []).filter((value) => optionIds.has(value.product_option_id));
     const links = optionLinksResult.data ?? [];

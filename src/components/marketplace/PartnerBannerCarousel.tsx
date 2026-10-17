@@ -89,17 +89,17 @@ export function PartnerBannerCarousel() {
               type="button"
               aria-label="Previous"
               onClick={() => goTo(-1)}
-              className="absolute left-2 top-1/2 hidden -translate-y-1/2 rounded-full bg-black/40 p-1.5 text-white opacity-0 backdrop-blur transition-opacity hover:bg-black/60 group-hover:opacity-100 md:block"
+              className="absolute start-2 top-1/2 hidden -translate-y-1/2 rounded-full bg-black/40 p-1.5 text-white opacity-0 backdrop-blur transition-opacity hover:bg-black/60 group-hover:opacity-100 md:block"
             >
-              <ChevronLeft className="size-4" />
+              <ChevronLeft className="size-4 rtl:rotate-180" />
             </button>
             <button
               type="button"
               aria-label="Next"
               onClick={() => goTo(1)}
-              className="absolute right-2 top-1/2 hidden -translate-y-1/2 rounded-full bg-black/40 p-1.5 text-white opacity-0 backdrop-blur transition-opacity hover:bg-black/60 group-hover:opacity-100 md:block"
+              className="absolute end-2 top-1/2 hidden -translate-y-1/2 rounded-full bg-black/40 p-1.5 text-white opacity-0 backdrop-blur transition-opacity hover:bg-black/60 group-hover:opacity-100 md:block"
             >
-              <ChevronRight className="size-4" />
+              <ChevronRight className="size-4 rtl:rotate-180" />
             </button>
           </>
         )}

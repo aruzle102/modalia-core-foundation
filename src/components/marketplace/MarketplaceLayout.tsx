@@ -41,7 +41,7 @@ export function MarketplaceLayout({
                 className="flex items-center justify-between rounded px-2 py-1.5 text-sm hover:bg-muted"
               >
                 All products
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                <ChevronRight className="h-4 w-4 text-muted-foreground rtl:rotate-180" />
               </Link>
               {categories.map((cat) => (
                 <Link
@@ -51,7 +51,7 @@ export function MarketplaceLayout({
                   className="flex items-center justify-between rounded px-2 py-1.5 text-sm hover:bg-muted"
                 >
                   <span className="truncate">{cat.name}</span>
-                  <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground rtl:rotate-180" />
                 </Link>
               ))}
             </nav>

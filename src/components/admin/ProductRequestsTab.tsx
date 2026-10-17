@@ -11,6 +11,7 @@ import {
   moderateAdminProduct,
 } from "@/lib/admin-catalog.functions";
 import { pickName } from "@/routes/admin/_shared";
+import { useAdminLocale } from "./useAdminLocale";
 
 type RequestItem = {
   id: string;
@@ -36,6 +37,7 @@ type RequestItem = {
  * Image, info, price, profit, shipping, sizes + Accept / Reject / Request Fix.
  */
 export function ProductRequestsTab() {
+  const locale = useAdminLocale();
   const queryClient = useQueryClient();
   const requestsQuery = useQuery({
     queryKey: ["admin-product-requests"],
@@ -132,17 +134,17 @@ export function ProductRequestsTab() {
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Price</p>
-                    <p className="text-lg font-bold">{fmtMoney(p.base_price, "DZD", "en")}</p>
+                    <p className="text-lg font-bold">{fmtMoney(p.base_price, "DZD", locale)}</p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">
                       Platform profit ({commissionRate}%)
                     </p>
-                    <p className="text-lg font-bold text-green-600">{fmtMoney(profit, "DZD", "en")}</p>
+                    <p className="text-lg font-bold text-green-600">{fmtMoney(profit, "DZD", locale)}</p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Seller net</p>
-                    <p className="text-lg font-bold">{fmtMoney(sellerNet, "DZD", "en")}</p>
+                    <p className="text-lg font-bold">{fmtMoney(sellerNet, "DZD", locale)}</p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Weight</p>
@@ -163,7 +165,7 @@ export function ProductRequestsTab() {
                           {typeof v.attributes === "object" && v.attributes
                             ? Object.values(v.attributes as Record<string, unknown>).join(" / ")
                             : v.sku ?? "Variant"}
-                          {v.price ? ` — ${fmtMoney(v.price, "DZD", "en")}` : ""}
+                          {v.price ? ` — ${fmtMoney(v.price, "DZD", locale)}` : ""}
                         </span>
                       ))}
                     </div>

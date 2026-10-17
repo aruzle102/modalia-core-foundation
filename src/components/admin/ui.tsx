@@ -52,62 +52,6 @@ export function AdminCard({
   );
 }
 
-/* ---------------------------------- Stat --------------------------------- */
-
-export function Stat({
-  label,
-  value,
-  hint,
-  className,
-}: {
-  label: string;
-  value: React.ReactNode;
-  hint?: React.ReactNode;
-  className?: string | undefined;
-}) {
-  return (
-    <Card className={cn("rounded-md shadow-none", className)}>
-      <CardContent className="p-4">
-        <p className="text-eyebrow text-muted-foreground">{label}</p>
-        <p className="mt-1.5 text-2xl font-semibold tabular-nums">{value}</p>
-        {hint ? <p className="mt-1 text-caption text-muted-foreground">{hint}</p> : null}
-      </CardContent>
-    </Card>
-  );
-}
-
-/* ------------------------- Stat rows (dense lists) ------------------------ */
-
-export function StatRows({ children, className }: { children: React.ReactNode; className?: string | undefined }) {
-  return (
-    <div className={cn("divide-y divide-border overflow-hidden rounded-md border border-border bg-card", className)}>
-      {children}
-    </div>
-  );
-}
-
-export function StatRow({
-  label,
-  value,
-  hint,
-  className,
-}: {
-  label: string;
-  value: React.ReactNode;
-  hint?: React.ReactNode;
-  className?: string | undefined;
-}) {
-  return (
-    <div className={cn("flex items-baseline justify-between gap-4 px-4 py-3 sm:px-5", className)}>
-      <div className="min-w-0">
-        <p className="text-small font-medium">{label}</p>
-        {hint ? <p className="mt-0.5 text-caption text-muted-foreground">{hint}</p> : null}
-      </div>
-      <p className="shrink-0 text-lg font-semibold tabular-nums">{value}</p>
-    </div>
-  );
-}
-
 /* ------------------------------- StatusPill ------------------------------ */
 
 const GREEN = new Set(["delivered", "approved", "active", "paid", "verified"]);
@@ -215,6 +159,8 @@ export function ConfirmDialog({
   cancelLabel,
   onConfirm,
   danger = false,
+  isPending = false,
+  disabled = false,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -224,6 +170,8 @@ export function ConfirmDialog({
   cancelLabel?: string | undefined;
   onConfirm: () => void;
   danger?: boolean | undefined;
+  isPending?: boolean | undefined;
+  disabled?: boolean | undefined;
 }) {
   // The dialog resolves the active locale itself so call sites that rely on
   // the default button labels get them translated for free.
@@ -242,9 +190,10 @@ export function ConfirmDialog({
           <AlertDialogCancel>{cancelText}</AlertDialogCancel>
           <AlertDialogAction
             onClick={onConfirm}
+            disabled={isPending || disabled}
             className={danger ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : undefined}
           >
-            {confirmText}
+            {isPending ? "..." : confirmText}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

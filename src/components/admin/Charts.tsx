@@ -5,14 +5,6 @@
 
 type SeriesPoint = { date: string; orders: number; sales: number };
 
-const PALETTE = [
-  "var(--chart-1)",
-  "var(--chart-2)",
-  "var(--chart-3)",
-  "var(--chart-4)",
-  "var(--chart-5)",
-];
-
 function compact(value: number): string {
   if (Math.abs(value) >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
   if (Math.abs(value) >= 1_000) return `${(value / 1_000).toFixed(1)}k`;
@@ -102,112 +94,5 @@ export function SalesChart({ data }: { data: SeriesPoint[] }) {
         </span>
       </figcaption>
     </figure>
-  );
-}
-
-export function DonutChart({ data }: { data: { label: string; value: number }[] }) {
-  const total = data.reduce((sum, d) => sum + d.value, 0);
-  const R = 70;
-  const C = 2 * Math.PI * R;
-  let offset = 0;
-
-  return (
-    <figure>
-      <svg
-        viewBox="0 0 200 200"
-        className="mx-auto h-44 w-44"
-        role="img"
-        aria-label={
-          total > 0
-            ? `Order status distribution across ${data.length} statuses, ${total} orders total.`
-            : "No orders to show in the status distribution."
-        }
-      >
-        {total > 0 ? (
-          <>
-            <circle cx={100} cy={100} r={R} fill="none" stroke="currentColor" className="text-muted" strokeWidth={26} />
-            {data.map((d, i) => {
-              const frac = d.value / total;
-              const dash = `${(frac * C).toFixed(1)} ${(C - frac * C).toFixed(1)}`;
-              const el = (
-                <circle
-                  key={d.label}
-                  cx={100}
-                  cy={100}
-                  r={R}
-                  fill="none"
-                  stroke={PALETTE[i % PALETTE.length]}
-                  strokeWidth={26}
-                  strokeDasharray={dash}
-                  strokeDashoffset={(-offset).toFixed(1)}
-                  transform="rotate(-90 100 100)"
-                />
-              );
-              offset += frac * C;
-              return el;
-            })}
-            <text x={100} y={96} textAnchor="middle" fontSize={22} fontWeight={700} fill="currentColor" className="text-foreground">
-              {total}
-            </text>
-            <text x={100} y={116} textAnchor="middle" fontSize={11} fill="currentColor" className="text-muted-foreground">
-              orders
-            </text>
-          </>
-        ) : (
-          <text x={100} y={104} textAnchor="middle" fontSize={13} fill="currentColor" className="text-muted-foreground">
-            No orders
-          </text>
-        )}
-      </svg>
-      {data.length > 0 ? (
-        <ul className="mt-4 space-y-2">
-          {data.map((d, i) => (
-            <li key={d.label} className="flex items-center justify-between gap-3 text-small">
-              <span className="inline-flex min-w-0 items-center gap-2">
-                <span className="size-2.5 shrink-0 rounded-full" style={{ background: PALETTE[i % PALETTE.length] }} aria-hidden="true" />
-                <span className="truncate">{d.label}</span>
-              </span>
-              <span className="font-medium tabular-nums">{d.value}</span>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="mt-4 text-center text-small text-muted-foreground">No order statuses recorded yet.</p>
-      )}
-    </figure>
-  );
-}
-
-export function TopList({ title, rows }: { title: string; rows: { label: string; value: string; hint?: string }[] }) {
-  const described = rows.length > 0 ? rows.map((r) => `${r.label}: ${r.value}`).join(", ") : "no rows";
-  return (
-    <div role="img" aria-label={`${title}: ${described}.`}>
-      <ol className="space-y-3">
-        {rows.map((row, i) => (
-          <li key={`${row.label}-${i}`} className="flex items-baseline gap-3">
-            <span aria-hidden="true" className="w-5 shrink-0 text-caption font-semibold text-muted-foreground tabular-nums">
-              {i + 1}
-            </span>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-baseline justify-between gap-2">
-                <p className="truncate text-small font-medium">{row.label}</p>
-                <p className="shrink-0 text-small text-muted-foreground tabular-nums">{row.value}</p>
-              </div>
-              <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-muted" aria-hidden="true">
-                <div
-                  className="h-full rounded-full"
-                  style={{
-                    width: `${rows.length > 1 ? ((rows.length - i) / rows.length) * 100 : 100}%`,
-                    background: PALETTE[i % PALETTE.length],
-                  }}
-                />
-              </div>
-              {row.hint ? <p className="mt-1 text-caption text-muted-foreground">{row.hint}</p> : null}
-            </div>
-          </li>
-        ))}
-      </ol>
-      {rows.length === 0 ? <p className="py-6 text-small text-muted-foreground">Nothing to rank yet — data will appear here once orders exist.</p> : null}
-    </div>
   );
 }

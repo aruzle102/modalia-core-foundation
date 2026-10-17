@@ -89,9 +89,6 @@ export const en = {
       areaLabel: "Admin",
     },
     shell: {
-      catalog: "The catalogue is taking shape",
-      catalogDescription:
-        "The Modalia experience is being crafted with care. Approved products and stores are coming soon.",
       explore: "Discover Modalia",
       back: "Back to home",
     },

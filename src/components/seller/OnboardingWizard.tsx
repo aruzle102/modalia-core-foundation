@@ -21,6 +21,7 @@ import { Reveal } from "@/lib/motion";
 import { getTranslations, localeDirections, type SupportedLocale } from "@/lib/i18n";
 import { markOnboardingComplete, updateSellerProfile } from "@/lib/seller-support.functions";
 import { updateStoreProfile } from "@/lib/seller-store.functions";
+import { completeSellerOnboarding } from "@/lib/seller-onboarding.functions";
 import { phonePattern } from "@/lib/localization";
 
 export interface OnboardingProfileData {
@@ -179,7 +180,7 @@ export function OnboardingWizard({
       await updateStoreProfile({
         data: {
           name: storeName.trim(),
-          description: description.trim() || undefined,
+          description: description.trim() ? { fr: description.trim(), en: description.trim(), ar: description.trim() } : undefined,
           contactEmail: contactEmail.trim() || undefined,
           contactPhone: contactPhone.trim() || undefined,
           logoPath: logoPath.trim() || undefined,
@@ -244,10 +245,27 @@ export function OnboardingWizard({
       setFieldError(t.errPasswordMatch || "Passwords do not match.");
       return false;
     }
-    // TODO: Call credential update function when available
-    // For now, just mark as complete — seller can update later in settings
-    setDirty(false);
-    return true;
+    // Update credentials via server function
+    // If password is set, username/email is required (function needs both)
+    if (newPassword.trim() && !newEmail.trim()) {
+      setFieldError(t.errEmail);
+      return false;
+    }
+    try {
+      if (newPassword.trim()) {
+        await completeSellerOnboarding({
+          data: {
+            newUsername: newEmail.trim(),
+            newPassword: newPassword.trim(),
+          },
+        });
+      }
+      setDirty(false);
+      return true;
+    } catch (e) {
+      setFieldError(e instanceof Error ? e.message : t.errSave);
+      return false;
+    }
   }
 
   async function handleContinue() {
@@ -460,7 +478,7 @@ export function OnboardingWizard({
             </div>
           ) : null}
 
-          {step === 5 ? (
+          {step === 3 ? (
             <div>
               <h2 className="text-h2 text-foreground">{t.brandingTitle || "Store branding"}</h2>
               <p className="mt-2 text-body text-muted-foreground">{t.brandingSub || "Contact info, logo, and banner for your store."}</p>

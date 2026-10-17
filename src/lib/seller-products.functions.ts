@@ -177,7 +177,13 @@ const saveProductSchema = z.object({
   images: z.array(imageInput).max(20).default([]),
   options: z.array(optionInput).max(5).default([]),
   variants: z.array(variantInput).min(1).max(200),
-});
+}).refine(
+  (d) => d.compareAtPrice === undefined || d.compareAtPrice > d.basePrice,
+  { message: "Compare-at price must be greater than the selling price.", path: ["compareAtPrice"] }
+).refine(
+  (d) => d.basePrice > 0,
+  { message: "Price must be greater than zero.", path: ["basePrice"] }
+);
 
 // ---------------------------------------------------------------------------
 // Lists
@@ -352,27 +358,44 @@ export async function executeProductSave(
 
   if (data.id) {
     const existing = await ownedProduct(sb, scope.sellerId, data.id);
-    const wasPublished = existing.moderation_status === "approved";
+    const wasPublished = (existing as any).moderation_status === "approved";
+    // Fetch full row for content comparison
+    const { data: fullExisting } = await (sb as any)
+      .from("products")
+      .select("name, description")
+      .eq("id", data.id)
+      .single();
+    // Detect content changes (name/description) vs price/stock-only
+    const contentChanged =
+      JSON.stringify((fullExisting as any)?.name) !== JSON.stringify(data.name) ||
+      JSON.stringify((fullExisting as any)?.description) !== JSON.stringify(data.description ?? {});
+    const updatePayload: any = {
+      name: data.name as unknown as Json,
+      description: (data.description ?? {}) as unknown as Json,
+      short_description: (data.shortDescription ?? {}) as unknown as Json,
+      category_id: data.categoryId ?? null,
+      brand_id: data.brandId ?? null,
+      sku: data.sku?.trim() || null,
+      barcode: data.barcode?.trim() || null,
+      weight_grams: data.weightGrams ?? null,
+      base_price: data.basePrice,
+      compare_at_price: data.compareAtPrice ?? null,
+      cost_price: data.costPrice,
+      profit_per_unit: data.profitPerUnit,
+      metadata: {
+        seo_title: data.seoTitle ?? null,
+        seo_description: data.seoDescription ?? null,
+      } as unknown as Json,
+    };
+    // Content edits on approved products require re-moderation
+    if (wasPublished && contentChanged && !scope.isAdmin) {
+      updatePayload["moderation_status"] = "pending";
+      updatePayload["publication_status"] = "pending_review";
+      updatePayload["visibility"] = "private";
+    }
     const { error } = await sb
       .from("products")
-      .update({
-        name: data.name as unknown as Json,
-        description: (data.description ?? {}) as unknown as Json,
-        short_description: (data.shortDescription ?? {}) as unknown as Json,
-        category_id: data.categoryId ?? null,
-        brand_id: data.brandId ?? null,
-        sku: data.sku?.trim() || null,
-        barcode: data.barcode?.trim() || null,
-        weight_grams: data.weightGrams ?? null,
-        base_price: data.basePrice,
-        compare_at_price: data.compareAtPrice ?? null,
-        cost_price: data.costPrice,
-        profit_per_unit: data.profitPerUnit,
-        metadata: {
-          seo_title: data.seoTitle ?? null,
-          seo_description: data.seoDescription ?? null,
-        } as unknown as Json,
-      })
+      .update(updatePayload)
       .eq("id", data.id);
     if (error) throw new Error(error.message);
     productId = data.id;
@@ -380,6 +403,7 @@ export async function executeProductSave(
     if (wasPublished) {
       const editedMeta: Record<string, Json> = { seller_id: scope.sellerId };
       if (scope.isAdmin) editedMeta["admin_override"] = true;
+      if (contentChanged) editedMeta["remoderation"] = true;
       await auditLog(scope.actorId, "product_edited_published", "product", productId, editedMeta);
     }
   } else {
@@ -841,6 +865,8 @@ export const duplicateProduct = createServerFn({ method: "POST" })
         weight_grams: source.weight_grams,
         base_price: source.base_price,
         compare_at_price: source.compare_at_price,
+        cost_price: (source as any).cost_price,
+        profit_per_unit: (source as any).profit_per_unit,
         status: "draft",
         moderation_status: "pending",
         publication_status: "pending_review",
@@ -1088,6 +1114,14 @@ export const adjustInventory = createServerFn({ method: "POST" })
     if (data.lowStockThreshold !== undefined) patch.low_stock_threshold = data.lowStockThreshold;
     const { error: upErr } = await sb.from("inventory").update(patch).eq("variant_id", data.variantId);
     if (upErr) throw new Error(upErr.message);
+
+    // Recompute variant availability: available = (quantity - reserved > 0)
+    if (data.quantity !== undefined) {
+      const newQty = data.quantity;
+      const reserved = (before as any).reserved_quantity ?? 0;
+      const available = newQty - reserved > 0;
+      await (sb as any).from("product_variants").update({ available }).eq("id", data.variantId);
+    }
 
     const after = {
       quantity: data.quantity ?? before.quantity,

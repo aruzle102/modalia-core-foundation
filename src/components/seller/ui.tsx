@@ -168,7 +168,6 @@ export function SellerShellSkeleton() {
 /*  Shared dashboard primitives (added 2026-10-09)                     */
 /*  StatCard   — KPI card: title, value, optional icon/description,    */
 /*               loading skeleton. Black/white/gray identity.          */
-/*  SectionHeader — section title + optional description + actions.     */
 /* ------------------------------------------------------------------ */
 
 export interface StatCardProps {
@@ -219,30 +218,5 @@ export function StatCard({ title, value, icon, description, loading, className }
         ) : null}
       </CardContent>
     </Card>
-  );
-}
-
-export interface SectionHeaderProps {
-  /** Section title */
-  title: string;
-  /** Optional description below the title */
-  description?: ReactNode;
-  /** Optional actions (buttons, links) rendered at the end */
-  actions?: ReactNode;
-  /** Optional extra classes on the wrapper */
-  className?: string;
-}
-
-export function SectionHeader({ title, description, actions, className }: SectionHeaderProps) {
-  return (
-    <div className={["flex flex-wrap items-start justify-between gap-3", className ?? ""].join(" ")}>
-      <div className="min-w-0">
-        <h2 className="text-lg font-semibold tracking-tight text-neutral-900 dark:text-white">{title}</h2>
-        {description ? (
-          <p className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">{description}</p>
-        ) : null}
-      </div>
-      {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
-    </div>
   );
 }

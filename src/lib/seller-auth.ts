@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -359,15 +358,3 @@ export const getSellerAccessStatus = createServerFn({ method: "GET" })
     return { access: "no-account", mustResetPassword: false, onboarded: false, isOwner: false };
   });
 
-/**
- * Session-less auth client used ONLY to verify the caller's current
- * (temporary) password. Never persists a session, never touches cookies.
- */
-function authVerifierClient() {
-  const url = process.env["SUPABASE_URL"];
-  const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
-  if (!url || !key) throw new Error("Password change is temporarily unavailable.");
-  return createClient<Database>(url, key, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
-}

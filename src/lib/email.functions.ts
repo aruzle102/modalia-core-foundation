@@ -129,7 +129,7 @@ export const getEmailTemplate = createServerFn({ method: "GET" })
   });
 
 // ---------------------------------------------------------------------------
-// Send email (via Edge Function)
+// Send email (via Resend API)
 // ---------------------------------------------------------------------------
 
 const sendEmailSchema = z.object({

@@ -70,7 +70,7 @@ const PARENT_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
 
 /** Strict seller-order transition matrix enforced on every status write. */
 const SELLER_TRANSITIONS: Record<SellerOrderStatus, SellerOrderStatus[]> = {
-  pending: ["accepted", "cancelled"],
+  pending: ["confirmed", "accepted", "cancelled"],
   confirmed: ["accepted", "processing", "cancelled"],
   accepted: ["processing", "cancelled"],
   processing: ["ready_for_shipping", "cancelled"],

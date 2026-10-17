@@ -270,7 +270,8 @@ function CampaignsTab() {
         onOpenChange={(o) => !o && setSendId(null)}
         title="Send campaign?"
         description="This will send to ALL active subscribers. This cannot be undone."
-        confirmLabel={sendMutation.isPending ? "Sending..." : "Send to All"}
+        confirmLabel="Send to All"
+        isPending={sendMutation.isPending}
         onConfirm={() => sendId && sendMutation.mutate(sendId)}
       />
     </>

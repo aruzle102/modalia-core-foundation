@@ -26,38 +26,47 @@ const SELLER_ORDER_STATUSES = [
   "cancelled",
   "refunded",
   "confirmed",
+  "preparing",
   "ready_for_shipping",
   "handed_to_courier",
   "in_transit",
   "delivered",
   "returned",
+  "failed_delivery",
 ] as const;
 
 /**
  * Strict seller-allowed transitions, enforced server-side on every write.
- * Sellers may only move their slice of an order forward (or cancel early):
- *   pending            → accepted | cancelled
- *   accepted           → processing | cancelled
- *   processing         → ready_for_shipping
+ * This map mirrors the transition_seller_order_status RPC whitelist (the
+ * canonical flow); updateSellerOrderStatus delegates to that RPC so the
+ * child update, history row, and parent-order rollup happen atomically.
+ *   pending            → confirmed | cancelled
+ *   confirmed          → processing | preparing | cancelled
+ *   processing         → preparing | cancelled
+ *   preparing          → ready_for_shipping | cancelled
  *   ready_for_shipping → handed_to_courier
- * Everything else (in_transit, delivered, returned, refunded, …) is the
- * platform/courier's job and is rejected here.
+ *   handed_to_courier → in_transit
+ *   in_transit         → delivered | failed_delivery
+ *   failed_delivery    → returned
+ *   delivered          → returned
+ * `accepted` / `fulfilled` are legacy statuses kept in the enum for existing
+ * rows and finance reporting; the RPC flow does not drive them.
  */
 const SELLER_TRANSITIONS: Record<SellerOrderStatus, SellerOrderStatus[]> = {
-  pending: ["accepted", "cancelled"],
-  accepted: ["processing", "cancelled"],
-  processing: ["ready_for_shipping"],
-  preparing: ["ready_for_shipping"],
+  pending: ["confirmed", "cancelled"],
+  confirmed: ["processing", "preparing", "cancelled"],
+  accepted: [],
+  processing: ["preparing", "cancelled"],
+  preparing: ["ready_for_shipping", "cancelled"],
   ready_for_shipping: ["handed_to_courier"],
-  confirmed: [],
+  handed_to_courier: ["in_transit"],
+  in_transit: ["delivered", "failed_delivery"],
+  failed_delivery: ["returned"],
   fulfilled: [],
+  delivered: ["returned"],
   cancelled: [],
-  refunded: [],
-  in_transit: [],
-  delivered: [],
   returned: [],
-  handed_to_courier: [],
-  failed_delivery: [],
+  refunded: [],
 };
 
 const sellerOnly = [requireSupabaseAuth] as const;
@@ -408,7 +417,6 @@ export const updateSellerOrderStatus = createServerFn({ method: "POST" })
     const seller = await sellerCtx(context, "orders.update" as SellerPermission);
     const supabaseAdmin = await adminClient();
     const userId = actorId(context);
-    const now = new Date().toISOString();
     const note = data.note && data.note.trim() ? data.note.trim() : null;
 
     if (!(SELLER_ORDER_STATUSES as readonly string[]).includes(data.status)) {
@@ -431,22 +439,18 @@ export const updateSellerOrderStatus = createServerFn({ method: "POST" })
       throw new Error(`Transition from "${current}" to "${next}" is not allowed for sellers.`);
     }
 
-    const updateResult = await supabaseAdmin
-      .from("seller_orders")
-      .update({ status: next, updated_at: now })
-      .eq("id", data.sellerOrderId);
-    if (updateResult.error) throw new Error(updateResult.error.message);
-
-    const historyResult = await supabaseAdmin.from("order_status_history").insert({
-      order_id: currentResult.data.order_id,
-      seller_order_id: data.sellerOrderId,
-      previous_status: current,
-      new_status: next,
-      actor_id: userId,
-      actor_type: "seller",
-      note,
+    // Delegate the transition to the canonical RPC so the child status
+    // update, the history row, and the parent-order rollup happen atomically
+    // in one transaction. IMPORTANT: call it through the request-scoped
+    // client, not supabaseAdmin — the RPC is SECURITY DEFINER and
+    // authorizes via auth.uid(), which is only populated on the caller's
+    // own session (supabaseAdmin uses the service_role key).
+    const rpcResult = await context.supabase.rpc("transition_seller_order_status", {
+      p_seller_order_id: data.sellerOrderId,
+      p_new_status: next,
+      p_note: note ?? "",
     });
-    if (historyResult.error) throw new Error(historyResult.error.message);
+    if (rpcResult.error) throw new Error(rpcResult.error.message);
 
     await supabaseAdmin.from("audit_logs").insert({
       actor_id: userId,

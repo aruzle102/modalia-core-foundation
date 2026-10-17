@@ -200,6 +200,13 @@ export const markOnboardingComplete = createServerFn({ method: "POST" })
       .is("onboarded_at", null);
     if (error) throw new Error(error.message);
 
+    // Clear temporary password flags (onboarding complete = credentials finalized)
+    const { supabaseAdmin: admin } = await import("@/integrations/supabase/client.server");
+    await (admin as any)
+      .from("seller_accounts")
+      .update({ must_change_password: false, must_reset_password: false })
+      .eq("seller_id", seller.sellerId);
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await supabaseAdmin.from("audit_logs").insert({
       actor_id: context.userId,

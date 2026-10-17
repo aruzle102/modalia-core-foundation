@@ -89,9 +89,6 @@ export const fr = {
       areaLabel: "Admin",
     },
     shell: {
-      catalog: "Le catalogue se prépare",
-      catalogDescription:
-        "L’expérience Modalia est conçue avec soin. Les produits et boutiques approuvés arrivent bientôt.",
       explore: "Découvrir Modalia",
       back: "Retour à l’accueil",
     },

@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { Building2, Home, Package, Pencil, Plus, BadgeCheck } from "lucide-react";
 import { SellerShell } from "@/components/seller/SellerShell";
 import {
@@ -173,6 +174,7 @@ function ShippingPage() {
       qc.invalidateQueries({ queryKey: ["seller-shipping-settings"] });
       invalidateRules();
     },
+    onError: (e) => toast.error(e instanceof Error ? e.message : String(e)),
   });
 
   // ------------------------------------------------------------------
@@ -348,6 +350,7 @@ function ShippingPage() {
       setDeleteTarget(null);
       invalidateRules();
     },
+    onError: (e) => toast.error(e instanceof Error ? e.message : String(e)),
   });
 
   const openCreate = () => {
@@ -426,6 +429,7 @@ function ShippingPage() {
       setDeleteOfficeTarget(null);
       qc.invalidateQueries({ queryKey: ["seller-offices"] });
     },
+    onError: (e) => toast.error(e instanceof Error ? e.message : String(e)),
   });
 
   const openCreateOffice = () => {
@@ -882,6 +886,7 @@ function ShippingPage() {
           description={t.deleteRule.text}
           confirmLabel={t.deleteRule.confirm}
           danger
+          isPending={deleteMutation.isPending}
           onConfirm={() => { if (deleteTarget) deleteMutation.mutate({ id: deleteTarget.id }); }}
         />
 
@@ -892,6 +897,7 @@ function ShippingPage() {
           description={t.officeDelivery.confirmDisableText}
           confirmLabel={t.officeDelivery.confirmDisable}
           danger
+          isPending={settingsMutation.isPending}
           onConfirm={() => settingsMutation.mutate(false)}
         />
 
@@ -998,6 +1004,7 @@ function ShippingPage() {
           description={t.offices.deleteText}
           confirmLabel={t.offices.deleteConfirm}
           danger
+          isPending={officeDeleteMutation.isPending}
           onConfirm={() => { if (deleteOfficeTarget) officeDeleteMutation.mutate({ id: deleteOfficeTarget.id }); }}
         />
       </SellerShell>

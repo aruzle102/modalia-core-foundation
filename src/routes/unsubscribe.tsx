@@ -40,10 +40,15 @@ function UnsubscribePage() {
   }, [token]);
 
   const texts = {
-    ar: { title: "إلغاء الاشتراك", success: "تم إلغاء اشتراكك بنجاح.", error: "رابط غير صالح." },
-    fr: { title: "Désinscription", success: "Désinscription réussie.", error: "Lien invalide." },
-    en: { title: "Unsubscribe", success: "Successfully unsubscribed.", error: "Invalid link." },
+    ar: { title: "إلغاء الاشتراك", success: "تم إلغاء اشتراكك بنجاح.", error: "رابط غير صالح.", retry: "حدث خطأ في الاتصال. حاول مجددًا.", retryButton: "إعادة المحاولة" },
+    fr: { title: "Désinscription", success: "Désinscription réussie.", error: "Lien invalide.", retry: "Erreur de connexion. Veuillez réessayer.", retryButton: "Réessayer" },
+    en: { title: "Unsubscribe", success: "Successfully unsubscribed.", error: "Invalid link.", retry: "Connection error. Please try again.", retryButton: "Retry" },
   }[loc];
+
+  // The server returns "Invalid unsubscribe link." only for bad/used tokens.
+  // Any other failure is a network or service error — offer a retry.
+  const failureMessage = unsubMutation.error instanceof Error ? unsubMutation.error.message : "";
+  const isInvalidLink = failureMessage === "Invalid unsubscribe link.";
 
   return (
     <div dir={localeDirections[loc]} className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -65,7 +70,12 @@ function UnsubscribePage() {
         ) : unsubMutation.isError ? (
           <div className="flex flex-col items-center gap-3">
             <XCircle className="h-12 w-12 text-destructive" />
-            <p className="text-sm text-muted-foreground">{texts.error}</p>
+            <p className="text-sm text-muted-foreground">{isInvalidLink ? texts.error : texts.retry}</p>
+            {!isInvalidLink ? (
+              <Button size="sm" onClick={() => unsubMutation.mutate()} disabled={unsubMutation.isPending}>
+                {texts.retryButton}
+              </Button>
+            ) : null}
           </div>
         ) : (
           <div className="flex flex-col items-center gap-3">

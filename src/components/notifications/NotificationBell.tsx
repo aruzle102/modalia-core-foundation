@@ -65,10 +65,12 @@ export function NotificationBell({
   const markReadMutation = useMutation({
     mutationFn: (id: string) => markRead({ data: { scope, id } }),
     onSettled: invalidate,
+    retry: 1,
   });
   const markAllMutation = useMutation({
     mutationFn: () => markAllRead({ data: { scope } }),
     onSettled: invalidate,
+    retry: 1,
   });
 
   useEffect(() => {

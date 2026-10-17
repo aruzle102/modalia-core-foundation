@@ -59,10 +59,12 @@ export function NotificationList({
   const markReadMutation = useMutation({
     mutationFn: (id: string) => markRead({ data: { scope, id } }),
     onSettled: () => invalidateAll(queryClient),
+    retry: 1,
   });
   const markAllMutation = useMutation({
     mutationFn: () => markAllRead({ data: { scope } }),
     onSettled: () => invalidateAll(queryClient),
+    retry: 1,
   });
 
   if (listQuery.isError) {

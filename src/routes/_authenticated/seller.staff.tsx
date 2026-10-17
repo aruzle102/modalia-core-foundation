@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { queryOptions, useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -130,6 +131,7 @@ function StaffTable() {
   const mutation = useMutation({
     mutationFn: (input: { staffId: string; active: boolean }) => updateStaff({ data: input }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["seller-staff"] }),
+    onError: (e) => toast.error(e instanceof Error ? e.message : String(e)),
   });
 
   if (!data.staff.length) {

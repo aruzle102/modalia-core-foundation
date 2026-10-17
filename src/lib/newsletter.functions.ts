@@ -229,6 +229,7 @@ export const sendNewsletterCampaign = createServerFn({ method: "POST" })
     const emailFrom = process.env["EMAIL_FROM"] ?? "info@modaliadz.com";
 
     if (!resendApiKey) throw new Error("Email service not configured (RESEND_API_KEY missing).");
+    console.log("[newsletter] Resend key present, length:", resendApiKey.length, "prefix:", resendApiKey.substring(0, 7));
 
     let sent = 0;
     let failed = 0;

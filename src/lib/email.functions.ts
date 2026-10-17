@@ -1,9 +1,9 @@
 /**
  * MODALIA — Email Center server functions.
  *
- * Sends emails via the Supabase Edge Function `send-email` (Resend).
- * The RESEND_API_KEY never leaves the server — it lives in the Edge
- * Function secrets, not in this code or the browser.
+ * Sends emails via the Resend API directly (server-side only).
+ * The RESEND_API_KEY never leaves the server — it lives in the
+ * server environment, not in this code or the browser.
  *
  * Authorization: email.manage permission or super_admin.
  */
@@ -12,6 +12,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getAdminIdentity, assertAdminPermission } from "./admin-permissions";
+import { emailConfig, getFromAddress } from "./email.config";
 
 const adminOnly = [requireSupabaseAuth] as const;
 
@@ -41,7 +42,11 @@ export function renderTemplate(template: string, variables: Record<string, strin
   return out;
 }
 
-/** Invoke the send-email Edge Function */
+/** Send email via Resend API directly.
+ *
+ * Called only from authenticated server functions (admin permission already
+ * verified by the caller). The RESEND_API_KEY is server-side only.
+ */
 async function invokeSendEmail(args: {
   to: string;
   subject: string;
@@ -50,28 +55,31 @@ async function invokeSendEmail(args: {
   templateId?: string;
   metadata?: Record<string, string>;
 }): Promise<{ success: boolean; id?: string; error?: string }> {
-  const supabaseUrl = process.env["SUPABASE_URL"] ?? process.env["VITE_SUPABASE_URL"];
-  const anonKey = process.env["SUPABASE_PUBLISHABLE_KEY"] ?? process.env["VITE_SUPABASE_PUBLISHABLE_KEY"];
+  
+  const apiKey = emailConfig.resendApiKey;
 
-  if (!supabaseUrl || !anonKey) {
-    throw new Error("Email service not configured.");
+  if (!apiKey) {
+    return { success: false, error: "Email service not configured (RESEND_API_KEY missing)." };
   }
 
-  // NOTE: In production this calls the deployed Edge Function.
-  // The Edge Function validates the caller's JWT and permissions server-side.
-  const res = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+  const res = await fetch(emailConfig.resendApiUrl, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "apikey": anonKey,
-      // The caller's auth is forwarded via the server function context
+      Authorization: `Bearer ${apiKey}`,
     },
-    body: JSON.stringify(args),
+    body: JSON.stringify({
+      from: getFromAddress(args.from),
+      to: args.to,
+      subject: args.subject,
+      html: args.html,
+    }),
   });
 
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    return { success: false, error: data?.error ?? "Email delivery failed" };
+    const errMsg = typeof data?.message === "string" ? data.message : `HTTP ${res.status}`;
+    return { success: false, error: errMsg };
   }
   return { success: true, id: data?.id };
 }
@@ -170,7 +178,7 @@ export const sendEmail = createServerFn({ method: "POST" })
       // Log failure
       await supabaseAdmin.from("email_logs").insert({
         to_email: data.to,
-        from_email: "noreply@modalia.dz",
+        from_email: emailConfig.defaultFrom,
         subject: data.subject,
         template_id: data.templateId ?? null,
         status: "failed",

@@ -39,20 +39,62 @@ const newsletterInput = z.object({
 export const subscribeNewsletter = createServerFn({ method: "POST" })
   .inputValidator((data) => newsletterInput.parse(data))
   .handler(async ({ data }) => {
-    // Rate limit temporarily disabled for debugging
-    // rateLimitEndpoint("subscribeNewsletter", 10);
+    rateLimitEndpoint("subscribeNewsletter", 10);
     const supabase = publicClient();
+    const { randomBytes } = await import("crypto");
+    const { createClient } = await import("@supabase/supabase-js");
+    const now = new Date().toISOString();
 
+    // Service client for existence check (anon has INSERT only, no SELECT)
+    const url = process.env["SUPABASE_URL"] ?? process.env["VITE_SUPABASE_URL"];
+    const serviceKey = process.env["SUPABASE_SERVICE_ROLE_KEY"];
+    const admin = url && serviceKey ? createClient(url, serviceKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    }) : null;
+
+    // Check for existing subscriber (via admin if available)
+    let existing: { id: string; status: string; unsubscribe_token: string | null } | null = null;
+    if (admin) {
+      const { data: found } = await (admin as any)
+        .from("newsletter_subscribers")
+        .select("id,status,unsubscribe_token")
+        .eq("email", data.email)
+        .maybeSingle();
+      existing = found as typeof existing;
+    }
+
+    if (existing) {
+      // Reactivate if unsubscribed, generate token if missing
+      const updates: Record<string, unknown> = { ["updated_at"]: now };
+      if ((existing as any).status !== "active") {
+        updates["status"] = "active";
+        updates["unsubscribed_at"] = null;
+        updates["consent_at"] = now;
+      }
+      if (!(existing as any).unsubscribe_token) {
+        updates["unsubscribe_token"] = randomBytes(32).toString("hex");
+      }
+      const db = admin ?? supabase;
+      const { error: updateError } = await (db as any)
+        .from("newsletter_subscribers")
+        .update(updates)
+        .eq("id", (existing as any).id);
+      if (updateError) throw new Error("Your subscription could not be saved. Please try again.");
+      return { ok: true, resubscribed: (existing as any).status !== "active" };
+    }
+
+    // New subscription with secure token
     const { error } = await supabase.from("newsletter_subscribers").insert({
       email: data.email,
       locale: data.locale ?? platformConfig.market.defaultLanguage,
-      subscribed_at: new Date().toISOString(),
+      subscribed_at: now,
+      consent_at: now,
+      status: "active",
+      unsubscribe_token: randomBytes(32).toString("hex"),
+      source: "footer",
     });
 
-    // Ignore duplicate errors (already subscribed = success)
-    if (error && !error.message.includes("duplicate") && error.code !== "23505") {
-      throw new Error("Your subscription could not be saved. Please try again.");
-    }
+    if (error) throw new Error("Your subscription could not be saved. Please try again.");
     return { ok: true };
   });
 
@@ -67,11 +109,25 @@ export const unsubscribeNewsletter = createServerFn({ method: "POST" })
       auth: { persistSession: false, autoRefreshToken: false },
     });
 
-    // Token is the subscriber ID (basic schema)
+    // Lookup by secure token
+    const { data: sub } = await admin
+      .from("newsletter_subscribers")
+      .select("id,status")
+      .eq("unsubscribe_token", data.token)
+      .maybeSingle();
+
+    if (!sub) throw new Error("Invalid unsubscribe link.");
+    if (sub.status === "unsubscribed") return { ok: true, alreadyUnsubscribed: true };
+
+    // Deactivate (never delete - preserves history)
     const { error } = await admin
       .from("newsletter_subscribers")
-      .delete()
-      .eq("id", data.token);
+      .update({
+        status: "unsubscribed",
+        unsubscribed_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", sub.id);
 
     if (error) throw new Error("Could not unsubscribe. Please try again.");
     return { ok: true };

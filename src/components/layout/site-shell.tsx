@@ -718,33 +718,7 @@ function NewsletterForm({ locale, t }: { locale: SupportedLocale; t: Translation
     setPending(true);
     setStatus("idle");
     try {
-      // Direct REST API call (bypasses all client issues)
-      const env = (typeof process !== "undefined" && process.env) || {};
-      const metaEnv = (import.meta as any).env || {};
-      const SUPABASE_URL = env["SUPABASE_URL"] || env["VITE_SUPABASE_URL"] || metaEnv["VITE_SUPABASE_URL"];
-      const SUPABASE_KEY = env["SUPABASE_PUBLISHABLE_KEY"] || env["VITE_SUPABASE_PUBLISHABLE_KEY"] || metaEnv["VITE_SUPABASE_PUBLISHABLE_KEY"];
-      if (!SUPABASE_URL || !SUPABASE_KEY) throw new Error("Config missing");
-
-      const response = await fetch(`${SUPABASE_URL}/rest/v1/newsletter_subscribers`, {
-        method: "POST",
-        headers: {
-          "apikey": SUPABASE_KEY,
-          "Authorization": `Bearer ${SUPABASE_KEY}`,
-          "Content-Type": "application/json",
-          "Prefer": "return=minimal",
-        },
-        body: JSON.stringify({
-          email: value,
-          locale: locale,
-          subscribed_at: new Date().toISOString(),
-        }),
-      });
-
-      // 201 = created, 409 = duplicate (already subscribed = success)
-      if (!response.ok && response.status !== 409) {
-        const body = await response.text();
-        throw new Error(`HTTP ${response.status}: ${body.substring(0, 200)}`);
-      }
+      await subscribeNewsletter({ data: { email: value, locale } });
       setStatus("success");
       setEmail("");
     } catch {

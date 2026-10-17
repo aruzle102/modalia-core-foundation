@@ -166,19 +166,22 @@ export const sendNewsletterTest = createServerFn({ method: "POST" })
       logoUrl,
     });
 
-    // Call Edge Function
-    const supabaseUrl = process.env["SUPABASE_URL"];
-    const anonKey = process.env["SUPABASE_PUBLISHABLE_KEY"] ?? process.env["VITE_SUPABASE_PUBLISHABLE_KEY"];
-    if (!supabaseUrl || !anonKey) throw new Error("Email service not configured.");
+    // Send test email via Resend API directly
+    const { emailConfig, getFromAddress } = await import("./email.config");
+    const resendApiKey = emailConfig.resendApiKey;
+    if (!resendApiKey) throw new Error("Email service not configured (RESEND_API_KEY missing).");
 
-    const res = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+    const res = await fetch(emailConfig.resendApiUrl, {
       method: "POST",
-      headers: { "Content-Type": "application/json", apikey: anonKey },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${resendApiKey}`,
+      },
       body: JSON.stringify({
+        from: getFromAddress(),
         to: data.to,
         subject: `[TEST] ${campaign.subject}`,
         html,
-        metadata: { campaign_id: data.id, test: "true" },
       }),
     });
 
@@ -210,12 +213,16 @@ export const sendNewsletterCampaign = createServerFn({ method: "POST" })
       .single();
 
     if (!campaign) throw new Error("Campaign not found.");
-    if (campaign.status !== "draft") throw new Error("Campaign already sent or in progress.");
+    if (!["draft", "failed", "partial"].includes(campaign.status)) {
+      throw new Error("Campaign already sent or in progress.");
+    }
+    // For retries: reset to sending, existing sends are skipped via duplicate check
 
-    // Get all subscribers (table has basic schema: id, email, locale, subscribed_at)
+    // Get eligible subscribers: active only (excludes unsubscribed/bounced/complained)
     const { data: subscribers, error: subError } = await db
       .from("newsletter_subscribers")
-      .select("id,email,locale");
+      .select("id,email,locale,unsubscribe_token")
+      .eq("status", "active");
 
     if (subError) throw new Error("Could not load subscribers.");
     if (!subscribers?.length) throw new Error("No eligible subscribers.");
@@ -223,10 +230,11 @@ export const sendNewsletterCampaign = createServerFn({ method: "POST" })
     // Mark as sending
     await db.from("newsletter_campaigns").update({ status: "sending" }).eq("id", data.id);
 
-    const siteUrl = process.env["SITE_URL"] ?? "https://modalia-core-foundation.lovable.app";
+    const { emailConfig, getFromAddress } = await import("./email.config");
+    const siteUrl = emailConfig.siteUrl;
     const logoUrl = `${siteUrl}/brand/modalia-logo.png`;
-    const resendApiKey = process.env["RESEND_API_KEY"];
-    const emailFrom = process.env["EMAIL_FROM"] ?? "info@modaliadz.com";
+    const resendApiKey = emailConfig.resendApiKey;
+    const emailFrom = getFromAddress();
 
     if (!resendApiKey) throw new Error("Email service not configured (RESEND_API_KEY missing).");
 
@@ -248,7 +256,7 @@ export const sendNewsletterCampaign = createServerFn({ method: "POST" })
             .maybeSingle();
           if (existing) return;
 
-          const unsubscribeUrl = `${siteUrl}/unsubscribe?token=${sub.id}`;
+          const unsubscribeUrl = `${siteUrl}/unsubscribe?token=${sub.unsubscribe_token ?? sub.id}`;
           const html = buildNewsletterHtml({
             title: campaign.name,
             previewText: campaign.preview_text,
@@ -306,10 +314,13 @@ export const sendNewsletterCampaign = createServerFn({ method: "POST" })
       }
     }
 
+    // Determine final status: sent (all ok), failed (all failed), partial (mixed)
+    const finalStatus = failed === 0 ? "sent" : sent === 0 ? "failed" : "partial";
+
     await db
       .from("newsletter_campaigns")
       .update({
-        status: "sent",
+        status: finalStatus,
         sent_at: new Date().toISOString(),
         recipient_count: subscribers.length,
         sent_count: sent,

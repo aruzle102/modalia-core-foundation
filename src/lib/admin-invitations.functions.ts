@@ -19,6 +19,7 @@ import { z } from "zod";
 import { createHash, randomBytes } from "crypto";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getAdminIdentity } from "./admin-permissions";
+import { rateLimitEndpoint } from "@/lib/rate-limit";
 import type { AdminRole } from "./admin-permissions";
 
 const adminOnly = [requireSupabaseAuth] as const;
@@ -173,6 +174,7 @@ export const revokeAdminInvitation = createServerFn({ method: "POST" })
 export const validateInvitationToken = createServerFn({ method: "GET" })
   .validator((d) => z.object({ token: z.string().min(1).max(128) }).parse(d))
   .handler(async ({ data }) => {
+    rateLimitEndpoint("validateInvitationToken", 20);
     const db = await getDb();
     const tokenHash = hashToken(data.token);
 
@@ -220,6 +222,7 @@ const acceptSchema = z.object({
 export const acceptAdminInvitation = createServerFn({ method: "POST" })
   .validator((d) => acceptSchema.parse(d))
   .handler(async ({ data }) => {
+    rateLimitEndpoint("acceptAdminInvitation", 5);
     const db = await getDb();
     const tokenHash = hashToken(data.token);
 

@@ -138,7 +138,6 @@ export const ar = {
       contactPhone: "الهاتف",
       contactAddress: "العنوان",
       rights: "جميع الحقوق محفوظة.",
-      contactSoon: "معلومات الاتصال قريبًا.",
       cashOnDelivery: "الدفع عند الاستلام",
     },
     common: {

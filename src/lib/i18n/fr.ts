@@ -138,7 +138,6 @@ export const fr = {
       contactPhone: "Téléphone",
       contactAddress: "Adresse",
       rights: "Tous droits réservés.",
-      contactSoon: "Coordonnées bientôt disponibles.",
       cashOnDelivery: "Paiement à la livraison",
     },
     common: {

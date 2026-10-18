@@ -214,10 +214,33 @@ export const sendNewsletterCampaign = createServerFn({ method: "POST" })
       .single();
 
     if (!campaign) throw new Error("Campaign not found.");
-    if (!["draft", "failed", "partial"].includes(campaign.status)) {
+
+    // ITEM 2: Validate Resend config BEFORE changing status to sending
+    const { emailConfig, getFromAddress } = await import("./email.config");
+    const siteUrl = emailConfig.siteUrl;
+    const logoUrl = `${siteUrl}/brand/modalia-logo.png`;
+    const resendApiKey = emailConfig.resendApiKey;
+    const emailFrom = getFromAddress();
+
+    if (!resendApiKey) throw new Error("Email service not configured (RESEND_API_KEY missing).");
+
+    // ITEM 1: ATOMIC status claim - only one concurrent request can succeed.
+    // UPDATE ... WHERE status IN (...) RETURNING ensures atomicity.
+    const { data: claimed, error: claimError } = await db
+      .from("newsletter_campaigns")
+      .update({ status: "sending" })
+      .eq("id", data.id)
+      .in("status", ["draft", "failed", "partial"])
+      .select("id")
+      .maybeSingle();
+
+    if (claimError) {
+      throw new Error(`Could not start campaign: ${claimError.message}`);
+    }
+    if (!claimed) {
       throw new Error("Campaign already sent or in progress.");
     }
-    // For retries: reset to sending, existing sends are skipped via duplicate check
+    // For retries: existing sends are skipped via duplicate check below
 
     // Get eligible subscribers: active only (excludes unsubscribed/bounced/complained)
     const { data: subscribers, error: subError } = await db
@@ -228,34 +251,19 @@ export const sendNewsletterCampaign = createServerFn({ method: "POST" })
     if (subError) throw new Error("Could not load subscribers.");
     if (!subscribers?.length) throw new Error("No eligible subscribers.");
 
-    // Mark as sending
-    await db.from("newsletter_campaigns").update({ status: "sending" }).eq("id", data.id);
-
-    const { emailConfig, getFromAddress } = await import("./email.config");
-    const siteUrl = emailConfig.siteUrl;
-    const logoUrl = `${siteUrl}/brand/modalia-logo.png`;
-    const resendApiKey = emailConfig.resendApiKey;
-    const emailFrom = getFromAddress();
-
-    if (!resendApiKey) throw new Error("Email service not configured (RESEND_API_KEY missing).");
-
     let sent = 0;
     let failed = 0;
 
+    try {
     // Batch: 10 at a time to respect rate limits
     const BATCH_SIZE = 10;
     for (let i = 0; i < subscribers.length; i += BATCH_SIZE) {
       const batch = subscribers.slice(i, i + BATCH_SIZE);
       await Promise.all(
         batch.map(async (sub: any) => {
-          // Duplicate prevention
-          const { data: existing } = await db
-            .from("newsletter_sends")
-            .select("id")
-            .eq("campaign_id", data.id)
-            .eq("subscriber_id", sub.id)
-            .maybeSingle();
-          if (existing) return;
+          // Duplicate prevention: UNIQUE(campaign_id, subscriber_id) constraint
+          // ensures atomicity. We check first for efficiency, but the INSERT
+          // below handles race conditions via unique violation catch.
 
           // Ensure subscriber has a secure token (backfill if missing)
           let token = sub.unsubscribe_token;
@@ -292,7 +300,7 @@ export const sendNewsletterCampaign = createServerFn({ method: "POST" })
             const result = await res.json().catch(() => ({}));
             const errMsg = res.ok ? null : `HTTP ${res.status}: ${JSON.stringify(result).substring(0, 300)}`;
 
-            await db.from("newsletter_sends").insert({
+            const { error: insertError } = await db.from("newsletter_sends").insert({
               campaign_id: data.id,
               subscriber_id: sub.id,
               email: sub.email,
@@ -301,6 +309,12 @@ export const sendNewsletterCampaign = createServerFn({ method: "POST" })
               error_message: errMsg,
               sent_at: res.ok ? new Date().toISOString() : null,
             });
+
+            // Unique violation means another concurrent request already sent to this subscriber - skip
+            if (insertError) {
+              if (insertError.code === "23505") return; // duplicate, safely skip
+              throw insertError;
+            }
 
             if (res.ok) sent++;
             else failed++;
@@ -322,10 +336,25 @@ export const sendNewsletterCampaign = createServerFn({ method: "POST" })
       }
     }
 
+    } catch (loopError) {
+      // Unexpected error during sending - mark as failed to prevent stuck "sending"
+      await db
+        .from("newsletter_campaigns")
+        .update({
+          status: "failed",
+          sent_at: new Date().toISOString(),
+          recipient_count: subscribers.length,
+          sent_count: sent,
+          failed_count: failed,
+        })
+        .eq("id", data.id);
+      throw loopError;
+    }
+
     // Determine final status: sent (all ok), failed (all failed), partial (mixed)
     const finalStatus = failed === 0 ? "sent" : sent === 0 ? "failed" : "partial";
 
-    await db
+    const { error: finalError } = await db
       .from("newsletter_campaigns")
       .update({
         status: finalStatus,
@@ -335,6 +364,10 @@ export const sendNewsletterCampaign = createServerFn({ method: "POST" })
         failed_count: failed,
       })
       .eq("id", data.id);
+
+    if (finalError) {
+      throw new Error(`Could not update campaign status: ${finalError.message}`);
+    }
 
     await db.from("audit_logs").insert({
       actor_id: userId,

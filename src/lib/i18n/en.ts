@@ -138,7 +138,6 @@ export const en = {
       contactPhone: "Phone",
       contactAddress: "Address",
       rights: "All rights reserved.",
-      contactSoon: "Contact info coming soon.",
       cashOnDelivery: "Cash on delivery",
     },
     common: {

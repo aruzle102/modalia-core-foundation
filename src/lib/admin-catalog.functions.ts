@@ -1256,7 +1256,7 @@ const SETTLED_STATUSES = ["approved", "paid"] as const;
  * Note: the seller_order_status enum only has "fulfilled" as a terminal,
  * pay-out state (there is no "delivered" status), so that is what we sum.
  */
-const EARNED_ORDER_STATUS = "fulfilled";
+const EARNED_ORDER_STATUSES = ["delivered", "fulfilled"] as const;
 
 const SETTLEMENT_TRANSITIONS: Record<string, string[]> = {
   pending: ["approved", "rejected", "cancelled"],
@@ -1311,7 +1311,7 @@ export const settlementReference = createServerFn({ method: "GET" })
       .from("seller_orders")
       .select("commission_total, subtotal")
       .eq("seller_id", data.sellerId)
-      .eq("status", EARNED_ORDER_STATUS);
+      .in("status", EARNED_ORDER_STATUSES);
     if (ordersError) throw new Error(ordersError.message);
 
     const { data: settlements, error: settlementsError } = await s
@@ -1321,7 +1321,7 @@ export const settlementReference = createServerFn({ method: "GET" })
       .in("status", [...SETTLED_STATUSES]);
     if (settlementsError) throw new Error(settlementsError.message);
 
-    const earnedTotal = (orders ?? []).reduce((sum, o) => sum + Number(o.commission_total ?? 0), 0);
+    const earnedTotal = (orders ?? []).reduce((sum, o) => sum + Number(o.subtotal ?? 0) - Number(o.commission_total ?? 0), 0);
     const settledTotal = (settlements ?? []).reduce((sum, st) => sum + Number(st.amount ?? 0), 0);
     return {
       sellerId: data.sellerId,

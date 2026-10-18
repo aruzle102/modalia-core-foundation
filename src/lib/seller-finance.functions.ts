@@ -12,10 +12,10 @@ const SETTLED_STATUSES = ["approved", "paid"] as const;
 
 async function getPayable(supabase: any, sellerId: string): Promise<number> {
   const [{ data: orders }, { data: settlements }] = await Promise.all([
-    supabase.from("seller_orders").select("commission_total").eq("seller_id", sellerId).eq("status", "fulfilled"),
+    supabase.from("seller_orders").select("subtotal,commission_total").eq("seller_id", sellerId).in("status", ["delivered", "fulfilled"]),
     supabase.from("seller_settlements").select("amount,status").eq("seller_id", sellerId).in("status", [...SETTLED_STATUSES]),
   ]);
-  const earned = (orders ?? []).reduce((s: number, o: any) => s + num(o.commission_total), 0);
+  const earned = (orders ?? []).reduce((s: number, o: any) => s + num(o.subtotal) - num(o.commission_total), 0);
   const settled = (settlements ?? []).reduce((s: number, x: any) => s + num(x.amount), 0);
   return Math.max(0, earned - settled);
 }
@@ -39,13 +39,14 @@ export const getCommissionSummary = createServerFn({ method: "GET" })
       context.supabase.from("seller_settlements").select("status,amount").eq("seller_id", seller.sellerId),
     ]);
 
-    const delivered = (orders ?? []).filter((o: any) => o.status === "fulfilled");
+    const delivered = (orders ?? []).filter((o: any) => o.status === "delivered" || o.status === "fulfilled");
     const grossDelivered = delivered.reduce((s: number, o: any) => s + num(o.subtotal) + num(o.shipping_total), 0);
     const commissionPayable = delivered.reduce((s: number, o: any) => s + num(o.commission_total), 0);
     const settled = (settlements ?? [])
       .filter((x: any) => (SETTLED_STATUSES as readonly string[]).includes(x.status))
       .reduce((s: number, x: any) => s + num(x.amount), 0);
-    const pendingPayout = Math.max(0, commissionPayable - settled);
+    const sellerNet = Math.max(0, grossDelivered - commissionPayable);
+    const pendingPayout = Math.max(0, sellerNet - settled);
 
     return {
       seller: { id: seller.sellerId, legalName: sellerRow?.legal_name ?? seller.legalName },

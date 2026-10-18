@@ -154,7 +154,7 @@ const imageInput = z.object({
   altText: localeText.optional(),
 });
 
-const saveProductSchema = z.object({
+const baseProductSchema = z.object({
   id: uuid.optional(),
   name: nonEmptyLocale,
   description: localeText.optional(),
@@ -177,11 +177,22 @@ const saveProductSchema = z.object({
   images: z.array(imageInput).max(20).default([]),
   options: z.array(optionInput).max(5).default([]),
   variants: z.array(variantInput).min(1).max(200),
-}).refine(
-  (d) => d.compareAtPrice === undefined || d.compareAtPrice > d.basePrice,
+});
+
+const priceRefinements = {
+  compareAtPrice: (d: Record<string, unknown>) => {
+    const cp = d["compareAtPrice"] as number | undefined;
+    const bp = d["basePrice"] as number;
+    return cp === undefined || cp > bp;
+  },
+  basePrice: (d: Record<string, unknown>) => (d["basePrice"] as number) > 0,
+};
+
+const saveProductSchema = baseProductSchema.refine(
+  priceRefinements.compareAtPrice,
   { message: "Compare-at price must be greater than the selling price.", path: ["compareAtPrice"] }
 ).refine(
-  (d) => d.basePrice > 0,
+  priceRefinements.basePrice,
   { message: "Price must be greater than zero.", path: ["basePrice"] }
 );
 
@@ -312,7 +323,7 @@ export const getProductEditor = createServerFn({ method: "GET" })
 // (admin overrides are flagged in audit_logs).
 // ---------------------------------------------------------------------------
 
-export { saveProductSchema };
+export { saveProductSchema, baseProductSchema, priceRefinements };
 export type SaveProductInput = z.infer<typeof saveProductSchema>;
 export type ProductSaveScope = {
   sellerId: string;

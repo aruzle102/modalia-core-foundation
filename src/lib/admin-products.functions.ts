@@ -24,7 +24,8 @@ import type { Database, Json } from "@/integrations/supabase/types";
 import { assertAdminPermission } from "@/lib/admin-permissions";
 import {
   executeProductSave,
-  saveProductSchema,
+  baseProductSchema,
+  priceRefinements,
   type SaveProductInput,
 } from "@/lib/seller-products.functions";
 
@@ -90,10 +91,16 @@ export const getAdminEditorLists = createServerFn({ method: "GET" })
     };
   });
 
-const adminSaveProductInput = saveProductSchema.extend({
+const adminSaveProductInput = baseProductSchema.extend({
   /** Required when creating (data.id absent); ignored on edit (product's own seller wins). */
   sellerId: uuid.optional(),
-});
+}).refine(
+  priceRefinements.compareAtPrice,
+  { message: "Compare-at price must be greater than the selling price.", path: ["compareAtPrice"] }
+).refine(
+  priceRefinements.basePrice,
+  { message: "Price must be greater than zero.", path: ["basePrice"] }
+);
 
 /**
  * Admin save (create / update) through the shared `executeProductSave` core:

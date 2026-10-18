@@ -226,54 +226,86 @@ export const acceptAdminInvitation = createServerFn({ method: "POST" })
     const db = await getDb();
     const tokenHash = hashToken(data.token);
 
-    const { data: invitation } = await db
-      .from("admin_invitations")
-      .select("id,email,role,permissions,expires_at,status")
-      .eq("token_hash", tokenHash)
-      .maybeSingle();
-
-    if (!invitation || invitation.status !== "pending") {
-      throw new Error("Invalid or already-used invitation.");
-    }
-    if (new Date(invitation.expires_at) < new Date()) {
-      await db.from("admin_invitations").update({ status: "expired" }).eq("id", invitation.id);
-      throw new Error("This invitation has expired.");
-    }
-
-    const { data: authUser, error: signUpError } = await db.auth.admin.createUser({
-      email: invitation.email,
-      password: data.password,
-      email_confirm: true,
-    });
-
-    if (signUpError || !authUser?.user) {
-      throw new Error("Could not create account. The email may already be registered.");
-    }
-
-    const { error: memberError } = await db.from("admin_members").insert({
-      user_id: authUser.user.id,
-      role: invitation.role,
-      permissions: invitation.permissions,
-      is_active: true,
-    });
-
-    if (memberError) {
-      await db.auth.admin.deleteUser(authUser.user.id);
-      throw new Error("Could not set up admin access.");
-    }
-
-    await db
+    // ATOMIC CLAIM: Update status from pending->claimed in a single operation.
+    // Only one concurrent request can succeed (affected row count = 1).
+    // This prevents race conditions where two requests both create admin users.
+    const { data: claimed, error: claimError } = await db
       .from("admin_invitations")
       .update({
-        status: "accepted",
-        accepted_at: new Date().toISOString(),
-        accepted_by: authUser.user.id,
+        status: "claimed",
+        claimed_at: new Date().toISOString(),
       })
-      .eq("id", invitation.id)
-      .eq("status", "pending");
+      .eq("token_hash", tokenHash)
+      .eq("status", "pending")
+      .gt("expires_at", new Date().toISOString())
+      .select("id,email,role,permissions")
+      .maybeSingle();
+
+    if (claimError || !claimed) {
+      // Check if it was expired vs already used
+      const { data: existing } = await db
+        .from("admin_invitations")
+        .select("status,expires_at")
+        .eq("token_hash", tokenHash)
+        .maybeSingle();
+      if (existing && new Date(existing.expires_at) < new Date() && existing.status === "pending") {
+        await db.from("admin_invitations").update({ status: "expired" }).eq("token_hash", tokenHash);
+        throw new Error("This invitation has expired.");
+      }
+      throw new Error("Invalid or already-used invitation.");
+    }
+
+    const invitation = claimed;
+
+    let authUserId: string | null = null;
+    try {
+      const { data: authUser, error: signUpError } = await db.auth.admin.createUser({
+        email: invitation.email,
+        password: data.password,
+        email_confirm: true,
+      });
+
+      if (signUpError || !authUser?.user) {
+        throw new Error("Could not create account. The email may already be registered.");
+      }
+      authUserId = authUser.user.id;
+
+      const { error: memberError } = await db.from("admin_members").insert({
+        user_id: authUser.user.id,
+        role: invitation.role,
+        permissions: invitation.permissions,
+        is_active: true,
+      });
+
+      if (memberError) {
+        throw new Error("Could not set up admin access.");
+      }
+
+      // Mark as fully accepted
+      await db
+        .from("admin_invitations")
+        .update({
+          status: "accepted",
+          accepted_at: new Date().toISOString(),
+          accepted_by: authUser.user.id,
+        })
+        .eq("id", invitation.id)
+        .eq("status", "claimed");
+    } catch (err) {
+      // Rollback: delete created user and release the claim
+      if (authUserId) {
+        await db.auth.admin.deleteUser(authUserId);
+      }
+      await db
+        .from("admin_invitations")
+        .update({ status: "pending", claimed_at: null })
+        .eq("id", invitation.id)
+        .eq("status", "claimed");
+      throw err;
+    }
 
     await db.from("audit_logs").insert({
-      actor_id: authUser.user.id,
+      actor_id: authUserId,
       action: "invitation.accept",
       resource_type: "admin_invitation",
       resource_id: invitation.id,

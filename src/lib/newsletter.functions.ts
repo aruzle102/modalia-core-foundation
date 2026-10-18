@@ -153,7 +153,8 @@ export const sendNewsletterTest = createServerFn({ method: "POST" })
 
     if (!campaign) throw new Error("Campaign not found.");
 
-    const siteUrl = process.env["SITE_URL"] ?? "https://modalia-core-foundation.lovable.app";
+    const { emailConfig: ec } = await import("./email.config");
+    const siteUrl = ec.siteUrl;
     const logoUrl = `${siteUrl}/brand/modalia-logo.png`;
 
     const html = buildNewsletterHtml({
@@ -256,7 +257,14 @@ export const sendNewsletterCampaign = createServerFn({ method: "POST" })
             .maybeSingle();
           if (existing) return;
 
-          const unsubscribeUrl = `${siteUrl}/unsubscribe?token=${sub.unsubscribe_token ?? sub.id}`;
+          // Ensure subscriber has a secure token (backfill if missing)
+          let token = sub.unsubscribe_token;
+          if (!token) {
+            const { randomBytes } = await import("crypto");
+            token = randomBytes(32).toString("hex");
+            await db.from("newsletter_subscribers").update({ unsubscribe_token: token }).eq("id", sub.id);
+          }
+          const unsubscribeUrl = `${siteUrl}/unsubscribe?token=${token}`;
           const html = buildNewsletterHtml({
             title: campaign.name,
             previewText: campaign.preview_text,

@@ -254,8 +254,8 @@ function CampaignsTab() {
                     contentHtml: "<p>Preview content...</p>",
                     locale: previewCampaign.locale,
                     unsubscribeUrl: "#",
-                    siteUrl: "https://modalia-core-foundation.lovable.app",
-                    logoUrl: "https://modalia-core-foundation.lovable.app/brand/modalia-logo.png",
+                    siteUrl: "https://modaliadz.com",
+                    logoUrl: "https://modaliadz.com/brand/modalia-logo.png",
                   })}
                 />
               </div>

@@ -64,7 +64,11 @@ export const createGuestOrder = createServerFn({ method: "POST" })
     const { data: cart, error: cartError } = await supabaseAdmin.from("carts").insert({ session_token: sessionToken, currency: "DZD" }).select("id").single();
     if (cartError || !cart) throw new Error("Unable to prepare checkout.");
     const { error: itemError } = await supabaseAdmin.from("cart_items").insert(data.items.map((item) => ({ cart_id: cart.id, variant_id: item.variantId, quantity: item.quantity })));
-    if (itemError) throw new Error("Unable to prepare cart items.");
+    if (itemError) {
+      // Prevent orphaned cart: clean up the cart row if items failed to insert
+      await supabaseAdmin.from("carts").delete().eq("id", cart.id);
+      throw new Error("Unable to prepare cart items.");
+    }
     // V8 (sections 29–32): the RPC gained optional coupon / per-seller method /
     // office / manual-commune params (hand-added to generated types.ts until
     // the next sync). The cast bridges the null/undefined gap on p_commune_id
@@ -88,11 +92,28 @@ export const createGuestOrder = createServerFn({ method: "POST" })
       ...(data.note ? { p_customer_note: data.note } : {}),
       p_idempotency_key: data.idempotencyKey,
     } satisfies Record<string, unknown>;
-    const { data: result, error } = await supabaseAdmin.rpc(
-      "checkout_cart",
-      rpcArgs as unknown as CheckoutCartArgs,
-    );
-    if (error) throw new Error(error.message.replace(/^.*?\n/, ""));
+    let result: unknown = null;
+    let rpcError: { message: string } | null = null;
+    // Idempotency race: if two concurrent requests with the same key both pass
+    // the initial check, the loser's INSERT hits the unique index. Retry once —
+    // the retry's idempotency check will find and return the existing order.
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const { data: rpcData, error } = await supabaseAdmin.rpc(
+        "checkout_cart",
+        rpcArgs as unknown as CheckoutCartArgs,
+      );
+      if (!error) {
+        result = rpcData;
+        rpcError = null;
+        break;
+      }
+      rpcError = error;
+      const isDuplicate = /unique|duplicate|already exists/i.test(error.message);
+      if (!isDuplicate || !data.idempotencyKey || attempt === 1) break;
+      // Brief backoff before retry to let the winner commit
+      await new Promise((r) => setTimeout(r, 100));
+    }
+    if (rpcError) throw new Error(rpcError.message.replace(/^.*?\n/, ""));
     const order = result as { order_id?: string; order_number?: string; subtotal?: number; shipping_total?: number; grand_total?: number; delivery_method?: string; discount_total?: number; coupon_code?: string; currency?: string } | null;
     if (!order?.order_id || !order.order_number) throw new Error("Order confirmation was unavailable.");
 

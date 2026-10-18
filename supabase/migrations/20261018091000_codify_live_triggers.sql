@@ -44,13 +44,32 @@ CREATE TRIGGER trg_prevent_seller_moderation_bypass
 CREATE OR REPLACE FUNCTION public.release_reserved_on_cancel()
 RETURNS TRIGGER AS $$
 BEGIN
+  -- Exactly-once: fires only on first entry into terminal states
   IF NEW.status IN ('cancelled', 'refunded', 'returned')
      AND OLD.status NOT IN ('cancelled', 'refunded', 'returned') THEN
+    -- Always release the reservation (goods no longer allocated to this order)
     UPDATE public.inventory i
     SET reserved_quantity = GREATEST(0, i.reserved_quantity - so.quantity)
     FROM public.order_items so
     WHERE so.seller_order_id = NEW.id
       AND so.variant_id = i.variant_id;
+    -- On RETURNED (from failed_delivery): goods physically come back, restock quantity.
+    -- On CANCELLED/REFUNDED: goods never left the warehouse, quantity untouched.
+    -- This runs exactly once: 'returned' is terminal (no outgoing transitions in RPC matrix).
+    IF NEW.status = 'returned' THEN
+      UPDATE public.inventory i
+      SET quantity = i.quantity + so.quantity
+      FROM public.order_items so
+      WHERE so.seller_order_id = NEW.id
+        AND so.variant_id = i.variant_id;
+      -- Recompute available flag after restock
+      UPDATE public.product_variants pv
+      SET available = (i.quantity - i.reserved_quantity > 0)
+      FROM public.inventory i
+      JOIN public.order_items so ON so.variant_id = i.variant_id
+      WHERE so.seller_order_id = NEW.id
+        AND pv.id = i.variant_id;
+    END IF;
   END IF;
   RETURN NEW;
 END;

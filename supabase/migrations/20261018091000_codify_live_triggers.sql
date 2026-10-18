@@ -78,6 +78,13 @@ BEGIN
     FROM public.order_items so
     WHERE so.seller_order_id = NEW.id
       AND so.variant_id = i.variant_id;
+    -- Recompute available flag (fixes stale-true after delivering last units)
+    UPDATE public.product_variants pv
+    SET available = (i.quantity - i.reserved_quantity > 0)
+    FROM public.inventory i
+    JOIN public.order_items so ON so.variant_id = i.variant_id
+    WHERE so.seller_order_id = NEW.id
+      AND pv.id = i.variant_id;
   END IF;
   RETURN NEW;
 END;

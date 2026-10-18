@@ -48,7 +48,7 @@ BEGIN
      AND OLD.status NOT IN ('cancelled', 'refunded', 'returned') THEN
     UPDATE public.inventory i
     SET reserved_quantity = GREATEST(0, i.reserved_quantity - so.quantity)
-    FROM public.seller_order_items so
+    FROM public.order_items so
     WHERE so.seller_order_id = NEW.id
       AND so.variant_id = i.variant_id;
   END IF;
@@ -75,7 +75,7 @@ BEGIN
     SET
       quantity = GREATEST(0, i.quantity - so.quantity),
       reserved_quantity = GREATEST(0, i.reserved_quantity - so.quantity)
-    FROM public.seller_order_items so
+    FROM public.order_items so
     WHERE so.seller_order_id = NEW.id
       AND so.variant_id = i.variant_id;
   END IF;

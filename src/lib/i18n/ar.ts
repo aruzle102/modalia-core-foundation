@@ -441,6 +441,9 @@ export const ar = {
       buyNow: "اشترِ الآن",
       addToBag: "أضف إلى السلة",
       wishlist: (name: string) => `احفظ ${name} في المفضلة`,
+      wishlistAdded: "أُضيف إلى المفضلة",
+      wishlistRemoved: "أُزيل من المفضلة",
+      wishlistError: "تعذّر تحديث المفضلة",
       productsCount: (count: number) =>
         count === 1 ? "منتج واحد" : count === 2 ? "منتجان" : `${count} منتجات`,
       emptyTitle: "لا توجد منتجات",

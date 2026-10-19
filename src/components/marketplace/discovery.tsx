@@ -1,6 +1,7 @@
-import { useState, type MouseEvent } from "react";
+import { useRef, useState, type MouseEvent, type TouchEvent } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, ChevronLeft, ChevronRight, Heart, ShoppingBag, Zap } from "lucide-react";
+import { ArrowRight, Heart, Loader2, ShoppingBag } from "lucide-react";
+import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatPrice } from "@/lib/i18n/format";
 import { getTranslations } from "@/lib/i18n";
@@ -34,9 +35,12 @@ export function ProductCard({
   locale: SupportedLocale;
 }) {
   const [wishlisted, setWishlisted] = useState(() => isWishlisted(product.id));
-  // Image carousel (Product Card 1 reference): arrows + indicators
+  const [wishPending, setWishPending] = useState(false);
+  // Quiet image dots + touch swipe (no overlay arrows).
   const images = [product.imagePath, product.secondImagePath].filter(Boolean) as string[];
   const [imgIndex, setImgIndex] = useState(0);
+  const touchStartX = useRef<number | null>(null);
+  const justSwiped = useRef(false);
   const t = getTranslations(locale).card;
 
   // Badges come from real data only: discount from compareAtPrice,
@@ -45,8 +49,33 @@ export function ProductCard({
   const fresh = isNewProduct(product.createdAt);
   const stock = product.totalStock;
   const soldOut = stock === 0;
-  const showArrows = images.length > 1 && !soldOut;
+  const hasMultipleImages = images.length > 1 && !soldOut;
   const lowStock = stock != null && stock > 0 && stock <= LOW_STOCK_THRESHOLD;
+
+  const goImage = (dir: 1 | -1) =>
+    setImgIndex((i) => (i + dir + images.length) % images.length);
+
+  const onImageTouchStart = (e: TouchEvent<HTMLDivElement>) => {
+    touchStartX.current = e.touches[0]?.clientX ?? null;
+    justSwiped.current = false;
+  };
+  const onImageTouchEnd = (e: TouchEvent<HTMLDivElement>) => {
+    if (touchStartX.current == null || !hasMultipleImages) return;
+    const dx = (e.changedTouches[0]?.clientX ?? 0) - touchStartX.current;
+    touchStartX.current = null;
+    if (Math.abs(dx) > 40) {
+      justSwiped.current = true;
+      goImage(dx < 0 ? 1 : -1);
+    }
+  };
+  // A swipe must not trigger the product link underneath.
+  const suppressSwipeClick = (e: MouseEvent<HTMLAnchorElement>) => {
+    if (justSwiped.current) {
+      e.preventDefault();
+      e.stopPropagation();
+      justSwiped.current = false;
+    }
+  };
 
   // Honest quick-add: raise a mode:"add" request for the catalog card.
   // BuyNowHost fetches real variant data server-side — default-variant
@@ -84,25 +113,40 @@ export function ProductCard({
     );
   };
 
-  const handleWishlist = (event: any) => {
+  const handleWishlist = async (event: any) => {
     event.stopPropagation();
-    const added = toggleWishlist({
-      productId: product.id,
-      slug: product.slug,
-      name: product.name,
-      price: product.price,
-      image: product.imagePath,
-      storeName: product.storeName,
-    });
-    setWishlisted(added);
-    if (added) replayAnimation(event.currentTarget, microAnimationClass.wishlistPop);
+    if (wishPending) return;
+    const button = event.currentTarget as HTMLElement | null;
+    setWishPending(true);
+    try {
+      // Yield so the spinner paints before the (sync) store write.
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+      const added = toggleWishlist({
+        productId: product.id,
+        slug: product.slug,
+        name: product.name,
+        price: product.price,
+        image: product.imagePath,
+        storeName: product.storeName,
+      });
+      setWishlisted(added);
+      if (added) {
+        if (button) replayAnimation(button, microAnimationClass.wishlistPop);
+        toast.success(t.wishlistAdded);
+      } else {
+        toast.success(t.wishlistRemoved);
+      }
+    } catch {
+      toast.error(t.wishlistError);
+    } finally {
+      setWishPending(false);
+    }
   };
 
 
   return (
     <article className="group relative flex min-w-0 flex-col overflow-hidden rounded-2xl border border-border/50 bg-card shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-all duration-300 hover:-translate-y-1 hover:border-border hover:shadow-[0_20px_45px_-18px_rgba(0,0,0,0.25)] motion-reduce:transition-none motion-reduce:hover:translate-y-0">
-      {/* Image carousel — arrows + indicators.
-          Arrows stopPropagation so they don't trigger the product link. */}
+      {/* Image — touch swipe cycles images; quiet dots live below the image. */}
       <div className="relative">
         <Link
           to="/product/$slug"
@@ -110,8 +154,13 @@ export function ProductCard({
           search={{ locale }}
           className="block"
           aria-label={product.name}
+          onClickCapture={suppressSwipeClick}
         >
-          <div className={`relative aspect-[4/5] overflow-hidden bg-muted ${soldOut ? "saturate-50" : ""}`}>
+          <div
+            className={`relative aspect-[4/5] overflow-hidden bg-muted ${soldOut ? "saturate-50" : ""} touch-pan-y`}
+            onTouchStart={onImageTouchStart}
+            onTouchEnd={onImageTouchEnd}
+          >
             {images.length > 0 ? (
               <img
                 key={imgIndex}
@@ -140,34 +189,6 @@ export function ProductCard({
             ) : null}
           </div>
         </Link>
-        {showArrows ? (
-          <>
-            <button
-              type="button"
-              aria-label="Previous image"
-              onClick={(e) => { e.stopPropagation(); e.preventDefault(); setImgIndex((i) => (i - 1 + images.length) % images.length); }}
-              className="absolute start-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-neutral-800 opacity-0 shadow-md backdrop-blur-sm transition-all group-hover:opacity-100 hover:scale-105 hover:bg-white focus-visible:opacity-100 [@media(hover:none)]:opacity-100"
-            >
-              <ChevronLeft className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />
-            </button>
-            <button
-              type="button"
-              aria-label="Next image"
-              onClick={(e) => { e.stopPropagation(); e.preventDefault(); setImgIndex((i) => (i + 1) % images.length); }}
-              className="absolute end-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-neutral-800 opacity-0 shadow-md backdrop-blur-sm transition-all group-hover:opacity-100 hover:scale-105 hover:bg-white focus-visible:opacity-100 [@media(hover:none)]:opacity-100"
-            >
-              <ChevronRight className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />
-            </button>
-            <div className="absolute bottom-2 left-1/2 z-10 flex -translate-x-1/2 gap-1.5 rtl:translate-x-1/2" aria-hidden="true">
-              {images.map((_, i) => (
-                <span
-                  key={i}
-                  className={`h-1.5 rounded-full transition-all ${i === imgIndex ? "w-4 bg-white" : "w-1.5 bg-white/60"}`}
-                />
-              ))}
-            </div>
-          </>
-        ) : null}
 
         {/* Badges — real data only, refined pills top-start */}
         <div className="pointer-events-none absolute start-3 top-3 z-10 flex flex-col items-start gap-1.5">
@@ -183,25 +204,44 @@ export function ProductCard({
           ) : null}
         </div>
 
-        {/* Wishlist — frosted circle top-end, heart fills red when active */}
+        {/* Wishlist — frosted circle top-end; spinner while pending, toast on done/error */}
         <button
           type="button"
           onClick={handleWishlist}
+          disabled={wishPending}
           aria-pressed={wishlisted}
+          aria-busy={wishPending}
           aria-label={t.wishlist(product.name)}
-          className="absolute end-3 top-3 z-10 grid size-9 place-items-center rounded-full bg-white/90 text-neutral-900 shadow-md backdrop-blur-sm transition-all hover:scale-110 hover:bg-white active:scale-95 touch-manipulation dark:bg-neutral-900/90 dark:text-white"
+          className="absolute end-2.5 top-2.5 z-10 grid size-8 place-items-center rounded-full bg-white/90 text-neutral-900 shadow-md backdrop-blur-sm transition-all hover:scale-110 hover:bg-white active:scale-95 disabled:cursor-wait touch-manipulation dark:bg-neutral-900/90 dark:text-white sm:size-9"
         >
-          <Heart className={`size-4 transition-colors ${wishlisted ? "fill-rose-500 text-rose-500" : ""}`} aria-hidden="true" />
+          {wishPending ? (
+            <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+          ) : (
+            <Heart className={`size-4 transition-colors ${wishlisted ? "fill-rose-500 text-rose-500" : ""}`} aria-hidden="true" />
+          )}
         </button>
       </div>
 
-      {/* Info — store, name, price, then actions */}
-      <div className="flex flex-1 flex-col gap-1 px-4 pb-4 pt-3.5">
-        {product.storeName ? (
-          <p className="truncate text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-            {product.storeName}
-          </p>
-        ) : null}
+      {/* Quiet image dots below the image — fixed height keeps cards uniform */}
+      <div className="flex h-3.5 items-center justify-center gap-1 pt-1" aria-hidden="true">
+        {hasMultipleImages
+          ? images.map((_, i) => (
+              <span
+                key={i}
+                className={`h-1 rounded-full transition-all ${i === imgIndex ? "w-3 bg-foreground/70" : "w-1 bg-foreground/25"}`}
+              />
+            ))
+          : null}
+      </div>
+
+      {/* Info — store, name, price, then actions. Fixed slots keep every card uniform. */}
+      <div className="flex flex-1 flex-col gap-1 px-3 pb-3 pt-1 sm:px-4 sm:pb-4 sm:pt-1.5">
+        <p
+          className={`truncate text-[10px] font-semibold uppercase tracking-[0.14em] sm:text-[11px] ${product.storeName ? "text-muted-foreground" : "invisible select-none"}`}
+          aria-hidden={product.storeName ? undefined : true}
+        >
+          {product.storeName || " "}
+        </p>
         <Link
           to="/product/$slug"
           params={{ slug: product.slug }}
@@ -209,15 +249,15 @@ export function ProductCard({
           className="block"
           aria-label={product.name}
         >
-          <h3 className="line-clamp-2 min-h-[2.5em] text-[14px] font-semibold leading-snug text-foreground transition-colors group-hover:text-foreground/80">
+          <h3 className="line-clamp-2 min-h-[2.4em] text-[13px] font-semibold leading-snug text-foreground transition-colors group-hover:text-foreground/80 sm:min-h-[2.5em] sm:text-[14px]">
             {product.name}
           </h3>
-          <p className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-            <span className="text-[17px] font-extrabold tabular-nums tracking-tight text-foreground">
+          <p className="mt-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 sm:mt-2">
+            <span className="text-[15px] font-extrabold tabular-nums tracking-tight text-foreground sm:text-[17px]">
               {formatPrice(product.price, locale)}
             </span>
             {sale != null && product.compareAtPrice ? (
-              <span className="shrink-0 text-[13px] tabular-nums text-muted-foreground line-through">
+              <span className="shrink-0 text-[12px] tabular-nums text-muted-foreground line-through sm:text-[13px]">
                 {formatPrice(product.compareAtPrice, locale)}
               </span>
             ) : null}
@@ -229,16 +269,15 @@ export function ProductCard({
             {t.onlyLeft(stock as number)}
           </p>
         ) : null}
-        <div className="mt-auto flex gap-2 pt-3.5">
+        <div className="mt-auto flex gap-2 pt-2.5 sm:pt-3.5">
           <button
             type="button"
             onClick={handleBuyNow}
             disabled={soldOut}
             aria-label={soldOut ? t.soldOut : t.buyNow}
             title={soldOut ? t.soldOut : t.buyNow}
-            className="flex h-10 flex-1 items-center justify-center gap-2 rounded-xl bg-neutral-900 text-[13px] font-bold text-white shadow-sm transition-all hover:bg-neutral-700 hover:shadow active:scale-[0.98] active:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:shadow-none touch-manipulation dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200 dark:active:bg-neutral-300"
+            className="flex h-9 flex-1 items-center justify-center gap-2 rounded-xl bg-foreground text-[13px] font-bold tracking-wide text-background shadow-sm transition-all hover:opacity-85 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 touch-manipulation sm:h-10"
           >
-            <Zap className="size-4" aria-hidden="true" />
             {t.buyNow}
           </button>
           <button
@@ -247,9 +286,9 @@ export function ProductCard({
             disabled={soldOut}
             aria-label={soldOut ? t.soldOut : t.quickAdd}
             title={soldOut ? t.soldOut : t.quickAdd}
-            className="grid size-10 shrink-0 place-items-center rounded-xl border border-border bg-card text-foreground shadow-sm transition-all hover:border-foreground/30 hover:bg-muted active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 touch-manipulation"
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-border bg-card text-foreground shadow-sm transition-all hover:border-foreground/30 hover:bg-muted active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 touch-manipulation sm:h-10 sm:w-10"
           >
-            <ShoppingBag className="size-4" aria-hidden="true" />
+            <ShoppingBag className="size-4" strokeWidth={1.75} aria-hidden="true" />
           </button>
         </div>
       </div>

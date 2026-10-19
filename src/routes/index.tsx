@@ -8,6 +8,7 @@ import { ArrowRight, ArrowDown } from "lucide-react";
 import { SiteFooter } from "@/components/layout/site-shell";
 import { getLocale, getTranslations, localeDirections } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { browseCatalog } from "@/lib/catalog.functions";
 
 export const Route = createFileRoute("/")({
   component: LandingPage,
@@ -108,14 +109,16 @@ function ParallaxImage({
 /* ---------- Image URLs (replaceable) ---------- */
 const IMG = {
   heroMain: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1200&q=80",
+  /* Hero backdrop: luxury fashion atelier — clothing racks, elegant fabrics */
+  heroBackdrop: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1920&q=80",
   fashion: "https://images.unsplash.com/photo-1445205170230-053b83016050?w=1200&q=80",
-  sport: "https://images.unsplash.com/photo-1517649763962-0c623066013b?w=1200&q=80",
+  sport: "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=1200&q=80",
   lifestyle: "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=1200&q=80",
   marketplace: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200&q=80",
   /* Hero category mosaic tiles */
   catFashion: "https://images.unsplash.com/photo-1445205170230-053b83016050?w=800&q=80",
   catShoes: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&q=80",
-  catSports: "https://images.unsplash.com/photo-1517649763962-0c623066013b?w=800&q=80",
+  catSports: "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=800&q=80",
   catAccessories: "https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=800&q=80",
 };
 
@@ -130,6 +133,85 @@ const HERO_CATS = [
 ] as const;
 
 const HERO_BOUTIQUES_CTA = { ar: "اكتشف المتاجر", fr: "Découvrir les boutiques", en: "Discover boutiques" };
+
+/* ---------- Dynamic Accessories Tile ----------
+   Fetches real accessories products and rotates their images.
+   Falls back to the static image if none available. */
+function DynamicAccessoriesTile({
+  locale,
+  label,
+}: {
+  locale: "ar" | "fr" | "en";
+  label: string;
+}) {
+  const [images, setImages] = useState<string[]>([]);
+  const [index, setIndex] = useState(0);
+  const [loaded, setLoaded] = useState(false);
+
+  // Fetch real accessories products on mount
+  useEffect(() => {
+    let cancelled = false;
+    browseCatalog({
+      data: { locale, category: "accessoires", pageSize: 12, inStock: true },
+    })
+      .then((result) => {
+        if (cancelled) return;
+        const imgs = (result.products || [])
+          .map((p: any) => p.imagePath)
+          .filter((src: string) => src && src.length > 0);
+        // Deduplicate
+        const unique = [...new Set(imgs)];
+        setImages(unique);
+        // Start at a random position for variety on each visit
+        if (unique.length > 1) {
+          setIndex(Math.floor(Math.random() * unique.length));
+        }
+        setLoaded(true);
+      })
+      .catch(() => {
+        if (!cancelled) setLoaded(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [locale]);
+
+  // Rotate every 30 seconds (gentle, non-intrusive)
+  useEffect(() => {
+    if (images.length < 2) return;
+    const id = window.setInterval(() => {
+      setIndex((i) => (i + 1) % images.length);
+    }, 30000);
+    return () => window.clearInterval(id);
+  }, [images.length]);
+
+  const src = images.length > 0 ? images[index] : IMG.catAccessories;
+
+  return (
+    <Link
+      to="/home"
+      search={{ locale }}
+      aria-label={label}
+      className="group relative col-span-2 min-h-[140px] overflow-hidden rounded-3xl sm:min-h-[180px]"
+    >
+      <img
+        src={src}
+        alt={label}
+        loading="lazy"
+        key={src}
+        className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+      />
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent"
+      />
+      <span className="absolute bottom-4 start-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm font-semibold text-white backdrop-blur-md transition-colors group-hover:bg-white/25">
+        {label}
+        <ArrowRight className="size-4 rtl:rotate-180" />
+      </span>
+    </Link>
+  );
+}
 
 /* ---------- Landing ---------- */
 const SCROLL_LABEL = { ar: "مرّر", fr: "Défiler", en: "Scroll" };
@@ -148,6 +230,18 @@ function LandingPage() {
 
         {/* ===== OPENING — editorial split hero ===== */}
         <section className="relative overflow-hidden bg-neutral-950">
+          {/* Fashion backdrop: luxury atelier imagery behind the black hero */}
+          <div aria-hidden="true" className="pointer-events-none absolute inset-0">
+            <img
+              src={IMG.heroBackdrop}
+              alt=""
+              loading="eager"
+              className="h-full w-full object-cover object-center opacity-40"
+            />
+            {/* Black gradient overlays: keep white text readable */}
+            <div className="absolute inset-0 bg-gradient-to-b from-neutral-950/80 via-neutral-950/60 to-neutral-950" />
+            <div className="absolute inset-0 bg-gradient-to-r from-neutral-950/70 via-transparent to-neutral-950/40" />
+          </div>
           {/* Ambient glow + ghost wordmark */}
           <div aria-hidden="true" className="pointer-events-none absolute inset-0">
             <div className="absolute -top-32 start-1/4 h-[420px] w-[420px] rounded-full bg-white/[0.07] blur-[120px]" />
@@ -209,38 +303,46 @@ function LandingPage() {
             {/* Category mosaic — the multi-category marketplace, visible */}
             <Reveal delay={200}>
               <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                {HERO_CATS.map((cat) => (
-                  <Link
-                    key={cat.key}
-                    to="/home"
-                    search={{ locale }}
-                    aria-label={cat.label[locale] ?? cat.label.en}
-                    className={[
-                      "group relative overflow-hidden rounded-3xl",
-                      "tall" in cat && cat.tall ? "row-span-2 min-h-[340px] sm:min-h-[440px] lg:min-h-[540px]" : "",
-                      "wide" in cat && cat.wide
-                        ? "col-span-2 min-h-[140px] sm:min-h-[180px]"
-                        : "tall" in cat && cat.tall
-                          ? ""
-                          : "min-h-[164px] sm:min-h-[212px] lg:min-h-[262px]",
-                    ].join(" ")}
-                  >
-                    <img
-                      src={IMG[cat.img]}
-                      alt={cat.label[locale] ?? cat.label.en}
-                      loading={cat.key === "fashion" ? "eager" : "lazy"}
-                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                {HERO_CATS.map((cat) =>
+                  cat.key === "accessories" ? (
+                    <DynamicAccessoriesTile
+                      key={cat.key}
+                      locale={locale}
+                      label={cat.label[locale] ?? cat.label.en}
                     />
-                    <div
-                      aria-hidden="true"
-                      className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent"
-                    />
-                    <span className="absolute bottom-4 start-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm font-semibold text-white backdrop-blur-md transition-colors group-hover:bg-white/25">
-                      {cat.label[locale] ?? cat.label.en}
-                      <ArrowRight className="size-4 rtl:rotate-180" />
-                    </span>
-                  </Link>
-                ))}
+                  ) : (
+                    <Link
+                      key={cat.key}
+                      to="/home"
+                      search={{ locale }}
+                      aria-label={cat.label[locale] ?? cat.label.en}
+                      className={[
+                        "group relative overflow-hidden rounded-3xl",
+                        "tall" in cat && cat.tall ? "row-span-2 min-h-[340px] sm:min-h-[440px] lg:min-h-[540px]" : "",
+                        "wide" in cat && cat.wide
+                          ? "col-span-2 min-h-[140px] sm:min-h-[180px]"
+                          : "tall" in cat && cat.tall
+                            ? ""
+                            : "min-h-[164px] sm:min-h-[212px] lg:min-h-[262px]",
+                      ].join(" ")}
+                    >
+                      <img
+                        src={IMG[cat.img]}
+                        alt={cat.label[locale] ?? cat.label.en}
+                        loading={cat.key === "fashion" ? "eager" : "lazy"}
+                        className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                      />
+                      <div
+                        aria-hidden="true"
+                        className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent"
+                      />
+                      <span className="absolute bottom-4 start-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm font-semibold text-white backdrop-blur-md transition-colors group-hover:bg-white/25">
+                        {cat.label[locale] ?? cat.label.en}
+                        <ArrowRight className="size-4 rtl:rotate-180" />
+                      </span>
+                    </Link>
+                  ),
+                )}
               </div>
             </Reveal>
           </div>

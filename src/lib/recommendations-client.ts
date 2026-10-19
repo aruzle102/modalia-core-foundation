@@ -77,8 +77,7 @@ function readSignals(): RecSignals {
     const parsed = JSON.parse(raw) as Partial<RecSignals>;
     return {
       views: Array.isArray(parsed.views) ? parsed.views.slice(0, MAX_VIEWS) : [],
-      wishlist:
-        parsed.wishlist && typeof parsed.wishlist === "object" ? parsed.wishlist : {},
+      wishlist: parsed.wishlist && typeof parsed.wishlist === "object" ? parsed.wishlist : {},
       categories:
         parsed.categories && typeof parsed.categories === "object" ? parsed.categories : {},
       cart: parsed.cart && typeof parsed.cart === "object" ? parsed.cart : {},
@@ -117,7 +116,12 @@ function toSignal(input: {
 /** Public read (debugging, server-engine wiring). Returns a copy. */
 export function getRecommendationSignals(): RecSignals {
   const s = readSignals();
-  return { views: [...s.views], wishlist: { ...s.wishlist }, categories: { ...s.categories }, cart: { ...s.cart } };
+  return {
+    views: [...s.views],
+    wishlist: { ...s.wishlist },
+    categories: { ...s.categories },
+    cart: { ...s.cart },
+  };
 }
 
 export function hasRecommendationData(): boolean {
@@ -321,8 +325,7 @@ export function scoreRecommendations(
       // Array#sort is stable: equal scores keep the shuffled (session-stable) order.
       .sort(
         (a, b) =>
-          b.score - a.score ||
-          (b.candidate.totalStock ?? 0) - (a.candidate.totalStock ?? 0),
+          b.score - a.score || (b.candidate.totalStock ?? 0) - (a.candidate.totalStock ?? 0),
       )
       .slice(0, limit)
       .map((s) => s.candidate);
@@ -332,9 +335,7 @@ export function scoreRecommendations(
 
   // Fallback: diverse + recent. Newest first, interleaved round-robin
   // across sellers so several storefronts get seen.
-  const byDate = [...eligible].sort(
-    (a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt),
-  );
+  const byDate = [...eligible].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
   const groups = new Map<string, CatalogProduct[]>();
   for (const product of byDate) {
     const key = sellerKeyOf(product);

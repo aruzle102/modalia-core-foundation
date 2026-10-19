@@ -43,7 +43,7 @@ function product(overrides: Partial<CatalogProduct> & { id: string }): CatalogPr
 function stubBrowser() {
   const ls = new Map<string, string>();
   const ss = new Map<string, string>();
-  (globalThis as Record<string, unknown>).window = {
+  (globalThis as Record<string, unknown>)["window"] = {
     localStorage: {
       getItem: (k: string) => (ls.has(k) ? ls.get(k)! : null),
       setItem: (k: string, v: string) => void ls.set(k, v),
@@ -69,7 +69,10 @@ describe("signal recording", () => {
     recordProductView({ id: "p2", categorySlug: "bags" });
     recordProductView({ id: "p1", categorySlug: "shoes" }); // revisit → most recent
     const signals = getRecommendationSignals();
-    assert.deepEqual(signals.views.map((v) => v.id), ["p1", "p2"]);
+    assert.deepEqual(
+      signals.views.map((v) => v.id),
+      ["p1", "p2"],
+    );
     assert.ok(hasRecommendationData());
   });
 
@@ -105,7 +108,7 @@ describe("signal recording", () => {
   });
 
   it("is SSR-safe without window", () => {
-    (globalThis as Record<string, unknown>).window = undefined;
+    (globalThis as Record<string, unknown>)["window"] = undefined;
     assert.doesNotThrow(() => {
       recordProductView({ id: "p1" });
       recordWishlistAdd({ id: "w1" });
@@ -141,12 +144,10 @@ describe("scoreRecommendations", () => {
     assert.equal(source, "personalized");
     // all-three: 3+2+1=6 (+1 category browse from the view) → first
     // cat-only: 3 (+1 browse) → second; seller-only: 2 → third; brand-only: 1 → fourth
-    assert.deepEqual(products.map((p) => p.id), [
-      "all-three",
-      "cat-only",
-      "seller-only",
-      "brand-only",
-    ]);
+    assert.deepEqual(
+      products.map((p) => p.id),
+      ["all-three", "cat-only", "seller-only", "brand-only"],
+    );
   });
 
   it("excludes viewed and in-cart products", () => {
@@ -158,7 +159,10 @@ describe("scoreRecommendations", () => {
       product({ id: "ok", categorySlug: "shoes" }),
     ];
     const { products } = scoreRecommendations(candidates, 5);
-    assert.deepEqual(products.map((p) => p.id), ["ok"]);
+    assert.deepEqual(
+      products.map((p) => p.id),
+      ["ok"],
+    );
   });
 
   it("wishlist signals score without excluding the product", () => {
@@ -223,10 +227,7 @@ describe("scoreRecommendations", () => {
   it("returns empty (not fabricated) when nothing is sellable", () => {
     const { products } = scoreRecommendations([], 5);
     assert.deepEqual(products, []);
-    const { products: oos } = scoreRecommendations(
-      [product({ id: "x", totalStock: 0 })],
-      5,
-    );
+    const { products: oos } = scoreRecommendations([product({ id: "x", totalStock: 0 })], 5);
     assert.deepEqual(oos, []);
   });
 });

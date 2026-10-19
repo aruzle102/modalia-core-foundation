@@ -13,8 +13,10 @@ const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..
 export async function resolve(specifier, context, nextResolve) {
   if (specifier.startsWith("@/")) {
     const rel = specifier.slice(2);
+    const withExt =
+      rel.endsWith(".ts") || rel.endsWith(".tsx") || rel.endsWith(".mjs") ? rel : rel + ".ts";
     const candidates = [
-      path.join(REPO_ROOT, "src", rel + ".ts"),
+      path.join(REPO_ROOT, "src", withExt),
       path.join(REPO_ROOT, "src", rel, "index.ts"),
     ];
     for (const candidate of candidates) {

@@ -51,7 +51,10 @@ describe("mulberry32 / seededShuffle", () => {
     const items = makeProducts();
     const snapshot = items.map((p) => p.id);
     rotateProducts(items, { seed: 7 });
-    assert.deepEqual(items.map((p) => p.id), snapshot);
+    assert.deepEqual(
+      items.map((p) => p.id),
+      snapshot,
+    );
   });
 
   it("mulberry32 produces values in [0, 1)", () => {
@@ -87,7 +90,9 @@ describe("interleaveBySeller (fairness)", () => {
   });
 
   it("keeps every product exactly once (no dupes, no drops)", () => {
-    const out = interleaveBySeller(makeProducts(), 5).map((p) => p.id).sort();
+    const out = interleaveBySeller(makeProducts(), 5)
+      .map((p) => p.id)
+      .sort();
     assert.deepEqual(out, ["a1", "a2", "a3", "a4", "b1", "b2", "c1"]);
   });
 
@@ -128,7 +133,10 @@ describe("rotateProducts", () => {
   it("handles empty / singleton arrays", () => {
     assert.deepEqual(rotateProducts([], { seed: 1 }), []);
     const one: P[] = [{ id: "only" }];
-    assert.deepEqual(rotateProducts(one, { seed: 1 }).map((p) => p.id), ["only"]);
+    assert.deepEqual(
+      rotateProducts(one, { seed: 1 }).map((p) => p.id),
+      ["only"],
+    );
   });
 });
 
@@ -155,7 +163,7 @@ describe("getRotationSeed (session stability)", () => {
   beforeEach(() => {
     // Fresh in-memory sessionStorage stub per test.
     const store = new Map<string, string>();
-    (globalThis as Record<string, unknown>).window = {
+    (globalThis as Record<string, unknown>)["window"] = {
       sessionStorage: {
         getItem: (k: string) => (store.has(k) ? store.get(k)! : null),
         setItem: (k: string, v: string) => void store.set(k, v),
@@ -172,21 +180,26 @@ describe("getRotationSeed (session stability)", () => {
   });
 
   it("a new session (cleared storage) generates and persists a fresh seed", () => {
+    // Install a dedicated stub so this test owns its storage map.
     const store = new Map<string, string>();
+    const install = (map: Map<string, string>) => {
+      (globalThis as Record<string, unknown>)["window"] = {
+        sessionStorage: {
+          getItem: (k: string) => (map.has(k) ? map.get(k)! : null),
+          setItem: (k: string, v: string) => void map.set(k, v),
+          removeItem: (k: string) => void map.delete(k),
+        },
+      };
+    };
+    install(store);
     const first = getRotationSeed();
     // The seed is persisted to sessionStorage for the rest of the session.
     assert.equal(store.get("modalia-rotation-seed-v1"), String(first));
 
-    // Simulate a new session: empty storage must not reuse the old seed —
-    // it generates a fresh integer seed and persists it.
+    // Simulate a new session: empty storage generates a fresh integer seed
+    // and persists it for the new session.
     const freshStore = new Map<string, string>();
-    (globalThis as Record<string, unknown>).window = {
-      sessionStorage: {
-        getItem: (k: string) => (freshStore.has(k) ? freshStore.get(k)! : null),
-        setItem: (k: string, v: string) => void freshStore.set(k, v),
-        removeItem: (k: string) => void freshStore.delete(k),
-      },
-    };
+    install(freshStore);
     const second = getRotationSeed();
     assert.ok(Number.isInteger(second), "seed must be an integer");
     assert.equal(freshStore.get("modalia-rotation-seed-v1"), String(second));

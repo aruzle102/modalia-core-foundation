@@ -118,8 +118,8 @@ export function interleaveBySeller<T extends RotatableProduct>(
   if (groups.size <= 1) return seededShuffle(products, effectiveSeed);
 
   const sellerKeys = seededShuffle([...groups.keys()], effectiveSeed);
-  const queues = sellerKeys.map(
-    (key) => seededShuffle(groups.get(key) as T[], effectiveSeed ^ 0x9e3779b9),
+  const queues = sellerKeys.map((key) =>
+    seededShuffle(groups.get(key) as T[], effectiveSeed ^ 0x9e3779b9),
   );
   const out: T[] = [];
   let remaining = true;
@@ -165,10 +165,7 @@ export function rotateProducts<T extends RotatableProduct>(
  * Callers pass the raw search/sort params they already hold; when in doubt,
  * pass the sort through — rotation stays off rather than overriding intent.
  */
-export function rotationApplies(opts: {
-  sort?: string | null;
-  isSearch?: boolean;
-}): boolean {
+export function rotationApplies(opts: { sort?: string | null; isSearch?: boolean }): boolean {
   if (opts.isSearch) return false;
   const sort = (opts.sort ?? "").trim();
   if (sort.length > 0) return false;

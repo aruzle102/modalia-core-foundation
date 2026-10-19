@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "test": "node --test \"src/**/*.test.ts\""
+    "test": "node --test --import ./src/lib/__tests__/alias-register.mjs \"src/**/*.test.ts\"",
+    "test:unit": "node --test --import ./src/lib/__tests__/alias-register.mjs \"src/lib/__tests__/rotation.test.ts\" \"src/lib/__tests__/recommendations-client.test.ts\""
   },
   "overrides": {
     "rolldown": "1.2.1"

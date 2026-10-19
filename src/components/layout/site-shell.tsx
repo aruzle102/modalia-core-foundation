@@ -38,6 +38,7 @@ import { SearchAutocomplete } from "@/components/marketplace/SearchAutocomplete"
 import { getPublicIntelligenceConfig } from "@/lib/intelligence-settings.functions";
 import { BuyNowHost } from "@/components/marketplace/buy-now";
 import { motionTw } from "@/lib/motion-tokens";
+import { cn } from "@/lib/utils";
 
 const supportedLocales: SupportedLocale[] = ["en", "fr", "ar"];
 
@@ -110,7 +111,44 @@ function BannerBar({ locale }: { locale: SupportedLocale }) {
  */
 export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translation }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawerClosing, setDrawerClosing] = useState(false);
+  const drawerCloseTimer = useRef<number | null>(null);
   const [assistantOpen, setAssistantOpen] = useState(false);
+
+  // Drawer open/close with a smooth slide-out exit animation.
+  const openDrawer = () => {
+    if (drawerCloseTimer.current) {
+      window.clearTimeout(drawerCloseTimer.current);
+      drawerCloseTimer.current = null;
+    }
+    setDrawerClosing(false);
+    setDrawerOpen(true);
+  };
+  const closeDrawer = () => {
+    if (!drawerOpen || drawerClosing) return;
+    setDrawerClosing(true);
+    drawerCloseTimer.current = window.setTimeout(() => {
+      setDrawerOpen(false);
+      setDrawerClosing(false);
+      drawerCloseTimer.current = null;
+    }, 200);
+  };
+  useEffect(() => {
+    return () => {
+      if (drawerCloseTimer.current) window.clearTimeout(drawerCloseTimer.current);
+    };
+  }, []);
+
+  // Close the drawer on Escape.
+  useEffect(() => {
+    if (!drawerOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") closeDrawer();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [drawerOpen, drawerClosing]);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const [categoriesOpen, setCategoriesOpen] = useState(false);
@@ -188,7 +226,7 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
     const q = searchValue.trim();
     if (!q) return;
     window.location.href = `/search?locale=${locale}&q=${encodeURIComponent(q)}`;
-    setDrawerOpen(false);
+    closeDrawer();
   };
 
   // SSENSE-style nav link: tight tracking, animated underline on hover.
@@ -292,7 +330,7 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
                 onChange={setSearchValue}
                 onSubmit={(q) => {
                   window.location.href = `/search?locale=${locale}&q=${encodeURIComponent(q)}`;
-                  setDrawerOpen(false);
+                  closeDrawer();
                 }}
                 onClose={() => {}}
                 inputRef={searchInputRef}
@@ -391,7 +429,7 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
               className="text-foreground/80 hover:text-foreground lg:hidden"
               aria-label={drawerOpen ? t.common.close : t.nav.menu}
               aria-expanded={drawerOpen}
-              onClick={() => setDrawerOpen(true)}
+              onClick={() => openDrawer()}
             >
               <Menu className="size-5" />
             </Button>
@@ -405,17 +443,37 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
       {drawerOpen ? (
         <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label={t.nav.menu}>
           <div
-            className="absolute inset-0 bg-foreground/20 backdrop-blur-[2px]"
-            onClick={() => setDrawerOpen(false)}
+            className={cn(
+              "absolute inset-0 bg-foreground/20 backdrop-blur-[2px]",
+              drawerClosing ? "animate-out fade-out-0" : "animate-in fade-in-0",
+            )}
+            onClick={() => closeDrawer()}
             aria-hidden="true"
           />
-          <aside className="absolute end-0 top-0 flex h-full w-[86%] max-w-sm flex-col bg-background shadow-[-8px_0_30px_rgba(0,0,0,0.12)] rtl:shadow-[8px_0_30px_rgba(0,0,0,0.12)]">
+          <aside
+            className={cn(
+              "absolute top-0 flex h-full w-[86%] max-w-sm flex-col bg-background duration-200",
+              // Drawer side follows the locale convention: Arabic slides from the
+              // right, French/English from the left (same as admin/seller sheets).
+              locale === "ar"
+                ? "right-0 shadow-[-8px_0_30px_rgba(0,0,0,0.12)]"
+                : "left-0 shadow-[8px_0_30px_rgba(0,0,0,0.12)]",
+              drawerClosing ? "animate-out" : "animate-in",
+              drawerClosing
+                ? locale === "ar"
+                  ? "slide-out-to-right"
+                  : "slide-out-to-left"
+                : locale === "ar"
+                  ? "slide-in-from-right"
+                  : "slide-in-from-left",
+            )}
+          >
             <div className="flex h-16 items-center justify-between border-b border-border px-5">
               <ModaliLogo className="h-7 w-auto" />
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setDrawerOpen(false)}
+                onClick={() => closeDrawer()}
                 aria-label={t.common.close}
               >
                 <X className="size-5" />
@@ -446,7 +504,7 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
                     <Link
                       to="/home"
                       search={{ locale }}
-                      onClick={() => setDrawerOpen(false)}
+                      onClick={() => closeDrawer()}
                       className="flex items-center gap-3 py-2.5 text-nav tracking-tight text-foreground/80 transition-colors hover:text-foreground"
                     >
                       <Home className="size-4 shrink-0" aria-hidden="true" />
@@ -457,7 +515,7 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
                     <Link
                       to="/shop"
                       search={shopSearch(locale)}
-                      onClick={() => setDrawerOpen(false)}
+                      onClick={() => closeDrawer()}
                       className="flex items-center gap-3 py-2.5 text-nav tracking-tight text-foreground/80 transition-colors hover:text-foreground"
                     >
                       <LayoutGrid className="size-4 shrink-0" aria-hidden="true" />
@@ -468,7 +526,7 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
                     <Link
                       to="/shop"
                       search={{ ...shopSearch(locale), sort: "newest" }}
-                      onClick={() => setDrawerOpen(false)}
+                      onClick={() => closeDrawer()}
                       className="flex items-center gap-3 py-2.5 text-nav tracking-tight text-foreground/80 transition-colors hover:text-foreground"
                     >
                       <Sparkles className="size-4 shrink-0" aria-hidden="true" />
@@ -479,7 +537,7 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
                     <Link
                       to="/home"
                       search={{ locale }}
-                      onClick={() => setDrawerOpen(false)}
+                      onClick={() => closeDrawer()}
                       className="flex items-center gap-3 py-2.5 text-nav tracking-tight text-foreground/80 transition-colors hover:text-foreground"
                     >
                       <TrendingUp className="size-4 shrink-0" aria-hidden="true" />
@@ -490,7 +548,7 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
                     <Link
                       to="/shop"
                       search={{ ...shopSearch(locale), onSale: true }}
-                      onClick={() => setDrawerOpen(false)}
+                      onClick={() => closeDrawer()}
                       className="flex items-center gap-3 py-2.5 text-nav tracking-tight text-foreground/80 transition-colors hover:text-foreground"
                     >
                       <Tag className="size-4 shrink-0" aria-hidden="true" />
@@ -511,7 +569,7 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
                       <Link
                         to="/shop"
                         search={{ ...shopSearch(locale), category: category.slug }}
-                        onClick={() => setDrawerOpen(false)}
+                        onClick={() => closeDrawer()}
                         className="block py-2 text-nav tracking-tight text-foreground/70 transition-colors hover:text-foreground"
                       >
                         {category.name}
@@ -531,7 +589,7 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
                     <Link
                       to="/wishlist"
                       search={{ locale }}
-                      onClick={() => setDrawerOpen(false)}
+                      onClick={() => closeDrawer()}
                       className="flex items-center gap-3 py-2.5 text-nav tracking-tight text-foreground/80 transition-colors hover:text-foreground"
                     >
                       <Heart className="size-4 shrink-0" aria-hidden="true" />
@@ -542,7 +600,7 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
                     <Link
                       to="/cart"
                       search={{ locale }}
-                      onClick={() => setDrawerOpen(false)}
+                      onClick={() => closeDrawer()}
                       className="flex items-center gap-3 py-2.5 text-nav tracking-tight text-foreground/80 transition-colors hover:text-foreground"
                     >
                       <ShoppingBag className="size-4 shrink-0" aria-hidden="true" />
@@ -558,7 +616,7 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
                     <Link
                       to="/track-order"
                       search={{ locale }}
-                      onClick={() => setDrawerOpen(false)}
+                      onClick={() => closeDrawer()}
                       className="flex items-center gap-3 py-2.5 text-nav tracking-tight text-foreground/80 transition-colors hover:text-foreground"
                     >
                       <Package className="size-4 shrink-0" aria-hidden="true" />
@@ -578,7 +636,7 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
                     <Link
                       to="/about"
                       search={{ locale }}
-                      onClick={() => setDrawerOpen(false)}
+                      onClick={() => closeDrawer()}
                       className="block py-2 text-nav tracking-tight text-foreground/70 transition-colors hover:text-foreground"
                     >
                       {t.nav.menuAbout}
@@ -588,7 +646,7 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
                     <Link
                       to="/contact"
                       search={{ locale }}
-                      onClick={() => setDrawerOpen(false)}
+                      onClick={() => closeDrawer()}
                       className="block py-2 text-nav tracking-tight text-foreground/70 transition-colors hover:text-foreground"
                     >
                       {t.nav.menuContact}
@@ -598,7 +656,7 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
                     <Link
                       to="/shipping"
                       search={{ locale }}
-                      onClick={() => setDrawerOpen(false)}
+                      onClick={() => closeDrawer()}
                       className="block py-2 text-nav tracking-tight text-foreground/70 transition-colors hover:text-foreground"
                     >
                       {t.footer.links.shipping}
@@ -608,7 +666,7 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
                     <Link
                       to="/returns"
                       search={{ locale }}
-                      onClick={() => setDrawerOpen(false)}
+                      onClick={() => closeDrawer()}
                       className="block py-2 text-nav tracking-tight text-foreground/70 transition-colors hover:text-foreground"
                     >
                       {t.footer.links.returns}
@@ -618,7 +676,7 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
                     <Link
                       to="/help"
                       search={{ locale }}
-                      onClick={() => setDrawerOpen(false)}
+                      onClick={() => closeDrawer()}
                       className="block py-2 text-nav tracking-tight text-foreground/70 transition-colors hover:text-foreground"
                     >
                       {t.nav.menuFaq}
@@ -628,7 +686,7 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
                     <Link
                       to="/terms"
                       search={{ locale }}
-                      onClick={() => setDrawerOpen(false)}
+                      onClick={() => closeDrawer()}
                       className="block py-2 text-nav tracking-tight text-foreground/70 transition-colors hover:text-foreground"
                     >
                       {t.nav.menuTerms}
@@ -646,7 +704,10 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
                     <button
                       key={value}
                       type="button"
-                      onClick={() => switchLocale(value)}
+                      onClick={() => {
+                        switchLocale(value);
+                        closeDrawer();
+                      }}
                       aria-current={value === locale ? "true" : undefined}
                       className={
                         value === locale

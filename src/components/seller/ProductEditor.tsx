@@ -10,6 +10,7 @@ import {
   Image as ImageIcon,
   Images,
   Loader2,
+  Palette,
   Plus,
   Send,
   Shirt,
@@ -272,6 +273,203 @@ function MediaThumb({ img }: { img: ImageState }) {
       className="h-10 w-10 shrink-0 rounded-md bg-muted object-cover"
     />
   );
+}
+
+/* ------------------------------------------------------------------ */
+/* OptionsOrganized: Colors / Sizes / Custom options, clearly separated.      */
+/* ------------------------------------------------------------------ */
+
+function isColorOption(o: OptionState): boolean {
+  const n = (o.name.en || o.name.fr || "").toLowerCase();
+  if (n.includes("color") || n.includes("colour") || n.includes("couleur") || n.includes("لون")) return true;
+  return o.values.some((v) => v.colorId);
+}
+
+function isSizeOption(o: OptionState): boolean {
+  const n = (o.name.en || o.name.fr || "").toLowerCase();
+  return n.includes("size") || n.includes("taille") || n.includes("pointure") || n.includes("مقاس");
+}
+
+function OptionsOrganized({
+  options, colors, colorById, patch,
+}: {
+  options: OptionState[];
+  colors: { id: string; name: unknown; slug: string; hex_value: string | null }[];
+  colorById: Map<string, { id: string; name: unknown; slug: string; hex_value: string | null }>;
+  patch: (fn: (s: EditorSnapshot) => EditorSnapshot) => void;
+}) {
+  const colorIdx = options.findIndex(isColorOption);
+  const sizeIdx = options.findIndex((o, i) => i !== colorIdx && isSizeOption(o));
+  const otherIdxs = options.map((_, i) => i).filter((i) => i !== colorIdx && i !== sizeIdx);
+  const removeOption = (oi: number) =>
+    patch((s) => ({ ...s, options: s.options.filter((_, j) => j !== oi) }));
+  const removeValue = (oi: number, vi: number) =>
+    patch((s) => ({ ...s, options: s.options.map((o, j) =>
+      j === oi ? { ...o, values: o.values.filter((_, k) => k !== vi) } : o) }));
+  const addValue = (oi: number) =>
+    patch((s) => ({ ...s, options: s.options.map((o, j) =>
+      j === oi ? { ...o, values: [...o.values, { key: `val-${uid()}`, label: { ...EMPTY_LOCALE }, value: "" }] } : o) }));
+  const setValueColor = (oi: number, vi: number, colorId: string | null) =>
+    patch((s) => ({ ...s, options: s.options.map((o, j) =>
+      j === oi ? { ...o, values: o.values.map((x, k) => (k === vi ? { ...x, colorId } : x)) } : o) }));
+  const setValueText = (oi: number, vi: number, v: string) =>
+    patch((s) => ({ ...s, options: s.options.map((o, j) =>
+      j === oi ? { ...o, values: o.values.map((x, k) =>
+        k === vi ? { ...x, value: v, label: { fr: x.label.fr || v, en: x.label.en || v, ar: x.label.ar || v } } : x) } : o) }));
+  const setOptionName = (oi: number, lc: "fr" | "en" | "ar", v: string) =>
+    patch((s) => ({ ...s, options: s.options.map((o, j) =>
+      j === oi ? { ...o, name: { ...o.name, [lc]: v } } : o) }));
+
+  return (
+    <div className="space-y-6">
+      {colorIdx !== -1 && (
+        <section aria-label="Colors" className="rounded-xl border border-border/70 bg-muted/30 p-4 sm:p-5">
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <span className="grid size-8 place-items-center rounded-lg bg-background shadow-sm">
+                <Palette className="h-4 w-4" />
+              </span>
+              <div>
+                <h3 className="text-sm font-semibold">Colors</h3>
+                <p className="text-xs text-muted-foreground">Pick a swatch per color — shown on the storefront</p>
+              </div>
+            </div>
+            <button type="button" onClick={() => removeOption(colorIdx)}
+              className="rounded p-1.5 text-muted-foreground hover:text-destructive" aria-label="Remove colors">
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {options[colorIdx].values.map((val, vi) => {
+              const hex = val.colorId ? (colorById.get(val.colorId)?.hex_value ?? "#cccccc") : null;
+              return (
+                <div key={val.key} className="flex items-center gap-2 rounded-full border border-border bg-background py-1 pe-2 ps-1 shadow-sm">
+                  <Select value={val.colorId ?? "none"} onValueChange={(v: string) => setValueColor(colorIdx, vi, v === "none" ? null : v)}>
+                    <SelectTrigger aria-label="Pick color swatch" className="h-9 w-9 shrink-0 rounded-full border-2 p-0 [&>svg]:hidden" style={{ backgroundColor: hex ?? "transparent" }}>
+                      <span className="sr-only">Color</span>
+                      {!hex && <Palette className="mx-auto h-4 w-4 text-muted-foreground" />}
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No swatch</SelectItem>
+                      {colors.map((cc) => (
+                        <SelectItem key={cc.id} value={cc.id}>
+                          <span className="flex items-center gap-2">
+                            <span className="h-4 w-4 rounded-full border" style={{ backgroundColor: cc.hex_value ?? "#cccccc" }} />
+                            {asLocale(cc.name).en || asLocale(cc.name).fr || cc.slug}
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Input className="h-8 w-28 border-0 bg-transparent p-0 text-sm shadow-none focus-visible:ring-0"
+                    value={val.value} onChange={(e) => setValueText(colorIdx, vi, e.target.value)}
+                    placeholder="Color name" aria-label="Color name" />
+                  <button type="button" aria-label="Remove color" onClick={() => removeValue(colorIdx, vi)}
+                    className="rounded-full p-1 text-muted-foreground hover:text-destructive">
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              );
+            })}
+            <Button type="button" variant="outline" size="sm" onClick={() => addValue(colorIdx)} className="rounded-full">
+              <Plus className="me-1 h-3.5 w-3.5" /> Add color
+            </Button>
+          </div>
+        </section>
+      )}
+      {sizeIdx !== -1 && (
+        <section aria-label="Sizes" className="rounded-xl border border-border/70 bg-muted/30 p-4 sm:p-5">
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <span className="grid size-8 place-items-center rounded-lg bg-background shadow-sm">
+                <Shirt className="h-4 w-4" />
+              </span>
+              <div>
+                <h3 className="text-sm font-semibold">Sizes</h3>
+                <p className="text-xs text-muted-foreground">Values from presets or your own</p>
+              </div>
+            </div>
+            <button type="button" onClick={() => removeOption(sizeIdx)}
+              className="rounded p-1.5 text-muted-foreground hover:text-destructive" aria-label="Remove sizes">
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {options[sizeIdx].values.map((val, vi) => (
+              <div key={val.key} className="flex items-center gap-1 rounded-lg border border-border bg-background py-1 pe-1 ps-2.5 shadow-sm">
+                <Input className="h-7 w-20 border-0 bg-transparent p-0 text-sm font-medium shadow-none focus-visible:ring-0"
+                  value={val.value} onChange={(e) => setValueText(sizeIdx, vi, e.target.value)}
+                  placeholder="Size" aria-label="Size value" />
+                <button type="button" aria-label="Remove size" onClick={() => removeValue(sizeIdx, vi)}
+                  className="rounded p-1 text-muted-foreground hover:text-destructive">
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ))}
+            <Button type="button" variant="outline" size="sm" onClick={() => addValue(sizeIdx)} className="rounded-lg">
+              <Plus className="me-1 h-3.5 w-3.5" /> Add size
+            </Button>
+          </div>
+        </section>
+      )}
+      {otherIdxs.map((oi) => {
+        const opt = options[oi];
+        return (
+          <section key={opt.key} aria-label="Custom option" className="rounded-xl border p-4">
+            <div className="flex items-start gap-3">
+              <div className="grid flex-1 gap-3 sm:grid-cols-3">
+                {(["fr", "en", "ar"] as const).map((lc) => (
+                  <div key={lc}>
+                    <Label>Option name ({lc})</Label>
+                    <Input className="mt-1.5" value={opt.name[lc]}
+                      onChange={(e) => setOptionName(oi, lc, e.target.value)}
+                      placeholder={lc === "fr" ? "Matière" : lc === "en" ? "Material" : "الخامة"} />
+                  </div>
+                ))}
+              </div>
+              <button type="button" aria-label="Remove option" onClick={() => removeOption(oi)}
+                className="mt-6 rounded p-1.5 text-muted-foreground hover:text-destructive">
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {opt.values.map((val, vi) => (
+                <div key={val.key} className="flex items-center gap-1 rounded-lg border border-border bg-background py-1 pe-1 ps-2.5">
+                  <Input className="h-7 w-24 border-0 bg-transparent p-0 text-sm shadow-none focus-visible:ring-0"
+                    value={val.value} onChange={(e) => setValueText(oi, vi, e.target.value)}
+                    placeholder="Value" aria-label="Option value" />
+                  <button type="button" aria-label="Remove value" onClick={() => removeValue(oi, vi)}
+                    className="rounded p-1 text-muted-foreground hover:text-destructive">
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ))}
+              <Button type="button" variant="ghost" size="sm" onClick={() => addValue(oi)}>
+                <Plus className="me-1 h-3.5 w-3.5" /> Value
+              </Button>
+            </div>
+          </section>
+        );
+      })}
+    </div>
+  );
+}
+
+function VariantColorDot({ optionRefs, options, colorById }: {
+  optionRefs: { optionCode: string; value: string }[];
+  options: OptionState[];
+  colorById: Map<string, { id: string; name: unknown; slug: string; hex_value: string | null }>;
+}) {
+  for (const ref of optionRefs) {
+    const opt = options.find((o) => o.code === ref.optionCode);
+    if (!opt) continue;
+    const val = opt.values.find((v) => v.value === ref.value);
+    if (val?.colorId) {
+      const hex = colorById.get(val.colorId)?.hex_value ?? "#cccccc";
+      return <span className="inline-block h-3.5 w-3.5 shrink-0 rounded-full border border-border" style={{ backgroundColor: hex }} aria-hidden="true" />;
+    }
+  }
+  return null;
 }
 
 export function ProductEditor({
@@ -663,6 +861,23 @@ export function ProductEditor({
           colorId: null,
         }));
       options[optIndex] = { ...opt, values: [...opt.values, ...newValues] };
+      return { ...s, options };
+    });
+  };
+
+  const addColorOption = () => {
+    patch((s) => {
+      let optIndex = s.options.findIndex((o) => {
+        const n = (o.name.en || o.name.fr || "").toLowerCase();
+        return n.includes("color") || n.includes("colour") || n.includes("couleur") || n.includes("لون");
+      });
+      if (optIndex === -1) optIndex = s.options.findIndex((o) => o.values.some((v) => v.colorId));
+      const options: OptionState[] = [...s.options];
+      if (optIndex === -1) {
+        const code = `option-color-${uid()}`;
+        options.push({ key: code, code, name: { fr: "Couleur", en: "Color", ar: "اللون" }, values: [] });
+        optIndex = options.length - 1;
+      }
       return { ...s, options };
     });
   };
@@ -1169,174 +1384,21 @@ export function ProductEditor({
                 <Button type="button" variant="outline" size="sm" onClick={() => addSizePreset("shoes")}>
                   <Footprints className="me-1.5 h-4 w-4" /> Shoe sizes
                 </Button>
+                <Button type="button" variant="outline" size="sm" onClick={addColorOption}>
+                  <Palette className="me-1.5 h-4 w-4" /> Colors
+                </Button>
                 <Button type="button" variant="outline" size="sm" onClick={addOption}>
-                  <Plus className="me-1.5 h-4 w-4" /> Add option
+                  <Plus className="me-1.5 h-4 w-4" /> Custom option
                 </Button>
               </div>
             }
           >
-            {snap.options.length ? (
-              <div className="space-y-4">
-                {snap.options.map((opt, oi) => (
-                  <div key={opt.key} className="rounded-lg border p-4">
-                    <div className="flex items-start gap-3">
-                      <div className="grid flex-1 gap-3 sm:grid-cols-3">
-                        {(["fr", "en", "ar"] as const).map((lc) => (
-                          <div key={lc}>
-                            <Label>Option name ({lc})</Label>
-                            <Input
-                              className="mt-1.5"
-                              value={opt.name[lc]}
-                              onChange={(e) =>
-                                patch((s) => ({
-                                  ...s,
-                                  options: s.options.map((o, j) =>
-                                    j === oi ? { ...o, name: { ...o.name, [lc]: e.target.value } } : o,
-                                  ),
-                                }))
-                              }
-                              placeholder={lc === "fr" ? "Taille" : lc === "en" ? "Size" : "الحجم"}
-                            />
-                          </div>
-                        ))}
-                      </div>
-                      <button
-                        type="button"
-                        aria-label="Remove option"
-                        onClick={() =>
-                          patch((s) => ({ ...s, options: s.options.filter((_, j) => j !== oi) }))
-                        }
-                        className="mt-6 rounded p-1.5 text-muted-foreground hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                    <div className="mt-3 flex flex-wrap gap-1.5">
-                      {opt.values.map((val, vi) => (
-                        <Badge key={val.key} variant="secondary" className="gap-1.5 py-1 ps-2.5">
-                          <Select
-                            value={val.colorId ?? "none"}
-                            onValueChange={(v: string) =>
-                              patch((s) => ({
-                                ...s,
-                                options: s.options.map((o, j) =>
-                                  j === oi
-                                    ? {
-                                        ...o,
-                                        values: o.values.map((x, k) =>
-                                          k === vi
-                                            ? { ...x, colorId: v === "none" ? null : v }
-                                            : x,
-                                        ),
-                                      }
-                                    : o,
-                                ),
-                              }))
-                            }
-                          >
-                            <SelectTrigger
-                              aria-label="Value color"
-                              className="h-6 w-6 shrink-0 rounded-full border p-0 [&>svg]:hidden"
-                              style={{
-                                backgroundColor: val.colorId
-                                  ? (colorById.get(val.colorId)?.hex_value ?? "#cccccc")
-                                  : "transparent",
-                              }}
-                            >
-                              <span className="sr-only">Color</span>
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="none">No color</SelectItem>
-                              {colors.map((c) => (
-                                <SelectItem key={c.id} value={c.id}>
-                                  <span className="flex items-center gap-2">
-                                    <span
-                                      className="h-4 w-4 rounded-full border"
-                                      style={{ backgroundColor: c.hex_value ?? "#cccccc" }}
-                                    />
-                                    {asLocale(c.name).en || asLocale(c.name).fr || c.slug}
-                                  </span>
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <Input
-                            className="h-6 w-24 border-0 bg-transparent p-0 text-xs shadow-none focus-visible:ring-0"
-                            value={val.value}
-                            onChange={(e) => {
-                              const v = e.target.value;
-                              patch((s) => ({
-                                ...s,
-                                options: s.options.map((o, j) =>
-                                  j === oi
-                                    ? {
-                                        ...o,
-                                        values: o.values.map((x, k) =>
-                                          k === vi
-                                            ? {
-                                                ...x,
-                                                value: v,
-                                                label: {
-                                                  fr: x.label.fr || v,
-                                                  en: x.label.en || v,
-                                                  ar: x.label.ar || v,
-                                                },
-                                              }
-                                            : x,
-                                        ),
-                                      }
-                                    : o,
-                                ),
-                              }));
-                            }}
-                            placeholder="Value"
-                          />
-                          <button
-                            type="button"
-                            aria-label="Remove value"
-                            onClick={() =>
-                              patch((s) => ({
-                                ...s,
-                                options: s.options.map((o, j) =>
-                                  j === oi ? { ...o, values: o.values.filter((_, k) => k !== vi) } : o,
-                                ),
-                              }))
-                            }
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </Badge>
-                      ))}
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() =>
-                          patch((s) => ({
-                            ...s,
-                            options: s.options.map((o, j) =>
-                              j === oi
-                                ? {
-                                    ...o,
-                                    values: [...o.values, { key: `val-${uid()}`, label: { ...EMPTY_LOCALE }, value: "" }],
-                                  }
-                                : o,
-                            ),
-                          }))
-                        }
-                      >
-                        <Plus className="me-1 h-3.5 w-3.5" /> Value
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <EmptyState
-                title="No options"
-                text="A product without options has a single default variant. Add options to create combinations."
-              />
-            )}
+            <OptionsOrganized
+              options={snap.options}
+              colors={colors}
+              colorById={colorById}
+              patch={patch}
+            />
           </AdminCard>
 
           {/* variant matrix */}
@@ -1375,13 +1437,13 @@ export function ProductEditor({
                 Apply stock
               </Button>
             </div>
-            <div className="overflow-x-auto rounded-lg border">
+            <div className="overflow-x-auto rounded-xl border">
               <table className="w-full min-w-[760px] text-sm">
-                <thead>
-                  <tr className="border-b bg-muted/50 text-start text-xs text-muted-foreground">
+                <thead className="sticky top-0">
+                  <tr className="border-b bg-muted/70 text-start text-xs text-muted-foreground backdrop-blur">
                     <th className="px-3 py-2.5 text-start font-medium">Variant</th>
                     <th className="px-3 py-2.5 text-start font-medium">SKU</th>
-                    <th className="px-3 py-2.5 text-start font-medium">Price</th>
+                    <th className="px-3 py-2.5 text-start font-medium">Price (DZD)</th>
                     <th className="px-3 py-2.5 text-start font-medium">Stock</th>
                     <th className="px-3 py-2.5 text-start font-medium">Low at</th>
                     <th className="px-3 py-2.5 text-start font-medium">Image</th>
@@ -1392,7 +1454,8 @@ export function ProductEditor({
                     <tr key={v.key} className="border-b last:border-0">
                       <td className="px-3 py-2">
                         {v.optionRefs.length ? (
-                          <span className="text-xs">
+                          <span className="inline-flex items-center gap-1.5 text-xs font-medium">
+                            <VariantColorDot optionRefs={v.optionRefs} options={snap.options} colorById={colorById} />
                             {v.optionRefs.map((r) => r.value).join(" / ")}
                           </span>
                         ) : (

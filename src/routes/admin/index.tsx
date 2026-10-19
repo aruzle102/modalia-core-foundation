@@ -40,17 +40,17 @@ import { getLocale, getTranslations } from "@/lib/i18n";
 import type { SupportedLocale } from "@/config/platform";
 
 /* ---------------------------------------------------------------------------
- * Kaiadmin-style stat cards: horizontal layout with solid colored icon tile.
- * Faithful to the Kaiadmin reference: [icon square] [label + big number].
+ * Stat cards: horizontal layout with solid colored icon tile.
+ * Colors use Tailwind palette classes (dark-mode safe), not raw hex.
  * ------------------------------------------------------------------------- */
 
 const kaiIconTiles = {
-  blue: "bg-[#1572e8]",
-  sky: "bg-[#48abf7]",
-  green: "bg-[#31ce36]",
-  purple: "bg-[#6861ce]",
-  orange: "bg-[#ffad46]",
-  red: "bg-[#f25961]",
+  blue: "bg-blue-600 dark:bg-blue-500",
+  sky: "bg-sky-500 dark:bg-sky-400",
+  green: "bg-emerald-600 dark:bg-emerald-500",
+  purple: "bg-violet-600 dark:bg-violet-500",
+  orange: "bg-amber-500 dark:bg-amber-400",
+  red: "bg-rose-600 dark:bg-rose-500",
 } as const;
 
 function KaiStatCard({
@@ -65,16 +65,16 @@ function KaiStatCard({
   value: ReactNode;
 }) {
   return (
-    <div className="flex items-center gap-4 rounded-xl bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.08)] dark:bg-neutral-900 dark:shadow-none dark:ring-1 dark:ring-neutral-800">
+    <div className="flex items-center gap-4 rounded-xl border border-border/60 bg-card p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
       <span
-        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-lg text-white ${kaiIconTiles[color]}`}
+        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-white shadow-sm ${kaiIconTiles[color]}`}
         aria-hidden="true"
       >
         {icon}
       </span>
       <span className="min-w-0">
-        <span className="block truncate text-[13px] text-neutral-500 dark:text-neutral-400">{label}</span>
-        <span className="mt-0.5 block text-2xl font-bold tracking-tight text-neutral-950 tabular-nums dark:text-white">
+        <span className="block truncate text-[13px] text-muted-foreground">{label}</span>
+        <span className="mt-0.5 block text-2xl font-bold tracking-tight tabular-nums">
           {value}
         </span>
       </span>

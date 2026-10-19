@@ -37,17 +37,17 @@ export function AdminCard({
   contentClassName?: string | undefined;
 }) {
   return (
-    <Card className={cn("rounded-md shadow-none", className)}>
+    <Card className={cn("rounded-xl border-border/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)]", className)}>
       {title || actions ? (
-        <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0 px-4 py-3.5 sm:px-5">
+        <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0 px-4 py-4 sm:px-6">
           <div className="min-w-0">
-            {title ? <CardTitle className="text-sm font-semibold">{title}</CardTitle> : null}
-            {subtitle ? <CardDescription className="mt-1 text-caption">{subtitle}</CardDescription> : null}
+            {title ? <CardTitle className="text-[15px] font-semibold tracking-tight">{title}</CardTitle> : null}
+            {subtitle ? <CardDescription className="mt-1 text-[13px]">{subtitle}</CardDescription> : null}
           </div>
-          {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
+          {actions ? <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div> : null}
         </CardHeader>
       ) : null}
-      <CardContent className={cn("px-4 pb-4 sm:px-5 sm:pb-5", contentClassName)}>{children}</CardContent>
+      <CardContent className={cn("px-4 pb-5 sm:px-6 sm:pb-6", contentClassName)}>{children}</CardContent>
     </Card>
   );
 }
@@ -132,7 +132,6 @@ export function EmptyState({
 }
 
 /* ------------------------------ TableSkeleton ---------------------------- */
-
 export function TableSkeleton({ rows = 6 }: { rows?: number }) {
   return (
     <div className="space-y-1.5" role="status">
@@ -144,6 +143,42 @@ export function TableSkeleton({ rows = 6 }: { rows?: number }) {
           <Skeleton className="h-5 w-16 rounded-full" />
         </div>
       ))}
+    </div>
+  );
+}
+
+/* ------------------------------- AdminTable ------------------------------ */
+
+/**
+ * Responsive table wrapper for admin list pages.
+ * - Rounded card container with border (matches AdminCard radius)
+ * - Horizontal scroll on small screens with subtle edge fade hint
+ * - Sticky header row with muted background
+ * - Row hover for scanability
+ * Use: <AdminTable><table className="w-full text-sm">…</table></AdminTable>
+ */
+export function AdminTable({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string | undefined;
+}) {
+  return (
+    <div
+      className={cn(
+        "relative overflow-x-auto rounded-xl border border-border/60 bg-card",
+        "[&_table]:w-full [&_table]:border-collapse [&_table]:text-sm",
+        "[&_thead]:sticky [&_thead]:top-0",
+        "[&_thead_th]:whitespace-nowrap [&_thead_th]:bg-muted/60 [&_thead_th]:px-4 [&_thead_th]:py-3",
+        "[&_thead_th]:text-start [&_thead_th]:text-xs [&_thead_th]:font-semibold [&_thead_th]:uppercase",
+        "[&_thead_th]:tracking-wide [&_thead_th]:text-muted-foreground",
+        "[&_tbody_td]:border-t [&_tbody_td]:border-border/50 [&_tbody_td]:px-4 [&_tbody_td]:py-3 [&_tbody_td]:align-middle",
+        "[&_tbody_tr]:transition-colors [&_tbody_tr:hover]:bg-muted/40",
+        className,
+      )}
+    >
+      {children}
     </div>
   );
 }
@@ -245,9 +280,34 @@ export function SegmentedControl<T extends string>({
   );
 }
 
-/* --------------------------------- Field --------------------------------- */
+/* ------------------------------- FilterBar ------------------------------- */
 
-export function Field({
+/**
+ * Consistent filter bar for admin list pages.
+ * Wraps on mobile (no horizontal overflow), aligns to a tidy grid on desktop.
+ * Pair with AdminTable below it.
+ */
+export function FilterBar({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string | undefined;
+}) {
+  return (
+    <div
+      className={cn(
+        "mb-4 flex flex-col gap-3 rounded-xl border border-border/60 bg-card p-4",
+        "sm:flex-row sm:flex-wrap sm:items-end",
+        className,
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
+/* --------------------------------- Field --------------------------------- */export function Field({
   label,
   children,
   hint,

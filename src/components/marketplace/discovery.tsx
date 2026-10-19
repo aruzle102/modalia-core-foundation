@@ -128,6 +128,8 @@ export function ProductCard({
         price: product.price,
         image: product.imagePath,
         storeName: product.storeName,
+        categorySlug: product.categorySlug ?? null,
+        storeId: product.storeId ?? null,
       });
       setWishlisted(added);
       if (added) {

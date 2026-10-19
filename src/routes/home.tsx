@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { queryOptions, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import {
@@ -38,6 +38,7 @@ import { useParallax } from "@/hooks/use-parallax";
 import { Magnetic, Marquee, TextReveal, ImageReveal } from "@/components/motion";
 import { motionPreset, motionTw } from "@/lib/motion-tokens";
 import {
+  browseCatalog,
   getDiscoveryData,
   type CatalogProduct,
   type CatalogStore,
@@ -1820,6 +1821,139 @@ function BoutiquesGrid({
   );
 }
 
+/**
+ * Lazy-loading product grid section.
+ * - Loads via IntersectionObserver when scrolled into view
+ * - Shows skeleton while loading
+ * - Dedupes against already-shown products (via shared set)
+ * - Hides entirely when empty
+ * - Grid: 2 cols mobile, 4-5 cols desktop
+ */
+function LazyProductGrid({
+  locale,
+  title,
+  subtitle,
+  fetchProducts,
+  viewAllSearch,
+  shownIds,
+  onShown,
+}: {
+  locale: SupportedLocale;
+  title: string;
+  subtitle?: string;
+  fetchProducts: () => Promise<CatalogProduct[]>;
+  viewAllSearch: Record<string, unknown>;
+  shownIds: Set<string>;
+  onShown: (ids: string[]) => void;
+}) {
+  const t = getTranslations(locale);
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+  const [products, setProducts] = useState<CatalogProduct[] | null>(null);
+
+  // IntersectionObserver: load when scrolled into view
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || visible) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          setVisible(true);
+          obs.disconnect();
+        }
+      },
+      { rootMargin: "200px" },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [visible]);
+
+  // Fetch when visible
+  useEffect(() => {
+    if (!visible || products !== null) return;
+    let cancelled = false;
+    fetchProducts()
+      .then((all) => {
+        if (cancelled) return;
+        // Dedupe: skip products already shown in earlier sections
+        const fresh = all.filter((p) => !shownIds.has(p.id));
+        setProducts(fresh);
+        if (fresh.length > 0) {
+          onShown(fresh.map((p) => p.id));
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setProducts([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [visible, products, fetchProducts, shownIds, onShown]);
+
+  // Not yet visible: render placeholder for observer
+  if (!visible) {
+    return <div ref={ref} aria-hidden className="min-h-[200px]" />;
+  }
+
+  // Loading: skeleton grid
+  if (products === null) {
+    return (
+      <div ref={ref}>
+        <section aria-label={title} className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-5">
+            <div className="h-7 w-48 animate-pulse rounded bg-muted" />
+            {subtitle ? <div className="mt-2 h-4 w-64 animate-pulse rounded bg-muted" /> : null}
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+            {Array.from({ length: 10 }).map((_, i) => (
+              <div key={i} className="overflow-hidden rounded-xl border border-border/60 bg-card">
+                <div className="aspect-[4/3] animate-pulse bg-muted" />
+                <div className="space-y-2 p-4">
+                  <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
+                  <div className="h-4 w-1/2 animate-pulse rounded bg-muted" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+  // Empty: hide entirely
+  if (products.length === 0) return null;
+
+  return (
+    <div ref={ref}>
+      <section aria-label={title} className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <Reveal>
+          <div className="mb-5 flex items-end justify-between gap-4">
+            <div className="min-w-0">
+              <h2 className="truncate text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+                {title}
+              </h2>
+              {subtitle ? <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p> : null}
+            </div>
+            <Link
+              to="/shop"
+              search={viewAllSearch as any}
+              className="group inline-flex shrink-0 items-center gap-1.5 text-[13px] font-semibold text-foreground transition-all hover:gap-2.5"
+            >
+              {t.common.viewAll}
+              <ArrowRight className="size-3.5 transition-transform rtl:rotate-180" />
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+            {products.slice(0, 10).map((product) => (
+              <ProductCard key={product.id} product={product} locale={locale} />
+            ))}
+          </div>
+        </Reveal>
+      </section>
+    </div>
+  );
+}
+
 function HomePage() {
   const { locale } = Route.useSearch();
   const { data } = useSuspenseQuery(homeQuery(locale));
@@ -1871,6 +2005,22 @@ function HomePage() {
     }),
     [locale],
   );
+
+  // Shared dedupe set: prevents the same product appearing in multiple sections.
+  // Stable for the session (useRef), reset on locale change via key.
+  const shownIdsRef = useRef<Set<string>>(new Set());
+  const registerShown = useMemo(
+    () => (ids: string[]) => {
+      for (const id of ids) shownIdsRef.current.add(id);
+    },
+    [],
+  );
+  // Pre-register products from the eager sections (trending/new rails)
+  useEffect(() => {
+    for (const p of data.products.slice(0, 20)) {
+      shownIdsRef.current.add(p.id);
+    }
+  }, [data.products]);
 
   const flash = sectionByKind("flash_sale");
   const flashContent = useMemo(() => sectionContent(flash), [flash]);
@@ -1963,6 +2113,104 @@ function HomePage() {
               categorySlug={fashionCategory?.slug}
               ctaLabel={copy.sfFashionCta}
               dark={false}
+            />
+          </div>
+
+          {/* ===== LAZY SECTIONS: deals, popular, categories ===== */}
+          <div className="space-y-12 sm:space-y-16">
+            {/* Meilleures offres */}
+            <LazyProductGrid
+              locale={locale}
+              title={copy.sfDealsTitle}
+              subtitle={copy.sfDealsSubtitle}
+              fetchProducts={async () => {
+                const res = await browseCatalog({
+                  data: { locale, onSale: true, pageSize: 10, inStock: true },
+                });
+                return res.products;
+              }}
+              viewAllSearch={{ ...shopSearch, onSale: true }}
+              shownIds={shownIdsRef.current}
+              onShown={registerShown}
+            />
+
+            {/* Les plus populaires */}
+            <LazyProductGrid
+              locale={locale}
+              title={copy.sfPopularTitle}
+              subtitle={copy.sfPopularSubtitle}
+              fetchProducts={async () => {
+                const res = await getBestsellers({ data: { limit: 10, locale } });
+                return res.products ?? [];
+              }}
+              viewAllSearch={{ ...shopSearch, sort: "popular" }}
+              shownIds={shownIdsRef.current}
+              onShown={registerShown}
+            />
+
+            {/* Category sections: only render if products exist (component hides when empty) */}
+            {[
+              { slug: "mode-homme", key: "modeHomme" },
+              { slug: "mode-femme", key: "modeFemme" },
+              { slug: "accessoires", key: "accessoires" },
+            ].map(({ slug, key }) => {
+              const cat = data.categories.find((cc) => cc.slug === slug);
+              const catName =
+                typeof cat?.name === "object"
+                  ? (cat.name as Record<string, string>)[locale] ?? (cat.name as Record<string, string>)["fr"] ?? slug
+                  : ((cat?.name as string) ?? slug);
+              return (
+                <LazyProductGrid
+                  key={key}
+                  locale={locale}
+                  title={catName}
+                  fetchProducts={async () => {
+                    const res = await browseCatalog({
+                      data: { locale, category: slug, pageSize: 10, inStock: true },
+                    });
+                    return res.products;
+                  }}
+                  viewAllSearch={{ ...shopSearch, category: slug }}
+                  shownIds={shownIdsRef.current}
+                  onShown={registerShown}
+                />
+              );
+            })}
+
+            {/* Chaussures / Sport / Enfants: search-based (no dedicated category) */}
+            {[
+              { q: "chaussure", key: "chaussures", fallback: { fr: "Chaussures", en: "Shoes", ar: "أحذية" } },
+              { q: "sport", key: "sport", fallback: { fr: "Sport & Fitness", en: "Sports & Fitness", ar: "رياضة ولياقة" } },
+            ].map(({ q, key, fallback }) => (
+              <LazyProductGrid
+                key={key}
+                locale={locale}
+                title={fallback[locale]}
+                fetchProducts={async () => {
+                  const res = await browseCatalog({
+                    data: { locale, q, pageSize: 10, inStock: true },
+                  });
+                  return res.products;
+                }}
+                viewAllSearch={{ ...shopSearch, q }}
+                shownIds={shownIdsRef.current}
+                onShown={registerShown}
+              />
+            ))}
+
+            {/* Enfants: gender filter (only if products exist) */}
+            <LazyProductGrid
+              locale={locale}
+              title={{ fr: "Enfants", en: "Kids", ar: "أطفال" }[locale]}
+              fetchProducts={async () => {
+                const res = await browseCatalog({
+                  data: { locale, gender: "kids", pageSize: 10, inStock: true },
+                });
+                return res.products;
+              }}
+              viewAllSearch={{ ...shopSearch, gender: "kids" }}
+              shownIds={shownIdsRef.current}
+              onShown={registerShown}
             />
           </div>
 

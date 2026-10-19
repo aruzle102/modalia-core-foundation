@@ -14,6 +14,7 @@ import { browseCatalog, getStoreDirectory } from "@/lib/catalog.functions";
 import { parseQuery, intentSummary, type CatalogCategoryLike } from "@/lib/ai/query-parse";
 import { getLocale, getTranslations, localeDirections } from "@/lib/i18n";
 import { track } from "@/lib/analytics";
+import { recordCategoryBrowse } from "@/lib/recommendations-client";
 import { pageHead, pageHeadCopy, prefetchSeoSettings, seoRobotsFromHeadCtx } from "@/lib/seo";
 import type { SupportedLocale } from "@/config/platform";
 import { motionTw } from "@/lib/motion-tokens";
@@ -591,11 +592,12 @@ function ShopPage() {
                   active={search.category === category.slug}
                   label={category.name}
                   count={category.productCount}
-                  onSelect={() =>
+                  onSelect={() => {
+                    recordCategoryBrowse(category.slug);
                     navigate({
                       search: (previous) => ({ ...previous, category: category.slug, page: 1 }),
-                    })
-                  }
+                    });
+                  }}
                 />
               ))}
             </div>

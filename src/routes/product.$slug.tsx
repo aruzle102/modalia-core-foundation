@@ -1,5 +1,7 @@
+import { useEffect } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
+import { recordProductView } from "@/lib/recommendations-client";
 import { Button } from "@/components/ui/button";
 import { SiteFooter, SiteHeader } from "@/components/layout/site-shell";
 import { ProductDetailView } from "@/components/marketplace/product-detail";
@@ -88,4 +90,15 @@ export const Route = createFileRoute("/product/$slug")({
   },
   component: ProductPage,
 });
-function ProductPage() { const { slug } = Route.useParams(); const { locale } = Route.useSearch(); const { data: product } = useSuspenseQuery(productQuery(slug, locale)); const t = getTranslations(locale); if (!product) return <div dir={localeDirections[locale]} lang={locale} className="min-h-screen bg-background"><SiteHeader locale={locale} t={t} /><main id="main-content" tabIndex={-1} className="px-6 py-24 text-center"><h1 className="text-display text-foreground">{t.product.unavailableTitle}</h1><p className="mt-3 text-body text-muted-foreground">{t.product.unavailableText}</p><Button asChild variant="outline" className="mt-7"><Link to="/shop" search={{ locale, q: "", category: "", sort: "newest", page: 1, focus: "", view: "" , brands: [], stores: [], colors: [], sizes: [], inStock: false, onSale: false }}>{t.product.backToShop}</Link></Button></main><SiteFooter locale={locale} t={t} /></div>; return <div dir={localeDirections[locale]} lang={locale} className="min-h-screen bg-background"><SiteHeader locale={locale} t={t} /><ProductDetailView product={product} locale={locale} /><SiteFooter locale={locale} t={t} /></div>; }
+function ProductPage() { const { slug } = Route.useParams(); const { locale } = Route.useSearch(); const { data: product } = useSuspenseQuery(productQuery(slug, locale)); const t = getTranslations(locale);
+  // Recommendation signal: record the product view once per product page.
+  useEffect(() => {
+    if (!product) return;
+    recordProductView({
+      id: product.id,
+      categorySlug: product.category?.slug ?? null,
+      storeName: product.store?.name ?? null,
+      brandSlug: product.brand?.slug ?? null,
+    });
+  }, [product?.id]);
+  if (!product) return <div dir={localeDirections[locale]} lang={locale} className="min-h-screen bg-background"><SiteHeader locale={locale} t={t} /><main id="main-content" tabIndex={-1} className="px-6 py-24 text-center"><h1 className="text-display text-foreground">{t.product.unavailableTitle}</h1><p className="mt-3 text-body text-muted-foreground">{t.product.unavailableText}</p><Button asChild variant="outline" className="mt-7"><Link to="/shop" search={{ locale, q: "", category: "", sort: "newest", page: 1, focus: "", view: "" , brands: [], stores: [], colors: [], sizes: [], inStock: false, onSale: false }}>{t.product.backToShop}</Link></Button></main><SiteFooter locale={locale} t={t} /></div>; return <div dir={localeDirections[locale]} lang={locale} className="min-h-screen bg-background"><SiteHeader locale={locale} t={t} /><ProductDetailView product={product} locale={locale} /><SiteFooter locale={locale} t={t} /></div>; }

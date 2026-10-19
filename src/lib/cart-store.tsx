@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { track } from "@/lib/analytics";
+import { recordCartAdd } from "@/lib/recommendations-client";
 
 export type CartLine = {
   productId: string;
@@ -47,6 +48,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartLine[]>(readCart);
   useEffect(() => { if (typeof window !== "undefined") localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); }, [items]);
   const addItem = useCallback((item: CartLine) => setItems((current) => {
+    // Recommendation signal: idempotent (keyed by productId), so a
+    // StrictMode double-invoke of this updater cannot duplicate it.
+    recordCartAdd({
+      id: item.productId,
+      storeId: item.storeId ?? item.sellerId ?? null,
+      storeName: item.storeName ?? null,
+    });
     const existing = current.find((line) => line.variantId === item.variantId);
     if (existing) return current.map((line) => line.variantId === item.variantId ? { ...line, quantity: line.quantity + item.quantity } : line);
     return [...current, item];

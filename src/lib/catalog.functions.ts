@@ -12,6 +12,10 @@ export type CatalogProduct = {
   name: string;
   price: number;
   storeName: string;
+  /** Store id when the source query selected it — used for seller-fair rotation. */
+  storeId?: string | null;
+  /** Brand slug when the source query selected it — used for recommendation scoring. */
+  brandSlug?: string | null;
   categorySlug: string | null;
   imagePath: string | null;
   imageAlt: string;
@@ -279,7 +283,7 @@ async function hydrateCards(
   const [detailResult, storeResult] = await Promise.all([
     client
       .from("products")
-      .select("id,slug,name,base_price,compare_at_price,created_at,store_id,category:categories(slug),seller:sellers(stores(name)),images:product_images(storage_path,alt_text,sort_order)")
+      .select("id,slug,name,base_price,compare_at_price,created_at,store_id,category:categories(slug),brand:brands(slug),seller:sellers(stores(name)),images:product_images(storage_path,alt_text,sort_order)")
       .in("id", ids),
     storeIds.length
       ? client.from("stores").select("id,name,verification_status,settings").in("id", storeIds)
@@ -299,6 +303,7 @@ async function hydrateCards(
       const seller = Array.isArray(product.seller) ? product.seller[0] : product.seller;
       const sellerStores = seller && Array.isArray(seller.stores) ? seller.stores : [];
       const category = Array.isArray(product.category) ? product.category[0] : product.category;
+      const brand = Array.isArray(product.brand) ? product.brand[0] : product.brand;
       const directStore = row.store_id ? storeById.get(row.store_id) : undefined;
       const totalStock = stockByProduct.get(row.id);
       return {
@@ -308,6 +313,8 @@ async function hydrateCards(
         price: Number(product.base_price),
         compareAtPrice: product.compare_at_price ?? null,
         storeName: directStore?.name ?? sellerStores[0]?.name ?? "Modalia store",
+        storeId: product.store_id ?? row.store_id ?? null,
+        brandSlug: brand?.slug ?? null,
         categorySlug: category?.slug ?? null,
         imagePath: publicUrl(firstImage?.storage_path ?? null),
         imageAlt: localized(firstImage?.alt_text ?? null, locale, ""),

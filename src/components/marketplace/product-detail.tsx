@@ -165,6 +165,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
       price,
       image: currentImage?.url ?? null,
       storeName: product.store?.name ?? null,
+      categorySlug: product.category?.slug ?? null,
     });
     setSaved(next);
     if (next) {

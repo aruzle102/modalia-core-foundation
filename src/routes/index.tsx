@@ -162,8 +162,28 @@ function LandingPage() {
                 className="group mt-10 inline-flex w-fit items-center gap-3 rounded-full bg-white px-10 py-4 text-sm font-semibold text-neutral-950 shadow-2xl transition-all hover:bg-white/90 active:scale-[0.98]"
               >
                 {heroCta}
-                <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
+                <ArrowRight className="size-4 transition-transform group-hover:translate-x-1 rtl:rotate-180" />
               </Link>
+            </Reveal>
+            {/* Multi-category pills: fashion, shoes, sports, accessories */}
+            <Reveal delay={350}>
+              <div className="mt-8 flex flex-wrap items-center gap-2">
+                {[
+                  { key: "fashion", label: { ar: "أزياء", fr: "Mode", en: "Fashion" } },
+                  { key: "shoes", label: { ar: "أحذية", fr: "Chaussures", en: "Shoes" } },
+                  { key: "sports", label: { ar: "رياضة", fr: "Sport", en: "Sports" } },
+                  { key: "accessories", label: { ar: "إكسسوارات", fr: "Accessoires", en: "Accessories" } },
+                ].map((cat) => (
+                  <Link
+                    key={cat.key}
+                    to="/home"
+                    search={{ locale, category: cat.key } as any}
+                    className="rounded-full border border-white/25 bg-white/10 px-4 py-2 text-xs font-medium text-white/90 backdrop-blur-sm transition-all hover:border-white/50 hover:bg-white/20 hover:text-white"
+                  >
+                    {cat.label[locale] || cat.label.en}
+                  </Link>
+                ))}
+              </div>
             </Reveal>
             <Reveal delay={400}>
               <div className="mt-14 flex items-center gap-3 text-white/50">

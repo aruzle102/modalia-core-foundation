@@ -38,7 +38,6 @@ export function ProductCard({
   const images = [product.imagePath, product.secondImagePath].filter(Boolean) as string[];
   const [imgIndex, setImgIndex] = useState(0);
   const t = getTranslations(locale).card;
-  const sf = getTranslations(locale).home;
 
   // Badges come from real data only: discount from compareAtPrice,
   // "new" from createdAt, low stock from summed variant inventory.
@@ -101,8 +100,8 @@ export function ProductCard({
 
 
   return (
-    <article className="group relative flex min-w-0 flex-col overflow-hidden rounded-xl border border-border/60 bg-card shadow-[0_2px_12px_-4px_rgba(0,0,0,0.08)] transition-shadow duration-300 hover:shadow-[0_16px_36px_-14px_rgba(0,0,0,0.22)]">
-      {/* Image carousel — Product Card 1 reference: arrows + indicators.
+    <article className="group relative flex min-w-0 flex-col overflow-hidden rounded-2xl border border-border/50 bg-card shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-all duration-300 hover:-translate-y-1 hover:border-border hover:shadow-[0_20px_45px_-18px_rgba(0,0,0,0.25)] motion-reduce:transition-none motion-reduce:hover:translate-y-0">
+      {/* Image carousel — arrows + indicators.
           Arrows stopPropagation so they don't trigger the product link. */}
       <div className="relative">
         <Link
@@ -112,14 +111,16 @@ export function ProductCard({
           className="block"
           aria-label={product.name}
         >
-          <div className={`relative aspect-[4/3] overflow-hidden bg-muted ${soldOut ? "saturate-50" : ""}`}>
+          <div className={`relative aspect-[4/5] overflow-hidden bg-muted ${soldOut ? "saturate-50" : ""}`}>
             {images.length > 0 ? (
               <img
                 key={imgIndex}
                 src={images[imgIndex]}
                 alt={product.imageAlt || product.name}
                 loading="lazy"
-                className={`size-full object-cover ${soldOut ? "opacity-75 saturate-50" : ""}`}
+                decoding="async"
+                sizes="(min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
+                className={`size-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04] motion-reduce:transition-none motion-reduce:group-hover:scale-100 ${soldOut ? "opacity-75 saturate-50" : ""}`}
               />
             ) : (
               <div className="flex size-full items-end p-5 text-sm text-muted-foreground">
@@ -128,6 +129,15 @@ export function ProductCard({
                 {product.name}
               </div>
             )}
+            {/* Subtle bottom gradient for legibility + premium depth */}
+            <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/25 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+            {soldOut ? (
+              <div className="absolute inset-0 grid place-items-center bg-background/45 backdrop-blur-[1px]">
+                <span className="rounded-full bg-foreground px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-background">
+                  {t.soldOut}
+                </span>
+              </div>
+            ) : null}
           </div>
         </Link>
         {showArrows ? (
@@ -136,7 +146,7 @@ export function ProductCard({
               type="button"
               aria-label="Previous image"
               onClick={(e) => { e.stopPropagation(); e.preventDefault(); setImgIndex((i) => (i - 1 + images.length) % images.length); }}
-              className="absolute start-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-neutral-800 opacity-0 shadow-md transition-opacity group-hover:opacity-100 hover:bg-white focus-visible:opacity-100 [@media(hover:none)]:opacity-100"
+              className="absolute start-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-neutral-800 opacity-0 shadow-md backdrop-blur-sm transition-all group-hover:opacity-100 hover:scale-105 hover:bg-white focus-visible:opacity-100 [@media(hover:none)]:opacity-100"
             >
               <ChevronLeft className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />
             </button>
@@ -144,7 +154,7 @@ export function ProductCard({
               type="button"
               aria-label="Next image"
               onClick={(e) => { e.stopPropagation(); e.preventDefault(); setImgIndex((i) => (i + 1) % images.length); }}
-              className="absolute end-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-neutral-800 opacity-0 shadow-md transition-opacity group-hover:opacity-100 hover:bg-white focus-visible:opacity-100 [@media(hover:none)]:opacity-100"
+              className="absolute end-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-neutral-800 opacity-0 shadow-md backdrop-blur-sm transition-all group-hover:opacity-100 hover:scale-105 hover:bg-white focus-visible:opacity-100 [@media(hover:none)]:opacity-100"
             >
               <ChevronRight className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />
             </button>
@@ -159,34 +169,39 @@ export function ProductCard({
           </>
         ) : null}
 
-        {/* Badges — real data only, stacked pills top-start like the reference */}
+        {/* Badges — real data only, refined pills top-start */}
         <div className="pointer-events-none absolute start-3 top-3 z-10 flex flex-col items-start gap-1.5">
-          {fresh ? (
-            <span className="rounded-full bg-official px-2.5 py-1 text-[11px] font-bold text-white shadow-sm">
-              {t.new}
+          {sale != null ? (
+            <span className="rounded-full bg-destructive/95 px-2.5 py-1 text-[11px] font-extrabold tracking-wide text-white shadow-md ring-1 ring-black/10 backdrop-blur-sm">
+              -{sale}%
             </span>
           ) : null}
-          {sale != null ? (
-            <span className="rounded-full bg-destructive px-2.5 py-1 text-[11px] font-bold text-white shadow-sm">
-              -{sale}%
+          {fresh ? (
+            <span className="rounded-full bg-emerald-600/95 px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-wider text-white shadow-md ring-1 ring-black/10 backdrop-blur-sm">
+              {t.new}
             </span>
           ) : null}
         </div>
 
-        {/* Wishlist — white circle top-end with shadow, heart fills red when active */}
+        {/* Wishlist — frosted circle top-end, heart fills red when active */}
         <button
           type="button"
           onClick={handleWishlist}
           aria-pressed={wishlisted}
           aria-label={t.wishlist(product.name)}
-          className="absolute end-3 top-3 z-10 grid size-9 place-items-center rounded-full bg-white text-neutral-900 shadow-md transition-transform hover:scale-105 active:scale-95 touch-manipulation dark:bg-neutral-900 dark:text-white"
+          className="absolute end-3 top-3 z-10 grid size-9 place-items-center rounded-full bg-white/90 text-neutral-900 shadow-md backdrop-blur-sm transition-all hover:scale-110 hover:bg-white active:scale-95 touch-manipulation dark:bg-neutral-900/90 dark:text-white"
         >
-          <Heart className={`size-4 ${wishlisted ? "fill-rose-500 text-rose-500" : ""}`} aria-hidden="true" />
+          <Heart className={`size-4 transition-colors ${wishlisted ? "fill-rose-500 text-rose-500" : ""}`} aria-hidden="true" />
         </button>
       </div>
 
-      {/* Info — name, price, then full-width Add to Cart (sibling of the Link, not nested) */}
-      <div className="flex flex-1 flex-col px-4 pb-4 pt-3">
+      {/* Info — store, name, price, then actions */}
+      <div className="flex flex-1 flex-col gap-1 px-4 pb-4 pt-3.5">
+        {product.storeName ? (
+          <p className="truncate text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+            {product.storeName}
+          </p>
+        ) : null}
         <Link
           to="/product/$slug"
           params={{ slug: product.slug }}
@@ -194,31 +209,34 @@ export function ProductCard({
           className="block"
           aria-label={product.name}
         >
-          <h3 className="line-clamp-2 min-h-[2.6em] text-[15px] font-bold leading-snug text-foreground">
+          <h3 className="line-clamp-2 min-h-[2.5em] text-[14px] font-semibold leading-snug text-foreground transition-colors group-hover:text-foreground/80">
             {product.name}
           </h3>
-          <p className="mt-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-            <span className="text-lg font-extrabold tabular-nums tracking-tight text-foreground">
+          <p className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+            <span className="text-[17px] font-extrabold tabular-nums tracking-tight text-foreground">
               {formatPrice(product.price, locale)}
             </span>
             {sale != null && product.compareAtPrice ? (
-              <span className="shrink-0 text-sm tabular-nums text-muted-foreground line-through">
+              <span className="shrink-0 text-[13px] tabular-nums text-muted-foreground line-through">
                 {formatPrice(product.compareAtPrice, locale)}
               </span>
             ) : null}
           </p>
         </Link>
         {lowStock ? (
-          <p className="pt-1 text-xs font-medium text-destructive">{t.onlyLeft(stock as number)}</p>
+          <p className="inline-flex items-center gap-1.5 text-xs font-semibold text-destructive">
+            <span className="size-1.5 rounded-full bg-destructive" aria-hidden />
+            {t.onlyLeft(stock as number)}
+          </p>
         ) : null}
-        <div className="mt-auto flex gap-2 pt-3">
+        <div className="mt-auto flex gap-2 pt-3.5">
           <button
             type="button"
             onClick={handleBuyNow}
             disabled={soldOut}
             aria-label={soldOut ? t.soldOut : t.buyNow}
             title={soldOut ? t.soldOut : t.buyNow}
-            className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-neutral-900 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-neutral-700 active:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-50 touch-manipulation dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200 dark:active:bg-neutral-300"
+            className="flex h-10 flex-1 items-center justify-center gap-2 rounded-xl bg-neutral-900 text-[13px] font-bold text-white shadow-sm transition-all hover:bg-neutral-700 hover:shadow active:scale-[0.98] active:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:shadow-none touch-manipulation dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200 dark:active:bg-neutral-300"
           >
             <Zap className="size-4" aria-hidden="true" />
             {t.buyNow}
@@ -229,7 +247,7 @@ export function ProductCard({
             disabled={soldOut}
             aria-label={soldOut ? t.soldOut : t.quickAdd}
             title={soldOut ? t.soldOut : t.quickAdd}
-            className="grid size-10 shrink-0 place-items-center rounded-lg border border-border bg-card text-foreground transition-colors hover:bg-muted active:bg-muted disabled:cursor-not-allowed disabled:opacity-50 touch-manipulation"
+            className="grid size-10 shrink-0 place-items-center rounded-xl border border-border bg-card text-foreground shadow-sm transition-all hover:border-foreground/30 hover:bg-muted active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 touch-manipulation"
           >
             <ShoppingBag className="size-4" aria-hidden="true" />
           </button>
@@ -327,7 +345,7 @@ export function StoreRail({ stores, locale }: { stores: CatalogStore[]; locale: 
           aria-label={store.name}
         >
           <div className="relative">
-            <div className="aspect-[21/9] overflow-hidden bg-muted">
+            <div className="aspect-[21/9] overflow-hidden rounded-2xl bg-muted ring-1 ring-border/40 transition-shadow duration-300 group-hover:shadow-[0_16px_36px_-14px_rgba(0,0,0,0.22)]">
               {store.bannerPath ? (
                 <img
                   src={store.bannerPath}
@@ -349,22 +367,24 @@ export function StoreRail({ stores, locale }: { stores: CatalogStore[]; locale: 
               )}
             </div>
             <div className="absolute bottom-0 start-6 translate-y-1/2">
-              {store.logoPath ? (
-                <img
-                  src={store.logoPath}
-                  alt=""
-                  aria-hidden
-                  loading="lazy"
-                  className="size-16 shrink-0 rounded-full bg-background object-cover ring-2 ring-background"
-                />
-              ) : (
-                <div
-                  aria-hidden
-                  className="grid size-16 shrink-0 place-items-center rounded-full bg-secondary font-display text-xl font-semibold text-foreground ring-2 ring-background"
-                >
-                  {store.name.slice(0, 1)}
-                </div>
-              )}
+              <span className="grid size-16 shrink-0 place-items-center overflow-hidden rounded-full bg-white p-1.5 ring-2 ring-background shadow-md">
+                {store.logoPath ? (
+                  <img
+                    src={store.logoPath}
+                    alt=""
+                    aria-hidden
+                    loading="lazy"
+                    className="size-full object-contain"
+                  />
+                ) : (
+                  <span
+                    aria-hidden
+                    className="grid size-full place-items-center rounded-full bg-secondary font-display text-xl font-semibold text-foreground"
+                  >
+                    {store.name.slice(0, 1)}
+                  </span>
+                )}
+              </span>
             </div>
           </div>
           <div className="mt-10 px-1">
@@ -409,7 +429,7 @@ export function ProductGrid({
       </section>
     );
   return (
-    <div className="grid grid-cols-2 gap-x-4 gap-y-10 sm:grid-cols-3 lg:grid-cols-4 lg:gap-x-6">
+    <div className="grid grid-cols-2 gap-x-3 gap-y-8 sm:grid-cols-3 sm:gap-x-4 lg:grid-cols-4 lg:gap-x-5 lg:gap-y-10 xl:grid-cols-5">
       {products.map((product) => (
         <ProductCard key={product.id} product={product} locale={locale} />
       ))}
@@ -421,10 +441,10 @@ export function DiscoverySkeleton() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
       <Skeleton className="h-[28rem] w-full" />
-      <div className="mt-16 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="mt-16 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
         {Array.from({ length: 4 }, (_, index) => (
           <div key={index}>
-            <Skeleton className="aspect-square w-full rounded-xl" />
+            <Skeleton className="aspect-[4/5] w-full rounded-2xl" />
             <Skeleton className="mt-3 h-4 w-2/3" />
             <Skeleton className="mt-2 h-4 w-1/3" />
           </div>

@@ -264,6 +264,7 @@ export const fr = {
     assistant: {
       open: "Assistant shopping",
       title: "Assistant shopping",
+      shortTitle: "Assistant",
       subtitle: "Répond uniquement à partir des vrais produits Modalia",
       placeholder: "Posez une question… ex. : je veux un téléphone pas cher",
       send: "Envoyer",
@@ -276,6 +277,9 @@ export const fr = {
       empty: "Posez votre question — je cherche dans le vrai catalogue et je vous montre ce qui existe vraiment.",
       supportStaticNote: "Réponse de la base de connaissances confirmée",
       disabledNotice: "L'assistant d'achat est actuellement désactivé par l'administration de Modalia.",
+      greeting: "Comment puis-je vous aider à magasiner aujourd'hui ?",
+      online: "En ligne",
+      newChat: "Démarrer une nouvelle conversation",
     },
     home: {
       sfHeroEyebrow: "NOUVEAU SUR MODALIA",
@@ -1183,6 +1187,7 @@ export const fr = {
       verifiedStore: "Boutique vérifiée",
       product: "produit",
       products: "produits",
+        visitStore: "Visiter la boutique",
       officialStore: "Boutique officielle Modalia",
       officialTagline: "La boutique officielle de Modalia",
       eyebrow: "Boutique",

@@ -257,7 +257,7 @@ function SmartSearchBanner({
   if (!suggestion) return null;
   return (
     <div
-      className="mt-4 flex flex-wrap items-center gap-3 rounded-[14px] border border-border bg-card px-4 py-3"
+      className="mt-4 flex flex-wrap items-center gap-3 rounded-2xl border border-border/70 bg-card px-4 py-3"
       role="status"
     >
       <Sparkles className="size-4 shrink-0 text-foreground" aria-hidden />
@@ -606,8 +606,10 @@ function ShopPage() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="lg:hidden"
+                  className="rounded-xl lg:hidden"
                   onClick={() => setFiltersOpen(true)}
+                  aria-expanded={filtersOpen}
+                  aria-controls="mobile-filters"
                 >
                   <SlidersHorizontal className="size-4" />
                   {ts.filters}
@@ -669,7 +671,7 @@ function ShopPage() {
 
             <div className="mt-8 grid gap-10 lg:grid-cols-[15rem_minmax(0,1fr)]">
               <aside className="hidden lg:block">
-                <div className="sticky top-24 rounded-[14px] border border-border bg-card p-5">{filtersPanel}</div>
+                <div className="sticky top-24 rounded-2xl border border-border/70 bg-card p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">{filtersPanel}</div>
               </aside>
               <div className="min-w-0">
                 <ProductGrid
@@ -738,7 +740,7 @@ function ShopPage() {
       </main>
 
       {filtersOpen ? (
-        <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label={ts.filters}>
+        <div id="mobile-filters" className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label={ts.filters}>
           <button
             type="button"
             aria-label={ts.hideFilters}

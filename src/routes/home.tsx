@@ -1219,7 +1219,7 @@ function BrandStores({
             >
               <div className="relative">
                 {store.bannerPath ? (
-                  <div className="aspect-[21/9] overflow-hidden bg-muted">
+                  <div className="aspect-[21/9] overflow-hidden rounded-2xl bg-muted ring-1 ring-border/40 transition-shadow duration-300 group-hover:shadow-[0_16px_36px_-14px_rgba(0,0,0,0.22)]">
                     <img
                       src={store.bannerPath}
                       alt=""
@@ -1229,7 +1229,7 @@ function BrandStores({
                   </div>
                 ) : (
                   <div
-                    className="flex aspect-[21/9] items-center justify-center bg-muted"
+                    className="flex aspect-[21/9] items-center justify-center rounded-2xl bg-muted ring-1 ring-border/40"
                     aria-hidden
                   >
                     <span className="font-display text-5xl font-semibold tracking-tight text-foreground/10">
@@ -1238,21 +1238,23 @@ function BrandStores({
                   </div>
                 )}
                 <div className="absolute bottom-0 start-6 translate-y-1/2">
-                  {store.logoPath ? (
-                    <img
-                      src={store.logoPath}
-                      alt=""
-                      loading="lazy"
-                      className="size-16 shrink-0 rounded-full bg-background object-cover ring-2 ring-background"
-                    />
-                  ) : (
-                    <div
-                      className="grid size-16 shrink-0 place-items-center rounded-full bg-secondary font-display text-xl font-semibold text-foreground ring-2 ring-background"
-                      aria-hidden
-                    >
-                      {store.name.slice(0, 1)}
-                    </div>
-                  )}
+                  <span className="grid size-16 shrink-0 place-items-center overflow-hidden rounded-full bg-white p-1.5 ring-2 ring-background shadow-md">
+                    {store.logoPath ? (
+                      <img
+                        src={store.logoPath}
+                        alt=""
+                        loading="lazy"
+                        className="size-full object-contain"
+                      />
+                    ) : (
+                      <span
+                        aria-hidden
+                        className="grid size-full place-items-center rounded-full bg-secondary font-display text-xl font-semibold text-foreground"
+                      >
+                        {store.name.slice(0, 1)}
+                      </span>
+                    )}
+                  </span>
                 </div>
               </div>
               <div className="mt-10 flex items-start justify-between gap-4 px-1">

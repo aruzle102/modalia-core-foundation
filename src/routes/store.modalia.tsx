@@ -261,12 +261,12 @@ function OfficialStorePage() {
             <div className="flex flex-col gap-5 py-8 sm:flex-row sm:items-end sm:gap-6">
               <div
                 className={
-                  "grid size-20 shrink-0 place-items-center overflow-hidden rounded-2xl border-4 border-background bg-card text-2xl font-semibold shadow-xl sm:size-28 " +
+                  "grid size-20 shrink-0 place-items-center overflow-hidden rounded-full border-4 border-background bg-white p-2 text-2xl font-semibold shadow-xl sm:size-28 " +
                   (store.bannerUrl ? "-mt-14 sm:-mt-20" : "")
                 }
               >
                 {store.logoUrl ? (
-                  <img src={store.logoUrl} alt="" className="size-full object-cover" />
+                  <img src={store.logoUrl} alt="" className="size-full object-contain" />
                 ) : (
                   store.name.slice(0, 1)
                 )}

@@ -276,7 +276,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
         {/* ——— Gallery with hover magnifier ——— */}
         <section aria-label={t.productMedia} className="min-w-0">
           <div
-            className="relative aspect-[4/5] cursor-zoom-in overflow-hidden rounded-xl border border-border bg-muted"
+            className="relative aspect-[4/5] cursor-zoom-in overflow-hidden rounded-2xl border border-border/60 bg-muted shadow-[0_2px_16px_-8px_rgba(0,0,0,0.15)]"
             onMouseMove={handleZoomMove}
             onMouseEnter={() => {
               if (canMagnify()) setZoomed(true);
@@ -335,7 +335,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
                     setView3d(false);
                     setZoomed(false);
                   }}
-                  className="size-16 shrink-0 overflow-hidden rounded-lg p-0 aria-pressed:border-foreground aria-pressed:ring-1 aria-pressed:ring-foreground"
+                  className="size-16 shrink-0 overflow-hidden rounded-xl p-0 shadow-sm aria-pressed:border-foreground aria-pressed:ring-2 aria-pressed:ring-foreground"
                 >
                   <span className="block size-full">
                     {item.url ? (
@@ -358,7 +358,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
                     setView3d(true);
                     setZoomed(false);
                   }}
-                  className="grid size-16 shrink-0 place-items-center gap-0.5 rounded-lg p-0 aria-pressed:border-foreground aria-pressed:ring-1 aria-pressed:ring-foreground"
+                  className="grid size-16 shrink-0 place-items-center gap-0.5 rounded-xl p-0 shadow-sm aria-pressed:border-foreground aria-pressed:ring-2 aria-pressed:ring-foreground"
                 >
                   <Box className="size-5" aria-hidden />
                   <span className="text-caption font-medium leading-none">3D</span>
@@ -475,7 +475,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
                             aria-label={value.label}
                             title={value.label}
                             style={{ backgroundColor: value.hex }}
-                            className={`size-9 rounded-full border border-border ${motionTw.transition.interactive} disabled:cursor-not-allowed disabled:opacity-30 motion-reduce:transition-none ${
+                            className={`size-10 rounded-full border border-black/10 shadow-sm ${motionTw.transition.interactive} disabled:cursor-not-allowed disabled:opacity-30 motion-reduce:transition-none ${
                               selected[option.id] === value.id
                                 ? "ring-2 ring-foreground ring-offset-2 ring-offset-background"
                                 : "hover:scale-110"
@@ -489,7 +489,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
                             size="sm"
                             disabled={!value.available}
                             onClick={() => updateOption(option.id, value.id)}
-                            className="min-w-10"
+                            className="min-w-11 rounded-xl font-semibold"
                           >
                             {value.label}
                           </Button>
@@ -533,7 +533,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
           ) : null}
 
           <div className="mt-6 flex items-center gap-3">
-            <div className="flex h-11 items-center rounded-lg border border-border">
+            <div className="flex h-12 items-center rounded-xl border border-border bg-card shadow-sm">
               <Button
                 type="button"
                 variant="ghost"
@@ -568,7 +568,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
               type="button"
               disabled={!canPurchase}
               onClick={handleBuyNow}
-              className="h-12 bg-foreground font-semibold text-background hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-40"
+              className="h-12 rounded-xl bg-foreground font-bold text-background shadow-sm transition-all hover:bg-foreground/90 hover:shadow active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
             >
               {sf.sfBuyNow}
             </Button>
@@ -577,7 +577,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
               variant="outline"
               disabled={!canPurchase}
               onClick={() => addToCart()}
-              className="h-12 disabled:cursor-not-allowed disabled:opacity-40"
+              className="h-12 rounded-xl font-semibold shadow-sm transition-all hover:shadow active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
             >
               <ShoppingBag className="size-4" />
               {sf.sfAddToCart}
@@ -642,7 +642,7 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
           })}
         </div>
 
-        <div className="mt-6 rounded-xl border border-border bg-card p-6 sm:p-8">
+        <div className="mt-6 rounded-2xl border border-border/70 bg-card p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04)] sm:p-8">
           {activeTab === "description" ? (
             <div role="tabpanel" id="tab-panel-description" aria-labelledby="tab-description">
               {descriptionParagraphs.length ? (

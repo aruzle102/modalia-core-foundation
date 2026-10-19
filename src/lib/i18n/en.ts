@@ -264,6 +264,7 @@ export const en = {
     assistant: {
       open: "Shopping assistant",
       title: "Shopping assistant",
+      shortTitle: "Assistant",
       subtitle: "Answers only from real Modalia products",
       placeholder: "Ask about a product… e.g.: I want a cheap phone",
       send: "Send",
@@ -276,6 +277,9 @@ export const en = {
       empty: "Ask away — I'll search the real catalog and show you what actually exists.",
       supportStaticNote: "Answer from the confirmed knowledge base",
       disabledNotice: "The shopping assistant is currently disabled by the Modalia administration.",
+      greeting: "How can I help you shop today?",
+      online: "Online",
+      newChat: "Start a new conversation",
     },
     home: {
       sfHeroEyebrow: "NEW ON MODALIA",
@@ -1182,6 +1186,7 @@ export const en = {
       verifiedStore: "Verified store",
       product: "product",
       products: "products",
+        visitStore: "Visit store",
       officialStore: "Modalia Official Store",
       officialTagline: "Modalia's official store",
       eyebrow: "Store",

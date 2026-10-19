@@ -69,28 +69,32 @@ export function StoreFront({
         </div>
       ) : null}
       <main id="main-content" tabIndex={-1}>
-        {/* ——— Banner: full-width block, aspect ratio preserves content ——— */}
+        {/* ——— Banner: full-width band, image never cropped ——— */}
         {store.bannerUrl ? (
-          <div className="flex w-full justify-center overflow-hidden bg-muted">
+          <div className="relative flex w-full justify-center overflow-hidden bg-muted/60">
             <img
               src={store.bannerUrl}
               alt=""
-              className="max-h-36 w-full object-contain sm:max-h-60"
+              className="max-h-44 w-full object-contain sm:max-h-72"
+            />
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-background/80 to-transparent"
             />
           </div>
         ) : null}
-        {/* ——— Store identity: normal flow, no overlap ——— */}
+        {/* ——— Store identity: logo overlaps the banner's bottom edge ——— */}
         <section className="border-b border-border bg-background">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col gap-5 py-8 sm:flex-row sm:items-end sm:gap-6">
+            <div className="flex flex-col gap-5 pb-6 pt-6 sm:flex-row sm:items-end sm:gap-6 sm:pb-8">
               <div
                 className={
-                  "grid size-20 shrink-0 place-items-center overflow-hidden rounded-2xl border-4 border-background bg-card text-2xl font-semibold text-foreground shadow-xl sm:size-28 " +
-                  (store.bannerUrl ? "-mt-14 sm:-mt-20" : "")
+                  "grid size-20 shrink-0 place-items-center overflow-hidden rounded-full bg-white p-2.5 text-2xl font-semibold text-foreground shadow-xl ring-4 ring-background sm:size-28 " +
+                  (store.bannerUrl ? "-mt-16 sm:-mt-24" : "")
                 }
               >
                 {store.logoUrl ? (
-                  <img src={store.logoUrl} alt="" className="size-full object-cover" />
+                  <img src={store.logoUrl} alt="" className="size-full object-contain" />
                 ) : (
                   store.name.slice(0, 1)
                 )}
@@ -109,11 +113,11 @@ export function StoreFront({
               </div>
             </div>
             {stats.length ? (
-              <dl className="flex flex-wrap gap-x-10 gap-y-4 pb-8">
+              <dl className="flex flex-wrap gap-x-10 gap-y-4 border-t border-border/60 pb-8 pt-5">
                 {stats.map((stat) => (
                   <div key={stat.label} className="flex min-w-20 flex-col">
                     <dt className="order-2 mt-1 text-caption text-muted-foreground">{stat.label}</dt>
-                    <dd className="order-1 font-display text-2xl font-semibold text-foreground">{stat.value}</dd>
+                    <dd className="order-1 font-display text-2xl font-semibold tabular-nums text-foreground">{stat.value}</dd>
                   </div>
                 ))}
               </dl>

@@ -42,11 +42,11 @@ function Section({
   children: ReactNode;
 }) {
   return (
-    <fieldset className="border-t border-border py-5 first:border-t-0 first:pt-0">
-      <legend className="float-start w-full px-0 text-nav font-medium text-foreground">
+    <fieldset className="border-t border-border/70 py-5 first:border-t-0 first:pt-1">
+      <legend className="float-start w-full px-0 text-[13px] font-bold uppercase tracking-[0.12em] text-foreground">
         {title}
       </legend>
-      <div className="mt-3">{children}</div>
+      <div className="mt-3.5">{children}</div>
     </fieldset>
   );
 }
@@ -63,14 +63,14 @@ function CheckRow({
   count?: number;
 }) {
   return (
-    <label className="flex cursor-pointer items-center gap-2.5 rounded-[10px] px-1 py-1.5 text-small text-foreground transition-colors hover:bg-muted">
+    <label className="flex cursor-pointer items-center gap-2.5 rounded-xl px-2 py-2 text-small text-foreground transition-colors hover:bg-muted active:bg-muted/70">
       <span
         aria-hidden
-        className={`grid size-4.5 shrink-0 place-items-center rounded border transition-colors ${
+        className={`grid size-5 shrink-0 place-items-center rounded-md border-2 transition-all ${
           checked ? "border-foreground bg-foreground text-background" : "border-border bg-card"
         }`}
       >
-        {checked ? <Check className="size-3" /> : null}
+        {checked ? <Check className="size-3.5" strokeWidth={3} /> : null}
       </span>
       <input
         type="checkbox"
@@ -126,8 +126,49 @@ export function ShopFilters({
 
   const hasPriceFacet = facets.priceBounds.max > 0;
 
+  // Active filter count (for the clear-all header)
+  const activeCount =
+    (values.minPrice !== undefined || values.maxPrice !== undefined ? 1 : 0) +
+    values.brands.length +
+    values.stores.length +
+    values.colors.length +
+    values.sizes.length +
+    (values.inStock ? 1 : 0) +
+    (values.onSale ? 1 : 0);
+
+  const clearAll = () =>
+    onChange({
+      minPrice: undefined,
+      maxPrice: undefined,
+      brands: [],
+      stores: [],
+      colors: [],
+      sizes: [],
+      inStock: false,
+      onSale: false,
+    });
+
   return (
     <div>
+      <div className="mb-4 flex items-center justify-between">
+        <p className="text-[13px] font-bold uppercase tracking-[0.12em] text-foreground">
+          {t.filters}
+          {activeCount > 0 ? (
+            <span className="ms-2 inline-grid size-5 place-items-center rounded-full bg-foreground text-[11px] font-extrabold tabular-nums text-background">
+              {activeCount}
+            </span>
+          ) : null}
+        </p>
+        {activeCount > 0 ? (
+          <button
+            type="button"
+            onClick={clearAll}
+            className="rounded-full px-3 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            {t.clearAll}
+          </button>
+        ) : null}
+      </div>
       {hasPriceFacet ? (
         <Section title={t.price}>
           <div className="flex items-center gap-2">
@@ -140,9 +181,9 @@ export function ShopFilters({
               onKeyDown={(event) => {
                 if (event.key === "Enter") applyPrice();
               }}
-              className="h-9 rounded-[10px] border-border"
+              className="h-10 rounded-xl border-border bg-background"
             />
-            <span aria-hidden className="text-muted-foreground">–</span>
+            <span aria-hidden className="shrink-0 text-muted-foreground">–</span>
             <Input
               inputMode="numeric"
               aria-label={t.maxPrice}
@@ -152,9 +193,9 @@ export function ShopFilters({
               onKeyDown={(event) => {
                 if (event.key === "Enter") applyPrice();
               }}
-              className="h-9 rounded-[10px] border-border"
+              className="h-10 rounded-xl border-border bg-background"
             />
-            <Button type="button" size="sm" variant="outline" className="border-foreground text-foreground" onClick={applyPrice}>
+            <Button type="button" size="sm" className="h-10 shrink-0 rounded-xl px-4 font-semibold" onClick={applyPrice}>
               {t.apply}
             </Button>
           </div>
@@ -192,10 +233,10 @@ export function ShopFilters({
                   aria-pressed={active}
                   title={`${size.label} · ${size.productCount}`}
                   onClick={() => onChange({ ...values, sizes: toggle(values.sizes, size.value) })}
-                  className={`min-w-10 rounded-[10px] border px-2.5 py-1.5 text-small transition-colors ${
+                  className={`min-w-11 rounded-xl border px-3 py-2 text-small font-semibold transition-all ${
                     active
-                      ? "border-foreground bg-foreground text-background"
-                      : "border-border bg-card text-foreground hover:border-foreground/40"
+                      ? "border-foreground bg-foreground text-background shadow-sm"
+                      : "border-border bg-card text-foreground hover:border-foreground/40 hover:shadow-sm active:scale-95"
                   }`}
                 >
                   {size.label}
@@ -220,11 +261,11 @@ export function ShopFilters({
                   title={`${color.name} · ${color.productCount}`}
                   onClick={() => onChange({ ...values, colors: toggle(values.colors, color.slug) })}
                   style={color.hex ? { backgroundColor: color.hex } : undefined}
-                  className={`grid size-9 place-items-center rounded-full border border-border ${motionTw.transition.interactive} ${
-                    active ? "ring-2 ring-foreground ring-offset-2 ring-offset-background" : "hover:scale-110"
+                  className={`grid size-10 place-items-center rounded-full border border-black/10 shadow-sm ${motionTw.transition.interactive} ${
+                    active ? "ring-2 ring-foreground ring-offset-2 ring-offset-background scale-105" : "hover:scale-110"
                   } ${color.hex ? "" : "bg-muted"}`}
                 >
-                  {active ? <Check className="size-4 text-background drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]" /> : null}
+                  {active ? <Check className="size-4 text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.7)]" strokeWidth={3} /> : null}
                 </button>
               );
             })}

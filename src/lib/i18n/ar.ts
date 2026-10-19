@@ -264,6 +264,7 @@ export const ar = {
     assistant: {
       open: "مساعد التسوق",
       title: "مساعد التسوق",
+      shortTitle: "المساعد",
       subtitle: "يجيب فقط من منتجات موداليا الحقيقية",
       placeholder: "اسأل عن منتج… مثلاً: أريد هاتفاً رخيصاً",
       send: "إرسال",
@@ -276,6 +277,9 @@ export const ar = {
       empty: "ابدأ بسؤال — سأبحث في الكتالوج الحقيقي وأعرض لك ما وجدت فعلاً.",
       supportStaticNote: "إجابة من قاعدة المعرفة المؤكدة للمنصة",
       disabledNotice: "مساعد التسوّق معطّل حالياً من طرف إدارة موداليا.",
+      greeting: "كيف أساعدك في التسوّق اليوم؟",
+      online: "متصل",
+      newChat: "بدء محادثة جديدة",
     },
     home: {
       sfHeroEyebrow: "جديد على موداليا",
@@ -1179,6 +1183,7 @@ export const ar = {
       verifiedStore: "متجر موثّق",
       product: "منتج",
       products: "منتجات",
+        visitStore: "زيارة المتجر",
       officialStore: "متجر موداليا الرسمي",
       officialTagline: "المتجر الرسمي لمنصة Modalia",
       eyebrow: "المتجر",

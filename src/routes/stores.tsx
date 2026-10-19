@@ -37,33 +37,58 @@ function StoreCard({ store, locale }: { store: CatalogStore; locale: SupportedLo
       to="/store/$slug"
       params={{ slug: store.slug }}
       search={{ locale }}
-      className="group flex items-center gap-4 rounded-2xl border border-border bg-card p-4 transition-colors hover:border-foreground/25 hover:bg-secondary/40 sm:p-5"
+      className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-card transition-all duration-200 hover:-translate-y-0.5 hover:border-foreground/25 hover:shadow-[0_16px_36px_-14px_rgba(0,0,0,0.22)]"
     >
-      {store.logoPath ? (
-        <img
-          src={store.logoPath}
-          alt=""
-          loading="lazy"
-          className="size-14 shrink-0 rounded-xl object-cover sm:size-16"
-        />
-      ) : (
-        <span className="grid size-14 shrink-0 place-items-center rounded-xl bg-muted sm:size-16">
-          <StoreIcon className="size-6 text-muted-foreground" />
-        </span>
-      )}
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <h2 className="truncate text-base font-semibold">{store.name}</h2>
-          <VerifiedSellerBadge verified={store.verified} tone={store.verificationBadge} label={t.store.verifiedStore} />
+      {/* Cover — fixed aspect ratio, logo overlays the bottom edge */}
+      <div className="relative aspect-[16/9] shrink-0 overflow-hidden bg-muted">
+        {store.bannerPath ? (
+          <>
+            <img
+              src={store.bannerPath}
+              alt=""
+              loading="lazy"
+              className="size-full object-cover transition-transform duration-500 group-hover:scale-[1.03] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+            />
+            <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent" />
+          </>
+        ) : (
+          <span className="grid size-full place-items-center bg-gradient-to-br from-muted to-secondary">
+            <StoreIcon className="size-8 text-muted-foreground/50" />
+          </span>
+        )}
+        <div className="absolute -bottom-7 start-4">
+          <span className="grid size-14 place-items-center overflow-hidden rounded-full border-2 border-card bg-white p-1.5 shadow-md">
+            {store.logoPath ? (
+              <img src={store.logoPath} alt="" loading="lazy" className="size-full object-contain" />
+            ) : (
+              <StoreIcon className="size-6 text-muted-foreground" />
+            )}
+          </span>
         </div>
-        {store.description ? (
-          <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">{store.description}</p>
+        {store.verified ? (
+          <span className="absolute end-3 top-3">
+            <VerifiedSellerBadge verified={store.verified} tone={store.verificationBadge} label={t.store.verifiedStore} />
+          </span>
         ) : null}
-        <p className="mt-1 text-xs text-muted-foreground">
-          {store.productCount} {store.productCount === 1 ? t.store.product : t.store.products}
-        </p>
       </div>
-      <ArrowRight className="size-5 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1" />
+      {/* Body — top padding clears the overlapping logo */}
+      <div className="flex min-w-0 flex-1 flex-col px-4 pb-4 pt-9">
+        <h2 className="truncate text-base font-semibold text-foreground">{store.name}</h2>
+        {store.description ? (
+          <p className="mt-1 line-clamp-2 min-h-[2.5em] text-sm leading-snug text-muted-foreground">
+            {store.description}
+          </p>
+        ) : null}
+        <div className="mt-auto flex items-center justify-between gap-2 pt-3">
+          <p className="text-xs tabular-nums text-muted-foreground">
+            {store.productCount} {store.productCount === 1 ? t.store.product : t.store.products}
+          </p>
+          <span className="inline-flex shrink-0 items-center gap-1 text-[13px] font-semibold text-foreground">
+            {t.store.visitStore}
+            <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5" />
+          </span>
+        </div>
+      </div>
     </Link>
   );
 }

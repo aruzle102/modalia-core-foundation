@@ -108,14 +108,32 @@ function ParallaxImage({
 /* ---------- Image URLs (replaceable) ---------- */
 const IMG = {
   heroMain: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1200&q=80",
-  heroSecondary: "https://images.unsplash.com/photo-1552346154-21d32810aba3?w=800&q=80",
   fashion: "https://images.unsplash.com/photo-1445205170230-053b83016050?w=1200&q=80",
   sport: "https://images.unsplash.com/photo-1517649763962-0c623066013b?w=1200&q=80",
   lifestyle: "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=1200&q=80",
   marketplace: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200&q=80",
+  /* Hero category mosaic tiles */
+  catFashion: "https://images.unsplash.com/photo-1445205170230-053b83016050?w=800&q=80",
+  catShoes: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&q=80",
+  catSports: "https://images.unsplash.com/photo-1517649763962-0c623066013b?w=800&q=80",
+  catAccessories: "https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=800&q=80",
 };
 
+/* Hero category tiles — trilingual labels, link to the shopping entry (/home).
+   Category slugs are admin-managed, so tiles navigate to /home rather than
+   guessing slugs that may not exist. */
+const HERO_CATS = [
+  { key: "fashion", img: "catFashion", label: { ar: "أزياء", fr: "Mode", en: "Fashion" }, tall: true },
+  { key: "shoes", img: "catShoes", label: { ar: "أحذية", fr: "Chaussures", en: "Shoes" } },
+  { key: "sports", img: "catSports", label: { ar: "رياضة", fr: "Sport", en: "Sports" } },
+  { key: "accessories", img: "catAccessories", label: { ar: "إكسسوارات", fr: "Accessoires", en: "Accessories" }, wide: true },
+] as const;
+
+const HERO_BOUTIQUES_CTA = { ar: "اكتشف المتاجر", fr: "Découvrir les boutiques", en: "Discover boutiques" };
+
 /* ---------- Landing ---------- */
+const SCROLL_LABEL = { ar: "مرّر", fr: "Défiler", en: "Scroll" };
+
 function LandingPage() {
   const locale = getLocale();
   const t = getTranslations(locale);
@@ -128,82 +146,110 @@ function LandingPage() {
     <div dir={localeDirections[locale]} lang={locale} className="min-h-screen bg-neutral-950 text-white antialiased">
       <main id="main-content">
 
-        {/* ===== OPENING — cinematic image hero ===== */}
-        <section className="relative flex min-h-[92vh] items-center overflow-hidden">
-          {/* Background image */}
-          <div className="absolute inset-0">
-            <img
-              src={IMG.heroMain}
-              alt="Modalia fashion campaign"
-              className="h-full w-full object-cover object-center motion-safe:animate-[heroZoom_20s_ease-in-out_infinite_alternate]"
-              loading="eager"
-            />
+        {/* ===== OPENING — editorial split hero ===== */}
+        <section className="relative overflow-hidden bg-neutral-950">
+          {/* Ambient glow + ghost wordmark */}
+          <div aria-hidden="true" className="pointer-events-none absolute inset-0">
+            <div className="absolute -top-32 start-1/4 h-[420px] w-[420px] rounded-full bg-white/[0.07] blur-[120px]" />
+            <div className="absolute -bottom-24 end-[10%] h-[320px] w-[320px] rounded-full bg-white/[0.05] blur-[100px]" />
           </div>
-          {/* Cinematic dark overlay */}
-          <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/60 to-black/30" />
-          <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/40" />
+          <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-10 select-none overflow-hidden">
+            <p className="whitespace-nowrap text-center text-[24vw] font-black leading-none tracking-tighter text-white/[0.035]">
+              MODALIA
+            </p>
+          </div>
 
-          <div className="relative z-10 mx-auto w-full max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
-            <Reveal>
-              <p className="mb-6 text-[12px] font-bold uppercase tracking-[0.45em] text-white/60">Modalia</p>
-            </Reveal>
-            <Reveal delay={100}>
-              <h1 className="max-w-3xl text-5xl font-bold leading-[1.02] tracking-tight text-white drop-shadow-lg sm:text-7xl lg:text-8xl">
-                {heroTitle}
-              </h1>
-            </Reveal>
+          <div className="relative z-10 mx-auto grid w-full max-w-7xl gap-12 px-4 pb-16 pt-24 sm:px-6 lg:grid-cols-2 lg:items-center lg:gap-14 lg:px-8 lg:pb-24 lg:pt-32">
+            {/* Copy */}
+            <div>
+              <Reveal>
+                <p className="flex items-center gap-3 text-[12px] font-bold uppercase tracking-[0.45em] text-white/60">
+                  <span aria-hidden="true" className="h-px w-10 bg-white/40" />
+                  Modalia
+                </p>
+              </Reveal>
+              <Reveal delay={100}>
+                <h1 className="mt-6 max-w-xl text-5xl font-black leading-[1.0] tracking-tighter text-white sm:text-7xl lg:text-[5.25rem]">
+                  {heroTitle}
+                </h1>
+              </Reveal>
+              <Reveal delay={200}>
+                <p className="mt-6 max-w-md text-lg leading-relaxed text-white/70">{heroSubtitle}</p>
+              </Reveal>
+              <Reveal delay={300}>
+                <div className="mt-10 flex flex-wrap items-center gap-3">
+                  <Link
+                    to="/home"
+                    search={{ locale }}
+                    className="group inline-flex items-center gap-3 rounded-full bg-white px-9 py-4 text-sm font-semibold text-neutral-950 shadow-2xl transition-all hover:bg-white/90 active:scale-[0.98]"
+                  >
+                    {heroCta}
+                    <ArrowRight className="size-4 transition-transform group-hover:translate-x-1 rtl:rotate-180" />
+                  </Link>
+                  <Link
+                    to="/stores"
+                    search={{ locale }}
+                    className="group inline-flex items-center gap-2 rounded-full border border-white/25 px-7 py-4 text-sm font-semibold text-white/85 transition-all hover:border-white/60 hover:text-white active:scale-[0.98]"
+                  >
+                    {HERO_BOUTIQUES_CTA[locale] ?? HERO_BOUTIQUES_CTA.en}
+                    <ArrowRight className="size-4 transition-transform group-hover:translate-x-1 rtl:rotate-180" />
+                  </Link>
+                </div>
+              </Reveal>
+              <Reveal delay={400}>
+                <div className="mt-14 flex items-center gap-3 text-white/50">
+                  <ArrowDown className="size-4 animate-bounce" />
+                  <span className="text-[11px] uppercase tracking-[0.25em]">
+                    {SCROLL_LABEL[locale] ?? SCROLL_LABEL.en}
+                  </span>
+                </div>
+              </Reveal>
+            </div>
+
+            {/* Category mosaic — the multi-category marketplace, visible */}
             <Reveal delay={200}>
-              <p className="mt-6 max-w-xl text-lg leading-relaxed text-white/80 drop-shadow sm:text-xl">{heroSubtitle}</p>
-            </Reveal>
-            <Reveal delay={300}>
-              <Link
-                to="/home"
-                search={{ locale }}
-                className="group mt-10 inline-flex w-fit items-center gap-3 rounded-full bg-white px-10 py-4 text-sm font-semibold text-neutral-950 shadow-2xl transition-all hover:bg-white/90 active:scale-[0.98]"
-              >
-                {heroCta}
-                <ArrowRight className="size-4 transition-transform group-hover:translate-x-1 rtl:rotate-180" />
-              </Link>
-            </Reveal>
-            {/* Multi-category pills: fashion, shoes, sports, accessories */}
-            <Reveal delay={350}>
-              <div className="mt-8 flex flex-wrap items-center gap-2">
-                {[
-                  { key: "fashion", label: { ar: "أزياء", fr: "Mode", en: "Fashion" } },
-                  { key: "shoes", label: { ar: "أحذية", fr: "Chaussures", en: "Shoes" } },
-                  { key: "sports", label: { ar: "رياضة", fr: "Sport", en: "Sports" } },
-                  { key: "accessories", label: { ar: "إكسسوارات", fr: "Accessoires", en: "Accessories" } },
-                ].map((cat) => (
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                {HERO_CATS.map((cat) => (
                   <Link
                     key={cat.key}
                     to="/home"
-                    search={{ locale, category: cat.key } as any}
-                    className="rounded-full border border-white/25 bg-white/10 px-4 py-2 text-xs font-medium text-white/90 backdrop-blur-sm transition-all hover:border-white/50 hover:bg-white/20 hover:text-white"
+                    search={{ locale }}
+                    aria-label={cat.label[locale] ?? cat.label.en}
+                    className={[
+                      "group relative overflow-hidden rounded-3xl",
+                      "tall" in cat && cat.tall ? "row-span-2 min-h-[340px] sm:min-h-[440px] lg:min-h-[540px]" : "",
+                      "wide" in cat && cat.wide
+                        ? "col-span-2 min-h-[140px] sm:min-h-[180px]"
+                        : "tall" in cat && cat.tall
+                          ? ""
+                          : "min-h-[164px] sm:min-h-[212px] lg:min-h-[262px]",
+                    ].join(" ")}
                   >
-                    {cat.label[locale] || cat.label.en}
+                    <img
+                      src={IMG[cat.img]}
+                      alt={cat.label[locale] ?? cat.label.en}
+                      loading={cat.key === "fashion" ? "eager" : "lazy"}
+                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                    />
+                    <div
+                      aria-hidden="true"
+                      className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent"
+                    />
+                    <span className="absolute bottom-4 start-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm font-semibold text-white backdrop-blur-md transition-colors group-hover:bg-white/25">
+                      {cat.label[locale] ?? cat.label.en}
+                      <ArrowRight className="size-4 rtl:rotate-180" />
+                    </span>
                   </Link>
                 ))}
               </div>
             </Reveal>
-            <Reveal delay={400}>
-              <div className="mt-14 flex items-center gap-3 text-white/50">
-                <ArrowDown className="size-4 animate-bounce" />
-                <span className="text-[11px] uppercase tracking-[0.25em]">Scroll</span>
-              </div>
-            </Reveal>
           </div>
 
-          <style>{`
-            @keyframes heroZoom {
-              from { transform: scale(1); }
-              to { transform: scale(1.08); }
-            }
-            @media (prefers-reduced-motion: reduce) {
-              .motion-safe\:animate-\[heroZoom_20s_ease-in-out_infinite_alternate\] {
-                animation: none !important;
-              }
-            }
-          `}</style>
+          {/* Soft fade into the next (light) section */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-24 bg-gradient-to-t from-neutral-950 to-transparent"
+          />
         </section>
 
         {/* ===== DISCOVER — image expansion ===== */}
@@ -242,7 +288,7 @@ function LandingPage() {
             </Reveal>
             <Reveal delay={150}>
               <Link to="/home" search={{ locale }} className="group mt-8 inline-flex w-fit items-center gap-2 text-sm font-semibold text-white/85 transition-all hover:gap-4 hover:text-white">
-                Explore fashion <ArrowRight className="size-4" />
+                Explore fashion <ArrowRight className="size-4 rtl:rotate-180" />
               </Link>
             </Reveal>
           </div>
@@ -266,7 +312,7 @@ function LandingPage() {
                   Performance gear, sneakers and sportswear — built for how you move.
                 </p>
                 <Link to="/home" search={{ locale }} className="group mt-8 inline-flex w-fit items-center gap-2 text-sm font-semibold transition-all hover:gap-4">
-                  Explore sport <ArrowRight className="size-4" />
+                  Explore sport <ArrowRight className="size-4 rtl:rotate-180" />
                 </Link>
               </Reveal>
             </div>
@@ -288,7 +334,7 @@ function LandingPage() {
                   Essentials for modern living — thoughtfully selected.
                 </p>
                 <Link to="/home" search={{ locale }} className="group mt-8 inline-flex w-fit items-center gap-2 text-sm font-semibold text-white/85 transition-all hover:gap-4 hover:text-white">
-                  Explore lifestyle <ArrowRight className="size-4" />
+                  Explore lifestyle <ArrowRight className="size-4 rtl:rotate-180" />
                 </Link>
               </Reveal>
             </div>
@@ -343,7 +389,7 @@ function LandingPage() {
                 className="group mt-10 inline-flex items-center gap-3 rounded-full bg-white px-12 py-5 text-base font-semibold text-neutral-950 transition-all hover:bg-white/90 active:scale-[0.98]"
               >
                 {heroCta}
-                <ArrowRight className="size-5 transition-transform group-hover:translate-x-1" />
+                <ArrowRight className="size-5 transition-transform group-hover:translate-x-1 rtl:rotate-180" />
               </Link>
             </Reveal>
           </div>

@@ -340,7 +340,7 @@ function OptionsOrganized({
             </button>
           </div>
           <div className="flex flex-wrap gap-2">
-            {options[colorIdx].values.map((val, vi) => {
+            {options[colorIdx]?.values.map((val, vi) => {
               const hex = val.colorId ? (colorById.get(val.colorId)?.hex_value ?? "#cccccc") : null;
               return (
                 <div key={val.key} className="flex items-center gap-2 rounded-full border border-border bg-background py-1 pe-2 ps-1 shadow-sm">
@@ -395,7 +395,7 @@ function OptionsOrganized({
             </button>
           </div>
           <div className="flex flex-wrap gap-2">
-            {options[sizeIdx].values.map((val, vi) => (
+            {options[sizeIdx]?.values.map((val, vi) => (
               <div key={val.key} className="flex items-center gap-1 rounded-lg border border-border bg-background py-1 pe-1 ps-2.5 shadow-sm">
                 <Input className="h-7 w-20 border-0 bg-transparent p-0 text-sm font-medium shadow-none focus-visible:ring-0"
                   value={val.value} onChange={(e) => setValueText(sizeIdx, vi, e.target.value)}
@@ -414,6 +414,7 @@ function OptionsOrganized({
       )}
       {otherIdxs.map((oi) => {
         const opt = options[oi];
+        if (!opt) return null;
         return (
           <section key={opt.key} aria-label="Custom option" className="rounded-xl border p-4">
             <div className="flex items-start gap-3">

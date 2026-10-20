@@ -356,7 +356,7 @@ async function fetchDiscoveryData(locale: string): Promise<DiscoveryData> {
     const [sectionResult, categoryResult, productResult, storeResult] = await Promise.all([
       supabase.from("homepage_sections").select("section_key,kind,title,subtitle,content").eq("enabled", true).order("sort_order"),
       supabase.from("categories").select("id,slug,name,image_url,gender,featured,seo_title,seo_description").eq("status", "active").is("parent_id", null).order("sort_order"),
-      supabase.from("products").select("id,slug,name,base_price,compare_at_price,created_at,category:categories(slug),seller:sellers(stores(name)),images:product_images(storage_path,alt_text,sort_order)").eq("status", "active").eq("publication_status", "published").eq("moderation_status", "approved").eq("visibility", "public").order("created_at", { ascending: false }).limit(24),
+      supabase.from("products").select("id,slug,name,base_price,compare_at_price,created_at,store_id,category:categories(slug),seller:sellers(stores(name)),images:product_images(storage_path,alt_text,sort_order)").eq("status", "active").eq("publication_status", "published").eq("moderation_status", "approved").eq("visibility", "public").order("created_at", { ascending: false }).limit(24),
       supabase.from("stores").select("id,slug,name,description,logo_path,banner_path,seller_id,verification_status,settings").eq("status", "active").order("created_at", { ascending: false }).limit(12),
     ]);
     if (sectionResult.error || categoryResult.error || productResult.error || storeResult.error) {
@@ -409,8 +409,11 @@ async function fetchDiscoveryData(locale: string): Promise<DiscoveryData> {
     });
     const categoryCounts = new Map<string, number>();
     products.forEach((product) => { if (product.categorySlug) categoryCounts.set(product.categorySlug, (categoryCounts.get(product.categorySlug) ?? 0) + 1); });
+    // Count by store_id: keying by the display name (derived from a
+    // sellers→stores join, with a "Modalia store" fallback) never matched
+    // stores.name, so every store showed 0 products.
     const storeCounts = new Map<string, number>();
-    products.forEach((product) => storeCounts.set(product.storeName, (storeCounts.get(product.storeName) ?? 0) + 1));
+    rows.forEach((row) => { if (row.store_id) storeCounts.set(row.store_id, (storeCounts.get(row.store_id) ?? 0) + 1); });
     return {
       sections: (sectionResult.data ?? []).map((section) => ({ sectionKey: section.section_key, kind: section.kind, title: localized(section.title, locale, ""), subtitle: localized(section.subtitle, locale, ""), content: section.content })),
       categories: (categoryResult.data ?? []).map((category: { id: string; slug: string; name: LocalizedText; image_url?: string | null; gender?: string | null; featured?: boolean | null; seo_title?: string | null; seo_description?: string | null }) => {
@@ -428,7 +431,7 @@ async function fetchDiscoveryData(locale: string): Promise<DiscoveryData> {
         };
       }),
       products,
-      stores: (storeResult.data ?? []).map((store) => ({ id: store.id, slug: store.slug, name: store.name, description: store.description, logoPath: publicUrl(store.logo_path), bannerPath: publicUrl(store.banner_path), productCount: storeCounts.get(store.name) ?? 0, verified: isStoreVerified(store.verification_status), verificationBadge: storeBadgeTone(store.settings) })),
+      stores: (storeResult.data ?? []).map((store) => ({ id: store.id, slug: store.slug, name: store.name, description: store.description, logoPath: publicUrl(store.logo_path), bannerPath: publicUrl(store.banner_path), productCount: storeCounts.get(store.id) ?? 0, verified: isStoreVerified(store.verification_status), verificationBadge: storeBadgeTone(store.settings) })),
     };
 }
 

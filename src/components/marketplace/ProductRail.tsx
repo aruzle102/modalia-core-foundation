@@ -11,7 +11,7 @@
  * (see useEntranceStagger); the animation fires a single time and is
  * fully disabled under prefers-reduced-motion.
  */
-import { useRef, useState, useEffect, type CSSProperties, type RefObject } from "react";
+import { useRef, useState, useEffect, useCallback, type CSSProperties } from "react";
 import { ArrowRight, ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { ProductCard } from "@/components/marketplace/discovery";
@@ -27,19 +27,29 @@ import { cn } from "@/lib/utils";
  * One-shot entrance trigger: `entered` flips true the first time the
  * observed element scrolls into view (immediately for reduced-motion
  * users and when IntersectionObserver is unavailable). Never re-fires.
+ *
+ * The ref is a callback ref: the element is stored in state so the
+ * observer is (re)created whenever the element actually mounts. This
+ * matters for lazily-rendered content whose target element does not
+ * exist yet on first render (an object ref read in a mount-only effect
+ * would still be null then, the observer would never be created, and
+ * the staggered items would stay at opacity:0 forever).
  */
 export function useEntranceStagger<T extends HTMLElement = HTMLDivElement>(): {
-  ref: RefObject<T | null>;
+  ref: (node: T | null) => void;
   entered: boolean;
   reduced: boolean;
 } {
-  const ref = useRef<T | null>(null);
+  const [element, setElement] = useState<T | null>(null);
   const [entered, setEntered] = useState(false);
   const [reduced, setReduced] = useState(false);
 
+  const ref = useCallback((node: T | null) => {
+    setElement(node);
+  }, []);
+
   useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
+    if (!element) return;
     if (
       typeof window !== "undefined" &&
       typeof window.matchMedia === "function" &&
@@ -62,9 +72,9 @@ export function useEntranceStagger<T extends HTMLElement = HTMLDivElement>(): {
       },
       { threshold: 0.08, rootMargin: "0px 0px -4% 0px" },
     );
-    obs.observe(el);
+    obs.observe(element);
     return () => obs.disconnect();
-  }, []);
+  }, [element]);
 
   return { ref, entered, reduced };
 }
@@ -257,7 +267,7 @@ export function ProductRail({
         <div
           ref={(el) => {
             scrollRef.current = el;
-            entrance.ref.current = el;
+            entrance.ref(el);
           }}
           onScroll={updateArrows}
           className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 sm:-mx-6 sm:gap-4 sm:px-6 lg:mx-0 lg:px-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"

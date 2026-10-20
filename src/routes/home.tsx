@@ -1930,7 +1930,7 @@ function LazyProductGrid({
   viewAllSearch: Record<string, unknown>;
   shownIds: Set<string>;
   onShown: (ids: string[]) => void;
-  tone?: "plain" | "muted";
+  tone?: "plain" | "muted" | "dark";
   /** Category grids pass false: their products are navigational (a product
    *  belongs in its category grid even if a rail above already showed it).
    *  Generic discovery sections keep full dedupe against earlier sections. */
@@ -1941,6 +1941,11 @@ function LazyProductGrid({
   const [visible, setVisible] = useState(false);
   const [products, setProducts] = useState<CatalogProduct[] | null>(null);
   const entrance = useEntranceStagger<HTMLDivElement>();
+
+  // "dark" is a cinematic near-black band (deals chapter): light text and
+  // white/10 skeleton tones on bg-neutral-950; product cards stay light.
+  const dark = tone === "dark";
+  const bandClass = dark ? "bg-neutral-950" : tone === "muted" ? "bg-muted/40" : "bg-background";
 
   // IntersectionObserver: load when scrolled into view
   useEffect(() => {
@@ -1990,19 +1995,22 @@ function LazyProductGrid({
   // Loading: skeleton grid matching the real layout (header + 4/5-aspect cards)
   if (products === null) {
     return (
-      <div ref={ref} className={tone === "muted" ? "bg-muted/40" : "bg-background"}>
+      <div ref={ref} className={bandClass}>
         <section aria-label={title} className="mx-auto w-full max-w-[1440px] px-4 py-10 sm:px-6 sm:py-14 lg:px-10">
           <div className="mb-6 sm:mb-8">
-            <div className="h-8 w-56 animate-pulse rounded bg-muted" />
-            {subtitle ? <div className="mt-2 h-4 w-72 animate-pulse rounded bg-muted" /> : null}
+            <div className={`h-8 w-56 animate-pulse rounded ${dark ? "bg-white/10" : "bg-muted"}`} />
+            {subtitle ? <div className={`mt-2 h-4 w-72 animate-pulse rounded ${dark ? "bg-white/10" : "bg-muted"}`} /> : null}
           </div>
           <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5">
             {Array.from({ length: 10 }).map((_, i) => (
-              <div key={i} className="overflow-hidden rounded-2xl border border-border/60 bg-card">
-                <div className="aspect-[4/5] animate-pulse bg-muted" />
+              <div
+                key={i}
+                className={`overflow-hidden rounded-2xl border ${dark ? "border-white/10 bg-white/5" : "border-border/60 bg-card"}`}
+              >
+                <div className={`aspect-[4/5] animate-pulse ${dark ? "bg-white/10" : "bg-muted"}`} />
                 <div className="space-y-2 p-3">
-                  <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
-                  <div className="h-4 w-1/2 animate-pulse rounded bg-muted" />
+                  <div className={`h-4 w-3/4 animate-pulse rounded ${dark ? "bg-white/10" : "bg-muted"}`} />
+                  <div className={`h-4 w-1/2 animate-pulse rounded ${dark ? "bg-white/10" : "bg-muted"}`} />
                 </div>
               </div>
             ))}
@@ -2016,20 +2024,24 @@ function LazyProductGrid({
   if (products.length === 0) return null;
 
   return (
-    <div ref={ref} className={tone === "muted" ? "bg-muted/40" : "bg-background"}>
+    <div ref={ref} className={bandClass}>
       <section aria-label={title} className="mx-auto w-full max-w-[1440px] px-4 py-10 sm:px-6 sm:py-14 lg:px-10">
         <Reveal>
           <div className="mb-6 flex items-end justify-between gap-4 sm:mb-8">
             <div className="min-w-0">
-              <h2 className="text-2xl font-semibold tracking-tight text-foreground sm:text-[2rem] sm:leading-[1.1]">
+              <h2
+                className={`text-2xl font-semibold tracking-tight sm:text-[2rem] sm:leading-[1.1] ${dark ? "text-white" : "text-foreground"}`}
+              >
                 {title}
               </h2>
-              {subtitle ? <p className="mt-2 text-sm text-muted-foreground">{subtitle}</p> : null}
+              {subtitle ? (
+                <p className={`mt-2 text-sm ${dark ? "text-neutral-300" : "text-muted-foreground"}`}>{subtitle}</p>
+              ) : null}
             </div>
             <Link
               to="/shop"
               search={viewAllSearch as any}
-              className="group inline-flex shrink-0 items-center gap-1.5 pb-1 text-[13px] font-semibold text-foreground transition-all hover:gap-2.5"
+              className={`group inline-flex shrink-0 items-center gap-1.5 pb-1 text-[13px] font-semibold transition-all hover:gap-2.5 ${dark ? "text-white" : "text-foreground"}`}
             >
               {t.common.viewAll}
               <ArrowRight className="size-3.5 transition-transform rtl:rotate-180" />
@@ -2254,12 +2266,15 @@ function HomePage() {
         {/* 8 — Lazy discovery chapters: deals, popular, category grids.
             Each loads on scroll, dedupes against earlier sections and
             hides entirely when it has no products. */}
-        {/* Meilleures offres */}
+        {/* Meilleures offres — dark merchandising band. dedupe off on
+            purpose: deals repeat products already shown in earlier rails
+            (with a small catalog, dedupe would starve and hide the band). */}
         <LazyProductGrid
           locale={locale}
           title={copy.sfDealsTitle}
           subtitle={copy.sfDealsSubtitle}
-          tone="muted"
+          tone="dark"
+          dedupe={false}
           fetchProducts={async () => {
             const res = await browseCatalog({
               data: { locale, onSale: true, pageSize: 10, inStock: true },

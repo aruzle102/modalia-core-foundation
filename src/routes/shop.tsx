@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { ChevronDown, ChevronLeft, ChevronRight, Search, ShoppingBag, SlidersHorizontal, Sparkles, X } from "lucide-react";
@@ -345,7 +345,45 @@ function ShopPage() {
   const { data: storeDirectory } = useSuspenseQuery(storeDirectoryQuery(search.locale));
   const t = getTranslations(search.locale);
   const ts = t.shop;
-  const [filtersOpen, setFiltersOpen] = useState(false);
+  // Mobile filter sheet: mounted/visible state machine so the sheet slides
+  // with a CSS transition in BOTH directions (same pattern and timing as the
+  // site drawers: backdrop opacity 260ms, panel transform 280ms expo-out).
+  const [filtersMounted, setFiltersMounted] = useState(false);
+  const [filtersVisible, setFiltersVisible] = useState(false);
+  const filtersCloseTimer = useRef<number | null>(null);
+  const openFilters = () => {
+    if (filtersCloseTimer.current) {
+      window.clearTimeout(filtersCloseTimer.current);
+      filtersCloseTimer.current = null;
+    }
+    setFiltersMounted(true);
+  };
+  const closeFilters = () => {
+    if (!filtersMounted) return;
+    setFiltersVisible(false);
+    if (filtersCloseTimer.current) window.clearTimeout(filtersCloseTimer.current);
+    filtersCloseTimer.current = window.setTimeout(() => {
+      setFiltersMounted(false);
+      filtersCloseTimer.current = null;
+    }, 260);
+  };
+  // Slide in on the frame after mount so the CSS transition actually runs.
+  useEffect(() => {
+    if (!filtersMounted) return;
+    let inner = 0;
+    const outer = window.requestAnimationFrame(() => {
+      inner = window.requestAnimationFrame(() => setFiltersVisible(true));
+    });
+    return () => {
+      window.cancelAnimationFrame(outer);
+      if (inner) window.cancelAnimationFrame(inner);
+    };
+  }, [filtersMounted]);
+  useEffect(() => {
+    return () => {
+      if (filtersCloseTimer.current) window.clearTimeout(filtersCloseTimer.current);
+    };
+  }, []);
   const q = search.q.trim();
 
   useEffect(() => {
@@ -365,11 +403,11 @@ function ShopPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q]);
 
-  // Mobile filter sheet: close on Escape and lock body scroll while open.
+  // Mobile filter sheet: close on Escape and lock body scroll while mounted.
   useEffect(() => {
-    if (!filtersOpen) return;
+    if (!filtersMounted) return;
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setFiltersOpen(false);
+      if (event.key === "Escape") closeFilters();
     };
     document.addEventListener("keydown", onKey);
     const previousOverflow = document.body.style.overflow;
@@ -378,7 +416,8 @@ function ShopPage() {
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = previousOverflow;
     };
-  }, [filtersOpen]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filtersMounted]);
 
   const filterValues: ShopFilterValues = {
     minPrice: search.minPrice,
@@ -523,6 +562,26 @@ function ShopPage() {
     });
 
   const totalPages = Math.max(1, Math.ceil(data.total / data.pageSize));
+
+  // Stable signature of everything that changes the result set. Keying the
+  // results region on it remounts (and crossfades) it exactly once per
+  // change — never on unrelated re-renders.
+  const gridSignature = JSON.stringify({
+    view: search.view,
+    q: search.q,
+    category: search.category,
+    sort: search.sort,
+    page: search.page,
+    minPrice: search.minPrice ?? null,
+    maxPrice: search.maxPrice ?? null,
+    brands: search.brands,
+    stores: search.stores,
+    colors: search.colors,
+    sizes: search.sizes,
+    gender: search.gender ?? "",
+    inStock: search.inStock,
+    onSale: search.onSale,
+  });
   const views: { value: (typeof VIEWS)[number]; label: string }[] = [
     { value: "", label: t.nav.shop },
     { value: "categories", label: t.nav.categories },
@@ -539,7 +598,7 @@ function ShopPage() {
   );
 
   return (
-    <div dir={localeDirections[search.locale]} lang={search.locale} className="min-h-screen bg-background">
+    <div dir={localeDirections[search.locale]} lang={search.locale} className="min-h-screen overflow-x-clip bg-background">
       <SiteHeader locale={search.locale} t={t} />
       <main id="main-content" tabIndex={-1} className="mx-auto w-full max-w-[1440px] px-4 pb-16 sm:px-6 sm:pb-20 lg:px-10">
         <header className="py-10 sm:py-14">
@@ -588,8 +647,8 @@ function ShopPage() {
               type="button"
               variant="outline"
               className="h-11 shrink-0 rounded-full lg:hidden"
-              onClick={() => setFiltersOpen(true)}
-              aria-expanded={filtersOpen}
+              onClick={openFilters}
+              aria-expanded={filtersMounted}
               aria-controls="mobile-filters"
             >
               <SlidersHorizontal className="size-4" />
@@ -641,7 +700,7 @@ function ShopPage() {
         />
 
         <div className="mt-8 flex flex-wrap items-center gap-2" aria-label={ts.filters}>
-          <div className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-muted/40 p-1">
+          <div className="inline-flex max-w-full items-center gap-1 overflow-x-auto rounded-full border border-border/60 bg-muted/40 p-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {views.map((view) => (
               <button
                 key={view.value || "all"}
@@ -663,11 +722,11 @@ function ShopPage() {
         </div>
 
         {search.view === "categories" ? (
-          <div className="mt-10 pb-16">
+          <div key="view-categories" className="animate-in fade-in-0 slide-in-from-bottom-2 mt-10 pb-16 duration-200">
             <CategoryRail categories={data.categories} locale={search.locale} />
           </div>
         ) : search.view === "stores" ? (
-          <div className="mt-10 pb-16">
+          <div key="view-stores" className="animate-in fade-in-0 slide-in-from-bottom-2 mt-10 pb-16 duration-200">
             <StoreRail stores={storeDirectory} locale={search.locale} />
           </div>
         ) : (
@@ -707,10 +766,10 @@ function ShopPage() {
                     key={chip.key}
                     type="button"
                     onClick={chip.clear}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-muted/40 py-1 pe-2 ps-3 text-caption text-foreground transition-colors hover:border-foreground/30"
+                    className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-border/60 bg-muted/40 py-1 pe-2 ps-3 text-caption text-foreground transition-colors hover:border-foreground/30"
                   >
-                    {chip.label}
-                    <X className="size-3.5 text-muted-foreground" aria-hidden />
+                    <span className="min-w-0 truncate">{chip.label}</span>
+                    <X className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
                   </button>
                 ))}
                 <button
@@ -728,6 +787,7 @@ function ShopPage() {
                 <div className="sticky top-36 rounded-2xl border border-border/60 bg-card p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">{filtersPanel}</div>
               </aside>
               <div className="min-w-0">
+                <div key={gridSignature} className="animate-in fade-in-0 slide-in-from-bottom-2 duration-200">
                 {data.products.length === 0 ? (
                   <section className="rounded-2xl border border-border/60 bg-muted/40 px-6 py-20 text-center">
                     <div className="mx-auto grid size-14 place-items-center rounded-full bg-background shadow-sm">
@@ -748,6 +808,7 @@ function ShopPage() {
                     ))}
                   </div>
                 )}
+                </div>
                 {totalPages > 1 ? (
                   <nav aria-label={ts.pageOf(data.page, totalPages)} className="mt-14 flex items-center justify-center gap-1.5">
                     {data.page <= 1 ? (
@@ -807,25 +868,32 @@ function ShopPage() {
         )}
       </main>
 
-      {filtersOpen ? (
+      {filtersMounted ? (
         <div id="mobile-filters" className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label={ts.filters}>
           <button
             type="button"
             aria-label={ts.hideFilters}
-            className="animate-in fade-in-0 absolute inset-0 cursor-default bg-foreground/40 backdrop-blur-[2px]"
-            onClick={() => setFiltersOpen(false)}
+            className="absolute inset-0 cursor-default bg-foreground/40 backdrop-blur-[2px]"
+            style={{ opacity: filtersVisible ? 1 : 0, transition: "opacity 260ms ease" }}
+            onClick={closeFilters}
           />
-          <div className="animate-in slide-in-from-bottom absolute inset-x-0 bottom-0 flex max-h-[88dvh] flex-col rounded-t-3xl bg-card shadow-2xl duration-300">
+          <div
+            className="absolute inset-x-0 bottom-0 flex max-h-[88dvh] flex-col rounded-t-3xl bg-card shadow-2xl"
+            style={{
+              transform: filtersVisible ? "translateY(0)" : "translateY(100%)",
+              transition: "transform 280ms cubic-bezier(0.32, 0.72, 0, 1)",
+            }}
+          >
             <div aria-hidden className="mx-auto mt-2.5 h-1 w-10 shrink-0 rounded-full bg-border" />
             <div className="flex items-center justify-between px-5 pb-2 pt-3">
               <h2 className="text-h3 text-foreground">{ts.filters}</h2>
-              <Button type="button" variant="ghost" size="icon" className="rounded-full" onClick={() => setFiltersOpen(false)} aria-label={ts.hideFilters}>
+              <Button type="button" variant="ghost" size="icon" className="rounded-full" onClick={closeFilters} aria-label={ts.hideFilters}>
                 <X className="size-5" />
               </Button>
             </div>
             <div className="flex-1 overflow-y-auto px-5 pb-4">{filtersPanel}</div>
             <div className="border-t border-border/60 p-4">
-              <Button type="button" className="w-full rounded-full" onClick={() => setFiltersOpen(false)}>
+              <Button type="button" className="w-full rounded-full" onClick={closeFilters}>
                 {ts.resultsCount(data.total)}
               </Button>
             </div>

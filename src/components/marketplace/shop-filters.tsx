@@ -43,7 +43,7 @@ function Section({
 }) {
   return (
     <fieldset className="border-t border-border/70 py-5 first:border-t-0 first:pt-1">
-      <legend className="float-start w-full px-0 text-[13px] font-bold uppercase tracking-[0.12em] text-foreground">
+      <legend className="float-start w-full px-0 text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
         {title}
       </legend>
       <div className="mt-3.5">{children}</div>
@@ -63,7 +63,7 @@ function CheckRow({
   count?: number;
 }) {
   return (
-    <label className="flex cursor-pointer items-center gap-2.5 rounded-xl px-2 py-2 text-small text-foreground transition-colors hover:bg-muted active:bg-muted/70">
+    <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl px-2 py-2.5 text-small text-foreground transition-colors hover:bg-muted active:bg-muted/70">
       <span
         aria-hidden
         className={`grid size-5 shrink-0 place-items-center rounded-md border-2 transition-all ${
@@ -151,7 +151,7 @@ export function ShopFilters({
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
-        <p className="text-[13px] font-bold uppercase tracking-[0.12em] text-foreground">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
           {t.filters}
           {activeCount > 0 ? (
             <span className="ms-2 inline-grid size-5 place-items-center rounded-full bg-foreground text-[11px] font-extrabold tabular-nums text-background">
@@ -181,7 +181,7 @@ export function ShopFilters({
               onKeyDown={(event) => {
                 if (event.key === "Enter") applyPrice();
               }}
-              className="h-10 rounded-xl border-border bg-background"
+              className="h-10 min-w-0 flex-1 rounded-xl border-border bg-background"
             />
             <span aria-hidden className="shrink-0 text-muted-foreground">–</span>
             <Input
@@ -193,7 +193,7 @@ export function ShopFilters({
               onKeyDown={(event) => {
                 if (event.key === "Enter") applyPrice();
               }}
-              className="h-10 rounded-xl border-border bg-background"
+              className="h-10 min-w-0 flex-1 rounded-xl border-border bg-background"
             />
             <Button type="button" size="sm" className="h-10 shrink-0 rounded-xl px-4 font-semibold" onClick={applyPrice}>
               {t.apply}
@@ -233,7 +233,7 @@ export function ShopFilters({
                   aria-pressed={active}
                   title={`${size.label} · ${size.productCount}`}
                   onClick={() => onChange({ ...values, sizes: toggle(values.sizes, size.value) })}
-                  className={`min-w-11 rounded-xl border px-3 py-2 text-small font-semibold transition-all ${
+                  className={`min-h-11 min-w-11 rounded-xl border px-3 py-2 text-small font-semibold transition-all ${
                     active
                       ? "border-foreground bg-foreground text-background shadow-sm"
                       : "border-border bg-card text-foreground hover:border-foreground/40 hover:shadow-sm active:scale-95"
@@ -261,7 +261,7 @@ export function ShopFilters({
                   title={`${color.name} · ${color.productCount}`}
                   onClick={() => onChange({ ...values, colors: toggle(values.colors, color.slug) })}
                   style={color.hex ? { backgroundColor: color.hex } : undefined}
-                  className={`grid size-10 place-items-center rounded-full border border-black/10 shadow-sm ${motionTw.transition.interactive} ${
+                  className={`grid size-11 place-items-center rounded-full border border-black/10 shadow-sm ${motionTw.transition.interactive} ${
                     active ? "ring-2 ring-foreground ring-offset-2 ring-offset-background scale-105" : "hover:scale-110"
                   } ${color.hex ? "" : "bg-muted"}`}
                 >

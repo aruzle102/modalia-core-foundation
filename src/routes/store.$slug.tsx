@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { SiteFooter, SiteHeader } from "@/components/layout/site-shell";
 import { StoreFront } from "@/components/store/StoreFront";
@@ -98,6 +98,13 @@ function StorePage() {
         <main id="main-content" tabIndex={-1} className="mx-auto max-w-7xl px-4 py-16 text-center">
           <h1 className="text-display">{t.store.unavailableTitle}</h1>
           <p className="mt-3 text-body text-muted-foreground">{t.store.unavailableText}</p>
+          <Link
+            to="/stores"
+            search={{ locale }}
+            className="link-underline mt-6 inline-block text-small font-medium text-foreground"
+          >
+            {t.store.filterAll}
+          </Link>
         </main>
         <SiteFooter locale={locale} t={t} />
       </div>

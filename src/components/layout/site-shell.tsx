@@ -1,26 +1,35 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { createPortal } from "react-dom";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
   Banknote,
+  Briefcase,
   ChevronDown,
+  ChevronRight,
   Facebook,
+  FileText,
   Globe,
   Heart,
   Home,
+  Info,
   Instagram,
   LayoutGrid,
   Mail,
   MapPin,
   Menu,
+  MessageCircle,
   Music2,
   Package,
   Phone,
+  RotateCcw,
   Search,
   ShoppingBag,
   Sparkles,
+  Store,
   Tag,
   TrendingUp,
+  Truck,
   UserRound,
   X,
 } from "lucide-react";
@@ -110,29 +119,42 @@ function BannerBar({ locale }: { locale: SupportedLocale }) {
  * Right: wishlist, cart, account, locale. Sell on Modalia lives in the footer only.
  */
 export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translation }) {
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [drawerClosing, setDrawerClosing] = useState(false);
+  const [drawerMounted, setDrawerMounted] = useState(false);
+  const [drawerVisible, setDrawerVisible] = useState(false);
   const drawerCloseTimer = useRef<number | null>(null);
   const [assistantOpen, setAssistantOpen] = useState(false);
 
-  // Drawer open/close with a smooth slide-out exit animation.
+  // Bulletproof drawer: rendered through a portal on document.body and slid
+  // with inline-style CSS transitions, so no ancestor transform/filter or
+  // missing animation utility can break its position or motion.
   const openDrawer = () => {
     if (drawerCloseTimer.current) {
       window.clearTimeout(drawerCloseTimer.current);
       drawerCloseTimer.current = null;
     }
-    setDrawerClosing(false);
-    setDrawerOpen(true);
+    setDrawerMounted(true);
   };
   const closeDrawer = () => {
-    if (!drawerOpen || drawerClosing) return;
-    setDrawerClosing(true);
+    if (!drawerMounted) return;
+    setDrawerVisible(false);
+    if (drawerCloseTimer.current) window.clearTimeout(drawerCloseTimer.current);
     drawerCloseTimer.current = window.setTimeout(() => {
-      setDrawerOpen(false);
-      setDrawerClosing(false);
+      setDrawerMounted(false);
       drawerCloseTimer.current = null;
-    }, 200);
+    }, 260);
   };
+  // Slide in on the frame after mount so the CSS transition actually runs.
+  useEffect(() => {
+    if (!drawerMounted) return;
+    let inner = 0;
+    const outer = window.requestAnimationFrame(() => {
+      inner = window.requestAnimationFrame(() => setDrawerVisible(true));
+    });
+    return () => {
+      window.cancelAnimationFrame(outer);
+      if (inner) window.cancelAnimationFrame(inner);
+    };
+  }, [drawerMounted]);
   useEffect(() => {
     return () => {
       if (drawerCloseTimer.current) window.clearTimeout(drawerCloseTimer.current);
@@ -141,20 +163,21 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
 
   // Close the drawer on Escape.
   useEffect(() => {
-    if (!drawerOpen) return;
+    if (!drawerMounted) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") closeDrawer();
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [drawerOpen, drawerClosing]);
+  }, [drawerMounted]);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const [categoriesOpen, setCategoriesOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const cart = useCart();
   const navigate = useNavigate();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   const searchInputRef = useRef<HTMLInputElement>(null);
   const mobileSearchInputRef = useRef<HTMLInputElement>(null);
   const categoriesRef = useRef<HTMLDivElement>(null);
@@ -206,13 +229,13 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
 
   // Lock body scroll while the mobile drawer or search overlay is open.
   useEffect(() => {
-    if (!drawerOpen && !searchOpen) return;
+    if (!drawerMounted && !searchOpen) return;
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = previous;
     };
-  }, [drawerOpen, searchOpen]);
+  }, [drawerMounted, searchOpen]);
 
   // Focus the search input when the overlay opens.
   useEffect(() => {
@@ -232,6 +255,17 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
   // SSENSE-style nav link: tight tracking, animated underline on hover.
   const navLink =
     "group relative text-nav tracking-tight text-foreground/80 transition-colors hover:text-foreground";
+
+  // Mobile drawer rows: line icon + label, clear active state.
+  const drawerRowClass = (active: boolean) =>
+    cn(
+      "flex items-center gap-3 rounded-lg px-3 py-2.5 text-nav tracking-tight transition-colors",
+      active
+        ? "bg-muted font-medium text-foreground"
+        : "text-foreground/80 hover:bg-muted/60 hover:text-foreground",
+    );
+  const drawerSectionLabel =
+    "px-3 pb-1 text-caption font-semibold uppercase tracking-[0.18em] text-muted-foreground";
 
   const underline = (
     <span
@@ -427,8 +461,8 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
               variant="ghost"
               size="icon"
               className="text-foreground/80 hover:text-foreground lg:hidden"
-              aria-label={drawerOpen ? t.common.close : t.nav.menu}
-              aria-expanded={drawerOpen}
+              aria-label={drawerMounted ? t.common.close : t.nav.menu}
+              aria-expanded={drawerMounted}
               onClick={() => openDrawer()}
             >
               <Menu className="size-5" />
@@ -439,291 +473,366 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
 
       <BannerBar locale={locale} />
 
-      {/* Mobile slide-over drawer */}
-      {drawerOpen ? (
-        <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label={t.nav.menu}>
-          <div
-            className={cn(
-              "absolute inset-0 bg-foreground/20 backdrop-blur-[2px]",
-              drawerClosing ? "animate-out fade-out-0" : "animate-in fade-in-0",
-            )}
-            onClick={() => closeDrawer()}
-            aria-hidden="true"
-          />
-          <aside
-            className={cn(
-              "absolute top-0 flex h-full w-[86%] max-w-sm flex-col bg-background duration-200",
-              // Drawer side follows the locale convention: Arabic slides from the
-              // right, French/English from the left (same as admin/seller sheets).
-              locale === "ar"
-                ? "right-0 shadow-[-8px_0_30px_rgba(0,0,0,0.12)]"
-                : "left-0 shadow-[8px_0_30px_rgba(0,0,0,0.12)]",
-              drawerClosing ? "animate-out" : "animate-in",
-              drawerClosing
-                ? locale === "ar"
-                  ? "slide-out-to-right"
-                  : "slide-out-to-left"
-                : locale === "ar"
-                  ? "slide-in-from-right"
-                  : "slide-in-from-left",
-            )}
-          >
-            <div className="flex h-16 items-center justify-between border-b border-border px-5">
-              <ModaliLogo className="h-7 w-auto" />
-              <Button
-                variant="ghost"
-                size="icon"
+      {/* Mobile slide-over drawer — portaled to <body> so no page ancestor
+          (transform, filter, overflow, stacking context) can break its fixed
+          layout, and slid with inline CSS transitions instead of animation
+          utility classes. */}
+      {drawerMounted && typeof document !== "undefined"
+        ? createPortal(
+            <div
+              className="fixed inset-0 z-[90] lg:hidden"
+              role="dialog"
+              aria-modal="true"
+              aria-label={t.nav.menu}
+            >
+              <div
+                className="absolute inset-0 bg-foreground/25 backdrop-blur-[2px]"
+                style={{ opacity: drawerVisible ? 1 : 0, transition: "opacity 260ms ease" }}
                 onClick={() => closeDrawer()}
-                aria-label={t.common.close}
+                aria-hidden="true"
+              />
+              <aside
+                className={cn(
+                  "absolute top-0 flex h-full w-[86%] max-w-sm flex-col bg-background",
+                  // Drawer side follows the locale convention: Arabic slides
+                  // from the right, French/English from the left.
+                  locale === "ar"
+                    ? "right-0 shadow-[-12px_0_40px_rgba(0,0,0,0.18)]"
+                    : "left-0 shadow-[12px_0_40px_rgba(0,0,0,0.18)]",
+                )}
+                style={{
+                  transform: drawerVisible
+                    ? "translateX(0)"
+                    : locale === "ar"
+                      ? "translateX(105%)"
+                      : "translateX(-105%)",
+                  transition: "transform 280ms cubic-bezier(0.32, 0.72, 0, 1)",
+                }}
               >
-                <X className="size-5" />
-              </Button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto px-5 py-6">
-              <form onSubmit={submitSearch} role="search" className="mb-6">
-                <div className="flex items-center gap-2 border-b border-foreground/20 pb-2 focus-within:border-foreground">
-                  <Search className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-                  <input
-                    value={searchValue}
-                    onChange={(event) => setSearchValue(event.target.value)}
-                    placeholder={t.nav.search}
-                    aria-label={t.nav.search}
-                    className="w-full bg-transparent text-body tracking-tight outline-none placeholder:text-muted-foreground"
-                  />
+                <div className="flex h-16 items-center justify-between border-b border-border px-5">
+                  <ModaliLogo className="h-7 w-auto" />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => closeDrawer()}
+                    aria-label={t.common.close}
+                  >
+                    <X className="size-5" />
+                  </Button>
                 </div>
-              </form>
 
-              <nav aria-label={t.nav.mobileNavigation}>
-                {/* ── DISCOVER ── */}
-                <p className="mb-1 text-caption font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                  {t.nav.menuDiscover}
-                </p>
-                <ul className="space-y-1">
-                  <li>
-                    <Link
-                      to="/home"
-                      search={{ locale }}
-                      onClick={() => closeDrawer()}
-                      className="flex items-center gap-3 py-2.5 text-nav tracking-tight text-foreground/80 transition-colors hover:text-foreground"
-                    >
-                      <Home className="size-4 shrink-0" aria-hidden="true" />
-                      {t.nav.menuHome}
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      to="/shop"
-                      search={shopSearch(locale)}
-                      onClick={() => closeDrawer()}
-                      className="flex items-center gap-3 py-2.5 text-nav tracking-tight text-foreground/80 transition-colors hover:text-foreground"
-                    >
-                      <LayoutGrid className="size-4 shrink-0" aria-hidden="true" />
-                      {t.nav.menuAllProducts}
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      to="/shop"
-                      search={{ ...shopSearch(locale), sort: "newest" }}
-                      onClick={() => closeDrawer()}
-                      className="flex items-center gap-3 py-2.5 text-nav tracking-tight text-foreground/80 transition-colors hover:text-foreground"
-                    >
-                      <Sparkles className="size-4 shrink-0" aria-hidden="true" />
-                      {t.nav.menuNew}
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      to="/home"
-                      search={{ locale }}
-                      onClick={() => closeDrawer()}
-                      className="flex items-center gap-3 py-2.5 text-nav tracking-tight text-foreground/80 transition-colors hover:text-foreground"
-                    >
-                      <TrendingUp className="size-4 shrink-0" aria-hidden="true" />
-                      {t.nav.menuTrending}
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      to="/shop"
-                      search={{ ...shopSearch(locale), onSale: true }}
-                      onClick={() => closeDrawer()}
-                      className="flex items-center gap-3 py-2.5 text-nav tracking-tight text-foreground/80 transition-colors hover:text-foreground"
-                    >
-                      <Tag className="size-4 shrink-0" aria-hidden="true" />
-                      {t.nav.menuOffers}
-                    </Link>
-                  </li>
-                </ul>
+                <div className="flex-1 overflow-y-auto px-3 py-5">
+                  <form onSubmit={submitSearch} role="search" className="mb-5 px-2">
+                    <div className="flex items-center gap-2 border-b border-foreground/20 pb-2 focus-within:border-foreground">
+                      <Search className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                      <input
+                        value={searchValue}
+                        onChange={(event) => setSearchValue(event.target.value)}
+                        placeholder={t.nav.search}
+                        aria-label={t.nav.search}
+                        className="w-full bg-transparent text-body tracking-tight outline-none placeholder:text-muted-foreground"
+                      />
+                    </div>
+                  </form>
 
-                <div className="my-5 border-t border-border" aria-hidden="true" />
+                  <nav aria-label={t.nav.mobileNavigation}>
+                    {/* ── DISCOVER ── */}
+                    <p className={drawerSectionLabel}>{t.nav.menuDiscover}</p>
+                    <ul className="space-y-0.5">
+                      <li>
+                        <Link
+                          to="/home"
+                          search={{ locale }}
+                          onClick={() => closeDrawer()}
+                          className={drawerRowClass(pathname === "/home" || pathname === "/")}
+                        >
+                          <Home className="size-4 shrink-0" aria-hidden="true" />
+                          {t.nav.menuHome}
+                        </Link>
+                      </li>
+                      <li>
+                        <Link
+                          to="/shop"
+                          search={shopSearch(locale)}
+                          onClick={() => closeDrawer()}
+                          className={drawerRowClass(pathname === "/shop")}
+                        >
+                          <LayoutGrid className="size-4 shrink-0" aria-hidden="true" />
+                          {t.nav.menuAllProducts}
+                        </Link>
+                      </li>
+                      <li>
+                        <Link
+                          to="/stores"
+                          search={{ locale }}
+                          onClick={() => closeDrawer()}
+                          className={drawerRowClass(
+                            pathname === "/stores" || pathname.startsWith("/store"),
+                          )}
+                        >
+                          <Store className="size-4 shrink-0" aria-hidden="true" />
+                          {t.nav.stores}
+                        </Link>
+                      </li>
+                      <li>
+                        <Link
+                          to="/shop"
+                          search={{ ...shopSearch(locale), sort: "newest" }}
+                          onClick={() => closeDrawer()}
+                          className={drawerRowClass(false)}
+                        >
+                          <Sparkles className="size-4 shrink-0" aria-hidden="true" />
+                          {t.nav.menuNew}
+                        </Link>
+                      </li>
+                      <li>
+                        <Link
+                          to="/home"
+                          search={{ locale }}
+                          onClick={() => closeDrawer()}
+                          className={drawerRowClass(false)}
+                        >
+                          <TrendingUp className="size-4 shrink-0" aria-hidden="true" />
+                          {t.nav.menuTrending}
+                        </Link>
+                      </li>
+                      <li>
+                        <Link
+                          to="/shop"
+                          search={{ ...shopSearch(locale), onSale: true }}
+                          onClick={() => closeDrawer()}
+                          className={drawerRowClass(false)}
+                        >
+                          <Tag className="size-4 shrink-0" aria-hidden="true" />
+                          {t.nav.menuOffers}
+                        </Link>
+                      </li>
+                    </ul>
 
-                {/* ── CATEGORIES (real, admin-managed) ── */}
-                <p className="mb-1 text-caption font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                  {t.nav.menuCategories}
-                </p>
-                <ul className="space-y-1">
-                  {categories.map((category) => (
-                    <li key={category.slug}>
-                      <Link
-                        to="/shop"
-                        search={{ ...shopSearch(locale), category: category.slug }}
-                        onClick={() => closeDrawer()}
-                        className="block py-2 text-nav tracking-tight text-foreground/70 transition-colors hover:text-foreground"
-                      >
-                        {category.name}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
+                    <div className="mx-3 my-5 border-t border-border" aria-hidden="true" />
 
-                <div className="my-5 border-t border-border" aria-hidden="true" />
+                    {/* ── CATEGORIES (real, admin-managed) ── */}
+                    <p className={drawerSectionLabel}>{t.nav.menuCategories}</p>
+                    <ul className="space-y-0.5">
+                      {categories.map((category) => (
+                        <li key={category.slug}>
+                          <Link
+                            to="/shop"
+                            search={{ ...shopSearch(locale), category: category.slug }}
+                            onClick={() => closeDrawer()}
+                            className={drawerRowClass(false)}
+                          >
+                            <span className="min-w-0 flex-1 truncate">{category.name}</span>
+                            <ChevronRight
+                              className="size-4 shrink-0 text-muted-foreground rtl:rotate-180"
+                              aria-hidden="true"
+                            />
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
 
-                {/* ── MY PURCHASES ── */}
-                <p className="mb-1 text-caption font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                  {t.nav.menuPurchases}
-                </p>
-                <ul className="space-y-1">
-                  <li>
-                    <Link
-                      to="/wishlist"
-                      search={{ locale }}
-                      onClick={() => closeDrawer()}
-                      className="flex items-center gap-3 py-2.5 text-nav tracking-tight text-foreground/80 transition-colors hover:text-foreground"
-                    >
-                      <Heart className="size-4 shrink-0" aria-hidden="true" />
-                      {t.nav.wishlist}
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      to="/cart"
-                      search={{ locale }}
-                      onClick={() => closeDrawer()}
-                      className="flex items-center gap-3 py-2.5 text-nav tracking-tight text-foreground/80 transition-colors hover:text-foreground"
-                    >
-                      <ShoppingBag className="size-4 shrink-0" aria-hidden="true" />
-                      {t.nav.cart}
-                      {cart.count ? (
-                        <span className="bg-foreground px-1.5 text-[10px] font-bold text-background">
-                          {cart.count}
-                        </span>
-                      ) : null}
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      to="/track-order"
-                      search={{ locale }}
-                      onClick={() => closeDrawer()}
-                      className="flex items-center gap-3 py-2.5 text-nav tracking-tight text-foreground/80 transition-colors hover:text-foreground"
-                    >
-                      <Package className="size-4 shrink-0" aria-hidden="true" />
-                      {t.nav.menuTrackOrder}
-                    </Link>
-                  </li>
-                </ul>
+                    <div className="mx-3 my-5 border-t border-border" aria-hidden="true" />
 
-                <div className="my-5 border-t border-border" aria-hidden="true" />
+                    {/* ── MY PURCHASES ── */}
+                    <p className={drawerSectionLabel}>{t.nav.menuPurchases}</p>
+                    <ul className="space-y-0.5">
+                      <li>
+                        <Link
+                          to="/wishlist"
+                          search={{ locale }}
+                          onClick={() => closeDrawer()}
+                          className={drawerRowClass(pathname === "/wishlist")}
+                        >
+                          <Heart className="size-4 shrink-0" aria-hidden="true" />
+                          {t.nav.wishlist}
+                        </Link>
+                      </li>
+                      <li>
+                        <Link
+                          to="/cart"
+                          search={{ locale }}
+                          onClick={() => closeDrawer()}
+                          className={drawerRowClass(pathname === "/cart")}
+                        >
+                          <ShoppingBag className="size-4 shrink-0" aria-hidden="true" />
+                          {t.nav.cart}
+                          {cart.count ? (
+                            <span className="ms-auto bg-foreground px-1.5 text-[10px] font-bold text-background">
+                              {cart.count}
+                            </span>
+                          ) : null}
+                        </Link>
+                      </li>
+                      <li>
+                        <Link
+                          to="/track-order"
+                          search={{ locale }}
+                          onClick={() => closeDrawer()}
+                          className={drawerRowClass(pathname === "/track-order")}
+                        >
+                          <Package className="size-4 shrink-0" aria-hidden="true" />
+                          {t.nav.menuTrackOrder}
+                        </Link>
+                      </li>
+                    </ul>
 
-                {/* ── INFORMATION ── */}
-                <p className="mb-1 text-caption font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                  {t.nav.menuInfo}
-                </p>
-                <ul className="space-y-1">
-                  <li>
-                    <Link
-                      to="/about"
-                      search={{ locale }}
-                      onClick={() => closeDrawer()}
-                      className="block py-2 text-nav tracking-tight text-foreground/70 transition-colors hover:text-foreground"
-                    >
-                      {t.nav.menuAbout}
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      to="/contact"
-                      search={{ locale }}
-                      onClick={() => closeDrawer()}
-                      className="block py-2 text-nav tracking-tight text-foreground/70 transition-colors hover:text-foreground"
-                    >
-                      {t.nav.menuContact}
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      to="/shipping"
-                      search={{ locale }}
-                      onClick={() => closeDrawer()}
-                      className="block py-2 text-nav tracking-tight text-foreground/70 transition-colors hover:text-foreground"
-                    >
-                      {t.footer.links.shipping}
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      to="/returns"
-                      search={{ locale }}
-                      onClick={() => closeDrawer()}
-                      className="block py-2 text-nav tracking-tight text-foreground/70 transition-colors hover:text-foreground"
-                    >
-                      {t.footer.links.returns}
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      to="/help"
-                      search={{ locale }}
-                      onClick={() => closeDrawer()}
-                      className="block py-2 text-nav tracking-tight text-foreground/70 transition-colors hover:text-foreground"
-                    >
-                      {t.nav.menuFaq}
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      to="/terms"
-                      search={{ locale }}
-                      onClick={() => closeDrawer()}
-                      className="block py-2 text-nav tracking-tight text-foreground/70 transition-colors hover:text-foreground"
-                    >
-                      {t.nav.menuTerms}
-                    </Link>
-                  </li>
-                </ul>
+                    <div className="mx-3 my-5 border-t border-border" aria-hidden="true" />
 
-                <div className="my-5 border-t border-border" aria-hidden="true" />
+                    {/* ── ACCOUNT ── */}
+                    <p className={drawerSectionLabel}>{t.nav.account}</p>
+                    <ul className="space-y-0.5">
+                      <li>
+                        <Link
+                          to="/auth"
+                          search={{ locale }}
+                          onClick={() => closeDrawer()}
+                          className={drawerRowClass(pathname === "/auth")}
+                        >
+                          <UserRound className="size-4 shrink-0" aria-hidden="true" />
+                          {t.nav.account}
+                        </Link>
+                      </li>
+                      <li>
+                        <Link
+                          to="/become-a-seller"
+                          search={{ locale }}
+                          onClick={() => closeDrawer()}
+                          className={drawerRowClass(pathname === "/become-a-seller")}
+                        >
+                          <Briefcase className="size-4 shrink-0" aria-hidden="true" />
+                          {t.footer.links.becomeSeller}
+                        </Link>
+                      </li>
+                    </ul>
 
-                <p className="mb-2 text-caption uppercase tracking-widest text-muted-foreground">
-                  {t.footer.languageLabel}
-                </p>
-                <div className="flex gap-2">
-                  {supportedLocales.map((value) => (
+                    <div className="mx-3 my-5 border-t border-border" aria-hidden="true" />
+
+                    {/* ── INFORMATION ── */}
+                    <p className={drawerSectionLabel}>{t.nav.menuInfo}</p>
+                    <ul className="space-y-0.5">
+                      <li>
+                        <Link
+                          to="/about"
+                          search={{ locale }}
+                          onClick={() => closeDrawer()}
+                          className={drawerRowClass(pathname === "/about")}
+                        >
+                          <Info className="size-4 shrink-0" aria-hidden="true" />
+                          {t.nav.menuAbout}
+                        </Link>
+                      </li>
+                      <li>
+                        <Link
+                          to="/contact"
+                          search={{ locale }}
+                          onClick={() => closeDrawer()}
+                          className={drawerRowClass(pathname === "/contact")}
+                        >
+                          <Mail className="size-4 shrink-0" aria-hidden="true" />
+                          {t.nav.menuContact}
+                        </Link>
+                      </li>
+                      <li>
+                        <Link
+                          to="/shipping"
+                          search={{ locale }}
+                          onClick={() => closeDrawer()}
+                          className={drawerRowClass(pathname === "/shipping")}
+                        >
+                          <Truck className="size-4 shrink-0" aria-hidden="true" />
+                          {t.footer.links.shipping}
+                        </Link>
+                      </li>
+                      <li>
+                        <Link
+                          to="/returns"
+                          search={{ locale }}
+                          onClick={() => closeDrawer()}
+                          className={drawerRowClass(pathname === "/returns")}
+                        >
+                          <RotateCcw className="size-4 shrink-0" aria-hidden="true" />
+                          {t.footer.links.returns}
+                        </Link>
+                      </li>
+                      <li>
+                        <Link
+                          to="/help"
+                          search={{ locale }}
+                          onClick={() => closeDrawer()}
+                          className={drawerRowClass(pathname === "/help")}
+                        >
+                          <MessageCircle className="size-4 shrink-0" aria-hidden="true" />
+                          {t.nav.menuFaq}
+                        </Link>
+                      </li>
+                      <li>
+                        <Link
+                          to="/terms"
+                          search={{ locale }}
+                          onClick={() => closeDrawer()}
+                          className={drawerRowClass(pathname === "/terms")}
+                        >
+                          <FileText className="size-4 shrink-0" aria-hidden="true" />
+                          {t.nav.menuTerms}
+                        </Link>
+                      </li>
+                    </ul>
+                  </nav>
+                </div>
+
+                {/* ── Bottom: assistant entry + language ── */}
+                <div className="border-t border-border px-5 py-4">
+                  {smartShoppingEnabled ? (
                     <button
-                      key={value}
                       type="button"
                       onClick={() => {
-                        switchLocale(value);
                         closeDrawer();
+                        setAssistantOpen(true);
                       }}
-                      aria-current={value === locale ? "true" : undefined}
-                      className={
-                        value === locale
-                          ? "border border-foreground bg-foreground px-4 py-1.5 text-small font-medium tracking-tight text-background"
-                          : "border border-border px-4 py-1.5 text-small tracking-tight text-muted-foreground transition-colors hover:border-foreground hover:text-foreground"
-                      }
+                      className="mb-4 flex w-full items-center gap-3 rounded-lg bg-muted/60 px-3 py-2.5 text-start transition-colors hover:bg-muted"
                     >
-                      {localeLabels[value]}
+                      <span className="flex h-8 shrink-0 items-center justify-center rounded-full bg-foreground px-2">
+                        <ModaliLogo variant="light" className="h-3 w-auto" />
+                      </span>
+                      <span className="text-nav font-medium tracking-tight text-foreground">
+                        {t.assistant.shortTitle ?? "Assistant"}
+                      </span>
+                      <ChevronRight
+                        className="ms-auto size-4 shrink-0 text-muted-foreground rtl:rotate-180"
+                        aria-hidden="true"
+                      />
                     </button>
-                  ))}
+                  ) : null}
+                  <p className="mb-2 text-caption uppercase tracking-widest text-muted-foreground">
+                    {t.footer.languageLabel}
+                  </p>
+                  <div className="flex gap-2">
+                    {supportedLocales.map((value) => (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => {
+                          switchLocale(value);
+                          closeDrawer();
+                        }}
+                        aria-current={value === locale ? "true" : undefined}
+                        className={
+                          value === locale
+                            ? "border border-foreground bg-foreground px-4 py-1.5 text-small font-medium tracking-tight text-background"
+                            : "border border-border px-4 py-1.5 text-small tracking-tight text-muted-foreground transition-colors hover:border-foreground hover:text-foreground"
+                        }
+                      >
+                        {localeLabels[value]}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </nav>
-            </div>
-          </aside>
-        </div>
-      ) : null}
+              </aside>
+            </div>,
+            document.body,
+          )
+        : null}
 
       {/* Mobile/tablet search overlay */}
       {searchOpen ? (

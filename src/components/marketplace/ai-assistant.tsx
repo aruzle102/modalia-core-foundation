@@ -31,7 +31,6 @@ import { getPublicIntelligenceConfig } from "@/lib/intelligence-settings.functio
 import { answerSupportQuestion } from "@/lib/support-knowledge";
 import { cn } from "@/lib/utils";
 import { ModaliLogo } from "@/components/brand/ModaliaLogo";
-import { ModaliaIntelligenceIcon } from "@/components/marketplace/ModaliaIntelligenceIcon";
 
 type ChatMessage = {
   id: number;
@@ -171,17 +170,17 @@ function ProductCard({ product, locale }: { product: AiChatProduct; locale: Supp
   );
 }
 
-/** Assistant avatar: Modalia Intelligence mark — distinctive geometric "M" with nodes. */
+/** Assistant avatar: the actual MODALIA logo on a dark chip. */
 function AssistantAvatar({ size = "md" }: { size?: "md" | "lg" }) {
   return (
     <span
       className={cn(
-        "grid shrink-0 place-items-center rounded-2xl bg-foreground text-background shadow-sm",
-        size === "md" ? "size-8" : "size-16",
+        "flex shrink-0 items-center justify-center rounded-2xl bg-foreground shadow-sm",
+        size === "md" ? "h-8 px-2" : "h-14 px-3.5",
       )}
       aria-hidden="true"
     >
-      <ModaliaIntelligenceIcon size={size === "md" ? 18 : 36} />
+      <ModaliLogo variant="light" className={size === "md" ? "h-3.5 w-auto" : "h-6 w-auto"} />
     </span>
   );
 }
@@ -491,7 +490,7 @@ export function AiAssistantDrawer({
   );
 }
 
-/** Floating button that opens the assistant — branded Modalia Intelligence. */
+/** Floating button that opens the assistant — carries the real MODALIA logo. */
 export function AiAssistantButton({
   locale,
   t,
@@ -509,8 +508,8 @@ export function AiAssistantButton({
       title={t.assistant.open}
       className="group flex items-center gap-2.5 rounded-full bg-foreground py-2 pe-4 ps-2 text-background shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl active:translate-y-0 active:scale-95"
     >
-      <span className="grid size-8 place-items-center rounded-full bg-background text-foreground">
-        <ModaliaIntelligenceIcon size={18} />
+      <span className="flex h-8 shrink-0 items-center justify-center rounded-full bg-foreground px-2">
+        <ModaliLogo variant="light" className="h-3.5 w-auto" />
       </span>
       <span className="text-[13px] font-semibold tracking-tight">{t.assistant.shortTitle ?? "Assistant"}</span>
     </button>

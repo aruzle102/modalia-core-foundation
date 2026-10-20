@@ -30,7 +30,6 @@ import {
   Tag,
   TrendingUp,
   Truck,
-  UserRound,
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -446,18 +445,6 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
             />
 
             <Button
-              asChild
-              variant="ghost"
-              size="icon"
-              className="hidden text-foreground/80 hover:text-foreground sm:inline-flex"
-              aria-label={t.nav.account}
-            >
-              <Link to="/auth" search={{ locale }}>
-                <UserRound className="size-[18px]" />
-              </Link>
-            </Button>
-
-            <Button
               variant="ghost"
               size="icon"
               className="text-foreground/80 hover:text-foreground lg:hidden"
@@ -679,20 +666,8 @@ export function SiteHeader({ locale, t }: { locale: SupportedLocale; t: Translat
 
                     <div className="mx-3 my-5 border-t border-border" aria-hidden="true" />
 
-                    {/* ── ACCOUNT ── */}
-                    <p className={drawerSectionLabel}>{t.nav.account}</p>
+                    {/* ── SELL ON MODALIA ── */}
                     <ul className="space-y-0.5">
-                      <li>
-                        <Link
-                          to="/auth"
-                          search={{ locale }}
-                          onClick={() => closeDrawer()}
-                          className={drawerRowClass(pathname === "/auth")}
-                        >
-                          <UserRound className="size-4 shrink-0" aria-hidden="true" />
-                          {t.nav.account}
-                        </Link>
-                      </li>
                       <li>
                         <Link
                           to="/become-a-seller"

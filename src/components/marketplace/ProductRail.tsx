@@ -3,7 +3,7 @@
  * Desktop: arrows. Mobile: swipe. No page overflow.
  */
 import { useRef, useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { ProductCard } from "@/components/marketplace/discovery";
 import { cn } from "@/lib/utils";
@@ -53,22 +53,22 @@ export function ProductRail({
 
   return (
     <section aria-label={title} className="relative">
-      <div className="mb-5 flex items-end justify-between gap-4">
+      <div className="mb-6 flex items-end justify-between gap-4 sm:mb-8">
         <div className="min-w-0">
-          <p className="mb-1.5 text-[11px] font-bold uppercase tracking-[0.22em] text-muted-foreground/80">
+          <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
             {eyebrow ?? "Discover"}
           </p>
-          <h2 className="truncate text-2xl font-bold tracking-tight text-foreground sm:text-[26px]">{title}</h2>
-          {subtitle ? <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p> : null}
+          <h2 className="mt-2 text-2xl font-semibold tracking-tight text-foreground sm:text-[2rem] sm:leading-[1.1]">{title}</h2>
+          {subtitle ? <p className="mt-2 text-sm text-muted-foreground">{subtitle}</p> : null}
         </div>
         {viewAllLabel ? (
           <Link
             to={viewAllTo as any}
             search={{ locale } as any}
-            className="group inline-flex shrink-0 items-center gap-1.5 text-[13px] font-semibold text-foreground transition-all hover:gap-2.5"
+            className="group inline-flex shrink-0 items-center gap-1.5 pb-1 text-[13px] font-semibold text-foreground transition-all hover:gap-2.5"
           >
             {viewAllLabel}
-            <ChevronRight className="size-3.5 transition-transform rtl:rotate-180" />
+            <ArrowRight className="size-3.5 transition-transform rtl:rotate-180" />
           </Link>
         ) : null}
       </div>
@@ -93,12 +93,12 @@ export function ProductRail({
         <div
           ref={scrollRef}
           onScroll={updateArrows}
-          className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 md:mx-0 md:px-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 sm:-mx-6 sm:gap-4 sm:px-6 lg:mx-0 lg:px-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {products.map((product) => (
             <div
               key={product.id}
-              className="w-36 shrink-0 snap-start sm:w-44 lg:w-48"
+              className="basis-[160px] shrink-0 snap-start sm:basis-[220px]"
             >
               <ProductCard product={product} locale={locale} />
             </div>

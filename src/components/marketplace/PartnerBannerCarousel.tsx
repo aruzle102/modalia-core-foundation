@@ -1,7 +1,7 @@
 /**
  * Partner advertising banner for /home.
- * Pure image billboard: ONE horizontal banner image, no card, no text block,
- * no button. Wide + short (150-190px mobile, 140-180px desktop).
+ * Premium billboard: ONE wide banner image in a rounded-2xl frame
+ * (150px mobile → 190px desktop, object-cover), no text block, no button.
  * Uses real active banners from the Admin-controlled system.
  * Carousel when multiple banners are active (dots + optional arrows).
  */
@@ -43,16 +43,13 @@ export function PartnerBannerCarousel() {
       alt={banner.title || "Partner"}
       loading="lazy"
       onError={() => setImgError(true)}
-      className="h-auto max-h-[120px] w-full rounded-[14px] object-contain bg-muted md:max-h-[140px]"
+      className="block h-[150px] w-full object-cover sm:h-[170px] lg:h-[190px]"
     />
   );
 
   return (
-    <section aria-label="Partners" className="mx-auto max-w-7xl px-4 pt-2 sm:px-6 lg:px-8">
-      <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.24em] text-[#666666]">
-        NOS PARTENAIRES
-      </p>
-      <div className="group relative">
+    <section aria-label="Partners" className="mx-auto w-full max-w-[1440px] px-4 pb-10 sm:px-6 sm:pb-14 lg:px-10">
+      <div className="group relative overflow-hidden rounded-2xl border border-border/60 bg-muted">
         {banner.linkUrl ? (
           <a
             href={banner.linkUrl}
@@ -65,6 +62,13 @@ export function PartnerBannerCarousel() {
         ) : (
           inner
         )}
+        {/* Legibility gradient for the carousel dots */}
+        {list.length > 1 ? (
+          <div
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-black/30 to-transparent"
+            aria-hidden
+          />
+        ) : null}
 
         {/* Carousel controls */}
         {list.length > 1 && (

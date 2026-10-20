@@ -888,34 +888,49 @@ function CategoryExplorer({
   const allLabel = getTranslations(locale).shop.all;
   if (!categories.length) return null;
   const items = [
-    { id: "__all", slug: null as string | null, name: allLabel, Icon: LayoutGrid },
-    ...categories.map((cat) => ({ id: cat.id, slug: cat.slug, name: cat.name, Icon: categoryIcon(cat.slug, cat.name) })),
+    { id: "__all", slug: null as string | null, name: allLabel, imageUrl: null as string | null, Icon: LayoutGrid },
+    ...categories.map((cat) => ({ id: cat.id, slug: cat.slug, name: cat.name, imageUrl: cat.imageUrl, Icon: categoryIcon(cat.slug, cat.name) })),
   ];
   return (
-    <section aria-label={copy.sfCatTitle} className="mx-auto max-w-7xl px-4 pt-2 sm:px-6 lg:px-8">
+    <section aria-label={copy.sfCatTitle} className="mx-auto w-full max-w-[1440px] px-4 pt-6 sm:px-6 sm:pt-8 lg:px-10">
       <Reveal>
-        <div className="mb-3">
-          <h2 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+        <div className="mb-6 sm:mb-8">
+          <h2 className="text-2xl font-semibold tracking-tight text-foreground sm:text-[2rem] sm:leading-[1.1]">
             {copy.sfCatTitle}
           </h2>
-          <p className="mt-1 text-sm text-muted-foreground">{copy.sfCatSubtitle}</p>
+          <p className="mt-2 text-sm text-muted-foreground">{copy.sfCatSubtitle}</p>
         </div>
         <nav
-          className="-mx-4 flex snap-x snap-mandatory gap-2 overflow-x-auto px-4 pb-2 sm:gap-3 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 sm:-mx-6 sm:gap-6 sm:px-6 lg:mx-0 lg:px-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
-          {items.map(({ id, slug, name, Icon }) => (
+          {items.map(({ id, slug, name, imageUrl, Icon }) => (
             <Link
               key={id}
               {...(slug
                 ? { to: "/category/$slug", params: { slug } }
                 : { to: "/shop" }) as any}
               search={{ locale } as any}
-              className="group flex shrink-0 snap-start flex-col items-center gap-2.5 rounded-[14px] border border-border bg-card px-5 py-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-foreground/25 active:scale-[0.97]"
+              className="group flex w-[76px] shrink-0 snap-start flex-col items-center gap-2.5 rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-ring sm:w-[84px]"
             >
-              <span className="grid size-11 place-items-center rounded-full bg-muted text-foreground transition-colors group-hover:bg-foreground group-hover:text-background">
-                <Icon className="size-5" aria-hidden />
+              <span
+                className={`grid size-16 place-items-center overflow-hidden rounded-full ring-1 transition-all duration-300 group-hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-y-0 sm:size-[72px] ${
+                  slug === null
+                    ? "bg-foreground text-background ring-foreground group-hover:ring-2 group-hover:ring-foreground/40"
+                    : "bg-muted text-foreground ring-border/60 group-hover:bg-secondary group-hover:ring-2 group-hover:ring-foreground/25"
+                }`}
+              >
+                {imageUrl ? (
+                  <img
+                    src={imageUrl}
+                    alt=""
+                    loading="lazy"
+                    className="size-full object-cover transition-transform duration-500 group-hover:scale-105 motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+                  />
+                ) : (
+                  <Icon className="size-6" aria-hidden />
+                )}
               </span>
-              <span className="whitespace-nowrap text-[12.5px] font-semibold text-foreground">
+              <span className="w-full truncate text-center text-xs font-medium leading-tight text-foreground">
                 {name}
               </span>
             </Link>
@@ -927,7 +942,8 @@ function CategoryExplorer({
 }
 
 /** Editorial discovery moment — visual rhythm break between commerce rails.
-    Large imagery + short copy, links to a category. Hidden when no image. */
+    Asymmetric split: large imagery (7 cols) beside oversized typography
+    (5 cols), links to a category. Hidden when no image. */
 function EditorialMoment({
   locale,
   eyebrow,
@@ -937,6 +953,7 @@ function EditorialMoment({
   categorySlug,
   ctaLabel,
   dark = true,
+  flip = false,
 }: {
   locale: SupportedLocale;
   eyebrow: string;
@@ -946,6 +963,7 @@ function EditorialMoment({
   categorySlug?: string | undefined;
   ctaLabel: string;
   dark?: boolean;
+  flip?: boolean;
 }) {
   if (!imageUrl) return null;
   return (
@@ -956,10 +974,10 @@ function EditorialMoment({
           ...(categorySlug ? { params: { slug: categorySlug } } : {}),
           search: { locale },
         } as any)}
-        className={`group relative block overflow-hidden rounded-3xl ${dark ? "bg-neutral-950 text-white" : "bg-muted text-foreground"}`}
+        className={`group relative block overflow-hidden rounded-2xl border border-border/60 ${dark ? "bg-neutral-950 text-white" : "bg-muted/60 text-foreground"}`}
       >
-        <div className="grid md:grid-cols-2">
-          <div className="relative min-h-[280px] overflow-hidden md:min-h-[360px]">
+        <div className="grid md:grid-cols-12">
+          <div className={`relative min-h-[280px] overflow-hidden md:col-span-7 md:min-h-[440px] ${flip ? "md:order-2" : ""}`}>
             <img
               src={imageUrl}
               alt=""
@@ -968,17 +986,17 @@ function EditorialMoment({
             />
             <div className={`absolute inset-0 ${dark ? "bg-gradient-to-r from-black/30 to-transparent" : ""}`} aria-hidden />
           </div>
-          <div className="flex flex-col justify-center p-8 sm:p-10 lg:p-12">
-            <p className={`text-[11px] font-bold uppercase tracking-[0.25em] ${dark ? "text-white/55" : "text-muted-foreground"}`}>
+          <div className="flex flex-col justify-center p-8 sm:p-10 md:col-span-5 lg:p-14">
+            <p className={`text-[11px] font-medium uppercase tracking-[0.2em] ${dark ? "text-white/55" : "text-muted-foreground"}`}>
               {eyebrow}
             </p>
-            <h2 className="mt-3 text-3xl font-bold leading-tight tracking-tight sm:text-4xl">
+            <h2 className="mt-4 text-4xl font-semibold leading-[1.05] tracking-tight sm:text-5xl">
               {title}
             </h2>
-            <p className={`mt-4 max-w-sm text-[15px] leading-relaxed ${dark ? "text-white/65" : "text-muted-foreground"}`}>
+            <p className={`mt-5 max-w-sm text-[15px] leading-relaxed ${dark ? "text-white/65" : "text-muted-foreground"}`}>
               {text}
             </p>
-            <span className={`mt-6 inline-flex w-fit items-center gap-2 text-sm font-semibold transition-all group-hover:gap-3 ${dark ? "text-white" : "text-foreground"}`}>
+            <span className={`mt-8 inline-flex w-fit items-center gap-2 text-sm font-semibold transition-all group-hover:gap-3 ${dark ? "text-white" : "text-foreground"}`}>
               {ctaLabel}
               <ArrowRight className="size-4 rtl:rotate-180" />
             </span>
@@ -1130,15 +1148,18 @@ function FlashSaleSection({
   if (!saleProducts.length) return null;
 
   return (
-    <section aria-label={copy.sfFlashTitle} className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <section aria-label={copy.sfFlashTitle} className="mx-auto w-full max-w-[1440px] px-4 py-10 sm:px-6 sm:py-14 lg:px-10">
       <Reveal>
-        <div className="overflow-hidden rounded-[20px] border border-border bg-card p-6 sm:p-8">
-          <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+        <div className="overflow-hidden rounded-2xl border border-border/60 bg-card p-5 sm:p-8">
+          <div className="mb-6 flex flex-wrap items-end justify-between gap-4 sm:mb-8">
             <div>
-              <h2 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+              <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
+                {copy.offersEyebrow}
+              </p>
+              <h2 className="mt-2 text-2xl font-semibold tracking-tight text-foreground sm:text-[2rem] sm:leading-[1.1]">
                 {copy.sfFlashTitle}
               </h2>
-              <div className="mt-3 flex items-center gap-1.5" role="timer" aria-live="off" dir="ltr">
+              <div className="mt-4 flex items-center gap-1.5" role="timer" aria-live="off" dir="ltr">
                 {units.map((u, i) => (
                   <span key={u.label} className="flex items-center gap-1.5">
                     <span className="grid min-w-12 place-items-center rounded-[10px] bg-foreground px-2 py-2">
@@ -1161,9 +1182,9 @@ function FlashSaleSection({
               <ArrowRight className="size-3.5 transition-transform rtl:rotate-180" />
             </Link>
           </div>
-          <div className="-mx-6 flex snap-x snap-mandatory gap-3 overflow-x-auto px-6 pb-1 sm:-mx-8 sm:gap-4 sm:px-8 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="-mx-5 flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-1 sm:-mx-8 sm:gap-4 sm:px-8 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {saleProducts.map((product) => (
-              <div key={product.id} className="w-36 shrink-0 snap-start sm:w-44 lg:w-48">
+              <div key={product.id} className="basis-[160px] shrink-0 snap-start sm:basis-[220px]">
                 <ProductCard product={product} locale={locale} />
               </div>
             ))}
@@ -1394,6 +1415,7 @@ function RecommendationsSection({
   return (
     <ProductRail
       title={section.title || copy.recsTitle}
+      eyebrow={copy.recsEyebrow}
       {...(section.subtitle ? { subtitle: section.subtitle } : {})}
       products={data.products}
       locale={locale}
@@ -1735,10 +1757,11 @@ function HomeNotFound() {
   return <div className="px-6 py-24 text-center text-muted-foreground">{t.home.nothingYet}</div>;
 }
 
-/** Boutiques: compact brand discovery — 4-6 stores max, never a directory. */
+/** Boutiques: premium compact store cards in a horizontal snap-scroll strip —
+    banner thumb, overlapping logo, name + verification, product count.
+    4-6 stores max, never a directory. */
 function BoutiquesGrid({
   stores,
-  products,
   locale,
   copy,
 }: {
@@ -1748,75 +1771,91 @@ function BoutiquesGrid({
   copy: HomeCopy;
 }) {
   const storeT = getTranslations(locale).store;
+  const cardT = getTranslations(locale).card;
   const list = stores.slice(0, 6);
   if (!list.length) return null;
   return (
-    <section aria-label={copy.sfStoresTitle} className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-      <Reveal>
-        <div className="mb-6 flex items-end justify-between gap-4">
-          <h2 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
-            {copy.sfStoresTitle}
-          </h2>
-          <Link
-            to={"/stores" as any}
-            search={{ locale } as any}
-            className="group inline-flex shrink-0 items-center gap-1.5 text-[13px] font-semibold text-foreground transition-all hover:gap-2.5"
-          >
-            {copy.sfStoresCta}
-            <ArrowRight className="size-3.5 transition-transform rtl:rotate-180" />
-          </Link>
-        </div>
-        <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {list.map((store) => {
-            const preview = products.find((p) => p.storeName === store.name && p.imagePath);
-            return (
+    <section aria-label={copy.sfStoresTitle} className="bg-muted/40">
+      <div className="mx-auto w-full max-w-[1440px] px-4 py-10 sm:px-6 sm:py-14 lg:px-10">
+        <Reveal>
+          <div className="mb-6 flex items-end justify-between gap-4 sm:mb-8">
+            <div className="min-w-0">
+              <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
+                {copy.storesEyebrow}
+              </p>
+              <h2 className="mt-2 text-2xl font-semibold tracking-tight text-foreground sm:text-[2rem] sm:leading-[1.1]">
+                {copy.sfStoresTitle}
+              </h2>
+            </div>
+            <Link
+              to={"/stores" as any}
+              search={{ locale } as any}
+              className="group inline-flex shrink-0 items-center gap-1.5 pb-1 text-[13px] font-semibold text-foreground transition-all hover:gap-2.5"
+            >
+              {copy.sfStoresCta}
+              <ArrowRight className="size-3.5 transition-transform rtl:rotate-180" />
+            </Link>
+          </div>
+          <div className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {list.map((store) => (
               <Link
                 key={store.id}
                 to="/store/$slug"
                 params={{ slug: store.slug }}
                 search={{ locale }}
-                className="group flex w-36 shrink-0 snap-start flex-col items-center gap-2 rounded-[14px] border border-border bg-card p-4 text-center transition-all duration-200 hover:-translate-y-0.5 hover:border-foreground/25 sm:w-40"
+                className="group block basis-[260px] shrink-0 snap-start overflow-hidden rounded-2xl border border-border/60 bg-card transition-shadow duration-300 hover:shadow-[0_16px_36px_-16px_rgba(0,0,0,0.18)] sm:basis-[300px]"
                 aria-label={store.name}
               >
-                <span className="relative block">
-                  {store.logoPath ? (
-                    <img
-                      src={store.logoPath}
-                      alt=""
-                      loading="lazy"
-                      className="size-14 rounded-full bg-muted object-cover ring-1 ring-border"
-                    />
+                <div className="relative">
+                  {store.bannerPath ? (
+                    <div className="aspect-[16/7] overflow-hidden bg-muted">
+                      <img
+                        src={store.bannerPath}
+                        alt=""
+                        loading="lazy"
+                        className="size-full object-cover transition-transform duration-500 group-hover:scale-[1.03] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+                      />
+                    </div>
                   ) : (
-                    <span className="grid size-14 place-items-center rounded-full bg-muted text-lg font-bold text-foreground">
-                      {store.name.slice(0, 1).toUpperCase()}
-                    </span>
+                    <div className="flex aspect-[16/7] items-center justify-center bg-muted" aria-hidden>
+                      <span className="font-display text-4xl font-semibold tracking-tight text-foreground/10">
+                        {store.name.slice(0, 1).toUpperCase()}
+                      </span>
+                    </div>
                   )}
-                  {store.verified || store.slug === "modalia" ? (
-                    <span className="absolute -bottom-0.5 -end-0.5 grid size-5 place-items-center rounded-full bg-green-600 text-white ring-2 ring-card">
-                      <BadgeCheck className="size-3" aria-hidden />
-                    </span>
-                  ) : null}
-                </span>
-                <span className="line-clamp-1 w-full text-[13px] font-semibold text-foreground">
-                  {store.name}
-                </span>
-                {store.slug === "modalia" ? (
-                  <OfficialStoreBadge label={storeT.officialStore} />
-                ) : null}
-                {preview?.imagePath ? (
-                  <img
-                    src={preview.imagePath as string}
-                    alt=""
-                    aria-hidden
-                    loading="lazy"
-                    className="mt-1 aspect-square w-full rounded-[10px] bg-muted object-cover"
-                  />
-                ) : null}
+                  <span className="absolute bottom-0 start-4 translate-y-1/2">
+                    {store.logoPath ? (
+                      <img
+                        src={store.logoPath}
+                        alt=""
+                        loading="lazy"
+                        className="size-12 rounded-full bg-white object-contain p-1 ring-2 ring-card"
+                      />
+                    ) : (
+                      <span className="grid size-12 place-items-center rounded-full bg-secondary font-display text-base font-semibold text-foreground ring-2 ring-card">
+                        {store.name.slice(0, 1).toUpperCase()}
+                      </span>
+                    )}
+                  </span>
+                </div>
+                <div className="px-4 pb-4 pt-8">
+                  <h3 className="flex items-center gap-1.5 text-[15px] font-semibold leading-snug text-foreground">
+                    <span className="truncate">{store.name}</span>
+                    {store.slug === "modalia" ? (
+                      <OfficialStoreBadge label={storeT.officialStore} />
+                    ) : (
+                      <VerifiedSellerBadge verified={store.verified} tone={store.verificationBadge} label={storeT.verifiedStore} />
+                    )}
+                  </h3>
+                  <p className="mt-1 text-[13px] text-muted-foreground">
+                    {cardT.productsCount(store.productCount)}
+                  </p>
+                </div>
               </Link>
-            );
-          })}
-        </div>
-      </Reveal>
+            ))}
+          </div>
+        </Reveal>
+      </div>
     </section>
   );
 }
@@ -1824,10 +1863,11 @@ function BoutiquesGrid({
 /**
  * Lazy-loading product grid section.
  * - Loads via IntersectionObserver when scrolled into view
- * - Shows skeleton while loading
+ * - Shows skeleton while loading (matches the real grid + card dimensions)
  * - Dedupes against already-shown products (via shared set)
  * - Hides entirely when empty
- * - Grid: 2 cols mobile, 4-5 cols desktop
+ * - Grid: 2 cols mobile, 4 cols lg, 5 cols xl
+ * - `tone` alternates the full-bleed band background (page chapters)
  */
 function LazyProductGrid({
   locale,
@@ -1837,6 +1877,7 @@ function LazyProductGrid({
   viewAllSearch,
   shownIds,
   onShown,
+  tone = "plain",
 }: {
   locale: SupportedLocale;
   title: string;
@@ -1845,6 +1886,7 @@ function LazyProductGrid({
   viewAllSearch: Record<string, unknown>;
   shownIds: Set<string>;
   onShown: (ids: string[]) => void;
+  tone?: "plain" | "muted";
 }) {
   const t = getTranslations(locale);
   const ref = useRef<HTMLDivElement>(null);
@@ -1895,20 +1937,20 @@ function LazyProductGrid({
     return <div ref={ref} aria-hidden className="min-h-[200px]" />;
   }
 
-  // Loading: skeleton grid
+  // Loading: skeleton grid matching the real layout (header + 4/5-aspect cards)
   if (products === null) {
     return (
-      <div ref={ref}>
-        <section aria-label={title} className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mb-5">
-            <div className="h-7 w-48 animate-pulse rounded bg-muted" />
-            {subtitle ? <div className="mt-2 h-4 w-64 animate-pulse rounded bg-muted" /> : null}
+      <div ref={ref} className={tone === "muted" ? "bg-muted/40" : "bg-background"}>
+        <section aria-label={title} className="mx-auto w-full max-w-[1440px] px-4 py-10 sm:px-6 sm:py-14 lg:px-10">
+          <div className="mb-6 sm:mb-8">
+            <div className="h-8 w-56 animate-pulse rounded bg-muted" />
+            {subtitle ? <div className="mt-2 h-4 w-72 animate-pulse rounded bg-muted" /> : null}
           </div>
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5">
             {Array.from({ length: 10 }).map((_, i) => (
-              <div key={i} className="overflow-hidden rounded-xl border border-border/60 bg-card">
-                <div className="aspect-[4/3] animate-pulse bg-muted" />
-                <div className="space-y-2 p-4">
+              <div key={i} className="overflow-hidden rounded-2xl border border-border/60 bg-card">
+                <div className="aspect-[4/5] animate-pulse bg-muted" />
+                <div className="space-y-2 p-3">
                   <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
                   <div className="h-4 w-1/2 animate-pulse rounded bg-muted" />
                 </div>
@@ -1924,26 +1966,26 @@ function LazyProductGrid({
   if (products.length === 0) return null;
 
   return (
-    <div ref={ref}>
-      <section aria-label={title} className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div ref={ref} className={tone === "muted" ? "bg-muted/40" : "bg-background"}>
+      <section aria-label={title} className="mx-auto w-full max-w-[1440px] px-4 py-10 sm:px-6 sm:py-14 lg:px-10">
         <Reveal>
-          <div className="mb-5 flex items-end justify-between gap-4">
+          <div className="mb-6 flex items-end justify-between gap-4 sm:mb-8">
             <div className="min-w-0">
-              <h2 className="truncate text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+              <h2 className="text-2xl font-semibold tracking-tight text-foreground sm:text-[2rem] sm:leading-[1.1]">
                 {title}
               </h2>
-              {subtitle ? <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p> : null}
+              {subtitle ? <p className="mt-2 text-sm text-muted-foreground">{subtitle}</p> : null}
             </div>
             <Link
               to="/shop"
               search={viewAllSearch as any}
-              className="group inline-flex shrink-0 items-center gap-1.5 text-[13px] font-semibold text-foreground transition-all hover:gap-2.5"
+              className="group inline-flex shrink-0 items-center gap-1.5 pb-1 text-[13px] font-semibold text-foreground transition-all hover:gap-2.5"
             >
               {t.common.viewAll}
               <ArrowRight className="size-3.5 transition-transform rtl:rotate-180" />
             </Link>
           </div>
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5">
             {products.slice(0, 10).map((product) => (
               <ProductCard key={product.id} product={product} locale={locale} />
             ))}
@@ -2039,46 +2081,56 @@ function HomePage() {
 
 
   return (
-    <div dir={localeDirections[locale]} lang={locale} className="min-h-screen bg-muted">
+    <div dir={localeDirections[locale]} lang={locale} className="min-h-screen overflow-x-clip bg-background">
       <SiteHeader locale={locale} t={t} />
       <main id="main-content" tabIndex={-1}>
-        <div className="space-y-4 py-0 sm:space-y-6">
-          <PartnerBannerCarousel />
+        {/* 1 — Compact category navigation: medallion rail */}
+        <CategoryExplorer categories={data.categories} locale={locale} copy={copy} />
 
-          <CategoryExplorer categories={data.categories} locale={locale} copy={copy} />
+        {/* 2 — Partner billboard */}
+        <PartnerBannerCarousel />
 
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <ProductRail
-              title={copy.sfTrendingTitle}
-              subtitle={copy.sfTrendingSubtitle}
-              products={data.products.slice(0, 10)}
-              locale={locale}
-              viewAllLabel={t.common.viewAll}
-            />
-          </div>
+        {/* 3 — Trending */}
+        <div className="mx-auto w-full max-w-[1440px] px-4 py-10 sm:px-6 sm:py-14 lg:px-10">
+          <ProductRail
+            title={copy.sfTrendingTitle}
+            eyebrow={copy.trendingEyebrow}
+            subtitle={copy.sfTrendingSubtitle}
+            products={data.products.slice(0, 10)}
+            locale={locale}
+            viewAllLabel={t.common.viewAll}
+          />
+        </div>
 
-          {flash && flashActive ? (
-            <FlashSaleSection
-              locale={locale}
-              section={flash}
-              products={data.products}
-              copy={copy}
-              viewAll={t.common.viewAll}
-            />
-          ) : null}
-
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        {/* 4 — New arrivals */}
+        <div className="bg-muted/40">
+          <div className="mx-auto w-full max-w-[1440px] px-4 py-10 sm:px-6 sm:py-14 lg:px-10">
             <ProductRail
               title={copy.sfNewTitle}
+              eyebrow={copy.freshEyebrow}
               subtitle={copy.sfNewSubtitle}
               products={[...data.products].reverse().slice(0, 10)}
               locale={locale}
               viewAllLabel={t.common.viewAll}
             />
           </div>
+        </div>
 
-          {recommendationsEnabled && recommendations ? (
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        {/* 5 — Flash sale (only while a real campaign window is active) */}
+        {flash && flashActive ? (
+          <FlashSaleSection
+            locale={locale}
+            section={flash}
+            products={data.products}
+            copy={copy}
+            viewAll={t.common.viewAll}
+          />
+        ) : null}
+
+        {/* 6 — Recommended for you */}
+        {recommendationsEnabled && recommendations ? (
+          <div className="bg-muted/40">
+            <div className="mx-auto w-full max-w-[1440px] px-4 py-10 sm:px-6 sm:py-14 lg:px-10">
               <RecommendationsSection
                 locale={locale}
                 section={{
@@ -2091,9 +2143,12 @@ function HomePage() {
                 shopSearch={shopSearch}
               />
             </div>
-          ) : null}
+          </div>
+        ) : null}
 
-          <div className="mx-auto max-w-7xl space-y-12 px-4 sm:space-y-16 sm:px-6 lg:px-8">
+        {/* 7 — Editorial moments */}
+        <div className="mx-auto w-full max-w-[1440px] px-4 py-10 sm:px-6 sm:py-14 lg:px-10">
+          <div className="flex flex-col gap-8 sm:gap-12">
             <EditorialMoment
               locale={locale}
               eyebrow="SPORT"
@@ -2113,109 +2168,114 @@ function HomePage() {
               categorySlug={fashionCategory?.slug}
               ctaLabel={copy.sfFashionCta}
               dark={false}
+              flip
             />
           </div>
-
-          {/* ===== LAZY SECTIONS: deals, popular, categories ===== */}
-          <div className="space-y-12 sm:space-y-16">
-            {/* Meilleures offres */}
-            <LazyProductGrid
-              locale={locale}
-              title={copy.sfDealsTitle}
-              subtitle={copy.sfDealsSubtitle}
-              fetchProducts={async () => {
-                const res = await browseCatalog({
-                  data: { locale, onSale: true, pageSize: 10, inStock: true },
-                });
-                return res.products;
-              }}
-              viewAllSearch={{ ...shopSearch, onSale: true }}
-              shownIds={shownIdsRef.current}
-              onShown={registerShown}
-            />
-
-            {/* Les plus populaires */}
-            <LazyProductGrid
-              locale={locale}
-              title={copy.sfPopularTitle}
-              subtitle={copy.sfPopularSubtitle}
-              fetchProducts={async () => {
-                const res = await getBestsellers({ data: { limit: 10, locale } });
-                return res.products ?? [];
-              }}
-              viewAllSearch={{ ...shopSearch, sort: "popular" }}
-              shownIds={shownIdsRef.current}
-              onShown={registerShown}
-            />
-
-            {/* Category sections: only render if products exist (component hides when empty) */}
-            {[
-              { slug: "mode-homme", key: "modeHomme" },
-              { slug: "mode-femme", key: "modeFemme" },
-              { slug: "accessoires", key: "accessoires" },
-            ].map(({ slug, key }) => {
-              const cat = data.categories.find((cc) => cc.slug === slug);
-              const catName =
-                typeof cat?.name === "object"
-                  ? (cat.name as Record<string, string>)[locale] ?? (cat.name as Record<string, string>)["fr"] ?? slug
-                  : ((cat?.name as string) ?? slug);
-              return (
-                <LazyProductGrid
-                  key={key}
-                  locale={locale}
-                  title={catName}
-                  fetchProducts={async () => {
-                    const res = await browseCatalog({
-                      data: { locale, category: slug, pageSize: 10, inStock: true },
-                    });
-                    return res.products;
-                  }}
-                  viewAllSearch={{ ...shopSearch, category: slug }}
-                  shownIds={shownIdsRef.current}
-                  onShown={registerShown}
-                />
-              );
-            })}
-
-            {/* Chaussures / Sport / Enfants: search-based (no dedicated category) */}
-            {[
-              { q: "chaussure", key: "chaussures", fallback: { fr: "Chaussures", en: "Shoes", ar: "أحذية" } },
-              { q: "sport", key: "sport", fallback: { fr: "Sport & Fitness", en: "Sports & Fitness", ar: "رياضة ولياقة" } },
-            ].map(({ q, key, fallback }) => (
-              <LazyProductGrid
-                key={key}
-                locale={locale}
-                title={fallback[locale]}
-                fetchProducts={async () => {
-                  const res = await browseCatalog({
-                    data: { locale, q, pageSize: 10, inStock: true },
-                  });
-                  return res.products;
-                }}
-                viewAllSearch={{ ...shopSearch, q }}
-                shownIds={shownIdsRef.current}
-                onShown={registerShown}
-              />
-            ))}
-
-            {/* Enfants: gender filter (only if products exist) */}
-            <LazyProductGrid
-              locale={locale}
-              title={{ fr: "Enfants", en: "Kids", ar: "أطفال" }[locale]}
-              fetchProducts={async () => {
-                const res = await browseCatalog({
-                  data: { locale, gender: "kids", pageSize: 10, inStock: true },
-                });
-                return res.products;
-              }}
-              viewAllSearch={{ ...shopSearch, gender: "kids" }}
-              shownIds={shownIdsRef.current}
-              onShown={registerShown}
-            />
-          </div>
-
-          <BoutiquesGrid stores={data.stores} products={data.products} locale={locale} copy={copy} />
         </div>
+
+        {/* 8 — Lazy discovery chapters: deals, popular, category grids.
+            Each loads on scroll, dedupes against earlier sections and
+            hides entirely when it has no products. */}
+        {/* Meilleures offres */}
+        <LazyProductGrid
+          locale={locale}
+          title={copy.sfDealsTitle}
+          subtitle={copy.sfDealsSubtitle}
+          tone="muted"
+          fetchProducts={async () => {
+            const res = await browseCatalog({
+              data: { locale, onSale: true, pageSize: 10, inStock: true },
+            });
+            return res.products;
+          }}
+          viewAllSearch={{ ...shopSearch, onSale: true }}
+          shownIds={shownIdsRef.current}
+          onShown={registerShown}
+        />
+
+        {/* Les plus populaires */}
+        <LazyProductGrid
+          locale={locale}
+          title={copy.sfPopularTitle}
+          subtitle={copy.sfPopularSubtitle}
+          fetchProducts={async () => {
+            const res = await getBestsellers({ data: { limit: 10, locale } });
+            return res.products ?? [];
+          }}
+          viewAllSearch={{ ...shopSearch, sort: "popular" }}
+          shownIds={shownIdsRef.current}
+          onShown={registerShown}
+        />
+
+        {/* Category sections: only render if products exist (component hides when empty) */}
+        {[
+          { slug: "mode-homme", key: "modeHomme", tone: "muted" as const },
+          { slug: "mode-femme", key: "modeFemme", tone: "plain" as const },
+          { slug: "accessoires", key: "accessoires", tone: "muted" as const },
+        ].map(({ slug, key, tone }) => {
+          const cat = data.categories.find((cc) => cc.slug === slug);
+          const catName =
+            typeof cat?.name === "object"
+              ? (cat.name as Record<string, string>)[locale] ?? (cat.name as Record<string, string>)["fr"] ?? slug
+              : ((cat?.name as string) ?? slug);
+          return (
+            <LazyProductGrid
+              key={key}
+              locale={locale}
+              title={catName}
+              tone={tone}
+              fetchProducts={async () => {
+                const res = await browseCatalog({
+                  data: { locale, category: slug, pageSize: 10, inStock: true },
+                });
+                return res.products;
+              }}
+              viewAllSearch={{ ...shopSearch, category: slug }}
+              shownIds={shownIdsRef.current}
+              onShown={registerShown}
+            />
+          );
+        })}
+
+        {/* Chaussures / Sport / Enfants: search-based (no dedicated category) */}
+        {[
+          { q: "chaussure", key: "chaussures", tone: "plain" as const, fallback: { fr: "Chaussures", en: "Shoes", ar: "أحذية" } },
+          { q: "sport", key: "sport", tone: "muted" as const, fallback: { fr: "Sport & Fitness", en: "Sports & Fitness", ar: "رياضة ولياقة" } },
+        ].map(({ q, key, tone, fallback }) => (
+          <LazyProductGrid
+            key={key}
+            locale={locale}
+            title={fallback[locale]}
+            tone={tone}
+            fetchProducts={async () => {
+              const res = await browseCatalog({
+                data: { locale, q, pageSize: 10, inStock: true },
+              });
+              return res.products;
+            }}
+            viewAllSearch={{ ...shopSearch, q }}
+            shownIds={shownIdsRef.current}
+            onShown={registerShown}
+          />
+        ))}
+
+        {/* Enfants: gender filter (only if products exist) */}
+        <LazyProductGrid
+          locale={locale}
+          title={{ fr: "Enfants", en: "Kids", ar: "أطفال" }[locale]}
+          fetchProducts={async () => {
+            const res = await browseCatalog({
+              data: { locale, gender: "kids", pageSize: 10, inStock: true },
+            });
+            return res.products;
+          }}
+          viewAllSearch={{ ...shopSearch, gender: "kids" }}
+          shownIds={shownIdsRef.current}
+          onShown={registerShown}
+        />
+
+        {/* 9 — Boutiques à découvrir */}
+        <BoutiquesGrid stores={data.stores} products={data.products} locale={locale} copy={copy} />
       </main>
       <SiteFooter locale={locale} t={t} />
     </div>

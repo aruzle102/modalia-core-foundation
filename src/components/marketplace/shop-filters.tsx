@@ -42,12 +42,12 @@ function Section({
   children: ReactNode;
 }) {
   return (
-    <fieldset className="border-t border-border/70 py-5 first:border-t-0 first:pt-1">
-      <legend className="float-start w-full px-0 text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+    <section className="border-t border-border/70 py-5 first:border-t-0 first:pt-1">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
         {title}
-      </legend>
+      </p>
       <div className="mt-3.5 min-w-0">{children}</div>
-    </fieldset>
+    </section>
   );
 }
 
@@ -171,7 +171,7 @@ export function ShopFilters({
       </div>
       {hasPriceFacet ? (
         <Section title={t.price}>
-          <div className="flex items-center gap-2">
+          <div className="flex w-full items-center gap-2">
             <Input
               inputMode="numeric"
               aria-label={t.minPrice}
@@ -181,7 +181,7 @@ export function ShopFilters({
               onKeyDown={(event) => {
                 if (event.key === "Enter") applyPrice();
               }}
-              className="h-10 min-w-0 flex-1 rounded-xl border-border bg-background"
+              className="h-10 min-w-0 flex-1 basis-0 rounded-xl border-border bg-background"
             />
             <span aria-hidden className="shrink-0 text-muted-foreground">–</span>
             <Input
@@ -193,7 +193,7 @@ export function ShopFilters({
               onKeyDown={(event) => {
                 if (event.key === "Enter") applyPrice();
               }}
-              className="h-10 min-w-0 flex-1 rounded-xl border-border bg-background"
+              className="h-10 min-w-0 flex-1 basis-0 rounded-xl border-border bg-background"
             />
           </div>
           <Button type="button" size="sm" className="mt-2 h-10 w-full rounded-xl font-semibold" onClick={applyPrice}>

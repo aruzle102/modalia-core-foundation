@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
-import { ChevronDown, ChevronLeft, ChevronRight, Search, SlidersHorizontal, Sparkles, X } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Search, ShoppingBag, SlidersHorizontal, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { CategoryRail, ProductGrid, StoreRail } from "@/components/marketplace/discovery";
+import { Skeleton } from "@/components/ui/skeleton";
+import { CategoryRail, ProductCard, StoreRail } from "@/components/marketplace/discovery";
 import {
   ShopFilters,
   type ShopFilterValues,
@@ -17,7 +18,6 @@ import { track } from "@/lib/analytics";
 import { recordCategoryBrowse } from "@/lib/recommendations-client";
 import { pageHead, pageHeadCopy, prefetchSeoSettings, seoRobotsFromHeadCtx } from "@/lib/seo";
 import type { SupportedLocale } from "@/config/platform";
-import { motionTw } from "@/lib/motion-tokens";
 
 const SORTS = ["newest", "price_asc", "price_desc"] as const;
 const VIEWS = ["", "categories", "stores"] as const;
@@ -89,13 +89,31 @@ const storeDirectoryQuery = (locale: SupportedLocale) =>
 function ShopLoading() {
   const { locale } = Route.useSearch();
   const t = getTranslations(locale);
-  return <div className="px-6 py-24 text-center text-muted-foreground">{t.shop.loading}</div>;
+  return (
+    <div className="min-h-screen bg-background" aria-busy="true" aria-label={t.shop.loading}>
+      <div className="mx-auto w-full max-w-[1440px] px-4 py-10 sm:px-6 sm:py-14 lg:px-10">
+        <Skeleton className="h-3 w-32" />
+        <Skeleton className="mt-4 h-10 w-64 max-w-full" />
+        <Skeleton className="mt-4 h-4 w-40" />
+        <Skeleton className="mt-10 h-14 w-full rounded-2xl" />
+        <div className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-6 xl:grid-cols-4">
+          {Array.from({ length: 8 }, (_, index) => (
+            <div key={index}>
+              <Skeleton className="aspect-[4/5] w-full rounded-2xl" />
+              <Skeleton className="mt-3 h-4 w-2/3" />
+              <Skeleton className="mt-2 h-4 w-1/3" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 }
 function ShopError() {
   const { locale } = Route.useSearch();
   const t = getTranslations(locale);
   return (
-    <div role="alert" className="px-6 py-24 text-center text-muted-foreground">
+    <div role="alert" className="mx-auto w-full max-w-[1440px] px-4 py-24 text-center text-muted-foreground sm:px-6 lg:px-10">
       {t.shop.loadError}
     </div>
   );
@@ -103,7 +121,11 @@ function ShopError() {
 function ShopNotFound() {
   const { locale } = Route.useSearch();
   const t = getTranslations(locale);
-  return <div className="px-6 py-24 text-center text-muted-foreground">{t.shop.noCatalogue}</div>;
+  return (
+    <div className="mx-auto w-full max-w-[1440px] px-4 py-24 text-center text-muted-foreground sm:px-6 lg:px-10">
+      {t.shop.noCatalogue}
+    </div>
+  );
 }
 
 export const Route = createFileRoute("/shop")({
@@ -283,7 +305,7 @@ function SmartSearchBanner({
   );
 }
 
-function CategoryTab({
+function CategoryPill({
   active,
   label,
   count,
@@ -300,20 +322,18 @@ function CategoryTab({
       role="tab"
       aria-selected={active}
       onClick={onSelect}
-      className={`relative shrink-0 pb-3 text-small transition-colors ${
-        active ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+      className={`shrink-0 rounded-full border px-4 py-2 text-small transition-colors duration-200 ${
+        active
+          ? "border-foreground bg-foreground font-semibold text-background"
+          : "border-border/70 bg-background font-medium text-muted-foreground hover:border-foreground/40 hover:text-foreground"
       }`}
     >
-      <span className={active ? "font-semibold" : "font-medium"}>{label}</span>
+      {label}
       {count !== undefined ? (
-        <span className="ms-1.5 text-caption text-muted-foreground/70">{count}</span>
+        <span className={`ms-1.5 text-caption ${active ? "text-background/70" : "text-muted-foreground/70"}`}>
+          {count}
+        </span>
       ) : null}
-      <span
-        aria-hidden
-        className={`absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-foreground ${motionTw.transition.opacity} ${motionTw.duration.feedback} ${
-          active ? "opacity-100" : "opacity-0"
-        }`}
-      />
     </button>
   );
 }
@@ -344,6 +364,21 @@ function ShopPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q]);
+
+  // Mobile filter sheet: close on Escape and lock body scroll while open.
+  useEffect(() => {
+    if (!filtersOpen) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setFiltersOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [filtersOpen]);
 
   const filterValues: ShopFilterValues = {
     minPrice: search.minPrice,
@@ -504,36 +539,89 @@ function ShopPage() {
   );
 
   return (
-    <div dir={localeDirections[search.locale]} lang={search.locale} className="min-h-screen bg-muted">
+    <div dir={localeDirections[search.locale]} lang={search.locale} className="min-h-screen bg-background">
       <SiteHeader locale={search.locale} t={t} />
-      <main id="main-content" tabIndex={-1} className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <h1 className="text-display tracking-tight text-foreground">SHOP</h1>
+      <main id="main-content" tabIndex={-1} className="mx-auto w-full max-w-[1440px] px-4 pb-16 sm:px-6 sm:pb-20 lg:px-10">
+        <header className="py-10 sm:py-14">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+            {ts.eyebrow}
+          </p>
+          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+            {ts.title}
+          </h1>
+          {search.view === "" ? (
+            <p className="mt-3 text-small text-muted-foreground" aria-live="polite">
+              {q ? `${ts.resultsFor(q)} · ` : ""}
+              {ts.resultsCount(data.total)}
+            </p>
+          ) : null}
+        </header>
 
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            const value = new FormData(event.currentTarget).get("q");
-            navigate({
-              search: (previous) => ({
-                ...previous,
-                q: typeof value === "string" ? value : "",
-                view: "",
-                page: 1,
-              }),
-            });
-          }}
-          className="relative mt-8 max-w-2xl"
-        >
-          <Search className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            key={search.q}
-            autoFocus={search.focus === "search"}
-            name="q"
-            defaultValue={search.q}
-            placeholder={ts.searchPlaceholder}
-            className="h-11 rounded-[10px] border-border bg-card ps-10"
-          />
-        </form>
+        <div className="sticky top-[4.5rem] z-30 rounded-2xl border border-border/60 bg-background/95 shadow-[0_1px_2px_rgba(0,0,0,0.04)] backdrop-blur">
+          <div className="flex items-center gap-2 p-2.5 sm:gap-3 sm:p-3">
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                const value = new FormData(event.currentTarget).get("q");
+                navigate({
+                  search: (previous) => ({
+                    ...previous,
+                    q: typeof value === "string" ? value : "",
+                    view: "",
+                    page: 1,
+                  }),
+                });
+              }}
+              className="relative min-w-0 flex-1"
+            >
+              <Search className="pointer-events-none absolute start-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                key={search.q}
+                autoFocus={search.focus === "search"}
+                name="q"
+                defaultValue={search.q}
+                placeholder={ts.searchPlaceholder}
+                className="h-11 rounded-full border-border/60 bg-muted/40 ps-11 shadow-none"
+              />
+            </form>
+            <Button
+              type="button"
+              variant="outline"
+              className="h-11 shrink-0 rounded-full lg:hidden"
+              onClick={() => setFiltersOpen(true)}
+              aria-expanded={filtersOpen}
+              aria-controls="mobile-filters"
+            >
+              <SlidersHorizontal className="size-4" />
+              <span className="hidden sm:inline">{ts.filters}</span>
+            </Button>
+            <div className="relative flex shrink-0 items-center gap-2">
+              <label htmlFor="shop-sort" className="hidden text-small text-muted-foreground md:block">
+                {ts.sortLabel}
+              </label>
+              <select
+                id="shop-sort"
+                aria-label={ts.sortLabel}
+                value={search.sort}
+                onChange={(event) =>
+                  navigate({
+                    search: (previous) => ({
+                      ...previous,
+                      sort: event.target.value as (typeof SORTS)[number],
+                      page: 1,
+                    }),
+                  })
+                }
+                className="h-11 cursor-pointer appearance-none rounded-full border border-border/60 bg-muted/40 px-4 pe-10 text-small text-foreground outline-none transition-colors hover:border-foreground/30"
+              >
+                <option value="newest">{ts.sortNewest}</option>
+                <option value="price_asc">{ts.sortPriceAsc}</option>
+                <option value="price_desc">{ts.sortPriceDesc}</option>
+              </select>
+              <ChevronDown className="pointer-events-none absolute end-4 size-4 text-muted-foreground" aria-hidden />
+            </div>
+          </div>
+        </div>
 
         <SmartSearchBanner
           q={search.q}
@@ -552,34 +640,44 @@ function ShopPage() {
           onApply={applySmartFilters}
         />
 
-        <div className="mt-8 flex flex-wrap items-center gap-2 border-b border-border pb-4" aria-label={ts.filters}>
-          {views.map((view) => (
-            <Button
-              key={view.value || "all"}
-              variant={search.view === view.value ? "default" : "outline"}
-              size="sm"
-              aria-current={search.view === view.value ? "page" : undefined}
-              onClick={() =>
-                navigate({ search: (previous) => ({ ...previous, view: view.value, page: 1 }) })
-              }
-            >
-              {view.label}
-            </Button>
-          ))}
+        <div className="mt-8 flex flex-wrap items-center gap-2" aria-label={ts.filters}>
+          <div className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-muted/40 p-1">
+            {views.map((view) => (
+              <button
+                key={view.value || "all"}
+                type="button"
+                aria-current={search.view === view.value ? "page" : undefined}
+                onClick={() =>
+                  navigate({ search: (previous) => ({ ...previous, view: view.value, page: 1 }) })
+                }
+                className={`rounded-full px-4 py-1.5 text-small transition-colors duration-200 ${
+                  search.view === view.value
+                    ? "bg-foreground font-semibold text-background shadow-sm"
+                    : "font-medium text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {view.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {search.view === "categories" ? (
-          <div className="mt-8">
+          <div className="mt-10 pb-16">
             <CategoryRail categories={data.categories} locale={search.locale} />
           </div>
         ) : search.view === "stores" ? (
-          <div className="mt-8">
+          <div className="mt-10 pb-16">
             <StoreRail stores={storeDirectory} locale={search.locale} />
           </div>
         ) : (
           <>
-            <div className="mt-8 flex gap-7 overflow-x-auto border-b border-border" role="tablist" aria-label={ts.filters}>
-              <CategoryTab
+            <div
+              className="mt-6 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              role="tablist"
+              aria-label={ts.filters}
+            >
+              <CategoryPill
                 active={search.category === ""}
                 label={ts.all}
                 onSelect={() =>
@@ -587,7 +685,7 @@ function ShopPage() {
                 }
               />
               {data.categories.map((category) => (
-                <CategoryTab
+                <CategoryPill
                   key={category.id}
                   active={search.category === category.slug}
                   label={category.name}
@@ -602,60 +700,14 @@ function ShopPage() {
               ))}
             </div>
 
-            <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-y border-border py-3">
-              <div className="flex items-center gap-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="rounded-xl lg:hidden"
-                  onClick={() => setFiltersOpen(true)}
-                  aria-expanded={filtersOpen}
-                  aria-controls="mobile-filters"
-                >
-                  <SlidersHorizontal className="size-4" />
-                  {ts.filters}
-                </Button>
-                <p className="text-small text-muted-foreground" aria-live="polite">
-                  {q ? `${ts.resultsFor(q)} · ` : ""}
-                  {ts.resultsCount(data.total)}
-                </p>
-              </div>
-              <div className="relative flex items-center gap-2">
-                <label htmlFor="shop-sort" className="text-small text-muted-foreground">
-                  {ts.sortLabel}
-                </label>
-                <select
-                  id="shop-sort"
-                  aria-label={ts.sortLabel}
-                  value={search.sort}
-                  onChange={(event) =>
-                    navigate({
-                      search: (previous) => ({
-                        ...previous,
-                        sort: event.target.value as (typeof SORTS)[number],
-                        page: 1,
-                      }),
-                    })
-                  }
-                  className="h-10 cursor-pointer appearance-none rounded-[10px] border border-border bg-card px-3 pe-9 text-small text-foreground outline-none"
-                >
-                  <option value="newest">{ts.sortNewest}</option>
-                  <option value="price_asc">{ts.sortPriceAsc}</option>
-                  <option value="price_desc">{ts.sortPriceDesc}</option>
-                </select>
-                <ChevronDown className="pointer-events-none absolute end-3 size-4 text-muted-foreground" aria-hidden />
-              </div>
-            </div>
-
             {chips.length ? (
-              <div className="mt-4 flex flex-wrap items-center gap-2" aria-label={ts.filters}>
+              <div className="mt-5 flex flex-wrap items-center gap-2" aria-label={ts.filters}>
                 {chips.map((chip) => (
                   <button
                     key={chip.key}
                     type="button"
                     onClick={chip.clear}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card py-1 pe-2 ps-3 text-caption text-foreground transition-colors hover:border-foreground/30"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-muted/40 py-1 pe-2 ps-3 text-caption text-foreground transition-colors hover:border-foreground/30"
                   >
                     {chip.label}
                     <X className="size-3.5 text-muted-foreground" aria-hidden />
@@ -671,26 +723,40 @@ function ShopPage() {
               </div>
             ) : null}
 
-            <div className="mt-8 grid gap-10 lg:grid-cols-[15rem_minmax(0,1fr)]">
+            <div className="mt-8 grid gap-8 lg:grid-cols-[16rem_minmax(0,1fr)] xl:gap-10">
               <aside className="hidden lg:block">
-                <div className="sticky top-24 rounded-2xl border border-border/70 bg-card p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">{filtersPanel}</div>
+                <div className="sticky top-36 rounded-2xl border border-border/60 bg-card p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">{filtersPanel}</div>
               </aside>
               <div className="min-w-0">
-                <ProductGrid
-                  products={data.products}
-                  locale={search.locale}
-                  emptyTitle={ts.noResultsTitle}
-                  emptyText={ts.noResultsText}
-                />
+                {data.products.length === 0 ? (
+                  <section className="rounded-2xl border border-border/60 bg-muted/40 px-6 py-20 text-center">
+                    <div className="mx-auto grid size-14 place-items-center rounded-full bg-background shadow-sm">
+                      <ShoppingBag className="size-6 text-muted-foreground" aria-hidden />
+                    </div>
+                    <h2 className="mt-5 text-h3 text-foreground">{ts.noResultsTitle}</h2>
+                    <p className="mx-auto mt-2 max-w-sm text-small text-muted-foreground">{ts.noResultsText}</p>
+                    {chips.length ? (
+                      <Button type="button" className="mt-6 rounded-full" onClick={clearAll}>
+                        {ts.clearAll}
+                      </Button>
+                    ) : null}
+                  </section>
+                ) : (
+                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-6 xl:grid-cols-4">
+                    {data.products.map((product) => (
+                      <ProductCard key={product.id} product={product} locale={search.locale} />
+                    ))}
+                  </div>
+                )}
                 {totalPages > 1 ? (
-                  <nav aria-label={ts.pageOf(data.page, totalPages)} className="mt-12 flex items-center justify-center gap-1.5">
+                  <nav aria-label={ts.pageOf(data.page, totalPages)} className="mt-14 flex items-center justify-center gap-1.5">
                     {data.page <= 1 ? (
-                      <Button variant="outline" size="sm" disabled>
+                      <Button variant="outline" size="sm" className="rounded-full" disabled>
                         <ChevronLeft className="size-4 rtl:rotate-180" aria-hidden />
                         {ts.prevPage}
                       </Button>
                     ) : (
-                      <Button asChild variant="outline" size="sm">
+                      <Button asChild variant="outline" size="sm" className="rounded-full">
                         <Link
                           to="/shop"
                           search={{ ...search, page: data.page - 1 }}
@@ -706,7 +772,7 @@ function ShopPage() {
                         asChild
                         variant={pageNumber === data.page ? "default" : "ghost"}
                         size="sm"
-                        className="min-w-9"
+                        className="min-w-9 rounded-full"
                       >
                         <Link
                           to="/shop"
@@ -718,12 +784,12 @@ function ShopPage() {
                       </Button>
                     ))}
                     {data.page >= totalPages ? (
-                      <Button variant="outline" size="sm" disabled>
+                      <Button variant="outline" size="sm" className="rounded-full" disabled>
                         {ts.nextPage}
                         <ChevronRight className="size-4 rtl:rotate-180" aria-hidden />
                       </Button>
                     ) : (
-                      <Button asChild variant="outline" size="sm">
+                      <Button asChild variant="outline" size="sm" className="rounded-full">
                         <Link
                           to="/shop"
                           search={{ ...search, page: data.page + 1 }}
@@ -746,19 +812,20 @@ function ShopPage() {
           <button
             type="button"
             aria-label={ts.hideFilters}
-            className="absolute inset-0 cursor-default bg-black/50"
+            className="animate-in fade-in-0 absolute inset-0 cursor-default bg-foreground/40 backdrop-blur-[2px]"
             onClick={() => setFiltersOpen(false)}
           />
-          <div className="absolute inset-y-0 start-0 flex w-80 max-w-[85vw] flex-col bg-card shadow-xl">
-            <div className="flex items-center justify-between border-b border-border p-4">
+          <div className="animate-in slide-in-from-bottom absolute inset-x-0 bottom-0 flex max-h-[88dvh] flex-col rounded-t-3xl bg-card shadow-2xl duration-300">
+            <div aria-hidden className="mx-auto mt-2.5 h-1 w-10 shrink-0 rounded-full bg-border" />
+            <div className="flex items-center justify-between px-5 pb-2 pt-3">
               <h2 className="text-h3 text-foreground">{ts.filters}</h2>
-              <Button type="button" variant="ghost" size="icon" onClick={() => setFiltersOpen(false)} aria-label={ts.hideFilters}>
+              <Button type="button" variant="ghost" size="icon" className="rounded-full" onClick={() => setFiltersOpen(false)} aria-label={ts.hideFilters}>
                 <X className="size-5" />
               </Button>
             </div>
-            <div className="flex-1 overflow-y-auto p-4">{filtersPanel}</div>
-            <div className="border-t border-border p-4">
-              <Button type="button" className="w-full" onClick={() => setFiltersOpen(false)}>
+            <div className="flex-1 overflow-y-auto px-5 pb-4">{filtersPanel}</div>
+            <div className="border-t border-border/60 p-4">
+              <Button type="button" className="w-full rounded-full" onClick={() => setFiltersOpen(false)}>
                 {ts.resultsCount(data.total)}
               </Button>
             </div>

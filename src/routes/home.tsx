@@ -1878,6 +1878,7 @@ function LazyProductGrid({
   shownIds,
   onShown,
   tone = "plain",
+  dedupe = true,
 }: {
   locale: SupportedLocale;
   title: string;
@@ -1887,6 +1888,10 @@ function LazyProductGrid({
   shownIds: Set<string>;
   onShown: (ids: string[]) => void;
   tone?: "plain" | "muted";
+  /** Category grids pass false: their products are navigational (a product
+   *  belongs in its category grid even if a rail above already showed it).
+   *  Generic discovery sections keep full dedupe against earlier sections. */
+  dedupe?: boolean;
 }) {
   const t = getTranslations(locale);
   const ref = useRef<HTMLDivElement>(null);
@@ -1918,7 +1923,8 @@ function LazyProductGrid({
       .then((all) => {
         if (cancelled) return;
         // Dedupe: skip products already shown in earlier sections
-        const fresh = all.filter((p) => !shownIds.has(p.id));
+        // (category grids opt out — see the dedupe prop).
+        const fresh = dedupe ? all.filter((p) => !shownIds.has(p.id)) : all;
         setProducts(fresh);
         if (fresh.length > 0) {
           onShown(fresh.map((p) => p.id));
@@ -1930,7 +1936,7 @@ function LazyProductGrid({
     return () => {
       cancelled = true;
     };
-  }, [visible, products, fetchProducts, shownIds, onShown]);
+  }, [visible, products, fetchProducts, shownIds, onShown, dedupe]);
 
   // Not yet visible: render placeholder for observer
   if (!visible) {
@@ -2075,6 +2081,17 @@ function HomePage() {
   const sportCategory = findCategory(/sport/i);
   const fashionCategory = findCategory(/fashion|mode|women|femme/i);
 
+  // Editorial imagery: the category's own image, else a real product photo
+  // from that same category — never invented imagery. A moment with no real
+  // image hides, and the whole band renders only if a moment survives (an
+  // unconditional wrapper here used to leave a large empty gap on /home).
+  const categoryImage = (cat: (typeof data.categories)[number] | undefined) =>
+    cat?.imageUrl ??
+    data.products.find((p) => p.categorySlug === cat?.slug && p.imagePath)?.imagePath ??
+    null;
+  const sportImage = categoryImage(sportCategory);
+  const fashionImage = categoryImage(fashionCategory);
+
   useEffect(() => {
     track("page_view", { metadata: { page: "home" } });
   }, []);
@@ -2146,32 +2163,34 @@ function HomePage() {
           </div>
         ) : null}
 
-        {/* 7 — Editorial moments */}
-        <div className="mx-auto w-full max-w-[1440px] px-4 py-10 sm:px-6 sm:py-14 lg:px-10">
-          <div className="flex flex-col gap-8 sm:gap-12">
-            <EditorialMoment
-              locale={locale}
-              eyebrow="SPORT"
-              title={copy.sfSportTitle}
-              text={copy.sportEditText ?? ""}
-              imageUrl={sportCategory?.imageUrl ?? null}
-              categorySlug={sportCategory?.slug}
-              ctaLabel={copy.sfSportCta}
-              dark
-            />
-            <EditorialMoment
-              locale={locale}
-              eyebrow="MODE"
-              title={copy.sfFashionTitle}
-              text={copy.fashionEditText ?? ""}
-              imageUrl={fashionCategory?.imageUrl ?? null}
-              categorySlug={fashionCategory?.slug}
-              ctaLabel={copy.sfFashionCta}
-              dark={false}
-              flip
-            />
+        {/* 7 — Editorial moments (band renders only when a moment has a real image) */}
+        {sportImage || fashionImage ? (
+          <div className="mx-auto w-full max-w-[1440px] px-4 py-10 sm:px-6 sm:py-14 lg:px-10">
+            <div className="flex flex-col gap-8 sm:gap-12">
+              <EditorialMoment
+                locale={locale}
+                eyebrow="SPORT"
+                title={copy.sfSportTitle}
+                text={copy.sportEditText ?? ""}
+                imageUrl={sportImage}
+                categorySlug={sportCategory?.slug}
+                ctaLabel={copy.sfSportCta}
+                dark
+              />
+              <EditorialMoment
+                locale={locale}
+                eyebrow="MODE"
+                title={copy.sfFashionTitle}
+                text={copy.fashionEditText ?? ""}
+                imageUrl={fashionImage}
+                categorySlug={fashionCategory?.slug}
+                ctaLabel={copy.sfFashionCta}
+                dark={false}
+                flip
+              />
+            </div>
           </div>
-        </div>
+        ) : null}
 
         {/* 8 — Lazy discovery chapters: deals, popular, category grids.
             Each loads on scroll, dedupes against earlier sections and
@@ -2233,6 +2252,7 @@ function HomePage() {
               viewAllSearch={{ ...shopSearch, category: slug }}
               shownIds={shownIdsRef.current}
               onShown={registerShown}
+              dedupe={false}
             />
           );
         })}
@@ -2256,6 +2276,7 @@ function HomePage() {
             viewAllSearch={{ ...shopSearch, q }}
             shownIds={shownIdsRef.current}
             onShown={registerShown}
+            dedupe={false}
           />
         ))}
 
@@ -2272,6 +2293,7 @@ function HomePage() {
           viewAllSearch={{ ...shopSearch, gender: "kids" }}
           shownIds={shownIdsRef.current}
           onShown={registerShown}
+          dedupe={false}
         />
 
         {/* 9 — Boutiques à découvrir */}

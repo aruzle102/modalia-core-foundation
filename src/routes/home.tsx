@@ -30,7 +30,7 @@ import { useDeviceTier } from "@/hooks/use-device-tier";
 import { DiscoverySkeleton, ProductCard } from "@/components/marketplace/discovery";
 import { PartnerBannerCarousel } from "@/components/marketplace/PartnerBannerCarousel";
 import { MarketplaceLayout } from "@/components/marketplace/MarketplaceLayout";
-import { ProductRail } from "@/components/marketplace/ProductRail";
+import { ProductRail, staggerStyle, useEntranceStagger } from "@/components/marketplace/ProductRail";
 import { OfficialStoreBadge, VerifiedSellerBadge } from "@/components/marketplace/StoreBadges";
 import { SiteFooter, SiteHeader } from "@/components/layout/site-shell";
 import { useReveal } from "@/hooks/use-reveal";
@@ -53,6 +53,8 @@ import { getRecommendations } from "@/lib/recommendations";
 import { getPublicIntelligenceConfig } from "@/lib/intelligence-settings.functions";
 import { getFeaturedReviews, type FeaturedReview } from "@/lib/reviews.functions";
 import { getRecentlyViewed, track } from "@/lib/analytics";
+import { getRecommendationSignals } from "@/lib/recommendations-client";
+import { getRotationSeed } from "@/lib/rotation";
 import { getLocale, getTranslations, localeDirections, type Translation } from "@/lib/i18n";
 import { formatPrice } from "@/lib/i18n/format";
 import type { SupportedLocale } from "@/config/platform";
@@ -1134,6 +1136,7 @@ function FlashSaleSection({
     const id = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(id);
   }, [live]);
+  const entrance = useEntranceStagger<HTMLDivElement>();
   if (!endsAt || endsAt <= now) return null;
 
   const diff = Math.max(0, endsAt - now);
@@ -1148,27 +1151,27 @@ function FlashSaleSection({
   if (!saleProducts.length) return null;
 
   return (
-    <section aria-label={copy.sfFlashTitle} className="mx-auto w-full max-w-[1440px] px-4 py-10 sm:px-6 sm:py-14 lg:px-10">
-      <Reveal>
-        <div className="overflow-hidden rounded-2xl border border-border/60 bg-card p-5 sm:p-8">
+    <section aria-label={copy.sfFlashTitle} className="bg-neutral-950 text-white">
+      <div className="mx-auto w-full max-w-[1440px] px-4 py-10 sm:px-6 sm:py-14 lg:px-10">
+        <Reveal>
           <div className="mb-6 flex flex-wrap items-end justify-between gap-4 sm:mb-8">
             <div>
-              <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
+              <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-red-400">
                 {copy.offersEyebrow}
               </p>
-              <h2 className="mt-2 text-2xl font-semibold tracking-tight text-foreground sm:text-[2rem] sm:leading-[1.1]">
+              <h2 className="mt-2 text-2xl font-semibold tracking-tight text-white sm:text-[2rem] sm:leading-[1.1]">
                 {copy.sfFlashTitle}
               </h2>
               <div className="mt-4 flex items-center gap-1.5" role="timer" aria-live="off" dir="ltr">
                 {units.map((u, i) => (
                   <span key={u.label} className="flex items-center gap-1.5">
-                    <span className="grid min-w-12 place-items-center rounded-[10px] bg-foreground px-2 py-2">
-                      <span className="text-lg font-bold tabular-nums text-background">
+                    <span className="grid min-w-12 place-items-center rounded-[10px] bg-white px-2 py-2">
+                      <span className="text-lg font-bold tabular-nums text-neutral-950">
                         {String(u.value).padStart(2, "0")}
                       </span>
                     </span>
-                    <span className="text-[11px] font-bold text-destructive">{u.label}</span>
-                    {i < units.length - 1 ? <span className="text-muted-foreground">:</span> : null}
+                    <span className="text-[11px] font-bold text-red-400">{u.label}</span>
+                    {i < units.length - 1 ? <span className="text-white/40">:</span> : null}
                   </span>
                 ))}
               </div>
@@ -1176,21 +1179,28 @@ function FlashSaleSection({
             <Link
               to="/shop"
               search={{ locale, onSale: true } as any}
-              className="group inline-flex shrink-0 items-center gap-1.5 text-[13px] font-semibold text-foreground transition-all hover:gap-2.5"
+              className="group inline-flex shrink-0 items-center gap-1.5 text-[13px] font-semibold text-white transition-all hover:gap-2.5"
             >
               {viewAll}
               <ArrowRight className="size-3.5 transition-transform rtl:rotate-180" />
             </Link>
           </div>
-          <div className="-mx-5 flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-1 sm:-mx-8 sm:gap-4 sm:px-8 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {saleProducts.map((product) => (
-              <div key={product.id} className="basis-[160px] shrink-0 snap-start sm:basis-[220px]">
+          <div
+            ref={entrance.ref}
+            className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 sm:-mx-6 sm:gap-4 sm:px-6 lg:mx-0 lg:px-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
+            {saleProducts.map((product, i) => (
+              <div
+                key={product.id}
+                className="basis-[160px] shrink-0 snap-start sm:basis-[220px]"
+                style={staggerStyle(entrance.entered, i, entrance.reduced)}
+              >
                 <ProductCard product={product} locale={locale} />
               </div>
             ))}
           </div>
-        </div>
-      </Reveal>
+        </Reveal>
+      </div>
     </section>
   );
 }
@@ -1455,54 +1465,70 @@ function TestimonialsSection({
 }
 
 /**
- * "Recently viewed" from first-party localStorage only. No network, no
- * tracking -- purely the visitor's own device history.
+ * "Recently viewed" — the visitor's own view history, resolved against the
+ * live catalog. Viewed ids come from the client recommendation signals
+ * (recommendations-client, recorded on product-page visits); every id is
+ * then re-fetched through browseCatalog so only products that are still
+ * published and in stock can appear, with their current name, price and
+ * image — never a stale stored snapshot. The rail renders only when at
+ * least two viewed products resolve; otherwise it hides entirely.
  */
 function RecentlyViewed({
   locale,
   copy,
   viewAll,
-  shopSearch,
 }: {
   locale: SupportedLocale;
   copy: HomeCopy;
   viewAll: string;
-  shopSearch: ShopSearch;
 }) {
-  const [items, setItems] = useState<CatalogProduct[]>(() =>
-    getRecentlyViewed().map(
-      (p): CatalogProduct => ({
-        id: p.id,
-        slug: p.slug,
-        name: p.name,
-        price: p.price,
-        storeName: "",
-        categorySlug: null,
-        imagePath: p.image,
-        imageAlt: p.name,
-        createdAt: "",
-      }),
-    ),
-  );
-  if (items.length === 0) return null;
+  // Latest-first viewed ids (signals are already deduplicated). Read once
+  // during initial state creation (SSR-safe: empty on the server), then
+  // re-synced on mount in case hydration started from the server state.
+  const [viewedIds, setViewedIds] = useState<string[]>(() => {
+    try {
+      return getRecommendationSignals().views.map((v) => v.id).slice(0, 12);
+    } catch {
+      return [];
+    }
+  });
+  useEffect(() => {
+    try {
+      const ids = getRecommendationSignals().views.map((v) => v.id).slice(0, 12);
+      setViewedIds((prev) =>
+        prev.length === ids.length && prev.every((id, i) => id === ids[i]) ? prev : ids,
+      );
+    } catch {
+      /* signals unavailable — the rail simply stays hidden */
+    }
+  }, []);
+
+  const { data } = useQuery({
+    queryKey: ["recently-viewed-resolved", locale, viewedIds.join(",")],
+    queryFn: () => browseCatalog({ data: { locale, pageSize: 48, inStock: true } }),
+    enabled: viewedIds.length >= 2,
+    staleTime: SECTION_STALE_MS,
+    retry: false,
+  });
+
+  if (viewedIds.length < 2 || !data) return null;
+  const byId = new Map(data.products.map((p) => [p.id, p]));
+  const resolved = viewedIds
+    .map((id) => byId.get(id))
+    .filter((p): p is CatalogProduct => !!p)
+    .slice(0, 10);
+  if (resolved.length < 2) return null;
+
   return (
-    <Reveal>
-      <SectionHeading
-        eyebrow={copy.recentEyebrow}
+    <div className="mx-auto w-full max-w-[1440px] px-4 py-10 sm:px-6 sm:py-14 lg:px-10">
+      <ProductRail
         title={copy.recentTitle}
-        href="/shop"
-        search={shopSearch}
-        viewAll={viewAll}
-        tone="minimal"
+        eyebrow={copy.recentEyebrow}
+        products={resolved}
+        locale={locale}
+        viewAllLabel={viewAll}
       />
-      <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 lg:pb-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {items.map((product) => (
-          <div key={product.id} className="w-36 shrink-0 snap-start sm:w-44 lg:w-48">
-            <ProductCard product={product} locale={locale} />
-          </div>
-        ))}
-      </div>
-    </Reveal>
+    </div>
   );
 }
 
@@ -1772,7 +1798,20 @@ function BoutiquesGrid({
 }) {
   const storeT = getTranslations(locale).store;
   const cardT = getTranslations(locale).card;
-  const list = stores.slice(0, 6);
+  const entrance = useEntranceStagger<HTMLDivElement>();
+  // Emerging-seller fairness: the strip shows six stores; rotating the
+  // starting point by a session-stable offset means smaller stores are not
+  // permanently buried behind the same leaders on every visit. The relative
+  // order stays the catalog's own, and no store is relabeled or invented.
+  // Initial render keeps catalog order (SSR-safe); rotation applies on mount.
+  const [list, setList] = useState<CatalogStore[]>(() => stores.slice(0, 6));
+  useEffect(() => {
+    if (stores.length > 1) {
+      const offset = getRotationSeed() % stores.length;
+      const rotated = [...stores.slice(offset), ...stores.slice(0, offset)];
+      setList(rotated.slice(0, 6));
+    }
+  }, [stores]);
   if (!list.length) return null;
   return (
     <section aria-label={copy.sfStoresTitle} className="bg-muted/40">
@@ -1796,13 +1835,17 @@ function BoutiquesGrid({
               <ArrowRight className="size-3.5 transition-transform rtl:rotate-180" />
             </Link>
           </div>
-          <div className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {list.map((store) => (
+          <div
+            ref={entrance.ref}
+            className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
+            {list.map((store, i) => (
               <Link
                 key={store.id}
                 to="/store/$slug"
                 params={{ slug: store.slug }}
                 search={{ locale }}
+                style={staggerStyle(entrance.entered, i, entrance.reduced)}
                 className="group block basis-[260px] shrink-0 snap-start overflow-hidden rounded-2xl border border-border/60 bg-card transition-shadow duration-300 hover:shadow-[0_16px_36px_-16px_rgba(0,0,0,0.18)] sm:basis-[300px]"
                 aria-label={store.name}
               >
@@ -1897,6 +1940,7 @@ function LazyProductGrid({
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
   const [products, setProducts] = useState<CatalogProduct[] | null>(null);
+  const entrance = useEntranceStagger<HTMLDivElement>();
 
   // IntersectionObserver: load when scrolled into view
   useEffect(() => {
@@ -1991,9 +2035,18 @@ function LazyProductGrid({
               <ArrowRight className="size-3.5 transition-transform rtl:rotate-180" />
             </Link>
           </div>
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5">
-            {products.slice(0, 10).map((product) => (
-              <ProductCard key={product.id} product={product} locale={locale} />
+          <div
+            ref={entrance.ref}
+            className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5"
+          >
+            {products.slice(0, 10).map((product, i) => (
+              <div
+                key={product.id}
+                className="min-w-0"
+                style={staggerStyle(entrance.entered, i, entrance.reduced)}
+              >
+                <ProductCard product={product} locale={locale} />
+              </div>
             ))}
           </div>
         </Reveal>
@@ -2116,6 +2169,7 @@ function HomePage() {
             products={data.products.slice(0, 10)}
             locale={locale}
             viewAllLabel={t.common.viewAll}
+            variant="featured"
           />
         </div>
 
@@ -2162,6 +2216,11 @@ function HomePage() {
             </div>
           </div>
         ) : null}
+
+        {/* 6b — Recently viewed: the visitor's own history, resolved live.
+            Renders nothing unless ≥2 viewed products are still published
+            and in stock, so it never leaves an empty band behind. */}
+        <RecentlyViewed locale={locale} copy={copy} viewAll={t.common.viewAll} />
 
         {/* 7 — Editorial moments (band renders only when a moment has a real image) */}
         {sportImage || fashionImage ? (

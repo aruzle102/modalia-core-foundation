@@ -46,7 +46,7 @@ function Section({
       <legend className="float-start w-full px-0 text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
         {title}
       </legend>
-      <div className="mt-3.5">{children}</div>
+      <div className="mt-3.5 min-w-0">{children}</div>
     </fieldset>
   );
 }
@@ -149,9 +149,9 @@ export function ShopFilters({
     });
 
   return (
-    <div>
-      <div className="mb-4 flex items-center justify-between">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+    <div className="min-w-0">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <p className="min-w-0 truncate text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
           {t.filters}
           {activeCount > 0 ? (
             <span className="ms-2 inline-grid size-5 place-items-center rounded-full bg-foreground text-[11px] font-extrabold tabular-nums text-background">
@@ -163,7 +163,7 @@ export function ShopFilters({
           <button
             type="button"
             onClick={clearAll}
-            className="rounded-full px-3 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            className="shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           >
             {t.clearAll}
           </button>
@@ -195,10 +195,10 @@ export function ShopFilters({
               }}
               className="h-10 min-w-0 flex-1 rounded-xl border-border bg-background"
             />
-            <Button type="button" size="sm" className="h-10 shrink-0 rounded-xl px-4 font-semibold" onClick={applyPrice}>
-              {t.apply}
-            </Button>
           </div>
+          <Button type="button" size="sm" className="mt-2 h-10 w-full rounded-xl font-semibold" onClick={applyPrice}>
+            {t.apply}
+          </Button>
           <p className="mt-2 text-caption text-muted-foreground">
             {formatPrice(facets.priceBounds.min, locale)} –{" "}
             {formatPrice(facets.priceBounds.max, locale)}
@@ -233,7 +233,7 @@ export function ShopFilters({
                   aria-pressed={active}
                   title={`${size.label} · ${size.productCount}`}
                   onClick={() => onChange({ ...values, sizes: toggle(values.sizes, size.value) })}
-                  className={`min-h-11 min-w-11 rounded-xl border px-3 py-2 text-small font-semibold transition-all ${
+                  className={`min-h-11 min-w-11 max-w-full truncate rounded-xl border px-3 py-2 text-small font-semibold transition-all ${
                     active
                       ? "border-foreground bg-foreground text-background shadow-sm"
                       : "border-border bg-card text-foreground hover:border-foreground/40 hover:shadow-sm active:scale-95"

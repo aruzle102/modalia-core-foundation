@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
+import { queryOptions, useIsFetching, useSuspenseQuery } from "@tanstack/react-query";
 import { ChevronDown, ChevronLeft, ChevronRight, Search, ShoppingBag, SlidersHorizontal, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -343,6 +343,13 @@ function ShopPage() {
   const navigate = useNavigate({ from: "/shop" });
   const { data } = useSuspenseQuery(shopQuery(search));
   const { data: storeDirectory } = useSuspenseQuery(storeDirectoryQuery(search.locale));
+  // The route loader fetches the next result set BEFORE the navigation
+  // commits, so this component never observes its own query fetching — the
+  // previous grid would sit frozen, then swap abruptly. useIsFetching
+  // subscribes to the query cache directly, so it flips while the previous
+  // result set is still mounted and the grid can visibly dim (below) until
+  // the keyed fade-in takes over for the committed new set.
+  const catalogFetching = useIsFetching({ queryKey: ["catalog"] }) > 0;
   const t = getTranslations(search.locale);
   const ts = t.shop;
   // Mobile filter sheet: mounted/visible state machine so the sheet slides
@@ -787,7 +794,11 @@ function ShopPage() {
                 <div className="sticky top-36 rounded-2xl border border-border/60 bg-card p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">{filtersPanel}</div>
               </aside>
               <div className="min-w-0">
-                <div key={gridSignature} className="animate-in fade-in-0 slide-in-from-bottom-2 duration-200">
+                <div
+                  key={gridSignature}
+                  aria-busy={catalogFetching}
+                  className={`animate-in fade-in-0 slide-in-from-bottom-2 duration-200 transition-opacity ${catalogFetching ? "opacity-60" : ""}`}
+                >
                 {data.products.length === 0 ? (
                   <section className="rounded-2xl border border-border/60 bg-muted/40 px-6 py-20 text-center">
                     <div className="mx-auto grid size-14 place-items-center rounded-full bg-background shadow-sm">

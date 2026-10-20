@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft, ChevronDown, Search, SearchX, ShoppingBag, X } from "lucide-react";
+import { ArrowLeft, ChevronDown, Search, SearchX, ShoppingBag, Star, X } from "lucide-react";
 import { OfficialStoreBadge, VerifiedSellerBadge } from "@/components/marketplace/StoreBadges";
 import { CategoryRail, ProductCard, ProductGrid } from "@/components/marketplace/discovery";
 import { SiteFooter, SiteHeader } from "@/components/layout/site-shell";
@@ -45,6 +45,39 @@ function humanizeSlug(slug: string): string {
 
 const CONTAINER = "mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-10";
 
+/** One approved customer review, as rendered by the reviews section. */
+export interface StoreFrontReview {
+  id: string;
+  rating: number;
+  body: string | null;
+  firstName: string | null;
+  productName: string;
+}
+
+/**
+ * Optional real review summary for a storefront — today only the official
+ * store route loads one (`getOfficialStoreReviews`). Absent or empty means
+ * no reviews section is rendered; nothing is ever fabricated.
+ */
+export interface StoreFrontReviewsData {
+  reviews: StoreFrontReview[];
+  average: number | null;
+  count: number;
+}
+
+function Stars({ value }: { value: number }) {
+  return (
+    <span className="inline-flex" aria-hidden>
+      {[1, 2, 3, 4, 5].map((star) => (
+        <Star
+          key={star}
+          className={`size-3.5 ${star <= Math.round(value) ? "fill-amber-400 text-amber-400" : "text-muted-foreground/40"}`}
+        />
+      ))}
+    </span>
+  );
+}
+
 /**
  * Presentational public storefront, shared by the `/store/$slug` route and the
  * seller Studio's live preview. Pure render from a `StoreDetail` — no data
@@ -57,10 +90,12 @@ export function StoreFront({
   store,
   locale,
   t,
+  reviewsData,
 }: {
   store: StoreDetail;
   locale: SupportedLocale;
   t: Translation;
+  reviewsData?: StoreFrontReviewsData;
 }) {
   const accent = accentById(store.accent);
   const v8 = t.sellerStoreV8.storefront;
@@ -539,6 +574,49 @@ export function StoreFront({
             </div>
           )}
         </section>
+
+        {/* ——— Customer reviews: real approved reviews only, hidden when none ——— */}
+        {reviewsData && reviewsData.count > 0 && reviewsData.reviews.length ? (
+          <section className="border-t border-border">
+            <div className={cn(CONTAINER, "py-12 sm:py-16")}>
+              <p className="text-eyebrow text-muted-foreground">{t.store.official.heroEyebrow}</p>
+              <h2 className="mt-2 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+                {t.store.official.reviewsTitle}
+              </h2>
+              {reviewsData.average != null ? (
+                <div className="mt-5 flex items-center gap-3">
+                  <span className="text-3xl font-semibold tabular-nums text-foreground">
+                    {reviewsData.average.toFixed(1)}
+                  </span>
+                  <span className="flex flex-col gap-1">
+                    <Stars value={reviewsData.average} />
+                    <span className="text-caption text-muted-foreground">
+                      {t.store.official.statsRating}
+                    </span>
+                  </span>
+                </div>
+              ) : null}
+              <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {reviewsData.reviews.slice(0, 6).map((review) => (
+                  <figure
+                    key={review.id}
+                    className="flex flex-col rounded-xl border border-border bg-card p-5"
+                  >
+                    <Stars value={review.rating} />
+                    {review.body ? (
+                      <blockquote className="mt-3 flex-1 text-small text-foreground">
+                        {review.body}
+                      </blockquote>
+                    ) : null}
+                    <figcaption className="mt-4 text-caption text-muted-foreground">
+                      {review.firstName ?? "—"} · {review.productName}
+                    </figcaption>
+                  </figure>
+                ))}
+              </div>
+            </div>
+          </section>
+        ) : null}
       </main>
       <SiteFooter locale={locale} t={t} />
     </div>

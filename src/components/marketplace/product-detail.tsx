@@ -1,9 +1,9 @@
-import { lazy, Suspense, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState, type MouseEvent, type TouchEvent } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, Box, Heart, Minus, Plus, ShieldCheck, ShoppingBag, Star, Truck } from "lucide-react";
+import { Box, ChevronRight, Heart, Minus, Plus, ShieldCheck, ShoppingBag, Star, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ProductGrid } from "@/components/marketplace/discovery";
+import { ProductCard } from "@/components/marketplace/discovery";
 import { OfficialStoreBadge, VerifiedSellerBadge } from "@/components/marketplace/StoreBadges";
 import { ReviewForm } from "@/components/marketplace/review-form";
 import { BackInStockNotify } from "@/components/marketplace/back-in-stock-notify";
@@ -20,6 +20,7 @@ import { recordRecentlyViewed, track } from "@/lib/analytics";
 import { startBuyNow } from "@/components/marketplace/buy-now";
 import { SiteButtons } from "@/components/layout/site-buttons";
 import type { SupportedLocale } from "@/config/platform";
+import type { CatalogProduct } from "@/lib/catalog.functions";
 import type { ProductDetail } from "@/lib/product.functions";
 
 const ProductViewer3D = lazy(() =>
@@ -134,6 +135,37 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
     setQuantity(1);
     setActiveMedia(0);
     setZoomed(false);
+  };
+
+  // Gallery navigation shared by thumbnails, dots and touch swipe.
+  const goToMedia = (index: number) => {
+    const count = images.length;
+    if (!count) return;
+    setActiveMedia(((index % count) + count) % count);
+    setView3d(false);
+    setZoomed(false);
+  };
+
+  // Touch swipe on the main image (mobile): a decisive horizontal drag moves
+  // to the next/previous image; the flag suppresses the tap-to-zoom click
+  // that fires right after the swipe ends.
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const swipedRef = useRef(false);
+  const handleTouchStart = (event: TouchEvent<HTMLDivElement>) => {
+    const touch = event.touches[0];
+    touchStartRef.current = touch ? { x: touch.clientX, y: touch.clientY } : null;
+  };
+  const handleTouchEnd = (event: TouchEvent<HTMLDivElement>) => {
+    const start = touchStartRef.current;
+    touchStartRef.current = null;
+    const touch = event.changedTouches[0];
+    if (!start || !touch || view3d || images.length < 2) return;
+    const dx = touch.clientX - start.x;
+    const dy = touch.clientY - start.y;
+    if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy) * 1.4) {
+      swipedRef.current = true;
+      goToMedia(activeMedia + (dx < 0 ? 1 : -1));
+    }
   };
 
   const handleZoomMove = (event: MouseEvent<HTMLDivElement>) => {
@@ -252,38 +284,89 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
 
   return (
     <main id="main-content" tabIndex={-1} className="mx-auto max-w-7xl px-4 pb-28 pt-7 sm:px-6 lg:px-8 lg:pb-7">
-      <nav aria-label={t.breadcrumb} className="flex flex-wrap items-center gap-2 text-caption text-muted-foreground">
-        <Link to="/" search={{ locale }} className="transition-colors hover:text-foreground">
+      <nav aria-label={t.breadcrumb} className="flex items-center gap-1.5 text-caption text-muted-foreground">
+        <Link to="/" search={{ locale }} className="shrink-0 transition-colors hover:text-foreground">
           {t.home}
         </Link>
-        <span aria-hidden>/</span>
+        <ChevronRight className="size-3.5 shrink-0 rtl:rotate-180" aria-hidden />
         {product.category ? (
           <>
             <Link
               to="/category/$slug"
               params={{ slug: product.category.slug }}
               search={{ locale }}
-              className="transition-colors hover:text-foreground"
+              className="shrink-0 transition-colors hover:text-foreground"
             >
               {product.category.name}
             </Link>
-            <span aria-hidden>/</span>
+            <ChevronRight className="size-3.5 shrink-0 rtl:rotate-180" aria-hidden />
           </>
         ) : null}
-        <span className="text-foreground">{product.name}</span>
+        <span className="min-w-0 truncate text-foreground">{product.name}</span>
       </nav>
 
       <div className="mt-6 grid gap-10 lg:grid-cols-[minmax(0,1.45fr)_minmax(20rem,0.8fr)] lg:items-start">
-        {/* ——— Gallery with hover magnifier ——— */}
+        {/* ——— Gallery: thumbnail column on sm+, touch swipe + discreet dots
+            on mobile, hover magnifier on fine pointers, crossfade on change ——— */}
         <section aria-label={t.productMedia} className="min-w-0">
+          <div className="flex gap-3">
+            {images.length > 1 || model3d ? (
+              <div className="hidden w-[72px] shrink-0 flex-col gap-2.5 overflow-y-auto sm:flex">
+                {images.map((item, index) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    aria-label={t.viewImage(index + 1)}
+                    aria-pressed={index === activeMedia && !view3d}
+                    onClick={() => goToMedia(index)}
+                    className={`relative aspect-square w-full shrink-0 overflow-hidden rounded-xl border transition-all ${
+                      index === activeMedia && !view3d
+                        ? "border-foreground ring-2 ring-foreground"
+                        : "border-border/60 hover:border-foreground/40"
+                    }`}
+                  >
+                    {item.url ? (
+                      <img src={item.url} alt="" loading="lazy" className="size-full object-cover" />
+                    ) : (
+                      <span className="block size-full bg-muted" />
+                    )}
+                  </button>
+                ))}
+                {canShow3d ? (
+                  <button
+                    type="button"
+                    aria-label={t.view3d}
+                    aria-pressed={view3d}
+                    onClick={() => {
+                      setView3d(true);
+                      setZoomed(false);
+                    }}
+                    className={`grid aspect-square w-full shrink-0 place-items-center gap-0.5 rounded-xl border bg-card transition-all ${
+                      view3d
+                        ? "border-foreground ring-2 ring-foreground"
+                        : "border-border/60 hover:border-foreground/40"
+                    }`}
+                  >
+                    <Box className="size-5" aria-hidden />
+                    <span className="text-caption font-medium leading-none">3D</span>
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
           <div
-            className="relative aspect-[4/5] cursor-zoom-in overflow-hidden rounded-2xl border border-border/60 bg-muted shadow-[0_2px_16px_-8px_rgba(0,0,0,0.15)]"
+            className="relative aspect-[4/5] min-w-0 flex-1 cursor-zoom-in overflow-hidden rounded-2xl border border-border/60 bg-muted shadow-[0_2px_16px_-8px_rgba(0,0,0,0.15)]"
             onMouseMove={handleZoomMove}
             onMouseEnter={() => {
               if (canMagnify()) setZoomed(true);
             }}
             onMouseLeave={handleMediaLeave}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
             onClick={() => {
+              if (swipedRef.current) {
+                swipedRef.current = false;
+                return;
+              }
               if (typeof window !== "undefined" && !window.matchMedia("(pointer: fine)").matches) {
                 setZoomed((value) => !value);
               }
@@ -301,11 +384,12 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
               </Suspense>
             ) : currentImage?.url ? (
               <img
+                key={currentImage.id}
                 src={currentImage.url}
                 alt={currentImage.alt || product.name}
                 sizes="(min-width: 1024px) 55vw, 100vw"
                 style={{ transformOrigin: zoomOrigin }}
-                className={`gallery-parallax size-full object-cover ${motionTw.transition.transform} ${motionTw.duration.feedback} ${motionTw.ease.out} motion-reduce:transition-none ${
+                className={`gallery-parallax size-full animate-in object-cover fade-in-0 ${motionTw.transition.transform} ${motionTw.duration.feedback} ${motionTw.ease.out} motion-reduce:animate-none motion-reduce:transition-none ${
                   zoomed ? "scale-[1.9]" : "scale-100"
                 }`}
               />
@@ -316,57 +400,34 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
                 {product.name}
               </div>
             )}
+            {sale && !view3d ? (
+              <span className="absolute start-3 top-3 z-10 rounded-md bg-destructive px-2.5 py-1 text-caption font-semibold text-destructive-foreground shadow-sm">
+                −{sale}%
+              </span>
+            ) : null}
             <span className="pointer-events-none absolute bottom-3 end-3 hidden rounded-full bg-card/85 px-3 py-1 text-caption text-muted-foreground backdrop-blur-sm [@media(pointer:fine)]:block">
               {t.zoomHint}
             </span>
           </div>
+          </div>
 
-          {images.length > 1 || model3d ? (
-            <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+          {images.length > 1 && !view3d ? (
+            <div className="mt-3 flex items-center justify-center gap-1.5 sm:hidden">
               {images.map((item, index) => (
-                <Button
+                <button
                   key={item.id}
                   type="button"
-                  variant="outline"
-                  size="icon"
                   aria-label={t.viewImage(index + 1)}
                   aria-pressed={index === activeMedia}
-                  onClick={() => {
-                    setActiveMedia(index);
-                    setView3d(false);
-                    setZoomed(false);
-                  }}
-                  className="size-16 shrink-0 overflow-hidden rounded-xl p-0 shadow-sm aria-pressed:border-foreground aria-pressed:ring-2 aria-pressed:ring-foreground"
-                >
-                  <span className="block size-full">
-                    {item.url ? (
-                      <img src={item.url} alt="" loading="lazy" className="size-full object-cover" />
-                    ) : (
-                      <span className="block size-full bg-muted" />
-                    )}
-                  </span>
-                </Button>
+                  onClick={() => goToMedia(index)}
+                  className={`h-1.5 rounded-full transition-all ${
+                    index === activeMedia ? "w-5 bg-foreground" : "w-1.5 bg-foreground/25 hover:bg-foreground/40"
+                  }`}
+                />
               ))}
-              {canShow3d ? (
-                <Button
-                  key="model-3d"
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  aria-label={t.view3d}
-                  aria-pressed={view3d}
-                  onClick={() => {
-                    setView3d(true);
-                    setZoomed(false);
-                  }}
-                  className="grid size-16 shrink-0 place-items-center gap-0.5 rounded-xl p-0 shadow-sm aria-pressed:border-foreground aria-pressed:ring-2 aria-pressed:ring-foreground"
-                >
-                  <Box className="size-5" aria-hidden />
-                  <span className="text-caption font-medium leading-none">3D</span>
-                </Button>
-              ) : null}
             </div>
           ) : null}
+
         </section>
 
         {/* ——— Purchase panel ——— */}
@@ -398,20 +459,27 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
               to="/store/$slug"
               params={{ slug: product.store.slug }}
               search={{ locale }}
-              className="mt-3 inline-flex items-center gap-2 text-small text-muted-foreground transition-colors hover:text-foreground"
+              className="mt-4 inline-flex max-w-full items-center gap-2.5 rounded-full border border-border/70 bg-card py-1.5 pe-4 ps-1.5 shadow-sm transition-all hover:border-foreground/30 hover:shadow"
             >
               {product.store.logoUrl ? (
-                <img src={product.store.logoUrl} alt="" loading="lazy" className="size-5 rounded-full object-cover" />
-              ) : null}
-              {t.soldBy}{" "}
-              <span className="inline-flex items-center gap-1 font-medium text-foreground">
-                {product.store.name}
-                {product.store.slug === "modalia" ? (
-                <OfficialStoreBadge label={officialLabel} />
+                <img src={product.store.logoUrl} alt="" loading="lazy" className="size-7 shrink-0 rounded-full object-cover" />
               ) : (
-                <VerifiedSellerBadge verified={product.store.verified} tone={product.store.verificationBadge} label={verifiedLabel} />
+                <span className="grid size-7 shrink-0 place-items-center rounded-full bg-muted text-caption font-semibold text-foreground" aria-hidden>
+                  {product.store.name.charAt(0)}
+                </span>
               )}
+              <span className="min-w-0 truncate text-small text-muted-foreground">
+                {t.soldBy}{" "}
+                <span className="inline-flex items-center gap-1 font-medium text-foreground">
+                  {product.store.name}
+                  {product.store.slug === "modalia" ? (
+                    <OfficialStoreBadge label={officialLabel} />
+                  ) : (
+                    <VerifiedSellerBadge verified={product.store.verified} tone={product.store.verificationBadge} label={verifiedLabel} />
+                  )}
+                </span>
               </span>
+              <ChevronRight className="size-4 shrink-0 text-muted-foreground rtl:rotate-180" aria-hidden />
             </Link>
           ) : null}
 
@@ -458,10 +526,16 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
             <div className="mt-8 space-y-6">
               {product.options.map((option) => {
                 const isColor = option.values.some((value) => value.hex);
+                const selectedValue = option.values.find((value) => value.id === selected[option.id]);
                 return (
                   <fieldset key={option.id}>
                     <legend className="text-nav text-foreground">
                       {option.name}
+                      {selectedValue ? (
+                        <>
+                          : <span className="font-normal text-muted-foreground">{selectedValue.label}</span>
+                        </>
+                      ) : null}
                       {option.required ? <span className="text-muted-foreground"> · {t.required}</span> : null}
                     </legend>
                     <div className="mt-3 flex flex-wrap gap-2">
@@ -483,17 +557,20 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
                             }`}
                           />
                         ) : (
-                          <Button
+                          <button
                             key={value.id}
                             type="button"
-                            variant={selected[option.id] === value.id ? "default" : "outline"}
-                            size="sm"
                             disabled={!value.available}
+                            aria-pressed={selected[option.id] === value.id}
                             onClick={() => updateOption(option.id, value.id)}
-                            className="min-w-11 rounded-xl font-semibold"
+                            className={`min-w-11 rounded-xl border px-3.5 py-2.5 text-small font-semibold transition-all active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40 ${
+                              selected[option.id] === value.id
+                                ? "border-foreground bg-foreground text-background shadow-sm"
+                                : "border-border bg-card text-foreground hover:border-foreground/50"
+                            }`}
                           >
                             {value.label}
-                          </Button>
+                          </button>
                         ),
                       )}
                     </div>
@@ -568,27 +645,27 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
             <Button
               type="button"
               disabled={!canPurchase}
-              onClick={handleBuyNow}
+              onClick={() => addToCart()}
               className="h-12 rounded-xl bg-foreground font-bold text-background shadow-sm transition-all hover:bg-foreground/90 hover:shadow active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
             >
-              {sf.sfBuyNow}
+              <ShoppingBag className="size-4" />
+              {sf.sfAddToCart}
             </Button>
             <Button
               type="button"
               variant="outline"
               disabled={!canPurchase}
-              onClick={() => addToCart()}
+              onClick={handleBuyNow}
               className="h-12 rounded-xl font-semibold shadow-sm transition-all hover:shadow active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
             >
-              <ShoppingBag className="size-4" />
-              {sf.sfAddToCart}
+              {sf.sfBuyNow}
             </Button>
           </div>
           <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2">
             <SiteButtons placement="product_cta" locale={locale} variant="link" itemClassName="text-small text-muted-foreground underline underline-offset-4 hover:text-foreground" />
           </div>
 
-          <div className="mt-6 grid grid-cols-2 gap-3 text-caption text-muted-foreground">
+          <div className="mt-6 grid grid-cols-2 gap-3 rounded-2xl bg-muted/40 p-4 text-caption text-muted-foreground">
             <p className="inline-flex items-center gap-2">
               <Truck className="size-4 shrink-0" aria-hidden />
               {t.shippedBy}
@@ -793,51 +870,21 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
         </div>
       </section>
 
-      {/* ——— Related ——— */}
-      {product.related.length ? (
-        <section className="mt-10 border-t border-border pt-8 lg:mt-14">
-          <p className="text-eyebrow text-muted-foreground">{t.relatedEyebrow}</p>
-          <h2 className="mt-2 font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-            {t.relatedTitle}
-          </h2>
-          <div className="mt-8">
-            <ProductGrid products={product.related} locale={locale} />
-          </div>
-        </section>
-      ) : null}
+      {/* ——— More from this store (real storefront products; hidden when none) ——— */}
+      <ProductRailSection eyebrow={t.fromStoreEyebrow} title={t.fromStoreTitle} products={product.fromStore} locale={locale} />
 
       {/* ——— Similar (same category, closest price — no store priority) ——— */}
-      {product.similar.length ? (
-        <section className="mt-10 border-t border-border pt-8 lg:mt-14">
-          <p className="text-eyebrow text-muted-foreground">{t.similarEyebrow}</p>
-          <h2 className="mt-2 font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-            {t.similarTitle}
-          </h2>
-          <div className="mt-8">
-            <ProductGrid products={product.similar} locale={locale} />
-          </div>
-        </section>
-      ) : null}
+      <ProductRailSection eyebrow={t.similarEyebrow} title={t.similarTitle} products={product.similar} locale={locale} />
+
+      {/* ——— Related ——— */}
+      <ProductRailSection eyebrow={t.relatedEyebrow} title={t.relatedTitle} products={product.related} locale={locale} />
 
       {/* ——— Viewed together (real co-view events; hidden until data exists) ——— */}
       <ViewedTogether productId={product.id} locale={locale} copy={t} />
 
-      {/* ——— More from this store (real storefront products; hidden when none) ——— */}
-      {product.fromStore.length ? (
-        <section className="mt-10 border-t border-border pt-8 lg:mt-14">
-          <p className="text-eyebrow text-muted-foreground">{t.fromStoreEyebrow}</p>
-          <h2 className="mt-2 font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-            {t.fromStoreTitle}
-          </h2>
-          <div className="mt-8">
-            <ProductGrid products={product.fromStore} locale={locale} />
-          </div>
-        </section>
-      ) : null}
-
       {/* ——— Sticky mobile purchase bar: appears once the main CTAs scroll out of view.
           Sec 43 (#100): while slid off-screen (`ctaVisible`) the bar is `inert`
-          as well as `aria-hidden`, so its Buy Now button can never receive
+          as well as `aria-hidden`, so its purchase button can never receive
           keyboard focus off-screen. `inert` flips synchronously with the
           tokenized slide transition (`motionTw.duration.base`). ——— */}
       {canPurchase ? (
@@ -859,8 +906,9 @@ export function ProductDetailView({ product, locale }: { product: ProductDetail;
               <p className="truncate text-small font-medium text-foreground">{product.name}</p>
               <p className="text-small font-semibold tabular-nums text-foreground">{formatPrice(price, locale)}</p>
             </div>
-            <Button type="button" onClick={handleBuyNow} className="h-11 shrink-0 bg-foreground font-semibold text-background hover:bg-foreground/90">
-              {sf.sfBuyNow}
+            <Button type="button" onClick={() => addToCart()} className="h-11 shrink-0 bg-foreground font-semibold text-background hover:bg-foreground/90">
+              <ShoppingBag className="size-4" />
+              {sf.sfAddToCart}
             </Button>
           </div>
         </div>
@@ -890,13 +938,47 @@ function ViewedTogether({
   });
   if (!data?.hasData || data.products.length === 0) return null;
   return (
+    <ProductRailSection
+      eyebrow={copy.viewedTogetherEyebrow}
+      title={copy.viewedTogetherTitle}
+      products={data.products}
+      locale={locale}
+    />
+  );
+}
+
+/**
+ * Horizontal discovery rail shared by every section below the buy panel:
+ * snap-scrolling ProductCards at the marketplace rail width (160px mobile,
+ * 220px desktop, matching the homepage rails). Renders nothing for an empty
+ * list — sections hide instead of leaving gaps. All lists are computed
+ * server-side from real published products and already exclude the current
+ * product.
+ */
+function ProductRailSection({
+  eyebrow,
+  title,
+  products,
+  locale,
+}: {
+  eyebrow: string;
+  title: string;
+  products: CatalogProduct[];
+  locale: SupportedLocale;
+}) {
+  if (!products.length) return null;
+  return (
     <section className="mt-10 border-t border-border pt-8 lg:mt-14">
-      <p className="text-eyebrow text-muted-foreground">{copy.viewedTogetherEyebrow}</p>
+      <p className="text-eyebrow text-muted-foreground">{eyebrow}</p>
       <h2 className="mt-2 font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-        {copy.viewedTogetherTitle}
+        {title}
       </h2>
-      <div className="mt-8">
-        <ProductGrid products={data.products} locale={locale} />
+      <div className="mt-8 flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 [scrollbar-width:none] sm:gap-4 [&::-webkit-scrollbar]:hidden">
+        {products.map((product) => (
+          <div key={product.id} className="basis-[160px] shrink-0 snap-start sm:basis-[220px]">
+            <ProductCard product={product} locale={locale} />
+          </div>
+        ))}
       </div>
     </section>
   );

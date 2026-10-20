@@ -1,11 +1,12 @@
-import { useRef, useState, type MouseEvent, type TouchEvent } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type MouseEvent, type TouchEvent } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Heart, Loader2, ShoppingBag } from "lucide-react";
+import { ArrowRight, Check, Heart, Loader2, ShoppingBag } from "lucide-react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatPrice } from "@/lib/i18n/format";
 import { getTranslations } from "@/lib/i18n";
 import { isWishlisted, toggleWishlist } from "@/lib/wishlist-store";
+import { useCart } from "@/lib/cart-store";
 import { microAnimationClass, replayAnimation } from "@/lib/motion";
 import { startBuyNow } from "@/components/marketplace/buy-now";
 import type { CatalogCategory, CatalogProduct, CatalogStore } from "@/lib/catalog.functions";
@@ -30,9 +31,16 @@ function discountPercent(price: number, compareAtPrice: number | null | undefine
 export function ProductCard({
   product,
   locale,
+  className,
+  style,
 }: {
   product: CatalogProduct;
   locale: SupportedLocale;
+  /** Optional parent hooks for entrance/stagger treatments (reveal classes,
+   *  per-index transition delay). Unused by default — existing call sites
+   *  render exactly as before. */
+  className?: string | undefined;
+  style?: CSSProperties | undefined;
 }) {
   const [wishlisted, setWishlisted] = useState(() => isWishlisted(product.id));
   const [wishPending, setWishPending] = useState(false);
@@ -42,6 +50,39 @@ export function ProductCard({
   const touchStartX = useRef<number | null>(null);
   const justSwiped = useRef(false);
   const t = getTranslations(locale).card;
+
+  // Quick-add success feedback, honestly sourced: startBuyNow is
+  // fire-and-forget (the host may add directly or open a variant sheet), so
+  // the bag button only shows its brief Check state when THIS product's
+  // cart quantity actually rises shortly after THIS card's click. A sheet
+  // that opens (or is cancelled) never produces a fake check.
+  const cart = useCart();
+  const [justAdded, setJustAdded] = useState(false);
+  const pendingBaselineRef = useRef<number | null>(null);
+  const pendingTimerRef = useRef<number | null>(null);
+  const addedTimerRef = useRef<number | null>(null);
+  const productQty = cart.items.reduce(
+    (sum, line) => (line.productId === product.id ? sum + line.quantity : sum),
+    0,
+  );
+
+  useEffect(() => {
+    if (pendingBaselineRef.current == null || productQty <= pendingBaselineRef.current) return;
+    pendingBaselineRef.current = null;
+    if (pendingTimerRef.current) window.clearTimeout(pendingTimerRef.current);
+    pendingTimerRef.current = null;
+    setJustAdded(true);
+    if (addedTimerRef.current) window.clearTimeout(addedTimerRef.current);
+    addedTimerRef.current = window.setTimeout(() => setJustAdded(false), 1200);
+  }, [productQty]);
+
+  useEffect(
+    () => () => {
+      if (pendingTimerRef.current) window.clearTimeout(pendingTimerRef.current);
+      if (addedTimerRef.current) window.clearTimeout(addedTimerRef.current);
+    },
+    [],
+  );
 
   // Badges come from real data only: discount from compareAtPrice,
   // "new" from createdAt, low stock from summed variant inventory.
@@ -84,6 +125,14 @@ export function ProductCard({
   const handleQuickAdd = (event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
     event.preventDefault();
+    // Arm the success watch: remember this product's current cart quantity;
+    // a rise within the window confirms the host really added it.
+    pendingBaselineRef.current = productQty;
+    if (pendingTimerRef.current) window.clearTimeout(pendingTimerRef.current);
+    pendingTimerRef.current = window.setTimeout(() => {
+      pendingBaselineRef.current = null;
+      pendingTimerRef.current = null;
+    }, 4000);
     startBuyNow(
       locale,
       {
@@ -147,7 +196,10 @@ export function ProductCard({
 
 
   return (
-    <article className="group relative flex min-w-0 flex-col overflow-hidden rounded-2xl border border-border/50 bg-card shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-all duration-300 hover:-translate-y-1 hover:border-border hover:shadow-[0_20px_45px_-18px_rgba(0,0,0,0.25)] motion-reduce:transition-none motion-reduce:hover:translate-y-0">
+    <article
+      style={style}
+      className={`group relative flex min-w-0 flex-col overflow-hidden rounded-2xl border border-border/60 bg-card shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-all duration-300 hover:-translate-y-0.5 hover:border-border hover:shadow-lg motion-reduce:transition-none motion-reduce:hover:translate-y-0 ${className ?? ""}`}
+    >
       {/* Image — touch swipe cycles images; quiet dots live below the image. */}
       <div className="relative">
         <Link
@@ -164,15 +216,31 @@ export function ProductCard({
             onTouchEnd={onImageTouchEnd}
           >
             {images.length > 0 ? (
-              <img
-                key={imgIndex}
-                src={images[imgIndex]}
-                alt={product.imageAlt || product.name}
-                loading="lazy"
-                decoding="async"
-                sizes="(min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
-                className={`size-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04] motion-reduce:transition-none motion-reduce:group-hover:scale-100 ${soldOut ? "opacity-75 saturate-50" : ""}`}
-              />
+              <>
+                <img
+                  key={imgIndex}
+                  src={images[imgIndex]}
+                  alt={product.imageAlt || product.name}
+                  loading="lazy"
+                  decoding="async"
+                  sizes="(min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
+                  className={`size-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04] motion-reduce:transition-none motion-reduce:group-hover:scale-100 ${soldOut ? "opacity-75 saturate-50" : ""}`}
+                />
+                {/* Second image — desktop hover crossfade only. Guarded by
+                    hover-capable + fine-pointer media so touch devices keep
+                    the swipe/dots behavior untouched and never see it. */}
+                {product.secondImagePath && !soldOut ? (
+                  <img
+                    src={product.secondImagePath}
+                    alt=""
+                    aria-hidden="true"
+                    loading="lazy"
+                    decoding="async"
+                    sizes="(min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
+                    className="pointer-events-none absolute inset-0 size-full object-cover opacity-0 transition-[opacity,transform] duration-500 ease-out motion-reduce:transition-none [@media(hover:hover)_and_(pointer:fine)]:group-hover:scale-[1.04] [@media(hover:hover)_and_(pointer:fine)]:group-hover:opacity-100"
+                  />
+                ) : null}
+              </>
             ) : (
               <div className="flex size-full items-end p-5 text-sm text-muted-foreground">
                 Modalia
@@ -288,9 +356,13 @@ export function ProductCard({
             disabled={soldOut}
             aria-label={soldOut ? t.soldOut : t.quickAdd}
             title={soldOut ? t.soldOut : t.quickAdd}
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-border bg-card text-foreground shadow-sm transition-all hover:border-foreground/30 hover:bg-muted active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 touch-manipulation sm:h-10 sm:w-10"
+            className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl border bg-card shadow-sm transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 touch-manipulation sm:h-10 sm:w-10 ${justAdded ? "border-emerald-600/40 text-emerald-600" : "border-border text-foreground hover:border-foreground/30 hover:bg-muted"}`}
           >
-            <ShoppingBag className="size-4" strokeWidth={1.75} aria-hidden="true" />
+            {justAdded ? (
+              <Check className="size-4" strokeWidth={2.25} aria-hidden="true" />
+            ) : (
+              <ShoppingBag className="size-4" strokeWidth={1.75} aria-hidden="true" />
+            )}
           </button>
         </div>
       </div>
@@ -454,11 +526,17 @@ export function ProductGrid({
   locale,
   emptyTitle,
   emptyText,
+  cardClassName,
+  cardStyle,
 }: {
   products: CatalogProduct[];
   locale: SupportedLocale;
   emptyTitle?: string;
   emptyText?: string;
+  /** Optional per-card hooks forwarded to ProductCard — e.g. an entrance
+   *  reveal class and an index-based transition delay for staggered grids. */
+  cardClassName?: string;
+  cardStyle?: CSSProperties | ((index: number) => CSSProperties | undefined);
 }) {
   const t = getTranslations(locale).card;
   if (!products.length)
@@ -471,8 +549,14 @@ export function ProductGrid({
     );
   return (
     <div className="grid grid-cols-2 gap-x-3 gap-y-8 sm:grid-cols-3 sm:gap-x-4 lg:grid-cols-4 lg:gap-x-5 lg:gap-y-10 xl:grid-cols-5">
-      {products.map((product) => (
-        <ProductCard key={product.id} product={product} locale={locale} />
+      {products.map((product, index) => (
+        <ProductCard
+          key={product.id}
+          product={product}
+          locale={locale}
+          className={cardClassName}
+          style={typeof cardStyle === "function" ? cardStyle(index) : cardStyle}
+        />
       ))}
     </div>
   );

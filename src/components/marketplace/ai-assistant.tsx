@@ -506,12 +506,13 @@ export function AiAssistantButton({
       onClick={onOpen}
       aria-label={t.assistant.open}
       title={t.assistant.open}
-      className="group flex items-center gap-2.5 rounded-full bg-foreground py-2 pe-4 ps-2 text-background shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl active:translate-y-0 active:scale-95"
+      className="group inline-flex shrink-0 items-center justify-center gap-2 box-border rounded-full bg-foreground py-1.5 pe-4 ps-1.5 text-background shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl active:translate-y-0 active:scale-95"
     >
-      <span className="flex h-8 shrink-0 items-center justify-center rounded-full bg-foreground px-2">
-        <ModaliLogo variant="light" className="h-3.5 w-auto" />
+      <span className="grid size-9 shrink-0 place-items-center rounded-full bg-background">
+        <ModaliLogo variant="dark" className="h-[10px] w-auto dark:hidden" />
+        <ModaliLogo variant="light" className="hidden h-[10px] w-auto dark:block" />
       </span>
-      <span className="text-[13px] font-semibold tracking-tight">{t.assistant.shortTitle ?? "Assistant"}</span>
+      <span className="whitespace-nowrap text-[13px] font-semibold leading-none tracking-tight">{t.assistant.shortTitle ?? "Assistant"}</span>
     </button>
   );
 }

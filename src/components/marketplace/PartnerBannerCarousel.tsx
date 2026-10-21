@@ -62,6 +62,8 @@ export function PartnerBannerCarousel({ label }: { label?: string }) {
     <img
       src={banner.imageUrl}
       alt={banner.title || "Partner"}
+      width={640}
+      height={213}
       loading="lazy"
       onError={() => setImgError(true)}
       className="mx-auto block h-auto max-h-[150px] w-auto max-w-full object-contain sm:max-h-[170px] lg:max-h-[190px]"

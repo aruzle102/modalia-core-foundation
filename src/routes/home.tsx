@@ -2166,11 +2166,12 @@ function HomePage() {
     <div dir={localeDirections[locale]} lang={locale} className="min-h-screen overflow-x-clip bg-background">
       <SiteHeader locale={locale} t={t} />
       <main id="main-content" tabIndex={-1}>
-        {/* 1 — Compact category navigation: medallion rail */}
-        <CategoryExplorer categories={data.categories} locale={locale} copy={copy} />
+        {/* 1 — Partners & Advertisers banner: FIRST, immediately above the
+            categories (Oussama's standing spec) — full artwork, never cropped */}
+        <PartnerBannerCarousel label={copy.sfPartnersLabel} />
 
-        {/* 2 — Partner billboard */}
-        <PartnerBannerCarousel />
+        {/* 2 — Compact category navigation: medallion rail */}
+        <CategoryExplorer categories={data.categories} locale={locale} copy={copy} />
 
         {/* 3 — Trending */}
         <div className="mx-auto w-full max-w-[1440px] px-4 py-10 sm:px-6 sm:py-14 lg:px-10">

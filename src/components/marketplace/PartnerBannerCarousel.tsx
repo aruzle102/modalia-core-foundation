@@ -1,16 +1,22 @@
 /**
  * Partner advertising banner for /home.
- * Premium billboard: ONE wide banner image in a rounded-2xl frame
- * (150px mobile → 190px desktop, object-cover), no text block, no button.
- * Uses real active banners from the Admin-controlled system.
- * Carousel when multiple banners are active (dots + optional arrows).
+ * Placement (Oussama's spec): FIRST section under the header, immediately
+ * ABOVE the category discovery — small "PARTENAIRES & ANNONCEURS" overline,
+ * then ONE wide advertising image whose artwork is fully visible.
+ *
+ * The admin-supplied assets are baked-artwork images (real ratio ≈ 3:1), so
+ * the image is NEVER cropped: it renders at its natural aspect ratio,
+ * constrained only by max-width (full container on mobile) and a max-height
+ * cap (170px tablet / 190px desktop, centered) — no object-cover, no fixed
+ * height box, no clipped text/artwork/CTA. The frame hugs the image exactly.
+ * Carousel when multiple banners are active (dots + desktop arrows).
  */
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { getActivePartnerBanners } from "@/lib/partner-banners.functions";
 
-export function PartnerBannerCarousel() {
+export function PartnerBannerCarousel({ label }: { label?: string }) {
   const { data: banners } = useQuery({
     queryKey: ["partner-banners"],
     queryFn: () => getActivePartnerBanners(),
@@ -29,6 +35,21 @@ export function PartnerBannerCarousel() {
     return () => clearInterval(timer);
   }, [list.length]);
 
+  // Loading: reserve the banner's space so the categories below do not jump
+  // when the image arrives (the banner is the first section on the page).
+  if (banners === undefined) {
+    return (
+      <section aria-label="Partners" className="mx-auto w-full max-w-[1440px] px-4 pt-8 sm:px-6 sm:pt-10 lg:px-10">
+        {label ? (
+          <p className="mb-4 text-center text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+            {label}
+          </p>
+        ) : null}
+        <div className="mx-auto h-[120px] w-full max-w-[570px] animate-pulse rounded-2xl bg-muted sm:h-[170px] lg:h-[190px]" />
+      </section>
+    );
+  }
+
   const banner = list.length > 0 ? list[index % list.length] : null;
   if (!banner || imgError || !banner.imageUrl) return null;
 
@@ -43,13 +64,18 @@ export function PartnerBannerCarousel() {
       alt={banner.title || "Partner"}
       loading="lazy"
       onError={() => setImgError(true)}
-      className="block h-[150px] w-full object-cover sm:h-[170px] lg:h-[190px]"
+      className="mx-auto block h-auto max-h-[150px] w-auto max-w-full object-contain sm:max-h-[170px] lg:max-h-[190px]"
     />
   );
 
   return (
-    <section aria-label="Partners" className="mx-auto w-full max-w-[1440px] px-4 pb-10 sm:px-6 sm:pb-14 lg:px-10">
-      <div className="group relative overflow-hidden rounded-2xl border border-border/60 bg-muted">
+    <section aria-label="Partners" className="mx-auto w-full max-w-[1440px] px-4 pt-8 sm:px-6 sm:pt-10 lg:px-10">
+      {label ? (
+        <p className="mb-4 text-center text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+          {label}
+        </p>
+      ) : null}
+      <div className="group relative mx-auto w-fit max-w-full overflow-hidden rounded-2xl border border-border/60 bg-muted shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
         {banner.linkUrl ? (
           <a
             href={banner.linkUrl}
